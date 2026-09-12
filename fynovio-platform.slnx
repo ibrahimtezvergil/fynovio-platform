@@ -1,2 +1,15 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Contracts/Contracts.csproj" />
+    <Project Path="src/Host/Host.csproj" />
+    <Project Path="src/Worker/Worker.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/Access/Access.csproj" />
+    <Project Path="src/Modules/CRM/CRM.csproj" />
+    <Project Path="src/Modules/MasterData/MasterData.csproj" />
+    <Project Path="src/Modules/Organization/Organization.csproj" />
+    <Project Path="src/Modules/Sales/Sales.csproj" />
+    <Project Path="src/Modules/TenantLifecycle/TenantLifecycle.csproj" />
+  </Folder>
 </Solution>
