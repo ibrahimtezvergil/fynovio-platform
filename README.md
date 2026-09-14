@@ -54,6 +54,42 @@ The full architecture rationale (module boundaries, canonical domain concepts, f
 - **PostgreSQL** via `Npgsql.EntityFrameworkCore.PostgreSQL`
 - **EF Core** for persistence, with `dotnet-ef` pinned as a repo-local tool
 
+## Prerequisites
+
+- **.NET 10 SDK**
+- **PostgreSQL 17** (local dev is expected to run against Postgres, not an in-memory provider)
+
+### Installing PostgreSQL locally (macOS / Homebrew)
+
+```bash
+brew install postgresql@17
+brew link postgresql@17 --force   # put psql/pg_ctl on PATH if not already linked
+brew services start postgresql@17 # start now and keep it running across reboots
+```
+
+Create the role and database the modules expect by default (see `Username=postgres;Password=postgres;Database=fynovio_platform` in `CrmDbContextFactory.cs` — override via the `FYNOVIO_CRM_CONNECTION_STRING` environment variable for anything else, e.g. a stronger local password):
+
+```bash
+psql -h localhost -d postgres -c "ALTER ROLE postgres WITH LOGIN SUPERUSER PASSWORD 'postgres';" \
+  || psql -h localhost -d postgres -c "CREATE ROLE postgres LOGIN SUPERUSER PASSWORD 'postgres';"
+psql -h localhost -d postgres -c "CREATE DATABASE fynovio_platform OWNER postgres;"
+```
+
+Verify it's reachable:
+
+```bash
+PGPASSWORD=postgres psql -h localhost -U postgres -d fynovio_platform -c "SELECT 1;"
+```
+
+Then apply the CRM module's migrations to create its schema (`crm.*` tables):
+
+```bash
+dotnet tool restore   # one-time per clone: restores dotnet-ef
+dotnet ef database update \
+  --project src/Modules/CRM/CRM.csproj \
+  --startup-project src/Modules/CRM/CRM.csproj
+```
+
 ## Getting started
 
 ```bash
