@@ -2,7 +2,7 @@
 
 Model-independent engineering rules for any coding agent (Claude Code, Codex, or a human) working in this repository. This file is the shared contract and should stay valid regardless of which agent is driving. Claude-specific tool routing and methodology lives in `CLAUDE.md`; avoid duplicating the same rule in both files.
 
-DRAFT — awaiting review/approval before treated as fully binding (see Status).
+Approved 2026-09-14 — binding, not a draft.
 
 ## Stack
 - .NET 10 (LTS, supported until ~2028), C# 13; ASP.NET Core (`Host`), PostgreSQL via `Npgsql.EntityFrameworkCore.PostgreSQL`.
@@ -74,4 +74,4 @@ dotnet ef migrations add <Name> \
 ```
 
 ## Status
-`Contracts` primitives and the CRM+Sales pilot module (entities, `CrmDbContext`, first migration) are implemented as of 2026-09-14; see `docs/schema/crm-sales-schema.md` for the design and `AGENTS.md`/`CLAUDE.md` history for what's not yet done. This file and `CLAUDE.md` are still first drafts — some rules (e.g. `TreatWarningsAsErrors`, CI) are intentionally aspirational until more of the codebase exists to exercise them against.
+`Contracts` primitives and the CRM+Sales pilot module (entities, `CrmDbContext`, first migration) are implemented as of 2026-09-14; see `docs/schema/crm-sales-schema.md` for the design. This file and `CLAUDE.md` are approved and binding, but some rules (e.g. `TreatWarningsAsErrors`, CI) are intentionally aspirational until more of the codebase exists to exercise them against — that's a scoping note, not a draft status.
