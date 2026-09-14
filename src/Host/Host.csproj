@@ -7,7 +7,6 @@
     <ProjectReference Include="..\Modules\Organization\Organization.csproj" />
     <ProjectReference Include="..\Modules\MasterData\MasterData.csproj" />
     <ProjectReference Include="..\Modules\CRM\CRM.csproj" />
-    <ProjectReference Include="..\Modules\Sales\Sales.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

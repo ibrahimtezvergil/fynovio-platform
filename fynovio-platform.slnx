@@ -9,7 +9,6 @@
     <Project Path="src/Modules/CRM/CRM.csproj" />
     <Project Path="src/Modules/MasterData/MasterData.csproj" />
     <Project Path="src/Modules/Organization/Organization.csproj" />
-    <Project Path="src/Modules/Sales/Sales.csproj" />
     <Project Path="src/Modules/TenantLifecycle/TenantLifecycle.csproj" />
   </Folder>
 </Solution>
