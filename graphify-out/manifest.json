@@ -269,18 +269,6 @@
     "ast_hash": "8caf9fa4a38a94b3d1839a6d67c8ade5",
     "semantic_hash": "8caf9fa4a38a94b3d1839a6d67c8ade5"
   },
-  "src/Modules/Sales/Class1.cs": {
-    "mtime": 1789251490.4133508,
-    "seen": 1789368957.470342,
-    "ast_hash": "8afb113099ee935b927c45119f98ce32",
-    "semantic_hash": "8afb113099ee935b927c45119f98ce32"
-  },
-  "src/Modules/Sales/Sales.csproj": {
-    "mtime": 1789251507.883067,
-    "seen": 1789368957.4703429,
-    "ast_hash": "8caf9fa4a38a94b3d1839a6d67c8ade5",
-    "semantic_hash": "8caf9fa4a38a94b3d1839a6d67c8ade5"
-  },
   "src/Modules/TenantLifecycle/Class1.cs": {
     "mtime": 1789251488.2474375,
     "seen": 1789368957.4703429,
@@ -396,9 +384,9 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1789369124.1754067,
-    "seen": 1789369348.605006,
-    "ast_hash": "816f0d9ca3dd6652dfaddad967e23dd8",
+    "mtime": 1789371238.7337542,
+    "seen": 1789371466.1038988,
+    "ast_hash": "7aedaba16a3bb81d34b77a3df45b0060",
     "semantic_hash": ""
   },
   "CLAUDE.md": {

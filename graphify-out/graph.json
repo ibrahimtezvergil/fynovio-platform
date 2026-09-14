@@ -156,25 +156,6 @@
       "source_location": "L5"
     },
     {
-      "id": "src_modules_crm_persistence_configurations_opportunitylineconfiguration_crm_persistence_configurations_opportunitylineconfiguration",
-      "label": "OpportunityLineConfiguration",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "OpportunityLine",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "CRM.Persistence.Configurations",
-        "scope_chain": [
-          "s128"
-        ]
-      },
-      "norm_label": "opportunitylineconfiguration",
-      "source_file": "src/Modules/CRM/Persistence/Configurations/OpportunityLineConfiguration.cs",
-      "source_location": "L8"
-    },
-    {
       "id": "src_modules_crm_evidence_evidencerecord_crm_evidence_evidencerecord",
       "label": "EvidenceRecord",
       "_callable": true,
@@ -384,23 +365,61 @@
       "source_location": "L4"
     },
     {
-      "id": "src_modules_sales_class1_sales_class1",
-      "label": "Class1",
+      "id": "src_modules_crm_domain_opportunityneed_crm_domain_opportunityneed",
+      "label": "OpportunityNeed",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 20,
-      "community_name": "Sales/Class1.cs",
+      "community": 2,
+      "community_name": "Contracts",
       "file_type": "code",
       "metadata": {
-        "namespace": "Sales",
+        "namespace": "CRM.Domain",
         "scope_chain": [
-          "s3"
+          "s18"
         ]
       },
-      "norm_label": "class1",
-      "source_file": "src/Modules/Sales/Class1.cs",
-      "source_location": "L3"
+      "norm_label": "opportunityneed",
+      "source_file": "src/Modules/CRM/Domain/OpportunityNeed.cs",
+      "source_location": "L7"
+    },
+    {
+      "id": "src_modules_crm_persistence_configurations_opportunitylineconfiguration_crm_persistence_configurations_opportunitylineconfiguration",
+      "label": "OpportunityLineConfiguration",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Contracts",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "CRM.Persistence.Configurations",
+        "scope_chain": [
+          "s128"
+        ]
+      },
+      "norm_label": "opportunitylineconfiguration",
+      "source_file": "src/Modules/CRM/Persistence/Configurations/OpportunityLineConfiguration.cs",
+      "source_location": "L8"
+    },
+    {
+      "id": "src_modules_crm_persistence_configurations_opportunityneedconfiguration_crm_persistence_configurations_opportunityneedconfiguration",
+      "label": "OpportunityNeedConfiguration",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Contracts",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "CRM.Persistence.Configurations",
+        "scope_chain": [
+          "s128"
+        ]
+      },
+      "norm_label": "opportunityneedconfiguration",
+      "source_file": "src/Modules/CRM/Persistence/Configurations/OpportunityNeedConfiguration.cs",
+      "source_location": "L8"
     },
     {
       "id": "src_modules_crm_domain_customerneed_crm_domain_customerneed",
@@ -422,25 +441,6 @@
       "source_location": "L5"
     },
     {
-      "id": "src_modules_crm_domain_opportunityneed_crm_domain_opportunityneed",
-      "label": "OpportunityNeed",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 24,
-      "community_name": "CustomerNeed",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "CRM.Domain",
-        "scope_chain": [
-          "s18"
-        ]
-      },
-      "norm_label": "opportunityneed",
-      "source_file": "src/Modules/CRM/Domain/OpportunityNeed.cs",
-      "source_location": "L7"
-    },
-    {
       "id": "src_modules_crm_persistence_configurations_customerneedconfiguration_crm_persistence_configurations_customerneedconfiguration",
       "label": "CustomerNeedConfiguration",
       "_callable": true,
@@ -457,25 +457,6 @@
       },
       "norm_label": "customerneedconfiguration",
       "source_file": "src/Modules/CRM/Persistence/Configurations/CustomerNeedConfiguration.cs",
-      "source_location": "L8"
-    },
-    {
-      "id": "src_modules_crm_persistence_configurations_opportunityneedconfiguration_crm_persistence_configurations_opportunityneedconfiguration",
-      "label": "OpportunityNeedConfiguration",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 24,
-      "community_name": "CustomerNeed",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "CRM.Persistence.Configurations",
-        "scope_chain": [
-          "s128"
-        ]
-      },
-      "norm_label": "opportunityneedconfiguration",
-      "source_file": "src/Modules/CRM/Persistence/Configurations/OpportunityNeedConfiguration.cs",
       "source_location": "L8"
     },
     {
@@ -1064,50 +1045,6 @@
       "source_location": "L28"
     },
     {
-      "id": "src_modules_crm_persistence_configurations_opportunitylineconfiguration_crm_persistence_configurations_opportunitylineconfiguration_configure",
-      "label": ".Configure()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "OpportunityLine",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "CRM.Persistence.Configurations",
-        "scope_chain": [
-          "s128"
-        ],
-        "unresolved_calls": [
-          {
-            "callee": "ToTable",
-            "receiver_type": "EntityTypeBuilder",
-            "lang": "csharp",
-            "line": "L12"
-          },
-          {
-            "callee": "HasKey",
-            "receiver_type": "EntityTypeBuilder",
-            "lang": "csharp",
-            "line": "L14"
-          },
-          {
-            "callee": "Property",
-            "receiver_type": "EntityTypeBuilder",
-            "lang": "csharp",
-            "line": "L16"
-          },
-          {
-            "callee": "HasIndex",
-            "receiver_type": "EntityTypeBuilder",
-            "lang": "csharp",
-            "line": "L37"
-          }
-        ]
-      },
-      "norm_label": ".configure()",
-      "source_file": "src/Modules/CRM/Persistence/Configurations/OpportunityLineConfiguration.cs",
-      "source_location": "L10"
-    },
-    {
       "id": "src_modules_crm_evidence_evidencerecord_crm_evidence_evidencerecord_create",
       "label": ".Create()",
       "_callable": true,
@@ -1342,6 +1279,118 @@
       "source_location": "L16"
     },
     {
+      "id": "src_modules_crm_domain_opportunityneed_crm_domain_opportunityneed_create",
+      "label": ".Create()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Contracts",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "CRM.Domain",
+        "scope_chain": [
+          "s18"
+        ]
+      },
+      "norm_label": ".create()",
+      "source_file": "src/Modules/CRM/Domain/OpportunityNeed.cs",
+      "source_location": "L15"
+    },
+    {
+      "id": "src_modules_crm_persistence_configurations_opportunitylineconfiguration_crm_persistence_configurations_opportunitylineconfiguration_configure",
+      "label": ".Configure()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Contracts",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "CRM.Persistence.Configurations",
+        "scope_chain": [
+          "s128"
+        ],
+        "unresolved_calls": [
+          {
+            "callee": "ToTable",
+            "receiver_type": "EntityTypeBuilder",
+            "lang": "csharp",
+            "line": "L12"
+          },
+          {
+            "callee": "HasKey",
+            "receiver_type": "EntityTypeBuilder",
+            "lang": "csharp",
+            "line": "L14"
+          },
+          {
+            "callee": "Property",
+            "receiver_type": "EntityTypeBuilder",
+            "lang": "csharp",
+            "line": "L16"
+          },
+          {
+            "callee": "HasIndex",
+            "receiver_type": "EntityTypeBuilder",
+            "lang": "csharp",
+            "line": "L37"
+          }
+        ]
+      },
+      "norm_label": ".configure()",
+      "source_file": "src/Modules/CRM/Persistence/Configurations/OpportunityLineConfiguration.cs",
+      "source_location": "L10"
+    },
+    {
+      "id": "src_modules_crm_persistence_configurations_opportunityneedconfiguration_crm_persistence_configurations_opportunityneedconfiguration_configure",
+      "label": ".Configure()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Contracts",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "CRM.Persistence.Configurations",
+        "scope_chain": [
+          "s128"
+        ],
+        "unresolved_calls": [
+          {
+            "callee": "ToTable",
+            "receiver_type": "EntityTypeBuilder",
+            "lang": "csharp",
+            "line": "L12"
+          },
+          {
+            "callee": "HasKey",
+            "receiver_type": "EntityTypeBuilder",
+            "lang": "csharp",
+            "line": "L14"
+          },
+          {
+            "callee": "Property",
+            "receiver_type": "EntityTypeBuilder",
+            "lang": "csharp",
+            "line": "L16"
+          },
+          {
+            "callee": "HasOne<Opportunity>",
+            "receiver_type": "EntityTypeBuilder",
+            "lang": "csharp",
+            "line": "L20"
+          },
+          {
+            "callee": "HasOne<CustomerNeed>",
+            "receiver_type": "EntityTypeBuilder",
+            "lang": "csharp",
+            "line": "L26"
+          }
+        ]
+      },
+      "norm_label": ".configure()",
+      "source_file": "src/Modules/CRM/Persistence/Configurations/OpportunityNeedConfiguration.cs",
+      "source_location": "L10"
+    },
+    {
       "id": "src_modules_crm_domain_customerneed_crm_domain_customerneed_create",
       "label": ".Create()",
       "_callable": true,
@@ -1357,24 +1406,6 @@
       },
       "norm_label": ".create()",
       "source_file": "src/Modules/CRM/Domain/CustomerNeed.cs",
-      "source_location": "L15"
-    },
-    {
-      "id": "src_modules_crm_domain_opportunityneed_crm_domain_opportunityneed_create",
-      "label": ".Create()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 24,
-      "community_name": "CustomerNeed",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "CRM.Domain",
-        "scope_chain": [
-          "s18"
-        ]
-      },
-      "norm_label": ".create()",
-      "source_file": "src/Modules/CRM/Domain/OpportunityNeed.cs",
       "source_location": "L15"
     },
     {
@@ -1419,56 +1450,6 @@
       },
       "norm_label": ".configure()",
       "source_file": "src/Modules/CRM/Persistence/Configurations/CustomerNeedConfiguration.cs",
-      "source_location": "L10"
-    },
-    {
-      "id": "src_modules_crm_persistence_configurations_opportunityneedconfiguration_crm_persistence_configurations_opportunityneedconfiguration_configure",
-      "label": ".Configure()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 24,
-      "community_name": "CustomerNeed",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "CRM.Persistence.Configurations",
-        "scope_chain": [
-          "s128"
-        ],
-        "unresolved_calls": [
-          {
-            "callee": "ToTable",
-            "receiver_type": "EntityTypeBuilder",
-            "lang": "csharp",
-            "line": "L12"
-          },
-          {
-            "callee": "HasKey",
-            "receiver_type": "EntityTypeBuilder",
-            "lang": "csharp",
-            "line": "L14"
-          },
-          {
-            "callee": "Property",
-            "receiver_type": "EntityTypeBuilder",
-            "lang": "csharp",
-            "line": "L16"
-          },
-          {
-            "callee": "HasOne<Opportunity>",
-            "receiver_type": "EntityTypeBuilder",
-            "lang": "csharp",
-            "line": "L20"
-          },
-          {
-            "callee": "HasOne<CustomerNeed>",
-            "receiver_type": "EntityTypeBuilder",
-            "lang": "csharp",
-            "line": "L26"
-          }
-        ]
-      },
-      "norm_label": ".configure()",
-      "source_file": "src/Modules/CRM/Persistence/Configurations/OpportunityNeedConfiguration.cs",
       "source_location": "L10"
     },
     {
@@ -2969,13 +2950,13 @@
       "source_location": ""
     },
     {
-      "id": "src_modules_crm_persistence_configurations_opportunitylineconfiguration_cs_entitytypebuilder",
-      "label": "EntityTypeBuilder",
+      "id": "ientitytypeconfiguration",
+      "label": "IEntityTypeConfiguration",
       "_origin": "ast",
-      "community": 1,
-      "community_name": "OpportunityLine",
+      "community": 10,
+      "community_name": "EvidenceRecord",
       "file_type": "code",
-      "norm_label": "entitytypebuilder",
+      "norm_label": "ientitytypeconfiguration",
       "source_file": "",
       "source_location": ""
     },
@@ -4004,6 +3985,22 @@
       "type": "namespace"
     },
     {
+      "id": "csharp_namespace:565553542bcc7cbc",
+      "label": "CRM.Customization",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Contracts",
+      "file_type": "code",
+      "metadata": {
+        "kind": "csharp_namespace",
+        "namespace": "CRM.Customization"
+      },
+      "norm_label": "crm.customization",
+      "source_file": "src/Modules/CRM/Customization/TenantFieldDefinition.cs",
+      "source_location": "L3",
+      "type": "namespace"
+    },
+    {
       "id": "csharp_namespace:67bc2231e7767882",
       "label": "CRM.Evidence",
       "_origin": "ast",
@@ -4096,6 +4093,17 @@
       "source_location": "L6"
     },
     {
+      "id": "src_modules_crm_customization_tenantfielddefinition",
+      "label": "TenantFieldDefinition.cs",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Contracts",
+      "file_type": "code",
+      "norm_label": "tenantfielddefinition.cs",
+      "source_file": "src/Modules/CRM/Customization/TenantFieldDefinition.cs",
+      "source_location": "L1"
+    },
+    {
       "id": "src_modules_crm_domain_customerneed",
       "label": "CustomerNeed.cs",
       "_origin": "ast",
@@ -4140,15 +4148,66 @@
       "source_location": "L1"
     },
     {
-      "id": "src_modules_crm_domain_party",
-      "label": "Party.cs",
+      "id": "src_modules_crm_domain_opportunityneed_crm_domain_opportunityneed_customerneedid",
+      "label": "CustomerNeedId",
       "_origin": "ast",
       "community": 2,
       "community_name": "Contracts",
       "file_type": "code",
-      "norm_label": "party.cs",
-      "source_file": "src/Modules/CRM/Domain/Party.cs",
-      "source_location": "L1"
+      "metadata": {
+        "namespace": "CRM.Domain",
+        "scope_chain": [
+          "s18"
+        ]
+      },
+      "norm_label": "customerneedid",
+      "source_file": "src/Modules/CRM/Domain/OpportunityNeed.cs",
+      "source_location": "L11"
+    },
+    {
+      "id": "src_modules_crm_domain_opportunityneed_crm_domain_opportunityneed_opportunityid",
+      "label": "OpportunityId",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Contracts",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "CRM.Domain",
+        "scope_chain": [
+          "s18"
+        ]
+      },
+      "norm_label": "opportunityid",
+      "source_file": "src/Modules/CRM/Domain/OpportunityNeed.cs",
+      "source_location": "L10"
+    },
+    {
+      "id": "src_modules_crm_domain_opportunityneed_crm_domain_opportunityneed_tenantid",
+      "label": "TenantId",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Contracts",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "CRM.Domain",
+        "scope_chain": [
+          "s18"
+        ]
+      },
+      "norm_label": "tenantid",
+      "source_file": "src/Modules/CRM/Domain/OpportunityNeed.cs",
+      "source_location": "L9"
+    },
+    {
+      "id": "src_modules_crm_domain_opportunityneed_cs_tenantid",
+      "label": "TenantId",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Contracts",
+      "file_type": "code",
+      "norm_label": "tenantid",
+      "source_file": "",
+      "source_location": ""
     },
     {
       "id": "src_modules_crm_evidence_evidencerecord",
@@ -4181,17 +4240,6 @@
       "file_type": "code",
       "norm_label": "outboxmessage.cs",
       "source_file": "src/Modules/CRM/Outbox/OutboxMessage.cs",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_modules_crm_persistence_configurations_customerneedconfiguration",
-      "label": "CustomerNeedConfiguration.cs",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Contracts",
-      "file_type": "code",
-      "norm_label": "customerneedconfiguration.cs",
-      "source_file": "src/Modules/CRM/Persistence/Configurations/CustomerNeedConfiguration.cs",
       "source_location": "L1"
     },
     {
@@ -4239,6 +4287,17 @@
       "source_location": "L1"
     },
     {
+      "id": "src_modules_crm_persistence_configurations_opportunitylineconfiguration_cs_entitytypebuilder",
+      "label": "EntityTypeBuilder",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Contracts",
+      "file_type": "code",
+      "norm_label": "entitytypebuilder",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
       "id": "src_modules_crm_persistence_configurations_opportunityneedconfiguration",
       "label": "OpportunityNeedConfiguration.cs",
       "_origin": "ast",
@@ -4248,6 +4307,17 @@
       "norm_label": "opportunityneedconfiguration.cs",
       "source_file": "src/Modules/CRM/Persistence/Configurations/OpportunityNeedConfiguration.cs",
       "source_location": "L1"
+    },
+    {
+      "id": "src_modules_crm_persistence_configurations_opportunityneedconfiguration_cs_entitytypebuilder",
+      "label": "EntityTypeBuilder",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Contracts",
+      "file_type": "code",
+      "norm_label": "entitytypebuilder",
+      "source_file": "",
+      "source_location": ""
     },
     {
       "id": "src_modules_crm_persistence_configurations_outboxmessageconfiguration",
@@ -4291,44 +4361,6 @@
       "file_type": "code",
       "norm_label": "crmdbcontext.cs",
       "source_file": "src/Modules/CRM/Persistence/CrmDbContext.cs",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_modules_crm_persistence_crmdbcontextfactory",
-      "label": "CrmDbContextFactory.cs",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Contracts",
-      "file_type": "code",
-      "norm_label": "crmdbcontextfactory.cs",
-      "source_file": "src/Modules/CRM/Persistence/CrmDbContextFactory.cs",
-      "source_location": "L1"
-    },
-    {
-      "id": "csharp_namespace:d0edfb6e8c55c874",
-      "label": "Sales",
-      "_origin": "ast",
-      "community": 20,
-      "community_name": "Sales/Class1.cs",
-      "file_type": "code",
-      "metadata": {
-        "kind": "csharp_namespace",
-        "namespace": "Sales"
-      },
-      "norm_label": "sales",
-      "source_file": "src/Modules/Sales/Class1.cs",
-      "source_location": "L1",
-      "type": "namespace"
-    },
-    {
-      "id": "src_modules_sales_class1",
-      "label": "Sales/Class1.cs",
-      "_origin": "ast",
-      "community": 20,
-      "community_name": "Sales/Class1.cs",
-      "file_type": "code",
-      "norm_label": "sales/class1.cs",
-      "source_file": "src/Modules/Sales/Class1.cs",
       "source_location": "L1"
     },
     {
@@ -4658,17 +4690,6 @@
       "source_location": "L49"
     },
     {
-      "id": "ientitytypeconfiguration",
-      "label": "IEntityTypeConfiguration",
-      "_origin": "ast",
-      "community": 24,
-      "community_name": "CustomerNeed",
-      "file_type": "code",
-      "norm_label": "ientitytypeconfiguration",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "src_modules_crm_domain_customerneed_crm_domain_customerneed_averageprice",
       "label": "AveragePrice",
       "_origin": "ast",
@@ -4776,80 +4797,18 @@
       "source_location": ""
     },
     {
-      "id": "src_modules_crm_domain_opportunityneed_crm_domain_opportunityneed_customerneedid",
-      "label": "CustomerNeedId",
+      "id": "src_modules_crm_persistence_configurations_customerneedconfiguration",
+      "label": "CustomerNeedConfiguration.cs",
       "_origin": "ast",
       "community": 24,
       "community_name": "CustomerNeed",
       "file_type": "code",
-      "metadata": {
-        "namespace": "CRM.Domain",
-        "scope_chain": [
-          "s18"
-        ]
-      },
-      "norm_label": "customerneedid",
-      "source_file": "src/Modules/CRM/Domain/OpportunityNeed.cs",
-      "source_location": "L11"
-    },
-    {
-      "id": "src_modules_crm_domain_opportunityneed_crm_domain_opportunityneed_opportunityid",
-      "label": "OpportunityId",
-      "_origin": "ast",
-      "community": 24,
-      "community_name": "CustomerNeed",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "CRM.Domain",
-        "scope_chain": [
-          "s18"
-        ]
-      },
-      "norm_label": "opportunityid",
-      "source_file": "src/Modules/CRM/Domain/OpportunityNeed.cs",
-      "source_location": "L10"
-    },
-    {
-      "id": "src_modules_crm_domain_opportunityneed_crm_domain_opportunityneed_tenantid",
-      "label": "TenantId",
-      "_origin": "ast",
-      "community": 24,
-      "community_name": "CustomerNeed",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "CRM.Domain",
-        "scope_chain": [
-          "s18"
-        ]
-      },
-      "norm_label": "tenantid",
-      "source_file": "src/Modules/CRM/Domain/OpportunityNeed.cs",
-      "source_location": "L9"
-    },
-    {
-      "id": "src_modules_crm_domain_opportunityneed_cs_tenantid",
-      "label": "TenantId",
-      "_origin": "ast",
-      "community": 24,
-      "community_name": "CustomerNeed",
-      "file_type": "code",
-      "norm_label": "tenantid",
-      "source_file": "",
-      "source_location": ""
+      "norm_label": "customerneedconfiguration.cs",
+      "source_file": "src/Modules/CRM/Persistence/Configurations/CustomerNeedConfiguration.cs",
+      "source_location": "L1"
     },
     {
       "id": "src_modules_crm_persistence_configurations_customerneedconfiguration_cs_entitytypebuilder",
-      "label": "EntityTypeBuilder",
-      "_origin": "ast",
-      "community": 24,
-      "community_name": "CustomerNeed",
-      "file_type": "code",
-      "norm_label": "entitytypebuilder",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "src_modules_crm_persistence_configurations_opportunityneedconfiguration_cs_entitytypebuilder",
       "label": "EntityTypeBuilder",
       "_origin": "ast",
       "community": 24,
@@ -5412,6 +5371,17 @@
       "source_location": "L61"
     },
     {
+      "id": "src_modules_crm_domain_party",
+      "label": "Party.cs",
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "Party",
+      "file_type": "code",
+      "norm_label": "party.cs",
+      "source_file": "src/Modules/CRM/Domain/Party.cs",
+      "source_location": "L1"
+    },
+    {
       "id": "src_modules_crm_domain_party_crm_domain_party_createdat",
       "label": "CreatedAt",
       "_origin": "ast",
@@ -5949,33 +5919,6 @@
       "node_kind": "heading",
       "norm_label": "graphify reference: extraction subagent prompt",
       "source_file": ".claude/skills/graphify/references/extraction-spec.md",
-      "source_location": "L1"
-    },
-    {
-      "id": "csharp_namespace:565553542bcc7cbc",
-      "label": "CRM.Customization",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "TenantFieldDefinition",
-      "file_type": "code",
-      "metadata": {
-        "kind": "csharp_namespace",
-        "namespace": "CRM.Customization"
-      },
-      "norm_label": "crm.customization",
-      "source_file": "src/Modules/CRM/Customization/TenantFieldDefinition.cs",
-      "source_location": "L3",
-      "type": "namespace"
-    },
-    {
-      "id": "src_modules_crm_customization_tenantfielddefinition",
-      "label": "TenantFieldDefinition.cs",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "TenantFieldDefinition",
-      "file_type": "code",
-      "norm_label": "tenantfielddefinition.cs",
-      "source_file": "src/Modules/CRM/Customization/TenantFieldDefinition.cs",
       "source_location": "L1"
     },
     {
@@ -6904,6 +6847,17 @@
       "source_location": ""
     },
     {
+      "id": "src_modules_crm_persistence_crmdbcontextfactory",
+      "label": "CrmDbContextFactory.cs",
+      "_origin": "ast",
+      "community": 7,
+      "community_name": "CrmDbContext",
+      "file_type": "code",
+      "norm_label": "crmdbcontextfactory.cs",
+      "source_file": "src/Modules/CRM/Persistence/CrmDbContextFactory.cs",
+      "source_location": "L1"
+    },
+    {
       "id": "docs_schema_crm_sales_schema",
       "label": "crm-sales-schema.md",
       "_origin": "ast",
@@ -7076,7 +7030,7 @@
       "label": "fynovio-platform.slnx",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "code",
       "norm_label": "fynovio-platform.slnx",
       "source_file": "fynovio-platform.slnx",
@@ -7087,7 +7041,7 @@
       "label": "EFCore.NamingConventions (10.0.1)",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "code",
       "norm_label": "efcore.namingconventions (10.0.1)",
       "source_file": "src/Modules/CRM/CRM.csproj",
@@ -7098,7 +7052,7 @@
       "label": "Microsoft.EntityFrameworkCore.Design (10.0.0)",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "code",
       "norm_label": "microsoft.entityframeworkcore.design (10.0.0)",
       "source_file": "src/Modules/CRM/CRM.csproj",
@@ -7109,7 +7063,7 @@
       "label": "Microsoft.Extensions.Hosting (10.0.12)",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "code",
       "norm_label": "microsoft.extensions.hosting (10.0.12)",
       "source_file": "src/Worker/Worker.csproj",
@@ -7120,7 +7074,7 @@
       "label": "Npgsql.EntityFrameworkCore.PostgreSQL (10.0.3)",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "code",
       "norm_label": "npgsql.entityframeworkcore.postgresql (10.0.3)",
       "source_file": "src/Modules/CRM/CRM.csproj",
@@ -7131,7 +7085,7 @@
       "label": "Contracts.csproj",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "code",
       "norm_label": "contracts.csproj",
       "source_file": "src/Contracts/Contracts.csproj",
@@ -7142,7 +7096,7 @@
       "label": "Host.csproj",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "code",
       "norm_label": "host.csproj",
       "source_file": "src/Host/Host.csproj",
@@ -7153,7 +7107,7 @@
       "label": "Access.csproj",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "code",
       "norm_label": "access.csproj",
       "source_file": "src/Modules/Access/Access.csproj",
@@ -7164,7 +7118,7 @@
       "label": "CRM.csproj",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "code",
       "norm_label": "crm.csproj",
       "source_file": "src/Modules/CRM/CRM.csproj",
@@ -7175,7 +7129,7 @@
       "label": "MasterData.csproj",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "code",
       "norm_label": "masterdata.csproj",
       "source_file": "src/Modules/MasterData/MasterData.csproj",
@@ -7186,21 +7140,10 @@
       "label": "Organization.csproj",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "code",
       "norm_label": "organization.csproj",
       "source_file": "src/Modules/Organization/Organization.csproj",
-      "source_location": null
-    },
-    {
-      "id": "src_modules_sales_sales",
-      "label": "Sales.csproj",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "Contracts.csproj",
-      "file_type": "code",
-      "norm_label": "sales.csproj",
-      "source_file": "src/Modules/Sales/Sales.csproj",
       "source_location": null
     },
     {
@@ -7208,7 +7151,7 @@
       "label": "TenantLifecycle.csproj",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "code",
       "norm_label": "tenantlifecycle.csproj",
       "source_file": "src/Modules/TenantLifecycle/TenantLifecycle.csproj",
@@ -7219,7 +7162,7 @@
       "label": "Worker.csproj",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "code",
       "norm_label": "worker.csproj",
       "source_file": "src/Worker/Worker.csproj",
@@ -7230,7 +7173,7 @@
       "label": "Microsoft.NET.Sdk",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "concept",
       "norm_label": "microsoft.net.sdk",
       "source_file": "src/Modules/CRM/CRM.csproj",
@@ -7241,7 +7184,7 @@
       "label": "Microsoft.NET.Sdk.Web",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "concept",
       "norm_label": "microsoft.net.sdk.web",
       "source_file": "src/Host/Host.csproj",
@@ -7252,7 +7195,7 @@
       "label": "Microsoft.NET.Sdk.Worker",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "concept",
       "norm_label": "microsoft.net.sdk.worker",
       "source_file": "src/Worker/Worker.csproj",
@@ -7263,7 +7206,7 @@
       "label": "net10.0",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "concept",
       "norm_label": "net10.0",
       "source_file": "src/Host/Host.csproj",
@@ -7274,7 +7217,7 @@
       "label": "net10.0",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "concept",
       "norm_label": "net10.0",
       "source_file": "src/Modules/CRM/CRM.csproj",
@@ -7285,7 +7228,7 @@
       "label": "net10.0",
       "_origin": "ast",
       "community": 9,
-      "community_name": "Contracts.csproj",
+      "community_name": "Worker.csproj",
       "file_type": "concept",
       "norm_label": "net10.0",
       "source_file": "src/Worker/Worker.csproj",
@@ -13696,28 +13639,6 @@
       "weight": 1.0
     },
     {
-      "source": "src_modules_sales_class1",
-      "target": "csharp_namespace:d0edfb6e8c55c874",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/Modules/Sales/Class1.cs",
-      "source_location": "L1",
-      "weight": 1.0
-    },
-    {
-      "source": "src_modules_sales_class1",
-      "target": "src_modules_sales_class1_sales_class1",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/Modules/Sales/Class1.cs",
-      "source_location": "L3",
-      "weight": 1.0
-    },
-    {
       "source": "src_modules_tenantlifecycle_class1",
       "target": "csharp_namespace:9cae5673bd7ed2d9",
       "relation": "contains",
@@ -13966,16 +13887,6 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/Modules/Organization/Organization.csproj",
-      "weight": 1.0
-    },
-    {
-      "source": "src_modules_sales_sales",
-      "target": "src_contracts_contracts",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/Modules/Sales/Sales.csproj",
       "weight": 1.0
     },
     {
@@ -14590,16 +14501,6 @@
       "weight": 1.0
     },
     {
-      "source": "src_modules_sales_sales",
-      "target": "src_host_host_csproj_framework_net10_0",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/Modules/Sales/Sales.csproj",
-      "weight": 1.0
-    },
-    {
       "source": "src_modules_tenantlifecycle_tenantlifecycle",
       "target": "src_host_host_csproj_framework_net10_0",
       "relation": "references",
@@ -14655,5 +14556,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "6bf613511e49d84e2839ccc6694d7720e920c9c0"
+  "built_at_commit": "cfc549a3c62f4e8aba4178f3a23d7c5e8c77c925"
 }

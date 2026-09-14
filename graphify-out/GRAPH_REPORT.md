@@ -1,16 +1,16 @@
 # Graph Report - fynovio-platform  (2026-09-14)
 
 ## Corpus Check
-- 70 files · ~23,382 words
+- 68 files · ~23,359 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 479 nodes · 593 edges · 38 communities (26 shown, 11 thin omitted)
+- 475 nodes · 589 edges · 37 communities (26 shown, 10 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 2 edges (avg confidence: 0.88)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6bf61351`
+- Built from commit: `cfc549a3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -24,7 +24,7 @@
 - InitialCrmSchema
 - CrmDbContext
 - CRM+Sales pilot schema (PostgreSQL, `crm` schema)
-- Contracts.csproj
+- Worker.csproj
 - EvidenceRecord
 - IdempotencyRecord
 - RowVersionInterceptor
@@ -35,7 +35,6 @@
 - Organization/Class1.cs
 - MasterData/Class1.cs
 - TenantLifecycle/Class1.cs
-- Sales/Class1.cs
 - CancellationToken
 - What You Must Do When Invoked
 - CustomerNeed
@@ -68,31 +67,31 @@
 ## Surprising Connections (you probably didn't know these)
 - `Opportunity` --references--> `OpportunityLine`  [EXTRACTED]
   src/Modules/CRM/Domain/Opportunity.cs → src/Modules/CRM/Domain/OpportunityLine.cs
+- `OpportunityLineConfiguration` --references--> `OpportunityLine`  [EXTRACTED]
+  src/Modules/CRM/Persistence/Configurations/OpportunityLineConfiguration.cs → src/Modules/CRM/Domain/OpportunityLine.cs
 - `CrmDbContext` --references--> `OpportunityLine`  [EXTRACTED]
   src/Modules/CRM/Persistence/CrmDbContext.cs → src/Modules/CRM/Domain/OpportunityLine.cs
 - `CrmDbContext` --references--> `EvidenceRecord`  [EXTRACTED]
   src/Modules/CRM/Persistence/CrmDbContext.cs → src/Modules/CRM/Evidence/EvidenceRecord.cs
 - `CrmDbContext` --references--> `IdempotencyRecord`  [EXTRACTED]
   src/Modules/CRM/Persistence/CrmDbContext.cs → src/Modules/CRM/Idempotency/IdempotencyRecord.cs
-- `CrmDbContext` --references--> `CustomerNeed`  [EXTRACTED]
-  src/Modules/CRM/Persistence/CrmDbContext.cs → src/Modules/CRM/Domain/CustomerNeed.cs
 
 ## Import Cycles
 - None detected.
 
-## Communities (38 total, 11 thin omitted)
+## Communities (37 total, 10 thin omitted)
 
 ### Community 0 - "Opportunity"
 Cohesion: 0.05
 Nodes (37): IReadOnlyCollection, List, PrincipalRef, Issuer, Subject, Opportunity, AssignedPrincipal, AssignedPrincipalIssuer (+29 more)
 
 ### Community 1 - "OpportunityLine"
-Cohesion: 0.06
-Nodes (28): EntityRef, BoundedContext, EntityType, Id, TenantId, EntityVersion, Entity, Version (+20 more)
+Cohesion: 0.07
+Nodes (26): EntityRef, BoundedContext, EntityType, Id, TenantId, EntityVersion, Entity, Version (+18 more)
 
 ### Community 2 - "Contracts"
-Cohesion: 0.12
-Nodes (9): CRM.Persistence.Configurations, Contracts, CRM.Idempotency, CRM.Evidence, CRM.Outbox, CRM.Persistence, CRM.Domain, TenantId (+1 more)
+Cohesion: 0.08
+Nodes (19): CRM.Persistence.Configurations, Contracts, CRM.Idempotency, CRM.Customization, CRM.Evidence, CRM.Outbox, CRM.Persistence, CRM.Domain (+11 more)
 
 ### Community 3 - "Party"
 Cohesion: 0.10
@@ -100,7 +99,7 @@ Nodes (19): Party, CreatedAt, CreationSource, CustomFields, Email, Id, MergedInt
 
 ### Community 4 - "TenantFieldDefinition"
 Cohesion: 0.11
-Nodes (21): CRM.Customization, TenantFieldAggregateType, Opportunity, Party, TenantFieldDefinition, AggregateType, CreatedAt, FieldName (+13 more)
+Nodes (20): TenantFieldAggregateType, Opportunity, Party, TenantFieldDefinition, AggregateType, CreatedAt, FieldName, FieldType (+12 more)
 
 ### Community 5 - "OutboxMessage"
 Cohesion: 0.10
@@ -118,13 +117,13 @@ Nodes (17): DbContext, DbSet, IDesignTimeDbContextFactory, CrmDbContext, Custome
 Cohesion: 0.14
 Nodes (13): Atomic durable intent ([14](.) decision #4), Contracts primitives already added (`src/Contracts/`), CRM+Sales pilot schema (PostgreSQL, `crm` schema), Cross-module references carry no FK ([07](.) §3, `EntityRef` in `Contracts`), Design notes carried over from revision 1 (still accurate), Diagram, Money: one rounding rule ([17](.) §3.4), No soft delete ([17](.) §3.5) (+5 more)
 
-### Community 9 - "Contracts.csproj"
-Cohesion: 0.22
+### Community 9 - "Worker.csproj"
+Cohesion: 0.23
 Nodes (10): EFCore.NamingConventions (10.0.1), Microsoft.EntityFrameworkCore.Design (10.0.0), Microsoft.Extensions.Hosting (10.0.12), Npgsql.EntityFrameworkCore.PostgreSQL (10.0.3), Microsoft.NET.Sdk, Microsoft.NET.Sdk.Web, Microsoft.NET.Sdk.Worker, net10.0 (+2 more)
 
 ### Community 10 - "EvidenceRecord"
 Cohesion: 0.12
-Nodes (17): EvidenceRecord, Action, AggregateId, AggregateType, AggregateVersion, CorrelationId, Detail, Id (+9 more)
+Nodes (18): IEntityTypeConfiguration, EvidenceRecord, Action, AggregateId, AggregateType, AggregateVersion, CorrelationId, Detail (+10 more)
 
 ### Community 11 - "IdempotencyRecord"
 Cohesion: 0.12
@@ -151,8 +150,8 @@ Cohesion: 0.08
 Nodes (24): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+16 more)
 
 ### Community 24 - "CustomerNeed"
-Cohesion: 0.11
-Nodes (18): IEntityTypeConfiguration, CustomerNeed, AveragePrice, CreatedAt, Id, Name, TenantId, DateTimeOffset (+10 more)
+Cohesion: 0.18
+Nodes (10): CustomerNeed, AveragePrice, CreatedAt, Id, Name, TenantId, DateTimeOffset, TenantId (+2 more)
 
 ### Community 25 - "fynovio-platform — Engineering Contract"
 Cohesion: 0.15
@@ -187,24 +186,24 @@ Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
 ## Knowledge Gaps
-- **237 isolated node(s):** `graphify`, `Usage`, `What graphify is for`, `Step 0 - GitHub repos and multi-path merge (only if a URL or several paths)`, `Step 1 - Ensure graphify is installed` (+232 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 309 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **235 isolated node(s):** `Stack`, `Code Conventions`, `Architecture Rules (binding — enforced by fitness functions, doc 12)`, `Database Rules`, `Testing / Definition of Done` (+230 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 307 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `CrmDbContext` connect `CrmDbContext` to `OpportunityLine`, `Contracts`, `TenantFieldDefinition`, `OutboxMessage`, `EvidenceRecord`, `IdempotencyRecord`, `CustomerNeed`?**
-  _High betweenness centrality (0.165) - this node is a cross-community bridge._
-- **Why does `Opportunity` connect `Opportunity` to `CustomerNeed`, `OpportunityLine`, `Contracts`?**
-  _High betweenness centrality (0.114) - this node is a cross-community bridge._
+  _High betweenness centrality (0.168) - this node is a cross-community bridge._
+- **Why does `Opportunity` connect `Opportunity` to `OpportunityLine`, `Contracts`?**
+  _High betweenness centrality (0.116) - this node is a cross-community bridge._
 - **Why does `OpportunityLine` connect `OpportunityLine` to `Opportunity`, `Contracts`, `CrmDbContext`?**
-  _High betweenness centrality (0.093) - this node is a cross-community bridge._
-- **What connects `graphify`, `Usage`, `What graphify is for` to the rest of the system?**
-  _237 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _High betweenness centrality (0.095) - this node is a cross-community bridge._
+- **What connects `Stack`, `Code Conventions`, `Architecture Rules (binding — enforced by fitness functions, doc 12)` to the rest of the system?**
+  _235 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Opportunity` be split into smaller, more focused modules?**
   _Cohesion score 0.04846938775510204 - nodes in this community are weakly interconnected._
 - **Should `OpportunityLine` be split into smaller, more focused modules?**
-  _Cohesion score 0.06349206349206349 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06818181818181818 - nodes in this community are weakly interconnected._
 - **Should `Contracts` be split into smaller, more focused modules?**
-  _Cohesion score 0.12183908045977011 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08048780487804878 - nodes in this community are weakly interconnected._
