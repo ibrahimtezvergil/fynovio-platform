@@ -480,3 +480,9 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Graphify — local incremental-build cache and generated viz are regenerable;
+# graph.json/GRAPH_REPORT.md/manifest.json are committed (graphify registers
+# a git merge driver for graph.json specifically so it can be tracked).
+graphify-out/cache/
+graphify-out/graph.html
