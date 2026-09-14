@@ -1,5 +1,4 @@
 using Contracts;
-using CRM.Persistence;
 
 namespace CRM.Domain;
 

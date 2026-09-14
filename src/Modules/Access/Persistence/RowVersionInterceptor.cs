@@ -2,12 +2,13 @@ using Contracts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace CRM.Persistence;
+namespace Access.Persistence;
 
 /// <summary>Increments row_version on every modified IHasRowVersion entity before save.
-/// EF's concurrency-token mechanism handles the rest: it captures the property's original
-/// value for the UPDATE ... WHERE clause and writes the new value, giving optimistic
-/// concurrency without relying on Postgres's internal xmin.</summary>
+/// Identical mechanism to CRM.Persistence.RowVersionInterceptor — duplicated, not shared,
+/// because Contracts may not depend on EF Core (doc 08's "Contracts... no ORM" rule) and no
+/// module may reference another module's namespace (AGENTS.md's module boundary rule). Only
+/// the marker interface (Contracts.IHasRowVersion) is actually shared.</summary>
 public sealed class RowVersionInterceptor : SaveChangesInterceptor
 {
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)

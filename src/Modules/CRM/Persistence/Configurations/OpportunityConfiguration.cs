@@ -60,7 +60,12 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
 
         builder.HasIndex(o => new { o.TenantId, o.Status });
         builder.HasIndex(o => new { o.TenantId, o.PartyId });
-        builder.HasIndex(o => new { o.TenantId, o.AssignedPrincipalSubject });
+        // Issuer+subject together, matching PrincipalRef's own identity pair (doc 19 §9
+        // amendment) — an index on subject alone contradicted the primitive it indexes.
+        // Explicit short name: EF Core's auto-generated name exceeds Postgres's 63-byte
+        // identifier limit and gets silently truncated mid-word otherwise.
+        builder.HasIndex(o => new { o.TenantId, o.AssignedPrincipalIssuer, o.AssignedPrincipalSubject })
+            .HasDatabaseName("ix_opportunities_tenant_assigned_principal");
         builder.HasIndex(o => new { o.TenantId, o.CreatedAt });
     }
 
