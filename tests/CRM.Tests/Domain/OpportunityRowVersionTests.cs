@@ -34,7 +34,7 @@ public sealed class OpportunityRowVersionTests
     [Fact]
     public void Canceling_a_line_increments_the_root_version()
     {
-        var opportunity = NewWaitingOpportunity();
+        var opportunity = NewDraftOpportunity();
         var line = opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m);
         var before = opportunity.RowVersion;
 
