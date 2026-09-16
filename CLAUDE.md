@@ -25,6 +25,9 @@ Default to normal effort. Escalate for: RLS/tenant-isolation code, EF Core migra
 ## Output style
 No ceremonial narration ("I'll now inspect...", "Let me check..."). State findings and changes directly. Keep completion notes to what changed and what's next — no long recap for a simple task.
 
+## Plan checkbox tracking (`docs/plans/*.md`)
+A step's checkbox (`- [ ]` → `- [x]`) is marked done **only after the corresponding commit exists** — never ahead of actual state. The step that contains the `git commit` gets a line directly under it: `→ Commit: \`<short-hash>\` "<commit message>"`. If a follow-up fix commit corrected that step's work (a subagent slip, a review finding), note it in the same line: `(follow-up fix: \`<hash>\` "<message>")`. If something about the step deviated from what the plan originally said, add a short note explaining why. This applies to every plan written from here on; see `docs/plans/2026-09-16-pilot-enforcement.md` for the worked example.
+
 ## Safety
 A repo-level PreToolUse guard (`.claude/hooks/guard.py`, registered in `.claude/settings.json`) blocks or asks-first on destructive Bash patterns (`rm -rf`, force-push/`reset --hard`/`clean -f` on `main`/`master`, `DROP DATABASE`/`DROP TABLE`/`TRUNCATE`, `dotnet ef database drop`, `terraform destroy`, etc.) as defense-in-depth on top of Claude Code's native sandbox and permission settings — it does not replace them. Never make a permanent-skip-permissions mode part of the normal workflow.
 

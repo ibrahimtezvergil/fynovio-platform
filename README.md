@@ -39,6 +39,7 @@ src/
     Organization/        Placeholder
     TenantLifecycle/     Placeholder
 docs/
+  architecture-analysis/       Current-state analyses and target-model specs for a module
   schema/                      Physical schema designs (read before changing an EF Core model)
   plans/                       Implementation plans
   dotnet-guide.md              .NET/EF Core primer for contributors coming from Laravel
@@ -147,8 +148,9 @@ EF Core migrations under `Persistence/Migrations/` are generated output — rege
 
 - **`AGENTS.md`** — the model-independent engineering contract: stack, code conventions, architecture and database rules, testing expectations, and generated-artifact policy. Read this first.
 - **`CLAUDE.md`** — Claude Code-specific tool routing and methodology (retrieval order, when to use which skill, reasoning-effort guidance).
+- **`docs/architecture-analysis/`** — current-state analyses (e.g. `CRM_CURRENT_STATE_ANALYSIS.md`) and target-model specs (e.g. `Enterprise_CRM_Target_Model_Binding_Implementation_Specification.pdf`) for a module.
 - **`docs/schema/`** — the physical schema designs behind each module's EF Core model (`crm-sales-schema.md`, `identity-access-schema.md`, `tenant-network-schema.md`).
-- **`docs/plans/`** — implementation plans, e.g. `2026-09-16-pilot-enforcement.md`.
+- **`docs/plans/`** — implementation plans, e.g. `2026-09-16-pilot-enforcement.md`, `2026-09-16-crm-target-model-phase0-delta-plan.md`, `2026-09-16-masterdata-party-foundation.md` (design), `2026-09-16-masterdata-phase0.5-execution-plan.md` (task/step/commit execution plan, not yet run).
 - **`docs/ai-tooling.md`** — what AI tooling is active in this repo and why.
 - **`docs/dotnet-guide.md`** — a .NET/EF Core primer for contributors coming from another ecosystem (e.g. Laravel), covering solution/project structure, DI, EF Core, migrations, and how this repo's connection-string resolution works.
 

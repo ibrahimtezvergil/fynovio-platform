@@ -1,6 +1,16 @@
 # Pilot Enforcement Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use subagent-driven-development (recommended) or executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status: COMPLETE (2026-09-16).** All 11 tasks (0–10) below executed and verified —
+> 41 tests passing, CI green, RLS enforced against the unprivileged `fynovio_app` role,
+> `CompleteOpportunityHandler` writing state+outbox+evidence+idempotency atomically.
+> Checkboxes below reflect actual completion, not a template. Each commit-step carries
+> a `→ Commit: \`<hash>\` "<message>"` line, added retroactively (matched against
+> `git log` by the exact commit message text this plan specified) as the worked
+> example for the standard below. Follow-up work that was explicitly out of scope here
+> (Access module fixes, outbox dispatcher, HTTP surface, on-prem packaging) is tracked
+> in [[project-status]], not in this file.
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use subagent-driven-development (recommended) or executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **Standard (see `CLAUDE.md` "Plan checkbox tracking"):** mark a step `[x]` only once its commit exists, and add a `→ Commit: \`<hash>\` "<message>"` line under it — never mark ahead of actual state.
 
 **Goal:** CRM pilot modülünü, mimari dokümanların bağlayıcı çekirdeğini gerçekten *çalışır* biçimde uygulayan bir hale getirmek: testler, RLS ile tenant izolasyonu, tek transaction'da state+outbox+evidence yazan ilk komut ve bilinen iki domain hatasının düzeltilmesi.
 
@@ -24,14 +34,14 @@ Bu görev bir karar görevidir. Sonraki görevlerin hangi kuralları zorunlu kab
 **Files:**
 - Modify: `AGENTS.md`
 
-- [ ] **Step 1: Kararı platform sahibine sun**
+- [x] **Step 1: Kararı platform sahibine sun**
 
 Aşağıdaki iki maddeyi onaya sun, onay gelmeden Task 1'e geçme:
 
 1. **Bağlayıcı çekirdek (bugün CI'da zorlanır):** her tabloda `tenant_id` + tenant-safe composite FK; tenant-scoped tablolarda RLS + yetkisiz runtime rolü; state+outbox aynı transaction; mutasyon komutlarında idempotency; reversible + expand/contract migration; şema seviyesinde CHECK/enum/para kuralı; desteklenen runtime + bağımlılık taraması.
 2. **Tetiklemeli kurallar (yeteneği gelince açılır):** evidence yalnızca riskli komutlarda (para taşıyan geçiş, yetki değişimi, iptal); evidence tamper-proofing, modül başına DB rolü, delegation/SoD/decision epoch, doc 12'nin kalan gate'leri.
 
-- [ ] **Step 2: Kararı `AGENTS.md`'ye yaz**
+- [x] **Step 2: Kararı `AGENTS.md`'ye yaz**
 
 `AGENTS.md` içindeki "Testing / Definition of Done" bölümünün hemen üstüne şu bölümü ekle (onaylanan metinle):
 
@@ -53,7 +63,8 @@ Evidence records are required only for risk-catalogued commands (money-carrying 
 **Named exception to the generated-migration rule:** PostgreSQL RLS has no EF Core model representation, so RLS policies live in an otherwise-empty generated migration whose `Up`/`Down` bodies are written by hand with `migrationBuilder.Sql(...)`. This is the only permitted hand-written migration content.
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
+  → Commit: `a22cb8a` "Record binding enforcement scope for the pilot"
 
 ```bash
 git add AGENTS.md
@@ -62,7 +73,7 @@ git commit -m "Record binding enforcement scope for the pilot
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 4: Araştırma reposuna doküman 20 yazılsın mı diye sor**
+- [x] **Step 4: Araştırma reposuna doküman 20 yazılsın mı diye sor**
 
 `~/Projects/fynovio/enterprise ve B2B mimari araştırma/docs/architecture-analysis/` altına `20_PILOT_ENFORCEMENT_SCOPE.md` eklemek ayrı bir yetki gerektirir (o repoda yeni numaralı dosya yalnızca platform sahibinin açık talimatıyla açılır). Sor; hayır ise bu adım kapanır, `AGENTS.md` tek kayıt olarak kalır.
 
@@ -76,7 +87,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Create: `tests/CRM.Tests/Domain/OpportunityStateMachineTests.cs`
 - Modify: `fynovio-platform.slnx`
 
-- [ ] **Step 1: Test projesini oluştur ve referansları ekle**
+- [x] **Step 1: Test projesini oluştur ve referansları ekle**
 
 ```bash
 cd /Users/ibrahimtezvergil/Projects/fynovio/fynovio-platform
@@ -92,7 +103,7 @@ Beklenen: `Build succeeded`. Şablonun ürettiği `UnitTest1.cs` dosyasını sil
 rm tests/CRM.Tests/UnitTest1.cs
 ```
 
-- [ ] **Step 2: xUnit sürümünü not et**
+- [x] **Step 2: xUnit sürümünü not et**
 
 ```bash
 dotnet list tests/CRM.Tests/CRM.Tests.csproj package
@@ -100,7 +111,7 @@ dotnet list tests/CRM.Tests/CRM.Tests.csproj package
 
 Çıktıdaki `xunit` sürümünü not et. Bu planın `IAsyncLifetime` kullanan kısımları (Task 3) iki sürüm için de kod veriyor; oradaki doğru varyantı seç.
 
-- [ ] **Step 3: Ortak test verisi yardımcısını yaz**
+- [x] **Step 3: Ortak test verisi yardımcısını yaz**
 
 `tests/CRM.Tests/TestData.cs`:
 
@@ -124,7 +135,7 @@ public static class TestData
 }
 ```
 
-- [ ] **Step 4: Durum makinesi testlerini yaz**
+- [x] **Step 4: Durum makinesi testlerini yaz**
 
 `tests/CRM.Tests/Domain/OpportunityStateMachineTests.cs`:
 
@@ -243,7 +254,7 @@ public sealed class OpportunityStateMachineTests
 }
 ```
 
-- [ ] **Step 5: Testleri çalıştır**
+- [x] **Step 5: Testleri çalıştır**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj
@@ -251,7 +262,8 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj
 
 Beklenen: `Passed!` — 10 test. Hepsi mevcut davranışı kilitler; bu adımda kırmızı test olmamalı.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
+  → Commit: `ccc36f1` "Add CRM test project and Opportunity state machine tests"
 
 ```bash
 git add tests/CRM.Tests fynovio-platform.slnx
@@ -268,13 +280,13 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Modify: `tests/CRM.Tests/CRM.Tests.csproj`
 - Create: `tests/CRM.Tests/Architecture/ModuleBoundaryTests.cs`
 
-- [ ] **Step 1: NetArchTest paketini ekle**
+- [x] **Step 1: NetArchTest paketini ekle**
 
 ```bash
 dotnet add tests/CRM.Tests/CRM.Tests.csproj package NetArchTest.Rules
 ```
 
-- [ ] **Step 2: Testi yaz**
+- [x] **Step 2: Testi yaz**
 
 `tests/CRM.Tests/Architecture/ModuleBoundaryTests.cs`:
 
@@ -319,7 +331,7 @@ public sealed class ModuleBoundaryTests
 }
 ```
 
-- [ ] **Step 3: Testleri çalıştır**
+- [x] **Step 3: Testleri çalıştır**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter FullyQualifiedName~ModuleBoundaryTests
@@ -327,7 +339,8 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter FullyQualifiedName~ModuleB
 
 Beklenen: `Passed!` — 2 test. (Bu kural bugün zaten sağlanıyor; test onu kalıcı hale getiriyor.)
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
+  → Commit: `c5bb3e8` "Add NetArchTest module boundary tests (FF01)"
 
 ```bash
 git add tests/CRM.Tests
@@ -345,13 +358,13 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Create: `tests/CRM.Tests/Integration/PostgresFixture.cs`
 - Create: `tests/CRM.Tests/Integration/OpportunityPersistenceTests.cs`
 
-- [ ] **Step 1: Testcontainers paketini ekle**
+- [x] **Step 1: Testcontainers paketini ekle**
 
 ```bash
 dotnet add tests/CRM.Tests/CRM.Tests.csproj package Testcontainers.PostgreSql
 ```
 
-- [ ] **Step 2: Fixture'ı yaz**
+- [x] **Step 2: Fixture'ı yaz**
 
 `tests/CRM.Tests/Integration/PostgresFixture.cs`:
 
@@ -418,7 +431,7 @@ public sealed class PostgresCollection : ICollectionFixture<PostgresFixture>;
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
 ```
 
-- [ ] **Step 3: Kırmızı testi yaz**
+- [x] **Step 3: Kırmızı testi yaz**
 
 `tests/CRM.Tests/Integration/OpportunityPersistenceTests.cs`:
 
@@ -483,7 +496,7 @@ public sealed class OpportunityPersistenceTests
 }
 ```
 
-- [ ] **Step 4: Testleri çalıştır — ilki kırmızı olmalı**
+- [x] **Step 4: Testleri çalıştır — ilki kırmızı olmalı**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter FullyQualifiedName~OpportunityPersistenceTests
@@ -493,7 +506,8 @@ Beklenen: `Canceling_a_waiting_opportunity_persists` FAIL. Hata metni:
 `Npgsql.PostgresException : 23514: new row for relation "opportunities" violates check constraint "ck_opportunities_expiry_required_once_offered"`.
 İkinci test (offered → canceled) PASS etmeli; bu, düzeltmenin mevcut doğru davranışı bozmadığını gösterecek.
 
-- [ ] **Step 5: Commit (kırmızı testle birlikte)**
+- [x] **Step 5: Commit (kırmızı testle birlikte)**
+  → Commit: `dbb16e6` "Add Testcontainers fixture and a failing test for cancel-from-waiting"
 
 ```bash
 git add tests/CRM.Tests
@@ -511,7 +525,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Create: `src/Modules/CRM/Persistence/Migrations/<timestamp>_FixCancelExpiryCheck.cs` (üretilir)
 - Modify: `src/Modules/CRM/Persistence/Migrations/CrmDbContextModelSnapshot.cs` (üretilir)
 
-- [ ] **Step 1: Kısıt ifadesini düzelt**
+- [x] **Step 1: Kısıt ifadesini düzelt**
 
 `OpportunityConfiguration.cs` içindeki şu satırı:
 
@@ -530,7 +544,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
                 "status NOT IN ('offered','completed') OR expiry_date IS NOT NULL");
 ```
 
-- [ ] **Step 2: Migration üret**
+- [x] **Step 2: Migration üret**
 
 ```bash
 dotnet ef migrations add FixCancelExpiryCheck \
@@ -539,11 +553,11 @@ dotnet ef migrations add FixCancelExpiryCheck \
   --output-dir Persistence/Migrations
 ```
 
-- [ ] **Step 3: Üretilen migration'ı doğrula**
+- [x] **Step 3: Üretilen migration'ı doğrula**
 
 Yeni `*_FixCancelExpiryCheck.cs` dosyasını aç. `Up` içinde `DropCheckConstraint` + `AddCheckConstraint`, `Down` içinde tersi olmalı. Bu operasyonlar yoksa (EF kısıt değişikliğini fark etmediyse) **dur ve haber ver** — elle migration yazmak AGENTS.md'ye aykırı, Task 0'daki tek istisna RLS'tir.
 
-- [ ] **Step 4: Testleri çalıştır**
+- [x] **Step 4: Testleri çalıştır**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter FullyQualifiedName~OpportunityPersistenceTests
@@ -551,7 +565,8 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter FullyQualifiedName~Opportu
 
 Beklenen: `Passed!` — 2 test.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
+  → Commit: `3e1d62b` "Fix expiry_date check so a waiting opportunity can be canceled"
 
 ```bash
 git add src/Modules/CRM/Persistence
@@ -572,7 +587,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Modify: `src/Host/Program.cs`
 - Create: `tests/CRM.Tests/Integration/OpportunityConcurrencyTests.cs`
 
-- [ ] **Step 1: Eşzamanlılık testini yaz (kırmızı)**
+- [x] **Step 1: Eşzamanlılık testini yaz (kırmızı)**
 
 `tests/CRM.Tests/Integration/OpportunityConcurrencyTests.cs`:
 
@@ -632,7 +647,7 @@ public sealed class OpportunityConcurrencyTests
 }
 ```
 
-- [ ] **Step 2: Testi çalıştır — derlenmemeli**
+- [x] **Step 2: Testi çalıştır — derlenmemeli**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter FullyQualifiedName~OpportunityConcurrencyTests
@@ -640,7 +655,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter FullyQualifiedName~Opportu
 
 Beklenen: derleme hatası `'Opportunity' does not contain a definition for 'CancelLine'`.
 
-- [ ] **Step 3: `OpportunityLine.Cancel`'ı internal yap**
+- [x] **Step 3: `OpportunityLine.Cancel`'ı internal yap**
 
 `src/Modules/CRM/Domain/OpportunityLine.cs` içinde:
 
@@ -656,7 +671,7 @@ Beklenen: derleme hatası `'Opportunity' does not contain a definition for 'Canc
     }
 ```
 
-- [ ] **Step 4: `Opportunity`'yi güncelle**
+- [x] **Step 4: `Opportunity`'yi güncelle**
 
 `src/Modules/CRM/Domain/Opportunity.cs` içinde, sınıfın sonuna `Touch` ekle ve tüm mutasyon metotlarında `UpdatedAt = DateTimeOffset.UtcNow;` satırlarını `Touch();` ile değiştir:
 
@@ -684,7 +699,7 @@ Beklenen: derleme hatası `'Opportunity' does not contain a definition for 'Canc
 
 `Create` içindeki `CreatedAt = now, UpdatedAt = now` ataması olduğu gibi kalır (yeni kayıt `RowVersion = 1` ile başlar). `AddLine`, `Offer`, `Complete`, `Cancel` metotlarındaki `UpdatedAt = DateTimeOffset.UtcNow;` satırları `Touch();` olur.
 
-- [ ] **Step 5: CRM interceptor'ını kaldır**
+- [x] **Step 5: CRM interceptor'ını kaldır**
 
 ```bash
 rm src/Modules/CRM/Persistence/RowVersionInterceptor.cs
@@ -692,7 +707,7 @@ rm src/Modules/CRM/Persistence/RowVersionInterceptor.cs
 
 `src/Modules/CRM/Persistence/CrmDbContextFactory.cs` içindeki `.AddInterceptors(new RowVersionInterceptor());` satırını sil. `src/Host/Program.cs` içindeki aynı satırı sil. (Access modülü kendi interceptor'ını korur — orada domain metotları henüz versiyon artırmıyor.)
 
-- [ ] **Step 6: Testleri çalıştır**
+- [x] **Step 6: Testleri çalıştır**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj
@@ -700,7 +715,8 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj
 
 Beklenen: `Passed!` — tüm testler, yeni eşzamanlılık testi dahil.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
+  → Commit: `cff7d25` "Move line cancellation and row_version increment into the Opportunity aggregate" (follow-up fix: `8be36c8` "Restore the rationale in row_version doc comments")
 
 ```bash
 git add src tests
@@ -721,7 +737,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Modify: `tests/CRM.Tests/Domain/OpportunityStateMachineTests.cs`
 - Create: `tests/CRM.Tests/Domain/OpportunityMoneyTests.cs`
 
-- [ ] **Step 1: Para testlerini yaz (kırmızı)**
+- [x] **Step 1: Para testlerini yaz (kırmızı)**
 
 `tests/CRM.Tests/Domain/OpportunityMoneyTests.cs`:
 
@@ -800,7 +816,7 @@ public sealed class OpportunityMoneyTests
 }
 ```
 
-- [ ] **Step 2: Testleri çalıştır — derlenmemeli**
+- [x] **Step 2: Testleri çalıştır — derlenmemeli**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter FullyQualifiedName~OpportunityMoneyTests
@@ -808,7 +824,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter FullyQualifiedName~Opportu
 
 Beklenen: derleme hatası — `Complete()` parametresiz aşırı yüklemesi yok.
 
-- [ ] **Step 3: `OpportunityLine.Create` satır toplamını hesaplasın**
+- [x] **Step 3: `OpportunityLine.Create` satır toplamını hesaplasın**
 
 `src/Modules/CRM/Domain/OpportunityLine.cs` içinde, `return new OpportunityLine { ... }` bloğuna `LineTotal` ekle:
 
@@ -829,7 +845,7 @@ Beklenen: derleme hatası — `Complete()` parametresiz aşırı yüklemesi yok.
         };
 ```
 
-- [ ] **Step 4: `Opportunity.Complete()`'i parametresiz yap**
+- [x] **Step 4: `Opportunity.Complete()`'i parametresiz yap**
 
 `src/Modules/CRM/Domain/Opportunity.cs` içindeki `Complete` metodunu şununla değiştir:
 
@@ -857,7 +873,7 @@ Beklenen: derleme hatası — `Complete()` parametresiz aşırı yüklemesi yok.
     }
 ```
 
-- [ ] **Step 5: Eski testleri yeni imzaya uyarla**
+- [x] **Step 5: Eski testleri yeni imzaya uyarla**
 
 `tests/CRM.Tests/Domain/OpportunityStateMachineTests.cs` içinde üç çağrıyı güncelle:
 - `Assert.Throws<InvalidOperationException>(() => opportunity.Complete(1000m));` → `... => opportunity.Complete());`
@@ -866,7 +882,7 @@ Beklenen: derleme hatası — `Complete()` parametresiz aşırı yüklemesi yok.
 
 `tests/CRM.Tests/Integration/OpportunityConcurrencyTests.cs` içinde `fromA.Complete(100m);` → `fromA.Complete();`
 
-- [ ] **Step 6: Testleri çalıştır**
+- [x] **Step 6: Testleri çalıştır**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj
@@ -874,7 +890,8 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj
 
 Beklenen: `Passed!` — tüm testler.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
+  → Commit: `dbd6bf9` "Derive opportunity total from lines with a single rounding point" (follow-up fix: `211b22c` "Derive a missing line total instead of counting it as zero")
 
 ```bash
 git add src tests
@@ -893,7 +910,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Create: `scripts/create-runtime-role.sql`
 - Create: `tests/CRM.Tests/Integration/TenantIsolationTests.cs`
 
-- [ ] **Step 1: Tenant context yardımcısını yaz**
+- [x] **Step 1: Tenant context yardımcısını yaz**
 
 `src/Modules/CRM/Persistence/CrmDbContextTenantExtensions.cs`:
 
@@ -925,7 +942,7 @@ public static class CrmDbContextTenantExtensions
 }
 ```
 
-- [ ] **Step 2: Boş migration üret**
+- [x] **Step 2: Boş migration üret**
 
 ```bash
 dotnet ef migrations add EnableRowLevelSecurity \
@@ -936,7 +953,7 @@ dotnet ef migrations add EnableRowLevelSecurity \
 
 Beklenen: `Up`/`Down` gövdeleri boş bir migration (model değişmedi).
 
-- [ ] **Step 3: Migration gövdesini yaz**
+- [x] **Step 3: Migration gövdesini yaz**
 
 Üretilen `*_EnableRowLevelSecurity.cs` dosyasının `Up`/`Down` metotlarını şununla doldur:
 
@@ -985,7 +1002,7 @@ Beklenen: `Up`/`Down` gövdeleri boş bir migration (model değişmedi).
 
 `current_setting('app.tenant_id', true)` ayar yoksa `NULL` döner; karşılaştırma `NULL` olunca hiçbir satır görünmez — yani varsayılan davranış "deny".
 
-- [ ] **Step 4: Runtime rolü scriptini yaz**
+- [x] **Step 4: Runtime rolü scriptini yaz**
 
 `scripts/create-runtime-role.sql`:
 
@@ -1009,7 +1026,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA crm
 REVOKE UPDATE, DELETE ON crm.evidence_records FROM fynovio_app;
 ```
 
-- [ ] **Step 5: İzolasyon testini yaz**
+- [x] **Step 5: İzolasyon testini yaz**
 
 `tests/CRM.Tests/Integration/TenantIsolationTests.cs`:
 
@@ -1091,7 +1108,7 @@ public sealed class TenantIsolationTests
 }
 ```
 
-- [ ] **Step 6: Fixture'a runtime rolü ekle**
+- [x] **Step 6: Fixture'a runtime rolü ekle**
 
 `tests/CRM.Tests/Integration/PostgresFixture.cs` içine ekle:
 
@@ -1127,7 +1144,7 @@ public sealed class TenantIsolationTests
     }
 ```
 
-- [ ] **Step 7: Testleri çalıştır**
+- [x] **Step 7: Testleri çalıştır**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj
@@ -1135,7 +1152,8 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj
 
 Beklenen: `Passed!` — izolasyon testleri dahil hepsi. Eğer `Runtime_role_cannot_write_a_row_for_another_tenant` beklenen `42501` yerine başka bir SqlState verirse, gerçek değeri hata metninden al ve testi ona göre düzelt (RLS `WITH CHECK` ihlali PostgreSQL 17'de `42501 insufficient_privilege` verir).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
+  → Commit: `a749860` "Enable RLS on crm tables with a transaction-local tenant context and isolation tests" (follow-up fix: `aeb3257` "Point the fixture comment at the isolation tests instead of a plan step")
 
 ```bash
 git add src scripts tests
@@ -1153,7 +1171,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Create: `src/Modules/CRM/Application/CompleteOpportunityHandler.cs`
 - Create: `tests/CRM.Tests/Integration/CompleteOpportunityHandlerTests.cs`
 
-- [ ] **Step 1: Testleri yaz (kırmızı)**
+- [x] **Step 1: Testleri yaz (kırmızı)**
 
 `tests/CRM.Tests/Integration/CompleteOpportunityHandlerTests.cs`:
 
@@ -1289,7 +1307,7 @@ public sealed class CompleteOpportunityHandlerTests
 }
 ```
 
-- [ ] **Step 2: Testleri çalıştır — derlenmemeli**
+- [x] **Step 2: Testleri çalıştır — derlenmemeli**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter FullyQualifiedName~CompleteOpportunityHandlerTests
@@ -1297,7 +1315,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter FullyQualifiedName~Complet
 
 Beklenen: derleme hatası — `CRM.Application` namespace'i yok.
 
-- [ ] **Step 3: Komut ve sonucu yaz**
+- [x] **Step 3: Komut ve sonucu yaz**
 
 `src/Modules/CRM/Application/CompleteOpportunityCommand.cs`:
 
@@ -1318,7 +1336,7 @@ public sealed record CompleteOpportunityCommand(
 public sealed record CompleteOpportunityResult(long OpportunityId, decimal TotalAmount, bool Replayed);
 ```
 
-- [ ] **Step 4: Handler'ı yaz**
+- [x] **Step 4: Handler'ı yaz**
 
 `src/Modules/CRM/Application/CompleteOpportunityHandler.cs`:
 
@@ -1438,7 +1456,7 @@ public sealed class CompleteOpportunityHandler
 }
 ```
 
-- [ ] **Step 5: Testleri çalıştır**
+- [x] **Step 5: Testleri çalıştır**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj
@@ -1446,7 +1464,8 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj
 
 Beklenen: `Passed!` — tüm testler.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
+  → Commit: `a89444a` "Add CompleteOpportunity command writing state, outbox, evidence and idempotency atomically" (follow-up fix: `1c4965e` "Use the non-obsolete PostgreSqlBuilder constructor")
 
 ```bash
 git add src tests
@@ -1462,7 +1481,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 **Files:**
 - Create: `.github/workflows/ci.yml`
 
-- [ ] **Step 1: Workflow'u yaz**
+- [x] **Step 1: Workflow'u yaz**
 
 `.github/workflows/ci.yml`:
 
@@ -1504,7 +1523,7 @@ jobs:
         run: dotnet test --no-build --configuration Release --verbosity normal
 ```
 
-- [ ] **Step 2: Zafiyet kontrolünü yerelde çalıştır**
+- [x] **Step 2: Zafiyet kontrolünü yerelde çalıştır**
 
 ```bash
 dotnet list package --vulnerable --include-transitive
@@ -1522,7 +1541,7 @@ dotnet list package --vulnerable --include-transitive
 
 Beklenen son çıktı: zafiyetli paket listelenmemeli. Hâlâ listeleniyorsa sürümü bulunan en güncel 10.x ile dene (`dotnet package search Microsoft.EntityFrameworkCore.Design`) ve sonucu raporla.
 
-- [ ] **Step 3: Tüm testleri çalıştır**
+- [x] **Step 3: Tüm testleri çalıştır**
 
 ```bash
 dotnet build && dotnet test
@@ -1530,7 +1549,8 @@ dotnet build && dotnet test
 
 Beklenen: `Passed!`, 0 uyarı hedeflenir (NU1903 uyarıları kalkmış olmalı).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
+  → Commit: `331f55c` "Add CI workflow with format, vulnerable-package and test gates" (built on `caffb75` "Bump EF Core design-time tooling and clear the vulnerable transitive package" and `45fbfa1` "Add .editorconfig and apply dotnet format")
 
 ```bash
 git add .github .config src
@@ -1549,7 +1569,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Modify: `AGENTS.md`
 - Modify: `README.md`
 
-- [ ] **Step 1: CRM şema dokümanını güncelle**
+- [x] **Step 1: CRM şema dokümanını güncelle**
 
 `docs/schema/crm-sales-schema.md` başlığındaki "This is a drawing/design document; no EF Core code or migration has been written yet." cümlesini sil ve yerine şu bölümü dosyanın sonuna ekle:
 
@@ -1583,7 +1603,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
    evidence + idempotency kaydını tek `SaveChanges()` içinde yazıyor (doc 17 §6 madde 1).
 ```
 
-- [ ] **Step 2: Identity/Access şema dokümanının başlığını düzelt**
+- [x] **Step 2: Identity/Access şema dokümanının başlığını düzelt**
 
 `docs/schema/identity-access-schema.md` başındaki "Revision 3 — ... no migration yet (needs `dotnet ef migrations add`, not hand-written per AGENTS.md)." cümlesini şununla değiştir:
 
@@ -1594,7 +1614,7 @@ Revision 3 — EF Core entities, `AccessDbContext` and configurations written
 question are still open — tracked in the Access follow-up plan.
 ```
 
-- [ ] **Step 3: AGENTS.md'nin Status ve Testing bölümlerini güncelle**
+- [x] **Step 3: AGENTS.md'nin Status ve Testing bölümlerini güncelle**
 
 `AGENTS.md` içindeki "## Status" bölümünün metnini şununla değiştir:
 
@@ -1610,7 +1630,7 @@ Runtime baseline is .NET 10 LTS (the explicit supported-runtime decision doc 07 
 
 "## Testing / Definition of Done" bölümündeki "(not yet created — pending first module test)" ifadesini sil.
 
-- [ ] **Step 4: README'ye test ve runtime rolü adımlarını ekle**
+- [x] **Step 4: README'ye test ve runtime rolü adımlarını ekle**
 
 `README.md` içindeki yerel kurulum bölümünün sonuna ekle:
 
@@ -1636,7 +1656,8 @@ export FYNOVIO_CRM_CONNECTION_STRING="Host=localhost;Database=fynovio_platform;U
 ```
 ```
 
-- [ ] **Step 5: Graph'ı güncelle ve commit**
+- [x] **Step 5: Graph'ı güncelle ve commit**
+  → Commit: `933d89a` "Sync schema docs, AGENTS.md and README with the implemented enforcement work"
 
 ```bash
 graphify update .
