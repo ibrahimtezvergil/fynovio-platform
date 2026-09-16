@@ -379,6 +379,18 @@ Per Section 9 item 2's own promise. Full reasoning lives in
   fate (rename+move vs. fork) is a Phase 5-time decision, not resolved now — §5.B only
   settled *ownership* (Sales), not the migration mechanics.
 
+**Phase 1 complete (2026-09-16):** `Opportunity` now references Party by `PartyRef` as
+decided above — implemented as a single `party_ref_party_id` column (the `TenantId`
+half is `Opportunity`'s own `tenant_id`, not a second stored column) with tenant-safety
+recovered by a domain-level guard in `Opportunity.Create(...)` plus a
+`ck_opportunities_party_ref_party_id_positive` CHECK, rather than the same-table
+`CHECK (party_ref_tenant_id = tenant_id)` sketched above — a minor implementation
+detail, not a reversal of the decision. `OpportunityStatus` renamed to
+`Draft/Open/Won/Lost`; `pipeline_definitions`/`pipeline_definition_versions`/
+`pipeline_stages` added, additive and unenforced. Execution plan:
+`docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md`, all four
+tasks done.
+
 **Next step:** Phase 1's execution plan is written —
 `docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md` — not yet run.
 Phase 1.5 (Access baseline) needs its own execution plan before Phase 2 can start; not
