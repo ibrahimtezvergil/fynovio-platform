@@ -1,16 +1,16 @@
-# Graph Report - crm-phase1-lifecycle-pipeline  (2026-09-16)
+# Graph Report - fynovio-platform  (2026-09-16)
 
 ## Corpus Check
-- 195 files · ~87,165 words
+- 195 files · ~88,749 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1452 nodes · 2279 edges · 95 communities (85 shown, 10 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 113 edges (avg confidence: 0.83)
+- 1492 nodes · 2398 edges · 110 communities (97 shown, 13 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 121 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5fc9e2dc`
+- Built from commit: `7e8fd4bf`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -22,12 +22,12 @@
 - TenantFieldDefinition
 - PipelineDefinition
 - OutboxMessage
-- PrincipalRef
+- ExternalIdentity
 - CRM+Sales pilot schema (PostgreSQL, `crm` schema)
 - Contracts.csproj
 - CRM Module — Current-State Analysis
 - CrmDbContext
-- Migration
+- CRM.Persistence.Migrations
 - http
 - EvidenceRecord
 - Worker
@@ -59,23 +59,23 @@
 - IdempotencyRecord
 - AccessDbContext
 - OpportunityNeed
-- .NewDraftOpportunity
-- Permission
+- OpportunityRowVersionTests
+- Access.Domain.Authorization
 - PipelineDefinitionVersion
 - PipelineStage
 - Role
 - CRM Target Model — Phase 0 Delta Plan
-- CRM.Persistence.Migrations
+- AddPipelineTables
 - Design notes
-- Access.Domain.Authorization
+- RolePermission
 - MasterData / Party Foundation — Phase 0.5 Execution Plan
 - .GetPartiesAsync
 - IdempotencyRecord
 - MasterData / Party Foundation — Design Reference (Phase 0.5)
 - EvidenceRecord
-- .ResolveExternalIdentityAsync
-- .Create
-- FixOpportunityAssignedPrincipalIndex
+- PartyRef
+- PostgresFixture
+- Migration
 - RenameOpportunityLifecycle
 - PartyRelationship
 - Party
@@ -88,72 +88,87 @@
 - DropOpportunityPartyForeignKey
 - PartyConfiguration
 - DropCrmParties
-- FixCancelExpiryCheck
-- PostgresFixture
 - CRM.Persistence
+- .Create
+- .CreateAdminContext
 - OpportunityStatus
 - .BuildModel
-- TenantId
+- PrincipalRef
 - PartyExternalIdentity
 - EnableRowLevelSecurity
 - RemoveCrmPartyEntity
 - .Create
 - Contracts
-- CompleteOpportunityHandler.cs
+- CRM.Persistence.Configurations
 - .Create
 - .CreatePartyAsync
 - CrmDbContextFactory
-- InitialAccessSchema
+- InitialMasterDataSchema
 - ArgumentOutOfRangeException
-- PartyRef
+- IHasRowVersion
+- .HandleAsync
+- .HandleAsync
 - .Create
 - CRM.Domain
 - CRM Phase 1 — Lifecycle/Pipeline Foundation — Execution Plan
+- InitialAccessSchema
+- EntityRef
+- MembershipStatus
 - TenantId
+- EnableRowLevelSecurity
+- InvalidOperationException
+- .BuildModel
+- AccessDbContextModelSnapshot.cs
+- .SetTenantContextAsync
+- Access.Domain.Identity
+- .BuildTargetModel
+- DateTimeOffset
+- TenantId
+- EntityTypeBuilder
 
 ## God Nodes (most connected - your core abstractions)
 1. `Contracts` - 77 edges
-2. `Opportunity` - 47 edges
-3. `CrmDbContext` - 32 edges
+2. `Opportunity` - 59 edges
+3. `CrmDbContext` - 34 edges
 4. `MasterDataDbContext` - 28 edges
 5. `OpportunityLine` - 27 edges
-6. `CRM.Domain` - 24 edges
-7. `PartyRelationship` - 24 edges
+6. `PartyRelationship` - 24 edges
+7. `CRM.Domain` - 24 edges
 8. `OutboxMessage` - 23 edges
 9. `OutboxMessage` - 23 edges
-10. `Party` - 22 edges
+10. `OpportunityStateMachineTests` - 22 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `TestData` --references--> `PrincipalRef`  [EXTRACTED]
   tests/CRM.Tests/TestData.cs → src/Contracts/PrincipalRef.cs
-- `TestData` --references--> `PrincipalRef`  [EXTRACTED]
-  tests/MasterData.Tests/TestData.cs → src/Contracts/PrincipalRef.cs
-- `PartyRef` --references--> `TenantId`  [EXTRACTED]
-  src/Contracts/PartyRef.cs → src/Contracts/EntityRef.cs
-- `CompleteOpportunityCommand` --references--> `TenantId`  [EXTRACTED]
-  src/Modules/CRM/Application/CompleteOpportunityCommand.cs → src/Contracts/EntityRef.cs
-- `CreatePartyCommand` --references--> `TenantId`  [EXTRACTED]
-  src/Modules/MasterData/Application/CreatePartyCommand.cs → src/Contracts/EntityRef.cs
+- `PrincipalRef` --references--> `TestData`  [EXTRACTED]
+  src/Contracts/PrincipalRef.cs → tests/MasterData.Tests/TestData.cs
+- `Opportunity` --implements--> `IHasRowVersion`  [EXTRACTED]
+  src/Modules/CRM/Domain/Opportunity.cs → src/Contracts/IHasRowVersion.cs
+- `Opportunity` --references--> `PrincipalRef`  [EXTRACTED]
+  src/Modules/CRM/Domain/Opportunity.cs → src/Contracts/PrincipalRef.cs
+- `Opportunity` --references--> `OpportunityLine`  [EXTRACTED]
+  src/Modules/CRM/Domain/Opportunity.cs → src/Modules/CRM/Domain/OpportunityLine.cs
 
 ## Import Cycles
 - None detected.
 
-## Communities (95 total, 10 thin omitted)
+## Communities (110 total, 13 thin omitted)
 
 ### Community 0 - "Opportunity"
-Cohesion: 0.07
-Nodes (27): Opportunity, AssignedPrincipal, AssignedPrincipalIssuer, AssignedPrincipalSubject, CreatedAt, Currency, CustomFields, EstimatedAmount (+19 more)
+Cohesion: 0.06
+Nodes (35): List, Opportunity, AssignedPrincipal, AssignedPrincipalIssuer, AssignedPrincipalSubject, CancelDate, CancelReason, CreatedAt (+27 more)
 
 ### Community 1 - "OpportunityLine"
-Cohesion: 0.07
-Nodes (25): EntityRef, BoundedContext, EntityType, Id, EntityVersion, Entity, Version, OpportunityLine (+17 more)
+Cohesion: 0.10
+Nodes (17): OpportunityLine, CancelReason, CreatedAt, Id, IsCanceled, IsOptional, LineTotal, ProductRef (+9 more)
 
 ### Community 2 - "CustomerNeed"
 Cohesion: 0.16
 Nodes (10): CustomerNeed, AveragePrice, CreatedAt, Id, Name, TenantId, DateTimeOffset, TenantId (+2 more)
 
 ### Community 3 - "OpportunityMoneyTests"
-Cohesion: 0.44
+Cohesion: 0.35
 Nodes (3): OpportunityMoneyTests, ArgumentException, Fact
 
 ### Community 4 - "TenantFieldDefinition"
@@ -168,9 +183,9 @@ Nodes (13): PipelineDefinition, CreatedAt, Id, Name, TenantId, UpdatedAt, Versio
 Cohesion: 0.10
 Nodes (20): DateTimeOffset, Guid, TenantId, OutboxMessage, AggregateId, AggregateType, AggregateVersion, CausationId (+12 more)
 
-### Community 7 - "PrincipalRef"
-Cohesion: 0.12
-Nodes (14): PrincipalRef, Issuer, Subject, ExternalIdentity, AccountId, Id, Issuer, LinkedAt (+6 more)
+### Community 7 - "ExternalIdentity"
+Cohesion: 0.17
+Nodes (11): ExternalIdentity, AccountId, Id, Issuer, LinkedAt, Principal, RawClaims, Subject (+3 more)
 
 ### Community 8 - "CRM+Sales pilot schema (PostgreSQL, `crm` schema)"
 Cohesion: 0.12
@@ -185,12 +200,12 @@ Cohesion: 0.07
 Nodes (26): 10. Events and Integration, 11. Test Coverage, 12. Current Scope Summary, 13. Target-vs-Current Comparison, 14. Recommended Next Actions, 1. Executive Summary, 2. CRM File / Module Inventory, 3. Current Domain Model (+18 more)
 
 ### Community 11 - "CrmDbContext"
-Cohesion: 0.12
-Nodes (15): CrmDbContext, CustomerNeeds, EvidenceRecords, IdempotencyRecords, Opportunities, OpportunityLines, OpportunityNeeds, OutboxMessages (+7 more)
+Cohesion: 0.11
+Nodes (17): CrmDbContext, CustomerNeeds, EvidenceRecords, IdempotencyRecords, Opportunities, OpportunityLines, OpportunityNeeds, OutboxMessages (+9 more)
 
-### Community 12 - "Migration"
-Cohesion: 0.17
-Nodes (8): Migration, DateTimeOffset, Guid, MigrationBuilder, InitialCrmSchema, DateTimeOffset, Guid, ModelBuilder
+### Community 12 - "CRM.Persistence.Migrations"
+Cohesion: 0.18
+Nodes (8): CRM.Persistence.Migrations, DateTimeOffset, Guid, MigrationBuilder, InitialCrmSchema, DateTimeOffset, Guid, ModelBuilder
 
 ### Community 13 - "http"
 Cohesion: 0.13
@@ -221,7 +236,7 @@ Cohesion: 0.14
 Nodes (13): Pilot Enforcement Implementation Plan, Sonraki plan (bu planın kapsamı dışında), Task 0: Bağlayıcı çekirdeği kararlaştır (checkpoint — kod yok), Task 10: Dokümanları kodla senkronla, Task 1: Test projesi ve domain durum makinesi testleri, Task 2: Mimari sınır testi (FF01), Task 3: Testcontainers altyapısı + iptal hatasını gösteren kırmızı test, Task 4: CHECK kısıtını düzelt (migration) (+5 more)
 
 ### Community 22 - "RoleAssignment"
-Cohesion: 0.12
+Cohesion: 0.11
 Nodes (18): RoleAssignment, AccountId, Id, RoleId, RowVersion, ScopeId, ScopeType, TenantId (+10 more)
 
 ### Community 23 - "What You Must Do When Invoked"
@@ -265,15 +280,15 @@ Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
 ### Community 38 - "TenantMembership"
-Cohesion: 0.06
-Nodes (26): DbContextEventData, InterceptionResult, SaveChangesInterceptor, IHasRowVersion, RowVersion, MembershipStatus, Active, Disabled (+18 more)
+Cohesion: 0.14
+Nodes (11): TenantMembership, AccountId, DisabledAt, Id, InvitedAt, JoinedAt, RowVersion, Status (+3 more)
 
 ### Community 39 - "Account"
-Cohesion: 0.12
-Nodes (11): Access.Domain.Identity, Account, CreatedAt, DisplayName, Email, Id, Locale, UpdatedAt (+3 more)
+Cohesion: 0.15
+Nodes (10): Account, CreatedAt, DisplayName, Email, Id, Locale, UpdatedAt, DateTimeOffset (+2 more)
 
 ### Community 40 - "OpportunityStateMachineTests"
-Cohesion: 0.33
+Cohesion: 0.22
 Nodes (4): OpportunityStateMachineTests, ArgumentException, Fact, InvalidOperationException
 
 ### Community 41 - "IdempotencyRecord"
@@ -281,20 +296,20 @@ Cohesion: 0.07
 Nodes (31): PartyType, Organization, Person, CreatedPartyPayload, Guid, CreatePartyCommand, CancellationToken, Task (+23 more)
 
 ### Community 42 - "AccessDbContext"
-Cohesion: 0.11
+Cohesion: 0.10
 Nodes (15): Access.Persistence, DbContext, IDesignTimeDbContextFactory, AccessConnectionString, AccessDbContext, Accounts, ExternalIdentities, Permissions (+7 more)
 
 ### Community 43 - "OpportunityNeed"
 Cohesion: 0.22
 Nodes (7): OpportunityNeed, CustomerNeedId, OpportunityId, TenantId, TenantId, OpportunityNeedConfiguration, EntityTypeBuilder
 
-### Community 44 - ".NewDraftOpportunity"
-Cohesion: 0.49
+### Community 44 - "OpportunityRowVersionTests"
+Cohesion: 0.53
 Nodes (3): OpportunityRowVersionTests, Fact, InvalidOperationException
 
-### Community 45 - "Permission"
-Cohesion: 0.22
-Nodes (6): Permission, Description, Id, Key, PermissionConfiguration, EntityTypeBuilder
+### Community 45 - "Access.Domain.Authorization"
+Cohesion: 0.15
+Nodes (9): Access.Persistence.Configurations, Access.Domain.Authorization, Permission, Description, Id, Key, PermissionConfiguration, EntityTypeBuilder (+1 more)
 
 ### Community 46 - "PipelineDefinitionVersion"
 Cohesion: 0.16
@@ -305,24 +320,24 @@ Cohesion: 0.16
 Nodes (10): PipelineStage, CreatedAt, Id, Name, PipelineDefinitionVersionId, SortOrder, TenantId, DateTimeOffset (+2 more)
 
 ### Community 48 - "Role"
-Cohesion: 0.33
-Nodes (6): Role, Id, IsSystem, Name, TenantId, TenantId
+Cohesion: 0.25
+Nodes (7): Role, Id, IsSystem, Name, TenantId, TenantId, EntityTypeBuilder
 
 ### Community 49 - "CRM Target Model — Phase 0 Delta Plan"
 Cohesion: 0.13
 Nodes (14): 0. Context and the decision this plan corrects, 10. Explicitly out of scope for this document, 11. Decisions recorded (2026-09-16, Party/MasterData reconciliation), 12. Revised dependency graph (2026-09-16, after §5.A/B/D/E), 1. Source-of-truth documents, 2. Current-state recap, 3. Decision matrix — current → target → migration strategy → compatibility risk, 4. Sales module re-introduction — concrete shape (+6 more)
 
-### Community 50 - "CRM.Persistence.Migrations"
+### Community 50 - "AddPipelineTables"
 Cohesion: 0.20
-Nodes (7): CRM.Persistence.Migrations, DateTimeOffset, MigrationBuilder, AddPipelineTables, DateTimeOffset, Guid, ModelBuilder
+Nodes (6): DateTimeOffset, MigrationBuilder, AddPipelineTables, DateTimeOffset, Guid, ModelBuilder
 
 ### Community 51 - "Design notes"
 Cohesion: 0.17
 Nodes (11): Account is the one deliberate exception to mandatory `tenant_id`, Concurrency token — added in Revision 2, was an omission not a decision, Design notes, Diagram, Identity + Access schema (PostgreSQL, `identity`/`access` schemas), Namespace layout, Revision 3, Not yet designed here, `PrincipalRef` mapping (+3 more)
 
-### Community 52 - "Access.Domain.Authorization"
-Cohesion: 0.17
-Nodes (7): Access.Persistence.Configurations, Access.Domain.Authorization, RolePermission, PermissionId, RoleId, RolePermissionConfiguration, EntityTypeBuilder
+### Community 52 - "RolePermission"
+Cohesion: 0.25
+Nodes (5): RolePermission, PermissionId, RoleId, RolePermissionConfiguration, EntityTypeBuilder
 
 ### Community 53 - "MasterData / Party Foundation — Phase 0.5 Execution Plan"
 Cohesion: 0.14
@@ -333,8 +348,8 @@ Cohesion: 0.19
 Nodes (11): IPartyDirectory, CancellationToken, IReadOnlyCollection, IReadOnlyDictionary, Task, PartyDirectoryEntry, CancellationToken, IReadOnlyCollection (+3 more)
 
 ### Community 55 - "IdempotencyRecord"
-Cohesion: 0.12
-Nodes (15): IdempotencyRecord, CreatedAt, ExpiresAt, IdempotencyKey, Operation, PrincipalIssuer, PrincipalSubject, RequestHash (+7 more)
+Cohesion: 0.14
+Nodes (14): IdempotencyRecord, CreatedAt, ExpiresAt, IdempotencyKey, Operation, PrincipalIssuer, PrincipalSubject, RequestHash (+6 more)
 
 ### Community 56 - "MasterData / Party Foundation — Design Reference (Phase 0.5)"
 Cohesion: 0.15
@@ -344,17 +359,17 @@ Nodes (12): 10. Phase 0.5 acceptance criteria, 11. Explicitly deferred (unchange
 Cohesion: 0.12
 Nodes (17): DateTimeOffset, Guid, TenantId, EvidenceRecord, Action, AggregateId, AggregateType, AggregateVersion (+9 more)
 
-### Community 58 - ".ResolveExternalIdentityAsync"
-Cohesion: 0.29
-Nodes (7): IPartyIdentityResolver, CancellationToken, Task, CancellationToken, PartyRef, Task, PartyIdentityResolver
+### Community 58 - "PartyRef"
+Cohesion: 0.20
+Nodes (11): TenantId, IPartyIdentityResolver, CancellationToken, Task, PartyRef, PartyId, TenantId, CancellationToken (+3 more)
 
-### Community 59 - ".Create"
-Cohesion: 0.06
-Nodes (42): IAsyncLifetime, PartyId, MergedPartyPayload, Guid, MergePartyCommand, CancellationToken, Task, TimeSpan (+34 more)
+### Community 59 - "PostgresFixture"
+Cohesion: 0.14
+Nodes (17): IAsyncLifetime, ICollectionFixture, PartyId, PostgresCollection, PostgresCollection, PostgreSqlContainer, Task, PostgresFixture (+9 more)
 
-### Community 60 - "FixOpportunityAssignedPrincipalIndex"
-Cohesion: 0.22
-Nodes (5): MigrationBuilder, FixOpportunityAssignedPrincipalIndex, DateTimeOffset, Guid, ModelBuilder
+### Community 60 - "Migration"
+Cohesion: 0.20
+Nodes (6): Migration, MigrationBuilder, FixOpportunityAssignedPrincipalIndex, DateTimeOffset, Guid, ModelBuilder
 
 ### Community 61 - "RenameOpportunityLifecycle"
 Cohesion: 0.22
@@ -381,8 +396,8 @@ Cohesion: 0.25
 Nodes (7): Design notes, Diagram, Not an extension of Tenant Lifecycle or Organization, Not yet designed here, Owns zero business data, `tenant_id` is the primary key, not a surrogate `id`, Tenant network schema (module owner not yet assigned)
 
 ### Community 67 - "MasterDataDbContext"
-Cohesion: 0.13
-Nodes (11): MasterDataConnectionString, DbSet, ModelBuilder, MasterDataDbContext, EvidenceRecords, IdempotencyRecords, OutboxMessages, Parties (+3 more)
+Cohesion: 0.11
+Nodes (14): MasterDataConnectionString, DbSet, ModelBuilder, MasterDataDbContext, EvidenceRecords, IdempotencyRecords, OutboxMessages, Parties (+6 more)
 
 ### Community 68 - "MasterData.Domain"
 Cohesion: 0.12
@@ -404,29 +419,29 @@ Nodes (3): EntityTypeBuilder, PartyType, PartyConfiguration
 Cohesion: 0.22
 Nodes (5): MigrationBuilder, DropCrmParties, DateTimeOffset, Guid, ModelBuilder
 
-### Community 73 - "FixCancelExpiryCheck"
-Cohesion: 0.22
-Nodes (5): MigrationBuilder, FixCancelExpiryCheck, DateTimeOffset, Guid, ModelBuilder
+### Community 73 - "CRM.Persistence"
+Cohesion: 0.15
+Nodes (7): CRM.Tests.Integration, CRM.Persistence, MigrationBuilder, FixCancelExpiryCheck, DateTimeOffset, Guid, ModelBuilder
 
-### Community 74 - "PostgresFixture"
-Cohesion: 0.06
-Nodes (39): CRM.Application, DbUpdateConcurrencyException, InvalidOperationException, CompletedPayload, CompleteOpportunityCommand, Guid, CompleteOpportunityHandler, CancellationToken (+31 more)
+### Community 74 - ".Create"
+Cohesion: 0.09
+Nodes (30): DbUpdateConcurrencyException, CompleteOpportunityHandler, TimeSpan, OpportunityId, CompleteOpportunityHandlerTests, Fact, InvalidOperationException, Task (+22 more)
 
-### Community 75 - "CRM.Persistence"
-Cohesion: 0.25
-Nodes (5): CRM.Tests.Integration, CRM.Persistence, ICollectionFixture, PostgresCollection, PostgresCollection
+### Community 75 - ".CreateAdminContext"
+Cohesion: 0.16
+Nodes (14): MergedPartyPayload, Guid, MergePartyCommand, CancellationToken, Task, TimeSpan, MergePartyHandler, MergePartyResult (+6 more)
 
 ### Community 76 - "OpportunityStatus"
-Cohesion: 0.24
-Nodes (7): OpportunityStatus, Draft, Lost, Open, Won, OpportunityConfiguration, EntityTypeBuilder
+Cohesion: 0.16
+Nodes (11): OpportunityStatus, Canceled, Completed, Draft, Lost, Offered, Open, Waiting (+3 more)
 
 ### Community 77 - ".BuildModel"
-Cohesion: 0.33
-Nodes (4): CrmDbContextModelSnapshot, DateTimeOffset, Guid, ModelBuilder
+Cohesion: 0.29
+Nodes (5): ModelSnapshot, CrmDbContextModelSnapshot, DateTimeOffset, Guid, ModelBuilder
 
-### Community 78 - "TenantId"
-Cohesion: 0.13
-Nodes (10): MasterData.Tests, TenantId, CrmDbContextTenantExtensions, CancellationToken, Task, CancellationToken, Task, MasterDataDbContextTenantExtensions (+2 more)
+### Community 78 - "PrincipalRef"
+Cohesion: 0.18
+Nodes (6): MasterData.Tests, PrincipalRef, Issuer, Subject, TestData, Operator
 
 ### Community 79 - "PartyExternalIdentity"
 Cohesion: 0.14
@@ -448,9 +463,9 @@ Nodes (3): PipelineDefinitionVersionTests, Fact, InvalidOperationException
 Cohesion: 0.21
 Nodes (5): MasterData.Application, MasterData.Persistence, Contracts, MasterData.Tests.Integration, CRM.Tests
 
-### Community 84 - "CompleteOpportunityHandler.cs"
-Cohesion: 0.14
-Nodes (6): CRM.Idempotency, CRM.Customization, CRM.Evidence, CRM.Outbox, EvidenceRecordConfiguration, EntityTypeBuilder
+### Community 84 - "CRM.Persistence.Configurations"
+Cohesion: 0.18
+Nodes (5): CRM.Persistence.Configurations, CRM.Idempotency, CRM.Customization, CRM.Evidence, CRM.Outbox
 
 ### Community 85 - ".Create"
 Cohesion: 0.33
@@ -460,45 +475,93 @@ Nodes (5): TenantId, ArgumentException, Fact, InvalidOperationException, PartyRe
 Cohesion: 0.32
 Nodes (5): TestData, Seller, PartyRef, Task, TenantId
 
-### Community 88 - "InitialAccessSchema"
-Cohesion: 0.05
-Nodes (27): MasterData.Persistence.Migrations, Access.Persistence.Migrations, ModelSnapshot, DateTimeOffset, MigrationBuilder, InitialAccessSchema, DateTimeOffset, ModelBuilder (+19 more)
+### Community 88 - "InitialMasterDataSchema"
+Cohesion: 0.22
+Nodes (5): MasterData.Persistence.Migrations, DateTimeOffset, Guid, MigrationBuilder, InitialMasterDataSchema
 
 ### Community 89 - "ArgumentOutOfRangeException"
 Cohesion: 0.24
 Nodes (9): ArgumentOutOfRangeException, PartyRelationshipStatus, Active, Ended, PartyRelationshipType, BranchOf, WorksFor, EntityTypeBuilder (+1 more)
 
-### Community 90 - "PartyRef"
-Cohesion: 0.40
-Nodes (3): PartyRef, PartyId, TenantId
+### Community 90 - "IHasRowVersion"
+Cohesion: 0.19
+Nodes (9): DbContextEventData, InterceptionResult, SaveChangesInterceptor, IHasRowVersion, RowVersion, RowVersionInterceptor, CancellationToken, DbContext (+1 more)
+
+### Community 91 - ".HandleAsync"
+Cohesion: 0.19
+Nodes (7): CRM.Application, CompletedPayload, CompleteOpportunityCommand, Guid, CancellationToken, Task, CompleteOpportunityResult
+
+### Community 92 - ".HandleAsync"
+Cohesion: 0.22
+Nodes (9): Guid, ResolveOrCreatePartyCommand, CancellationToken, Task, ResolveOrCreatePartyHandler, ResolveOrCreatePartyResult, Fact, Task (+1 more)
+
+### Community 93 - ".Create"
+Cohesion: 0.28
+Nodes (6): Fact, InvalidOperationException, PartyMergeTests, ArgumentException, Fact, PartyTests
 
 ### Community 94 - "CRM.Domain"
-Cohesion: 0.12
-Nodes (12): CRM.Tests.Domain, CRM.Persistence.Configurations, CRM.Domain, IEntityTypeConfiguration, RoleConfiguration, EntityTypeBuilder, IdempotencyRecordConfiguration, OpportunityLineConfiguration (+4 more)
+Cohesion: 0.11
+Nodes (12): CRM.Tests.Domain, CRM.Domain, IEntityTypeConfiguration, EvidenceRecordConfiguration, EntityTypeBuilder, IdempotencyRecordConfiguration, EntityTypeBuilder, OpportunityLineConfiguration (+4 more)
 
 ### Community 95 - "CRM Phase 1 — Lifecycle/Pipeline Foundation — Execution Plan"
 Cohesion: 0.25
 Nodes (7): Acceptance criteria, CRM Phase 1 — Lifecycle/Pipeline Foundation — Execution Plan, Task 0: Pre-flight design decisions — read and confirm before Task 3, Task 1: `OpportunityStatus` lifecycle rename — `Waiting/Offered/Completed/Canceled` → `Draft/Open/Won/Lost`, Task 2: Pipeline definition/version/stage tables (additive), Task 3: `Opportunity.PartyId` → `PartyRef` — MasterData cutover, Task 4: Docs, CI, memory sync
 
+### Community 96 - "InitialAccessSchema"
+Cohesion: 0.22
+Nodes (6): Access.Persistence.Migrations, DateTimeOffset, MigrationBuilder, InitialAccessSchema, DateTimeOffset, ModelBuilder
+
+### Community 97 - "EntityRef"
+Cohesion: 0.18
+Nodes (7): EntityRef, BoundedContext, EntityType, Id, EntityVersion, Entity, Version
+
+### Community 98 - "MembershipStatus"
+Cohesion: 0.31
+Nodes (6): MembershipStatus, Active, Disabled, Invited, TenantMembershipConfiguration, EntityTypeBuilder
+
+### Community 100 - "EnableRowLevelSecurity"
+Cohesion: 0.29
+Nodes (5): MigrationBuilder, DateTimeOffset, Guid, ModelBuilder, EnableRowLevelSecurity
+
+### Community 101 - "InvalidOperationException"
+Cohesion: 0.29
+Nodes (4): InvalidOperationException, IdempotencyKeyReusedException, OpportunityNotFoundException, PartyNotFoundException
+
+### Community 102 - ".BuildModel"
+Cohesion: 0.33
+Nodes (4): DateTimeOffset, Guid, ModelBuilder, MasterDataDbContextModelSnapshot
+
+### Community 103 - "AccessDbContextModelSnapshot.cs"
+Cohesion: 0.40
+Nodes (3): AccessDbContextModelSnapshot, DateTimeOffset, ModelBuilder
+
+### Community 104 - ".SetTenantContextAsync"
+Cohesion: 0.40
+Nodes (3): CrmDbContextTenantExtensions, CancellationToken, Task
+
+### Community 106 - ".BuildTargetModel"
+Cohesion: 0.50
+Nodes (3): DateTimeOffset, Guid, ModelBuilder
+
 ## Knowledge Gaps
-- **528 isolated node(s):** `net10.0`, `Microsoft.NET.Sdk`, `BoundedContext`, `EntityType`, `Id` (+523 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 736 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **538 isolated node(s):** `Task 0: Pre-flight design decisions — read and confirm before Task 3`, `Task 1: `OpportunityStatus` lifecycle rename — `Waiting/Offered/Completed/Canceled` → `Draft/Open/Won/Lost``, `Task 2: Pipeline definition/version/stage tables (additive)`, `Task 3: `Opportunity.PartyId` → `PartyRef` — MasterData cutover`, `Task 4: Docs, CI, memory sync` (+533 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 752 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **13 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Contracts` connect `Contracts` to `OpportunityLine`, `CustomerNeed`, `PipelineDefinition`, `PrincipalRef`, `TenantMembership`, `Account`, `IdempotencyRecord`, `OpportunityNeed`, `PipelineDefinitionVersion`, `PipelineStage`, `Access.Domain.Authorization`, `.GetPartiesAsync`, `.ResolveExternalIdentityAsync`, `MasterData.Domain`, `PostgresFixture`, `CRM.Persistence`, `OpportunityStatus`, `TenantId`, `CompleteOpportunityHandler.cs`, `PartyRef`, `CRM.Domain`, `TenantId`?**
-  _High betweenness centrality (0.185) - this node is a cross-community bridge._
-- **Why does `CrmDbContext` connect `CrmDbContext` to `OpportunityLine`, `CustomerNeed`, `OutboxMessage`, `TenantFieldDefinition`, `PipelineDefinition`, `PostgresFixture`, `AccessDbContext`, `OpportunityNeed`, `PipelineDefinitionVersion`, `PipelineStage`, `EvidenceRecord`, `TenantId`, `CompleteOpportunityHandler.cs`, `CrmDbContextFactory`, `IdempotencyRecord`?**
-  _High betweenness centrality (0.109) - this node is a cross-community bridge._
-- **Why does `CRM.Persistence` connect `CRM.Persistence` to `BackfillMasterDataParties`, `ModuleBoundaryTests`, `DropOpportunityPartyForeignKey`, `DropCrmParties`, `FixCancelExpiryCheck`, `Migration`, `.BuildModel`, `TenantId`, `EnableRowLevelSecurity`, `RemoveCrmPartyEntity`, `CRM.Persistence.Migrations`, `Contracts`, `CompleteOpportunityHandler.cs`, `CrmDbContextFactory`, `FixOpportunityAssignedPrincipalIndex`, `RenameOpportunityLifecycle`?**
-  _High betweenness centrality (0.094) - this node is a cross-community bridge._
-- **What connects `net10.0`, `Microsoft.NET.Sdk`, `BoundedContext` to the rest of the system?**
-  _528 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `Contracts` connect `Contracts` to `OpportunityLine`, `CustomerNeed`, `TenantFieldDefinition`, `PipelineDefinition`, `RoleAssignment`, `IdempotencyRecord`, `AccessDbContext`, `OpportunityNeed`, `Access.Domain.Authorization`, `PipelineDefinitionVersion`, `PipelineStage`, `.GetPartiesAsync`, `PartyRef`, `MasterData.Domain`, `CRM.Persistence`, `OpportunityStatus`, `PrincipalRef`, `CRM.Persistence.Configurations`, `IHasRowVersion`, `.HandleAsync`, `CRM.Domain`, `EntityRef`, `TenantId`, `.SetTenantContextAsync`, `Access.Domain.Identity`?**
+  _High betweenness centrality (0.216) - this node is a cross-community bridge._
+- **Why does `CRM.Persistence` connect `CRM.Persistence` to `BackfillMasterDataParties`, `ModuleBoundaryTests`, `DropOpportunityPartyForeignKey`, `DropCrmParties`, `.SetTenantContextAsync`, `CRM.Persistence.Migrations`, `.BuildModel`, `EnableRowLevelSecurity`, `RemoveCrmPartyEntity`, `AddPipelineTables`, `Contracts`, `CRM.Persistence.Configurations`, `CrmDbContextFactory`, `Migration`, `RenameOpportunityLifecycle`?**
+  _High betweenness centrality (0.120) - this node is a cross-community bridge._
+- **Why does `CrmDbContext` connect `CrmDbContext` to `OpportunityLine`, `CustomerNeed`, `OutboxMessage`, `TenantFieldDefinition`, `PipelineDefinition`, `.SetTenantContextAsync`, `AccessDbContext`, `OpportunityNeed`, `.Create`, `EvidenceRecord`, `PipelineDefinitionVersion`, `PipelineStage`, `CRM.Persistence.Configurations`, `CrmDbContextFactory`, `IdempotencyRecord`?**
+  _High betweenness centrality (0.104) - this node is a cross-community bridge._
+- **What connects `Task 0: Pre-flight design decisions — read and confirm before Task 3`, `Task 1: `OpportunityStatus` lifecycle rename — `Waiting/Offered/Completed/Canceled` → `Draft/Open/Won/Lost``, `Task 2: Pipeline definition/version/stage tables (additive)` to the rest of the system?**
+  _538 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Opportunity` be split into smaller, more focused modules?**
-  _Cohesion score 0.07056451612903226 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05537098560354374 - nodes in this community are weakly interconnected._
 - **Should `OpportunityLine` be split into smaller, more focused modules?**
-  _Cohesion score 0.07007575757575757 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1038961038961039 - nodes in this community are weakly interconnected._
 - **Should `TenantFieldDefinition` be split into smaller, more focused modules?**
-  _Cohesion score 0.11231884057971014 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11333333333333333 - nodes in this community are weakly interconnected._
