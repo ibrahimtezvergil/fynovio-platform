@@ -37,6 +37,22 @@ Approved 2026-09-14 — binding, not a draft.
 - Outbox rows commit in the same transaction as the domain state they describe (same `SaveChanges()` call), with a CloudEvents-shaped envelope (`source`, `subject`, `correlation_id`, `causation_id`, `aggregate_version`, unique `event_id`).
 - EF Core migrations under `Persistence/Migrations/` are generated output — regenerate with `dotnet ef migrations add`, never hand-edit a migration or its model snapshot.
 
+## Enforcement Scope (approved 2026-09-16)
+
+**Binding core — enforced in CI from now on:**
+1. Every tenant-scoped table carries `tenant_id` and every FK is the tenant-safe composite form.
+2. RLS (`ENABLE` + `FORCE`) on every tenant-scoped table, exercised by an integration test running as the unprivileged runtime role.
+3. Business state and its outbox row commit in the same `SaveChanges()`.
+4. Every state-changing command is idempotent (tenant + principal + operation + key).
+5. Migrations are reversible, expand/contract-shaped, and generated — never hand-edited except for the RLS exception below.
+6. Single-row invariants are DB `CHECK` constraints and each one has a test.
+7. Supported runtime (.NET LTS) and a dependency-vulnerability check in CI.
+
+**Trigger-based — not required yet:**
+Evidence records are required only for risk-catalogued commands (money-carrying transitions, authorization changes, cancellation). Evidence tamper-proofing, per-module DB roles, delegation/SoD/decision epochs and the remaining fitness functions in doc 12 stay NOT APPLICABLE until the capability they guard is built (doc 12 §1 permits a visible not-applicable state, never a fake pass).
+
+**Named exception to the generated-migration rule:** PostgreSQL RLS has no EF Core model representation, so RLS policies live in an otherwise-empty generated migration whose `Up`/`Down` bodies are written by hand with `migrationBuilder.Sql(...)`. This is the only permitted hand-written migration content.
+
 ## Testing / Definition of Done
 - xUnit, one test project per module under `tests/`, mirroring `src/Modules/*` (not yet created — pending first module test).
 - Architecture/dependency-rule tests (e.g. NetArchTest) enforcing the "Architecture Rules" above must run in CI, not just be reviewed by eye.
