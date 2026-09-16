@@ -111,7 +111,8 @@ public sealed class Opportunity : IHasRowVersion
         if (billableLines.Count == 0)
             throw new InvalidOperationException("Cannot complete an opportunity without at least one active required line.");
 
-        var computedTotal = billableLines.Sum(line => line.LineTotal ?? 0m);
+        // line_total is NULL on rows persisted before it was computed; derive it rather than count it as zero.
+        var computedTotal = billableLines.Sum(line => line.LineTotal ?? line.Quantity * line.UnitPrice);
 
         Status = OpportunityStatus.Completed;
         // Single declared rounding point (17 §3.4): 4dp computed total rounds to the
