@@ -10,12 +10,9 @@ public sealed class CrmDbContextFactory : IDesignTimeDbContextFactory<CrmDbConte
 {
     public CrmDbContext CreateDbContext(string[] args)
     {
-        var connectionString = Environment.GetEnvironmentVariable("FYNOVIO_CRM_CONNECTION_STRING")
-            ?? "Host=localhost;Database=fynovio_platform;Username=postgres;Password=postgres";
-
         var optionsBuilder = new DbContextOptionsBuilder<CrmDbContext>();
         optionsBuilder
-            .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", CrmDbContext.Schema))
+            .UseNpgsql(CrmConnectionString.Resolve(), npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", CrmDbContext.Schema))
             .UseSnakeCaseNamingConvention()
             .AddInterceptors(new RowVersionInterceptor());
 
