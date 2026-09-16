@@ -19,7 +19,15 @@
 > `PartyRef`-shaped field could be added to `Opportunity`. That work is recorded in
 > `docs/plans/2026-09-16-masterdata-party-foundation.md`. Its outcome inserts a new
 > **Phase 0.5** before Phase 1 (see the revised table in Section 6) and changes
-> Section 4's Sales shape. See Section 11 below for what's resolved vs. still open.
+> Section 4's Sales shape. Phase 0.5 has since been implemented and is done.
+>
+> **Update 2026-09-16 (same day, third round):** §5.A/B/D/E — the remaining STOP-list
+> items — were all resolved directly by the platform owner. Nothing in Section 5
+> remains open. See Section 11 for the consolidated decision record and Section 12 for
+> the revised dependency graph (a new Phase 1.5, Access enforcement baseline, now runs
+> parallel to Phase 1 and gates Phase 2). Phase 1's execution plan is written —
+> `docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md` — but not yet
+> run.
 
 ## 0. Context and the decision this plan corrects
 
@@ -138,34 +146,43 @@ Per the PDF's own Section 24 protocol ("If this PDF does not define a decision, 
 and ask; do not invent product behavior"), the following are not resolved by either
 source document and must not be defaulted silently.
 
-**Status as of the 2026-09-16 Party/MasterData reconciliation:** only **C** was
-actually resolved by that discussion — it's what opened the larger reconciliation, but
-the reconciliation itself stayed scoped to Party/identity questions and did not touch
-A, B, D, or E. They remain open exactly as written below; no silent resolution.
+**Status as of 2026-09-16: ALL FIVE RESOLVED.** C was resolved by the Party/MasterData
+reconciliation; A, B, D, and E were resolved directly by the platform owner in one pass
+the same day. Nothing in §5 remains open. See §11 for the consolidated decision record.
 
-**A. The approval-step decision (long-standing, already tracked).**
+**A. The approval-step decision (long-standing, already tracked). RESOLVED 2026-09-16.**
 `WinOpportunity` requires "explicit authority/policy; reason/evidence optional by
 policy" (PDF §14) but doesn't define what that authority mechanism is. This is the same
 open decision already recorded in [[feedback-open-decisions]] ("onay adımı sonrada
-konuşulur," never revisited). Does adopting this target model mean we now design that
-approval step (version-bound human approval between `Open` and `Won`), or does it stay
-deferred and `WinOpportunity` ships with no gate beyond "any authenticated caller,"
-matching today's `CompleteOpportunity` behavior?
+konuşulur," never revisited).
 
-**B. Where does `OpportunityLine` money live?**
-Two readings of the PDF are both defensible:
-1. `OpportunityLine` (quantity/price/line total) moves wholesale into Sales as
-   `QuoteLine`, and `Opportunity` keeps only aggregate estimates (`forecast_amount`,
-   `need_potential_amount` — PDF §13's `opportunities` row lists these, and does *not*
-   list an opportunity-lines table).
-2. `OpportunityLine` stays in CRM as a lighter-weight "what the customer wants" record,
-   and Sales's `QuoteLine` is a separate, richer pricing/discount record that
-   *originates from* but doesn't *replace* it.
+**Decision:** mandatory human/manager approval workflow is **DEFERRED** — `Open → Won`
+happens directly through a `WinOpportunity` command, no version-bound approval stage
+gets hardcoded into the lifecycle or pipeline. This does **not** mean any authenticated
+caller can call it: `WinOpportunity` must still be protected by authorization, tenant
+policy, and its own domain invariants (matching `CompleteOpportunity`'s existing
+tenant-scoped, RLS-protected shape — just with a real authorization gate added).
+Approval/multi-step-approval stays available as a future **optional capability**, never
+a hardcoded lifecycle stage.
 
-These have very different migration costs and different implications for
-`AGENTS.md`'s "one money-rounding rule per aggregate" (reading 1 keeps one rounding
-point in Sales; reading 2 needs two, one per aggregate, explicitly reconciled). Which
-reading is correct?
+**B. Where does `OpportunityLine` money live? RESOLVED 2026-09-16.**
+Two readings of the PDF were both defensible: (1) `OpportunityLine` moves wholesale
+into Sales as `QuoteLine`, or (2) it stays in CRM as a lighter-weight record Sales's
+`QuoteLine` originates from but doesn't replace.
+
+**Decision:** reading (1). In the target architecture, CRM never owns a commercial
+(priced/quantitied/discounted) line — it owns need-shaped data only: `CustomerNeed`,
+`NeedPotential`, `ForecastAmount`, `ExpectedCloseDate`, and — if it turns out to be
+needed — a non-commercial `ProductInterest`. Commercial lines belong entirely to Sales:
+`Quote → QuoteVersion → QuoteLine`, where `QuoteLine` carries `ProductRef`, `Quantity`,
+`UnitPrice`, `Discounts`, `Taxes`, and the commercial total. Today's monetary
+`OpportunityLine` (`UnitPrice`/`LineTotal`/`Currency`) is a **pilot/legacy compatibility
+artifact**, not a permanent CRM concept — it is explicitly **not** to be destructively
+rewritten during Phase 1; its physical migration or removal happens in Phase 5's own
+execution plan, when Sales exists to receive it. If a pre-quote "product interest"
+capability is needed in CRM before then, it gets solved with a new lightweight
+intent/interest model, never by keeping the priced `OpportunityLine` around as the
+answer.
 
 **C. Contact — build now or defer? RESOLVED 2026-09-16.**
 Contact is not a standalone entity — it's a role: a Person Party related to an
@@ -175,24 +192,34 @@ foundation doc). Full reasoning and the accepted target shape (`Party` = Person 
 Organization, `PartyRelationship` typed graph, `works_for` + `branch_of` as the initial
 closed vocabulary) are in `docs/plans/2026-09-16-masterdata-party-foundation.md`.
 
-**D. Access module sequencing.**
+**D. Access module sequencing. RESOLVED 2026-09-16.**
 `WinOpportunity`, `ChangePipelineStage`, and `quote.send` capability checks all require
 authorization. The `Access` module currently has entities and one migration only — no
 RLS, no tests, no Host wiring (`docs/architecture-analysis/CRM_CURRENT_STATE_ANALYSIS.md`
-§7, §12 gap list). Should Phase 0's downstream phases include bringing `Access` to the
-same enforcement-scope baseline as CRM (RLS + tests + Host registration) as a
-prerequisite before `WinOpportunity` ships with a real gate — or should CRM commands
-ship first with authorization checks stubbed as always-allow (matching the doc 20
-trigger-based enforcement pattern already used for evidence), and Access catches up
-later?
+§7, §12 gap list).
 
-**E. Sector templates — in scope for this pass?**
+**Decision:** no always-allow authorization stub, ever. Phase 1 (Lifecycle/Pipeline
+foundation) may proceed without Access being ready, because Phase 1 introduces no
+public state-changing application surface — it's schema/domain-model work only. But
+**Access must reach its own enforcement-scope baseline (Host registration, tenant
+isolation/RLS where applicable, an authorization contract/policy, integration tests,
+architecture tests) before Phase 2 (Opportunity commands/API) starts** — Phase 2 is
+where `WinOpportunity`, `ChangePipelineStage`, and other production-path commands ship,
+and none of them may ship without real authorization. Access's own execution plan can
+run in parallel with Phase 1's, not sequentially after it. See §12's dependency graph.
+
+**E. Sector templates — in scope for this pass? RESOLVED 2026-09-16.**
 The PDF's own Phase 9 already sequences "Sector templates" last, after the underlying
-generic capabilities are stable (§21). Confirming: is Phase 0 planning for the full
-9-phase sequence, or only through Phase 4/5 (lifecycle, pipeline, customer need,
-activities, Sales split) for now, treating AI inference (Phase 7), Customer Portal
-(Phase 6), Feedback/Consent (Phase 8), and Sector templates (Phase 9) as a later,
-separately-scoped follow-up plan?
+generic capabilities are stable (§21).
+
+**Decision:** the full 0–9 roadmap stays the reference plan — nothing is cut. Current
+**execution** scope is Phases 0 through 5 only (through the Sales Quote split). Phase 6
+(Customer Portal), Phase 7 (AI inference), Phase 8 (Feedback/Consent), and Phase 9
+(Sector templates) remain roadmap/deferred; each gets its own separately-scoped
+execution plan written **after** Phase 5's acceptance criteria pass, not before. Sector
+templates specifically will not be implemented before the generic capabilities they
+template are stable — building on an unstable foundation would mean re-deriving the
+templates later anyway.
 
 ## 6. Phase breakdown — mapped onto this repository
 
@@ -205,21 +232,24 @@ started — this table is the roadmap, not the script.
 |---|---|---|---|
 | 0 — Inspect / Delta Plan | This document + `docs/plans/2026-09-16-masterdata-party-foundation.md` | — | ✅ Done |
 | **0.5 — MasterData / Party foundation** *(new, 2026-09-16)* | `Party` (+`party_type`), `PartyRelationship`, `PartyExternalIdentity` in a new, previously-placeholder `MasterData` module; `PartyRef`/`IPartyDirectory`/`IPartyIdentityResolver` in `Contracts`; own RLS, own outbox, own idempotency, `tests/MasterData.Tests`. Built and tested **fully isolated from CRM** — `crm.parties` untouched. Design: `docs/plans/2026-09-16-masterdata-party-foundation.md`. Execution plan: `docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md` (11 tasks, all committed). | Nothing — this is now the foundation everything else sits on | ✅ Done — `tests/MasterData.Tests` 30/30, `tests/CRM.Tests` 41/41 (no regression) |
-| 1 — Lifecycle/Pipeline foundation | `OpportunityStatus` → `Draft/Open/Won/Lost`; new `pipeline_definitions`/`pipeline_definition_versions`/`pipeline_stages` tables + entities in `CRM.Domain`; `Opportunity` is built **directly** against `PartyRef` (no interim `long PartyId`+FK step — that would just be reworked at the old Phase 5); compatibility mapping so existing tests are updated, not silently broken | Phase 0.5 (so `Opportunity.PartyRef` is built once, correctly, not twice); §5.A resolved (affects whether `Open→Won` needs a gate placeholder) | ⚪ Blocked on §5.A |
-| 2 — Opportunity commands/API | `CreateOpportunity`, `OpenOpportunity`, `ChangePipelineStage`, `Add/Confirm/RejectOpportunityNeed`, `WinOpportunity`, `LoseOpportunity`, `ReopenOpportunity` (if enabled) as real `CRM.Application` commands + first HTTP endpoints; each gets idempotency, evidence (for risk-catalogued ones), outbox, RLS test coverage matching `CompleteOpportunityHandlerTests`'s pattern | Phase 1; §5.D (authorization strategy) | ⚪ Not started |
+| 1 — Lifecycle/Pipeline foundation | `OpportunityStatus` → `Draft/Open/Won/Lost`; new `pipeline_definitions`/`pipeline_definition_versions`/`pipeline_stages` tables + entities in `CRM.Domain`; `Opportunity` is built **directly** against `PartyRef` (no interim `long PartyId`+FK step — that would just be reworked at the old Phase 5); `OpportunityLine` left structurally untouched per §5.B (no destructive rewrite — it's flagged as a legacy/pilot artifact, not restructured); compatibility mapping so existing tests are updated, not silently broken | Phase 0.5 (done — so `Opportunity.PartyRef` is built once, correctly, not twice) | 🟡 Execution plan written (`docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md`), not yet run |
+| **1.5 — Access enforcement baseline** *(new, 2026-09-16, per §5.D)* | Bring `Access` to the same enforcement-scope baseline CRM/MasterData already met: Host registration, tenant isolation/RLS where applicable, an authorization contract/policy, `tests/Access.Tests` (integration + architecture). No always-allow stub. | Independent of Phase 1's domain-model work — runs in **parallel** with Phase 1, not after it | ⚪ Not started — own execution plan not yet written |
+| 2 — Opportunity commands/API | `CreateOpportunity`, `OpenOpportunity`, `ChangePipelineStage`, `Add/Confirm/RejectOpportunityNeed`, `WinOpportunity`, `LoseOpportunity`, `ReopenOpportunity` (if enabled) as real `CRM.Application` commands + first HTTP endpoints; each gets idempotency, evidence (for risk-catalogued ones), outbox, RLS test coverage matching `CompleteOpportunityHandlerTests`'s pattern; `WinOpportunity` gets a real authorization gate per §5.A (no mandatory approval workflow, but no always-allow either) | Phase 1 **and** Phase 1.5 (Access baseline) both complete — §5.D's explicit prerequisite | ⚪ Not started |
 | 3 — Customer Need capability | `OpportunityNeed`/`CustomerNeed` gain `Source`/`Confidence`/`ConfirmationStatus`/`EvidenceRef`/`EstimatedValueSnapshot`; `estimated_amount` derivation from confirmed needs (closes an already-tracked gap) | Phase 2 (needs a real command surface to attach to) | ⚪ Not started |
 | 4 — Activity timeline | New `activities` table/entity in CRM, event ingestion scaffolding (no real producers yet besides CRM's own pipeline-stage-changed event) | Phase 1–3 | ⚪ Not started |
-| 5 — Sales Quote split | New `src/Modules/Sales/` per §4 above; `Quote`/`QuoteVersion`/`QuoteLine`; `QuoteVersion` document-snapshot invariant implemented; §5.B resolved first | Phase 0.5 (Party access), Phase 1–2; §5.B (blocking) | ⚪ Blocked on §5.B |
-| 6 — Customer Portal | Secure quote links, view/download/comment/accept/reject, `QuoteViewed`/`QuoteAccepted`/`QuoteRejected` events | Phase 5 | ⚪ Not started |
-| 7 — AI inference | Structured `NeedSuggestion` flow from approved sources, human/policy confirmation | Phase 3 | ⚪ Not started |
-| 8 — Feedback/Consent | Separate capabilities, linked by reference/event only | Independent — can run in parallel with 3–7 | ⚪ Not started |
-| 9 — Sector templates | Template catalog + tenant overrides/versioning | After 1–4 are stable (per PDF's own sequencing) | ⚪ Not started |
+| 5 — Sales Quote split | New `src/Modules/Sales/` per §4 above; `Quote`/`QuoteVersion`/`QuoteLine`; `QuoteVersion` document-snapshot invariant implemented; physical fate of today's monetary `OpportunityLine` (rename+move vs. fork) decided and executed here, per §5.B | Phase 0.5 (Party access, done), Phase 1–2 | ⚪ Not started |
+| 6 — Customer Portal | Secure quote links, view/download/comment/accept/reject, `QuoteViewed`/`QuoteAccepted`/`QuoteRejected` events | Phase 5 | ⚪ Deferred past current execution scope (§5.E) — own planning pass after Phase 5 |
+| 7 — AI inference | Structured `NeedSuggestion` flow from approved sources, human/policy confirmation | Phase 3 | ⚪ Deferred past current execution scope (§5.E) — own planning pass after Phase 5 |
+| 8 — Feedback/Consent | Separate capabilities, linked by reference/event only | Independent — can run in parallel with 3–7 | ⚪ Deferred past current execution scope (§5.E) — own planning pass after Phase 5 |
+| 9 — Sector templates | Template catalog + tenant overrides/versioning | After 1–4 are stable (per PDF's own sequencing); explicitly not before generic capabilities are stable (§5.E) | ⚪ Deferred past current execution scope (§5.E) — own planning pass after Phase 5 |
 
 Legend: ✅ Done · 🟡 In progress / approved-not-started · ⚪ Not started. Update this
 column as each phase's own execution plan (task/step/commit format) gets written and
 run — this table is the roadmap-level tracker, step-level tracking lives in each
 phase's own execution plan (see `docs/plans/2026-09-16-pilot-enforcement.md` for the
-pattern that produced Phase 0's predecessor work).
+pattern that produced Phase 0's predecessor work). **Current execution scope is Phases
+0–5** per §5.E's resolution — Phases 6–9 stay on the roadmap but are not planned in
+detail until Phase 5's acceptance criteria pass.
 
 Cross-cutting, every phase: preserve RLS/outbox/idempotency/concurrency/evidence
 patterns (§3's LOW-risk row) — this is not a separate phase, it's a standing
@@ -323,14 +353,63 @@ Per Section 9 item 2's own promise. Full reasoning lives in
   future `CommercialRelationship` domain) stays open, tied to whichever command first
   needs to write it.
 
-**Still genuinely open** (§5.A, §5.B, §5.D, §5.E as originally written, plus):
-- The approval-step decision, Access-module sequencing, `OpportunityLine`'s eventual
-  home, sector-template scope.
+**Resolved and frozen, 2026-09-16 (§5.A/B/D/E, decided directly by the platform owner):**
+- **§5.A:** mandatory human/manager approval workflow is deferred, permanently optional
+  capability, never a hardcoded lifecycle/pipeline stage. `WinOpportunity` ships as a
+  direct `Open → Won` command, protected by authorization + tenant policy + domain
+  invariants — not by an approval gate, and not by "any authenticated caller" either.
+- **§5.B:** commercial (priced) lines belong to Sales only. CRM's target-model surface
+  is need-shaped (`CustomerNeed`, `NeedPotential`, `ForecastAmount`,
+  `ExpectedCloseDate`, optionally a non-commercial `ProductInterest`); Sales owns
+  `Quote → QuoteVersion → QuoteLine` with the commercial fields. Today's monetary
+  `OpportunityLine` is a pilot/legacy compatibility artifact — left alone through Phase
+  1–4, its physical fate (rename+move or fork) is decided and executed in Phase 5.
+- **§5.D:** no always-allow authorization stub, ever. Access reaching its own
+  enforcement-scope baseline is a prerequisite for **Phase 2** (Opportunity
+  commands/API), not for Phase 1 (which introduces no public command surface). Access's
+  own execution plan runs in parallel with Phase 1's.
+- **§5.E:** the full 0–9 roadmap stays the reference plan. Current **execution** scope
+  is Phases 0–5 only; Phases 6–9 stay deferred/roadmap, each getting its own
+  separately-scoped execution plan after Phase 5's acceptance criteria pass.
+
+**Still genuinely open** (nothing from §5 remains — all five resolved):
 - Generic `PartyRole`, Vendor/Partner, `OpportunityStakeholder`, Territory, fuzzy
   identity resolution, a full automation engine, `PartyRelationship.metadata` usage —
-  all explicitly deferred, none scheduled.
+  all explicitly deferred, none scheduled. `OpportunityLine`'s exact Phase 5 physical
+  fate (rename+move vs. fork) is a Phase 5-time decision, not resolved now — §5.B only
+  settled *ownership* (Sales), not the migration mechanics.
 
-**Next step:** Phase 0.5 is done — `docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md`
-ran to completion, all 11 tasks committed, `tests/MasterData.Tests` at 30/30 and no
-regression in `tests/CRM.Tests` (41/41). Phase 1 (Lifecycle/Pipeline foundation) is next,
-but is blocked on §5.A (the approval-step decision) until the owner resolves it.
+**Next step:** Phase 1's execution plan is written —
+`docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md` — not yet run.
+Phase 1.5 (Access baseline) needs its own execution plan before Phase 2 can start; not
+yet written.
+
+## 12. Revised dependency graph (2026-09-16, after §5.A/B/D/E)
+
+```mermaid
+graph TD
+    P0["Phase 0 — Delta Plan ✅"] --> P05["Phase 0.5 — MasterData/Party ✅"]
+    P05 --> P1["Phase 1 — Lifecycle/Pipeline 🟡 plan written"]
+    P1 --> P2["Phase 2 — Opportunity commands/API ⚪"]
+    P15["Phase 1.5 — Access baseline ⚪ (parallel with Phase 1, per §5.D)"] --> P2
+    P2 --> P3["Phase 3 — Customer Need capability ⚪"]
+    P1 --> P4["Phase 4 — Activity timeline ⚪"]
+    P2 --> P4
+    P3 --> P4
+    P05 --> P5["Phase 5 — Sales Quote split ⚪ (§5.B resolved: ownership only, mechanics decided here)"]
+    P1 --> P5
+    P2 --> P5
+    P5 -.->|"scope boundary, §5.E — separate planning after Phase 5"| P6["Phase 6 — Customer Portal (deferred)"]
+    P3 -.-> P7["Phase 7 — AI inference (deferred)"]
+    P8["Phase 8 — Feedback/Consent (deferred, parallel-eligible)"]
+    P5 -.-> P9["Phase 9 — Sector templates (deferred, needs stable generics)"]
+```
+
+Plain-text summary, if Mermaid doesn't render in your viewer:
+- `0 → 0.5 → 1 → 2 → {3, 4, 5}` (4 also needs 2 and 3; 5 also needs 1 and 2)
+- `1.5` runs parallel to `1`, but must finish before `2` starts (§5.D)
+- `2 → 3 → 4`; `0.5` and `1` and `2` all feed `5`
+- `5 → 6`, `3 → 7`, `5 → 9` are all past the current execution boundary (§5.E) — not
+  planned in detail until `5`'s acceptance criteria pass. `8` is independent and
+  deferred alongside them, not because it depends on anything, but because it's outside
+  the current execution scope.
