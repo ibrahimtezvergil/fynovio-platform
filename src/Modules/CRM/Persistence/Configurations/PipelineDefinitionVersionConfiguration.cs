@@ -23,6 +23,10 @@ public sealed class PipelineDefinitionVersionConfiguration : IEntityTypeConfigur
             .HasPrincipalKey(p => new { p.TenantId, p.Id })
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Stages is populated only via AddStage(), never by EF — not a queryable
+        // collection. Ignore() also prevents EF from auto-discovering it as the inverse
+        // of PipelineStageConfiguration's FK, which would recreate a duplicate/shadow
+        // relationship (the bug this replaced).
         builder.Ignore(v => v.Stages);
 
         builder.HasIndex(v => new { v.TenantId, v.PipelineDefinitionId, v.VersionNumber }).IsUnique();

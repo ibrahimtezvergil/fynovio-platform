@@ -20,6 +20,10 @@ public sealed class PipelineDefinitionConfiguration : IEntityTypeConfiguration<P
 
         builder.Property(p => p.Name).IsRequired();
 
+        // Versions is populated only via AddVersion(), never by EF — not a queryable
+        // collection. Ignore() also prevents EF from auto-discovering it as the inverse
+        // of PipelineDefinitionVersionConfiguration's FK, which would recreate a
+        // duplicate/shadow relationship.
         builder.Ignore(p => p.Versions);
 
         builder.HasIndex(p => new { p.TenantId, p.Name }).IsUnique();
