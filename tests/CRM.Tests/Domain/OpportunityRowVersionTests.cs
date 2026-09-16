@@ -1,3 +1,4 @@
+using Contracts;
 using CRM.Domain;
 using Xunit;
 
@@ -7,8 +8,11 @@ namespace CRM.Tests.Domain;
 /// outbox/evidence kayıtları güncel versiyonu okuyabilsin diye.</summary>
 public sealed class OpportunityRowVersionTests
 {
-    private static Opportunity NewDraftOpportunity() =>
-        Opportunity.Create(TestData.NextTenant(), partyId: 1, TestData.Seller, "TRY", 1000m);
+    private static Opportunity NewDraftOpportunity()
+    {
+        var tenant = TestData.NextTenant();
+        return Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", 1000m);
+    }
 
     [Fact]
     public void A_new_opportunity_starts_at_version_one()

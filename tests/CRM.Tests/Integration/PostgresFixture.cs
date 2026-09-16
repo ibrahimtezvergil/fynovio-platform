@@ -60,10 +60,12 @@ public sealed class PostgresFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         await _container.StartAsync();
-        await using var crmContext = CreateAdminContext();
-        await crmContext.Database.MigrateAsync();
+        // MasterData first: CRM's BackfillMasterDataParties migration inserts into
+        // masterdata.parties, which must already exist.
         await using var masterDataContext = CreateMasterDataContext();
         await masterDataContext.Database.MigrateAsync();
+        await using var crmContext = CreateAdminContext();
+        await crmContext.Database.MigrateAsync();
     }
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();

@@ -19,31 +19,31 @@ public sealed class TenantIsolationTests
     [Fact]
     public async Task Runtime_role_cannot_read_another_tenants_rows()
     {
-        var (_, partyAId) = await SeedPartyAsync("A");
-        var (tenantB, partyBId) = await SeedPartyAsync("B");
+        var (_, opportunityAId) = await SeedOpportunityAsync("A");
+        var (tenantB, opportunityBId) = await SeedOpportunityAsync("B");
 
         await using var context = PostgresFixture.CreateContext(await _fixture.RuntimeConnectionStringAsync());
         await using var transaction = await context.Database.BeginTransactionAsync();
         await context.SetTenantContextAsync(tenantB);
 
-        var visible = await context.Parties.AsNoTracking().ToListAsync();
+        var visible = await context.Opportunities.AsNoTracking().ToListAsync();
 
-        Assert.Contains(visible, p => p.Id == partyBId);
-        Assert.DoesNotContain(visible, p => p.Id == partyAId);
-        Assert.All(visible, p => Assert.Equal(tenantB, p.TenantId));
+        Assert.Contains(visible, o => o.Id == opportunityBId);
+        Assert.DoesNotContain(visible, o => o.Id == opportunityAId);
+        Assert.All(visible, o => Assert.Equal(tenantB, o.TenantId));
     }
 
     [Fact]
     public async Task Runtime_role_cannot_read_a_guessed_id_from_another_tenant()
     {
-        var (_, partyAId) = await SeedPartyAsync("A2");
-        var (tenantB, _) = await SeedPartyAsync("B2");
+        var (_, opportunityAId) = await SeedOpportunityAsync("A2");
+        var (tenantB, _) = await SeedOpportunityAsync("B2");
 
         await using var context = PostgresFixture.CreateContext(await _fixture.RuntimeConnectionStringAsync());
         await using var transaction = await context.Database.BeginTransactionAsync();
         await context.SetTenantContextAsync(tenantB);
 
-        var guessed = await context.Parties.AsNoTracking().SingleOrDefaultAsync(p => p.Id == partyAId);
+        var guessed = await context.Opportunities.AsNoTracking().SingleOrDefaultAsync(o => o.Id == opportunityAId);
 
         Assert.Null(guessed);
     }
@@ -51,12 +51,12 @@ public sealed class TenantIsolationTests
     [Fact]
     public async Task Runtime_role_sees_nothing_without_a_tenant_context()
     {
-        await SeedPartyAsync("C");
+        await SeedOpportunityAsync("C");
 
         await using var context = PostgresFixture.CreateContext(await _fixture.RuntimeConnectionStringAsync());
         await using var transaction = await context.Database.BeginTransactionAsync();
 
-        var visible = await context.Parties.AsNoTracking().ToListAsync();
+        var visible = await context.Opportunities.AsNoTracking().ToListAsync();
 
         Assert.Empty(visible);
     }
@@ -64,7 +64,7 @@ public sealed class TenantIsolationTests
     [Fact]
     public async Task Tenant_context_does_not_survive_on_a_pooled_connection()
     {
-        var (tenantA, _) = await SeedPartyAsync("D");
+        var (tenantA, _) = await SeedOpportunityAsync("D");
         var singleConnectionPool = new NpgsqlConnectionStringBuilder(await _fixture.RuntimeConnectionStringAsync())
         {
             Pooling = true,
@@ -75,14 +75,14 @@ public sealed class TenantIsolationTests
         {
             await using var transaction = await first.Database.BeginTransactionAsync();
             await first.SetTenantContextAsync(tenantA);
-            Assert.NotEmpty(await first.Parties.AsNoTracking().ToListAsync());
+            Assert.NotEmpty(await first.Opportunities.AsNoTracking().ToListAsync());
             await transaction.CommitAsync();
         }
 
         await using var second = PostgresFixture.CreateContext(singleConnectionPool);
         await using var secondTransaction = await second.Database.BeginTransactionAsync();
 
-        var visible = await second.Parties.AsNoTracking().ToListAsync();
+        var visible = await second.Opportunities.AsNoTracking().ToListAsync();
 
         Assert.Empty(visible);
     }
@@ -90,14 +90,17 @@ public sealed class TenantIsolationTests
     [Fact]
     public async Task Runtime_role_cannot_write_a_row_for_another_tenant()
     {
-        var (tenantA, _) = await SeedPartyAsync("E");
+        var (tenantA, _) = await SeedOpportunityAsync("E");
         var tenantB = TestData.NextTenant();
+
+        await using var masterDataContext = _fixture.CreateMasterDataContext();
+        var partyRef = await TestData.CreatePartyAsync(masterDataContext, tenantA, "Sızdırma denemesi");
 
         await using var context = PostgresFixture.CreateContext(await _fixture.RuntimeConnectionStringAsync());
         await using var transaction = await context.Database.BeginTransactionAsync();
         await context.SetTenantContextAsync(tenantB);
 
-        context.Parties.Add(Party.Create(tenantA, "Sızdırma denemesi", PartyCreationSource.Manual));
+        context.Opportunities.Add(Opportunity.Create(tenantA, partyRef, TestData.Seller, "TRY", 100m));
 
         var exception = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
         var postgresException = Assert.IsType<PostgresException>(exception.InnerException);
@@ -127,13 +130,16 @@ public sealed class TenantIsolationTests
         Assert.Equal(PostgresErrorCodes.InsufficientPrivilege, exception.SqlState);
     }
 
-    private async Task<(TenantId TenantId, long PartyId)> SeedPartyAsync(string name)
+    private async Task<(TenantId TenantId, long OpportunityId)> SeedOpportunityAsync(string partyName)
     {
         var tenant = TestData.NextTenant();
+        await using var masterDataContext = _fixture.CreateMasterDataContext();
+        var partyRef = await TestData.CreatePartyAsync(masterDataContext, tenant, partyName);
+
         await using var context = _fixture.CreateAdminContext();
-        var party = Party.Create(tenant, name, PartyCreationSource.Manual);
-        context.Parties.Add(party);
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
+        context.Opportunities.Add(opportunity);
         await context.SaveChangesAsync();
-        return (tenant, party.Id);
+        return (tenant, opportunity.Id);
     }
 }

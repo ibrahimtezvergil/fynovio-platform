@@ -1,3 +1,4 @@
+using Contracts;
 using CRM.Domain;
 using Xunit;
 
@@ -8,7 +9,7 @@ public sealed class OpportunityStateMachineTests
     private static Opportunity NewDraftOpportunity()
     {
         var tenant = TestData.NextTenant();
-        return Opportunity.Create(tenant, partyId: 1, TestData.Seller, "TRY", estimatedAmount: 1000m);
+        return Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", estimatedAmount: 1000m);
     }
 
     [Fact]
@@ -26,7 +27,7 @@ public sealed class OpportunityStateMachineTests
         var tenant = TestData.NextTenant();
 
         Assert.Throws<ArgumentException>(() =>
-            Opportunity.Create(tenant, partyId: 1, TestData.Seller, "TRYX", 1000m));
+            Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRYX", 1000m));
     }
 
     [Fact]

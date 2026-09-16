@@ -1,3 +1,4 @@
+using Contracts;
 using CRM.Domain;
 using Xunit;
 
@@ -8,8 +9,11 @@ namespace CRM.Tests.Domain;
 /// geçişinde tam olarak bir kez 2 haneye yuvarlanır.</summary>
 public sealed class OpportunityMoneyTests
 {
-    private static Opportunity DraftOpportunity() =>
-        Opportunity.Create(TestData.NextTenant(), partyId: 1, TestData.Seller, "TRY", 0m);
+    private static Opportunity DraftOpportunity()
+    {
+        var tenant = TestData.NextTenant();
+        return Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", 0m);
+    }
 
     [Fact]
     public void AddLine_computes_the_line_total()
@@ -33,8 +37,9 @@ public sealed class OpportunityMoneyTests
     [Fact]
     public void Create_rejects_an_estimated_amount_with_more_than_two_decimals()
     {
+        var tenant = TestData.NextTenant();
         Assert.Throws<ArgumentException>(() =>
-            Opportunity.Create(TestData.NextTenant(), partyId: 1, TestData.Seller, "TRY", 10.001m));
+            Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", 10.001m));
     }
 
     [Fact]

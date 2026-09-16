@@ -1,13 +1,18 @@
-using CRM.Domain;
-using Contracts;
-using MasterData.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace CRM.Tests.Integration;
 
-/// <summary>Verifies that the backfill migration correctly copied all data from crm.parties
-/// to masterdata.parties. This is step 3 of docs/plans/2026-09-16-masterdata-party-foundation.md §9.</summary>
+/// <summary>docs/plans/2026-09-16-masterdata-party-foundation.md §9 step 3 originally asked
+/// for a crm.parties-vs-masterdata.parties row/column comparison, but that is no longer
+/// testable here: crm.parties is dropped by the DropCrmParties migration, which runs (along
+/// with the rest of history) on every fresh Testcontainers database — there is no "before the
+/// drop" state to inspect in this harness. In a Testcontainers-fresh database crm.parties also
+/// never holds real rows to begin with (no seed data predates the backfill migration), so a
+/// row-count comparison would only ever have proven 0 == 0. What IS still worth covering here:
+/// that PostgresFixture's dual-DbContext migration wiring and masterdata schema grants
+/// (added in this same task) actually work — a real party seeded through
+/// TestData.CreatePartyAsync is readable back through MasterDataDbContext.</summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class PartyBackfillVerificationTests
 {
@@ -16,52 +21,18 @@ public sealed class PartyBackfillVerificationTests
     public PartyBackfillVerificationTests(PostgresFixture fixture) => _fixture = fixture;
 
     [Fact]
-    public async Task Backfilled_masterdata_parties_matches_crm_parties_row_count()
-    {
-        await using var crmContext = _fixture.CreateAdminContext();
-        await using var masterDataContext = _fixture.CreateMasterDataContext();
-
-        var crmPartyCount = await crmContext.Parties.CountAsync();
-        var masterDataPartyCount = await masterDataContext.Parties.CountAsync();
-
-        Assert.Equal(crmPartyCount, masterDataPartyCount);
-    }
-
-    [Fact]
-    public async Task Every_crm_party_exists_in_masterdata_with_correct_data()
-    {
-        await using var crmContext = _fixture.CreateAdminContext();
-        await using var masterDataContext = _fixture.CreateMasterDataContext();
-
-        var crmParties = await crmContext.Parties.OrderBy(p => p.Id).ToListAsync();
-        var masterDataParties = await masterDataContext.Parties.OrderBy(p => p.Id).ToListAsync();
-
-        Assert.Equal(crmParties.Count, masterDataParties.Count);
-
-        for (int i = 0; i < crmParties.Count; i++)
-        {
-            var crmParty = crmParties[i];
-            var masterDataParty = masterDataParties[i];
-
-            Assert.Equal(crmParty.Id, masterDataParty.Id);
-            Assert.Equal(crmParty.TenantId, masterDataParty.TenantId);
-            Assert.Equal(crmParty.Name, masterDataParty.Name);
-            Assert.Equal(crmParty.Surname, masterDataParty.Surname);
-            Assert.Equal(crmParty.Phone, masterDataParty.Phone);
-            Assert.Equal(crmParty.Email, masterDataParty.Email);
-            Assert.Equal(crmParty.MergedIntoPartyId, masterDataParty.MergedIntoPartyId);
-        }
-    }
-
-    [Fact]
-    public async Task All_backfilled_parties_have_organization_type()
+    public async Task A_party_seeded_through_masterdata_is_readable_back()
     {
         await using var masterDataContext = _fixture.CreateMasterDataContext();
+        var tenant = TestData.NextTenant();
 
-        var nonOrganizationParties = await masterDataContext.Parties
-            .Where(p => p.PartyType != Contracts.PartyType.Organization)
-            .CountAsync();
+        var partyRef = await TestData.CreatePartyAsync(masterDataContext, tenant, "Acme");
 
-        Assert.Equal(0, nonOrganizationParties);
+        await using var verification = _fixture.CreateMasterDataContext();
+        var party = await verification.Parties.AsNoTracking().SingleAsync(p => p.Id == partyRef.PartyId);
+
+        Assert.Equal(tenant, party.TenantId);
+        Assert.Equal("Acme", party.Name);
+        Assert.Equal(Contracts.PartyType.Organization, party.PartyType);
     }
 }

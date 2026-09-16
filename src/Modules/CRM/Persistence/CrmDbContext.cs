@@ -19,7 +19,6 @@ public sealed class CrmDbContext : DbContext
     {
     }
 
-    public DbSet<Party> Parties => Set<Party>();
     public DbSet<CustomerNeed> CustomerNeeds => Set<CustomerNeed>();
     public DbSet<Opportunity> Opportunities => Set<Opportunity>();
     public DbSet<OpportunityLine> OpportunityLines => Set<OpportunityLine>();
