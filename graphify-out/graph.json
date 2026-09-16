@@ -21531,7 +21531,7 @@
       "node_kind": "heading",
       "norm_label": "acceptance criteria",
       "source_file": "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md",
-      "source_location": "L666"
+      "source_location": "L695"
     },
     {
       "id": "docs_plans_2026_09_16_crm_phase1_lifecycle_pipeline_execution_plan_crm_phase_1_lifecycle_pipeline_foundation_execution_plan",
@@ -21555,7 +21555,7 @@
       "node_kind": "heading",
       "norm_label": "task 0: pre-flight design decisions \u2014 read and confirm before task 3",
       "source_file": "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md",
-      "source_location": "L39"
+      "source_location": "L43"
     },
     {
       "id": "docs_plans_2026_09_16_crm_phase1_lifecycle_pipeline_execution_plan_task_1_opportunitystatus_lifecycle_rename_waiting_offered_completed_canceled_draft_open_won_lost",
@@ -21567,7 +21567,7 @@
       "node_kind": "heading",
       "norm_label": "task 1: `opportunitystatus` lifecycle rename \u2014 `waiting/offered/completed/canceled` \u2192 `draft/open/won/lost`",
       "source_file": "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md",
-      "source_location": "L77"
+      "source_location": "L81"
     },
     {
       "id": "docs_plans_2026_09_16_crm_phase1_lifecycle_pipeline_execution_plan_task_2_pipeline_definition_version_stage_tables_additive",
@@ -21579,7 +21579,7 @@
       "node_kind": "heading",
       "norm_label": "task 2: pipeline definition/version/stage tables (additive)",
       "source_file": "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md",
-      "source_location": "L217"
+      "source_location": "L248"
     },
     {
       "id": "docs_plans_2026_09_16_crm_phase1_lifecycle_pipeline_execution_plan_task_3_opportunity_partyid_partyref_masterdata_cutover",
@@ -21591,7 +21591,7 @@
       "node_kind": "heading",
       "norm_label": "task 3: `opportunity.partyid` \u2192 `partyref` \u2014 masterdata cutover",
       "source_file": "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md",
-      "source_location": "L444"
+      "source_location": "L475"
     },
     {
       "id": "docs_plans_2026_09_16_crm_phase1_lifecycle_pipeline_execution_plan_task_4_docs_ci_memory_sync",
@@ -21603,7 +21603,7 @@
       "node_kind": "heading",
       "norm_label": "task 4: docs, ci, memory sync",
       "source_file": "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md",
-      "source_location": "L618"
+      "source_location": "L647"
     },
     {
       "id": "src_contracts_partytype",
@@ -39916,7 +39916,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md",
-      "source_location": "L217",
+      "source_location": "L248",
       "weight": 1.0
     },
     {
@@ -39927,7 +39927,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md",
-      "source_location": "L39",
+      "source_location": "L43",
       "weight": 1.0
     },
     {
@@ -39938,7 +39938,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md",
-      "source_location": "L444",
+      "source_location": "L475",
       "weight": 1.0
     },
     {
@@ -39949,7 +39949,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md",
-      "source_location": "L618",
+      "source_location": "L647",
       "weight": 1.0
     },
     {
@@ -39960,7 +39960,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md",
-      "source_location": "L666",
+      "source_location": "L695",
       "weight": 1.0
     },
     {
@@ -39971,7 +39971,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md",
-      "source_location": "L77",
+      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -48548,5 +48548,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "7214867b5d36c13523a3840ef59e5a9edc0a9eb5"
+  "built_at_commit": "2a89a3172a8a6bb1fa7f8b68f67ee60820b61c3c"
 }
