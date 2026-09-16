@@ -108,7 +108,7 @@ public sealed class CompleteOpportunityHandlerTests
             seed.Parties.Add(party);
             await seed.SaveChangesAsync();
 
-            // Still waiting: Complete() will reject it.
+            // Still in Draft: Win() will reject it.
             var opportunity = Opportunity.Create(tenant, party.Id, TestData.Seller, "TRY", 100m);
             opportunity.AddLine(TestData.ProductRef(tenant), quantity: 1, unitPrice: 100m);
             seed.Opportunities.Add(opportunity);
