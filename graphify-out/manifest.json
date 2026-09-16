@@ -661,8 +661,8 @@
   },
   "scripts/create-runtime-role.sql": {
     "mtime": 1789563848.0575495,
-    "seen": 1789563927.469837,
-    "ast_hash": "",
+    "seen": 1789564455.729514,
+    "ast_hash": "009a15b656573aed798779823dc84072",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/CompleteOpportunityCommand.cs": {
@@ -732,9 +732,9 @@
     "semantic_hash": ""
   },
   "docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md": {
-    "mtime": 1789564252.9998596,
-    "seen": 1789564413.2986372,
-    "ast_hash": "4304e9c86f376dc6ada96746000556ad",
+    "mtime": 1789564466.0267818,
+    "seen": 1789564470.2629151,
+    "ast_hash": "6856377ffe7a37de62d3c30a70efb806",
     "semantic_hash": ""
   },
   "docs/architecture-analysis/Enterprise_CRM_Target_Model_Binding_Implementation_Specification.pdf": {

@@ -15896,7 +15896,7 @@
       "node_kind": "heading",
       "norm_label": "kabul kriterleri (bu plan\u0131n \"bitti\" demesi icin)",
       "source_file": "docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md",
-      "source_location": "L2676"
+      "source_location": "L2681"
     },
     {
       "id": "docs_plans_2026_09_16_masterdata_phase0_5_execution_plan_masterdata_party_foundation_phase_0_5_execution_plan",
@@ -40160,7 +40160,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md",
-      "source_location": "L2676",
+      "source_location": "L2681",
       "weight": 1.0
     },
     {
@@ -48352,5 +48352,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f2fec349aee516a8684e572dc614e75c7ef8749b"
+  "built_at_commit": "76d3ff7f87ebba513177741818fa42856782ac5c"
 }

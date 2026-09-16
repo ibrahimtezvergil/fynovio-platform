@@ -1,7 +1,7 @@
 # Graph Report - fynovio-platform  (2026-09-16)
 
 ## Corpus Check
-- 176 files · ~74,159 words
+- 176 files · ~74,234 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f2fec349`
+- Built from commit: `76d3ff7f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -121,12 +121,12 @@
   tests/CRM.Tests/TestData.cs → src/Contracts/PrincipalRef.cs
 - `TestData` --references--> `PrincipalRef`  [EXTRACTED]
   tests/MasterData.Tests/TestData.cs → src/Contracts/PrincipalRef.cs
-- `EntityVersion` --references--> `EntityRef`  [EXTRACTED]
-  src/Contracts/EntityVersion.cs → src/Contracts/EntityRef.cs
-- `OpportunityLine` --references--> `EntityRef`  [EXTRACTED]
-  src/Modules/CRM/Domain/OpportunityLine.cs → src/Contracts/EntityRef.cs
-- `PartyRef` --references--> `TenantId`  [EXTRACTED]
-  src/Contracts/PartyRef.cs → src/Contracts/EntityRef.cs
+- `Opportunity` --implements--> `IHasRowVersion`  [EXTRACTED]
+  src/Modules/CRM/Domain/Opportunity.cs → src/Contracts/IHasRowVersion.cs
+- `Opportunity` --references--> `PrincipalRef`  [EXTRACTED]
+  src/Modules/CRM/Domain/Opportunity.cs → src/Contracts/PrincipalRef.cs
+- `Opportunity` --references--> `OpportunityLine`  [EXTRACTED]
+  src/Modules/CRM/Domain/Opportunity.cs → src/Modules/CRM/Domain/OpportunityLine.cs
 
 ## Import Cycles
 - None detected.
@@ -454,7 +454,7 @@ Cohesion: 0.50
 Nodes (3): DateTimeOffset, Guid, ModelBuilder
 
 ## Knowledge Gaps
-- **510 isolated node(s):** `net10.0`, `Microsoft.NET.Sdk`, `BoundedContext`, `EntityType`, `Id` (+505 more)
+- **510 isolated node(s):** `Task 0: MasterData projesini iskeletten gerçek modüle çevir`, `Task 1: Contracts — PartyRef, PartyType, PartyDirectoryEntry, IPartyDirectory, IPartyIdentityResolver`, `Task 2: Domain — Party, PartyRelationship, PartyExternalIdentity + merge invariant tests`, `Task 3: Mimari sınır testi`, `Task 4: Outbox / Idempotency / Evidence (CRM'in şeklinin birebir tekrarı)` (+505 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 690 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -462,12 +462,12 @@ Nodes (3): DateTimeOffset, Guid, ModelBuilder
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Contracts` connect `Contracts` to `OpportunityLine`, `CustomerNeed`, `Party`, `TenantFieldDefinition`, `OutboxMessage`, `PrincipalRef`, `IdempotencyRecord`, `OpportunityNeed`, `MembershipStatus`, `Access.Persistence`, `.Create`, `EvidenceRecord`, `EntityRef`, `.CreateAdminContext`, `IEntityTypeConfiguration`, `Access.Domain.Identity`, `Access.Domain.Authorization`, `EntityVersion`, `.CreateAdminContext`, `CRM.Persistence`, `OpportunityStatus`, `TenantId`, `IHasRowVersion`, `CRM.Domain`?**
-  _High betweenness centrality (0.199) - this node is a cross-community bridge._
+  _High betweenness centrality (0.179) - this node is a cross-community bridge._
 - **Why does `CrmDbContext` connect `CrmDbContext` to `OpportunityLine`, `CustomerNeed`, `MasterDataDbContext`, `TenantFieldDefinition`, `OutboxMessage`, `.CreateAdminContext`, `OpportunityNeed`, `EvidenceRecord`, `TenantId`, `CRM.Domain`, `IdempotencyRecord`?**
-  _High betweenness centrality (0.078) - this node is a cross-community bridge._
-- **Why does `CRM.Persistence` connect `CRM.Persistence` to `CrmDbContext`, `FixCancelExpiryCheck`, `Contracts`, `Migration`, `.BuildModel`, `TenantId`, `CRM.Persistence.Migrations`, `CRM.Domain`, `FixOpportunityAssignedPrincipalIndex`?**
-  _High betweenness centrality (0.078) - this node is a cross-community bridge._
-- **What connects `net10.0`, `Microsoft.NET.Sdk`, `BoundedContext` to the rest of the system?**
+  _High betweenness centrality (0.074) - this node is a cross-community bridge._
+- **Why does `Opportunity` connect `Opportunity` to `OpportunityLine`, `Party`, `PrincipalRef`, `OpportunityNeed`, `OpportunityStatus`, `.NewWaitingOpportunity`, `IHasRowVersion`, `EntityRef`?**
+  _High betweenness centrality (0.062) - this node is a cross-community bridge._
+- **What connects `Task 0: MasterData projesini iskeletten gerçek modüle çevir`, `Task 1: Contracts — PartyRef, PartyType, PartyDirectoryEntry, IPartyDirectory, IPartyIdentityResolver`, `Task 2: Domain — Party, PartyRelationship, PartyExternalIdentity + merge invariant tests` to the rest of the system?**
   _510 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Opportunity` be split into smaller, more focused modules?**
   _Cohesion score 0.07881773399014778 - nodes in this community are weakly interconnected._
