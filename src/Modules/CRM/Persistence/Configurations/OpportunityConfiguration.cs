@@ -25,7 +25,7 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
 
         builder.Property(o => o.Currency).HasMaxLength(3).IsFixedLength().IsRequired();
         builder.Property(o => o.EstimatedAmount).HasColumnType("numeric(19,2)");
-        // Computed value, 4dp — rounded to 2dp exactly once, at the `completed` transition.
+        // Computed value, 4dp — rounded to 2dp exactly once, at the `won` transition.
         builder.Property(o => o.TotalAmount).HasColumnType("numeric(19,4)");
         builder.Property(o => o.CustomFields).HasColumnType("jsonb");
 
@@ -33,12 +33,24 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
         // it inside domain methods; EF captures the original value for the UPDATE ... WHERE.
         builder.Property(o => o.RowVersion).IsConcurrencyToken().IsRequired();
 
-        builder.HasOne<Party>()
+        // PartyRef: tenant-safety via CHECK, no cross-schema FK to MasterData.Party
+        builder.Property(o => o.PartyRefPartyId).IsRequired();
+        builder.Ignore(o => o.PartyRef);
+
+        // Optional pipeline version and stage references — no enforcement yet (Phase 2's ChangePipelineStage does).
+        builder.HasOne<PipelineDefinitionVersion>()
             .WithMany()
-            .HasForeignKey(o => new { o.TenantId, o.PartyId })
-            .HasPrincipalKey(p => new { p.TenantId, p.Id })
+            .HasForeignKey(o => new { o.TenantId, o.PipelineDefinitionVersionId })
+            .HasPrincipalKey(v => new { v.TenantId, v.Id })
             .OnDelete(DeleteBehavior.Restrict)
-            .IsRequired();
+            .IsRequired(false);
+
+        builder.HasOne<PipelineStage>()
+            .WithMany()
+            .HasForeignKey(o => new { o.TenantId, o.PipelineStageId })
+            .HasPrincipalKey(s => new { s.TenantId, s.Id })
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
 
         builder.HasMany(o => o.Lines)
             .WithOne()
@@ -48,23 +60,23 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
 
         builder.ToTable(t =>
         {
-            t.HasCheckConstraint("ck_opportunities_status", "status IN ('waiting','offered','completed','canceled')");
+            t.HasCheckConstraint("ck_opportunities_status", "status IN ('draft','open','won','lost')");
             t.HasCheckConstraint("ck_opportunities_estimated_amount_non_negative", "estimated_amount >= 0");
-            // waiting → offered is a DB-enforced gate (17 §2): expiry_date required once offered.
-            // expiry_date yalnızca offered/completed durumlarında zorunlu. Eski ifade
-            // (status = 'waiting' OR ...) waiting → canceled geçişini de kapsıyordu ve
-            // teklif verilmemiş bir opportunity'nin iptalini imkansız kılıyordu.
+            // draft → open is a DB-enforced gate (17 §2): expiry_date required once open.
+            // expiry_date yalnızca open/won durumlarında zorunlu. Eski ifade
+            // (status = 'draft' OR ...) teklif verilmemiş bir opportunity'nin kaybedilmesini imkansız kılıyordu.
             t.HasCheckConstraint(
-                "ck_opportunities_expiry_required_once_offered",
-                "status NOT IN ('offered','completed') OR expiry_date IS NOT NULL");
-            t.HasCheckConstraint("ck_opportunities_sale_date_required_once_completed", "status <> 'completed' OR sale_date IS NOT NULL");
+                "ck_opportunities_expiry_required_once_open",
+                "status NOT IN ('open','won') OR expiry_date IS NOT NULL");
+            t.HasCheckConstraint("ck_opportunities_won_date_required_once_won", "status <> 'won' OR won_date IS NOT NULL");
             t.HasCheckConstraint(
-                "ck_opportunities_cancel_fields_required_once_canceled",
-                "status <> 'canceled' OR (cancel_date IS NOT NULL AND cancel_reason IS NOT NULL)");
+                "ck_opportunities_lost_fields_required_once_lost",
+                "status <> 'lost' OR (lost_date IS NOT NULL AND lost_reason IS NOT NULL)");
+            t.HasCheckConstraint("ck_opportunities_party_ref_party_id_positive", "party_ref_party_id > 0");
         });
 
         builder.HasIndex(o => new { o.TenantId, o.Status });
-        builder.HasIndex(o => new { o.TenantId, o.PartyId });
+        builder.HasIndex(o => new { o.TenantId, o.PartyRefPartyId });
         // Issuer+subject together, matching PrincipalRef's own identity pair (doc 19 §9
         // amendment) — an index on subject alone contradicted the primitive it indexes.
         // Explicit short name: EF Core's auto-generated name exceeds Postgres's 63-byte
@@ -76,19 +88,19 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
 
     private static string ToDb(OpportunityStatus status) => status switch
     {
-        OpportunityStatus.Waiting => "waiting",
-        OpportunityStatus.Offered => "offered",
-        OpportunityStatus.Completed => "completed",
-        OpportunityStatus.Canceled => "canceled",
+        OpportunityStatus.Draft => "draft",
+        OpportunityStatus.Open => "open",
+        OpportunityStatus.Won => "won",
+        OpportunityStatus.Lost => "lost",
         _ => throw new ArgumentOutOfRangeException(nameof(status))
     };
 
     private static OpportunityStatus FromDb(string value) => value switch
     {
-        "waiting" => OpportunityStatus.Waiting,
-        "offered" => OpportunityStatus.Offered,
-        "completed" => OpportunityStatus.Completed,
-        "canceled" => OpportunityStatus.Canceled,
+        "draft" => OpportunityStatus.Draft,
+        "open" => OpportunityStatus.Open,
+        "won" => OpportunityStatus.Won,
+        "lost" => OpportunityStatus.Lost,
         _ => throw new ArgumentOutOfRangeException(nameof(value))
     };
 }

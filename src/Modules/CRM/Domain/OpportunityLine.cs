@@ -50,7 +50,7 @@ public sealed class OpportunityLine
             UnitPrice = unitPrice,
             IsOptional = isOptional,
             SortOrder = sortOrder,
-            // Hesaplanan değer: 4 hanede tutulur; yuvarlama yalnızca Opportunity.Complete()'te.
+            // Hesaplanan değer: 4 hanede tutulur; yuvarlama yalnızca Opportunity.Win()'te.
             LineTotal = decimal.Round(quantity * unitPrice, 4, MidpointRounding.AwayFromZero),
             CreatedAt = DateTimeOffset.UtcNow
         };

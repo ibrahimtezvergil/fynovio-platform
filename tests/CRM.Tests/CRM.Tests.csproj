@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Modules\CRM\CRM.csproj" />
+    <ProjectReference Include="..\..\src\Modules\MasterData\MasterData.csproj" />
   </ItemGroup>
 
 </Project>

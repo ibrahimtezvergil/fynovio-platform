@@ -1,33 +1,44 @@
 # CRM+Sales pilot schema (PostgreSQL, `crm` schema)
 
-Physical schema for the merged CRM+Sales pilot aggregate decided in
+Physical schema for the CRM module decided in
 `docs/architecture-analysis/17_CRM_SALES_PILOT_DOMAIN.md` (in the research
-project, sibling to this repo). Revision 4 (2026-09-16) — Revision 3's design is
-implemented in `src/Modules/CRM/`; the implementation-side corrections are recorded
-in "Revision 4" at the end of this file.
+project, sibling to this repo). Revision 5 (2026-09-16) — Phase 1's Lifecycle and
+Pipeline foundation; Revisions 1-4's design already implemented; Phase 1 changes
+recorded in "Revision 5" at the end of this file.
 
 ## Diagram
 
 ```mermaid
 erDiagram
-    PARTIES ||--o{ OPPORTUNITIES : "referenced by"
     OPPORTUNITIES ||--o{ OPPORTUNITY_LINES : contains
     OPPORTUNITIES ||--o{ OPPORTUNITY_NEEDS : contains
     CUSTOMER_NEEDS ||--o{ OPPORTUNITY_NEEDS : "selected via"
-    PARTIES ||--o{ PARTIES : "merged_into_party_id (AI-record merge)"
+    PIPELINE_DEFINITION_VERSIONS ||--o{ PIPELINE_STAGES : contains
+    PIPELINE_DEFINITIONS ||--o{ PIPELINE_DEFINITION_VERSIONS : versions
 
-    PARTIES {
+    PIPELINE_DEFINITIONS {
         bigint id PK
         bigint tenant_id "NOT NULL, UNIQUE(tenant_id,id)"
-        text name "NOT NULL"
-        text surname
-        text phone
-        text email
-        text creation_source "CHECK: manual | ai_voice_capture"
-        bigint merged_into_party_id FK "self-FK, nullable, tenant-safe composite"
-        jsonb custom_fields "tier-1 tenant fields"
+        text name "NOT NULL, UNIQUE(tenant_id,name)"
         timestamptz created_at
         timestamptz updated_at
+    }
+
+    PIPELINE_DEFINITION_VERSIONS {
+        bigint id PK
+        bigint tenant_id "NOT NULL"
+        bigint pipeline_definition_id FK "NOT NULL, tenant-safe composite"
+        int version_number "NOT NULL, UNIQUE(tenant_id,pipeline_definition_id,version_number)"
+        timestamptz created_at
+    }
+
+    PIPELINE_STAGES {
+        bigint id PK
+        bigint tenant_id "NOT NULL"
+        bigint pipeline_definition_version_id FK "NOT NULL, tenant-safe composite"
+        text name "NOT NULL, UNIQUE(tenant_id,pipeline_definition_version_id,name)"
+        int sort_order "NOT NULL, UNIQUE(tenant_id,pipeline_definition_version_id,sort_order)"
+        timestamptz created_at
     }
 
     CUSTOMER_NEEDS {
@@ -47,18 +58,20 @@ erDiagram
     OPPORTUNITIES {
         bigint id PK
         bigint tenant_id "NOT NULL, UNIQUE(tenant_id,id)"
-        bigint party_id FK "NOT NULL, tenant-safe composite -> parties"
+        bigint party_ref_party_id "PartyRef's PartyId half, CHECK > 0, no FK (Party in MasterData) — TenantId half is this row's own tenant_id, not a stored column"
         text assigned_principal_issuer "PrincipalRef, no FK (Identity module)"
         text assigned_principal_subject "PrincipalRef, no FK (Identity module)"
-        text status "CHECK: waiting|offered|completed|canceled (no refund — pilot scope)"
-        text cancel_reason
+        text status "CHECK: draft|open|won|lost (Phase 1 lifecycle foundation)"
+        text lost_reason "nullable, replaces cancel_reason"
         char_3 currency "NOT NULL"
         numeric_19_2 estimated_amount "entered, 2dp, CHECK >= 0"
         numeric_19_4 total_amount "computed, 4dp, nullable"
-        timestamptz expiry_date "NOT NULL once offered/completed (CHECK)"
-        timestamptz offer_date
-        timestamptz sale_date "NOT NULL once completed (CHECK)"
-        timestamptz cancel_date "NOT NULL once canceled (CHECK)"
+        timestamptz expiry_date "NOT NULL once open/won (CHECK, unchanged from Revision 4 aside from the rename)"
+        timestamptz opened_date "nullable (replaces offer_date)"
+        timestamptz won_date "nullable (replaces sale_date)"
+        timestamptz lost_date "nullable (replaces cancel_date)"
+        bigint pipeline_definition_version_id "nullable, unenforced (Phase 1)"
+        bigint pipeline_stage_id "nullable, unenforced (Phase 1)"
         jsonb custom_fields "tier-1 tenant fields"
         bigint row_version "NOT NULL DEFAULT 1, EF Core concurrency token"
         timestamptz created_at
@@ -202,8 +215,21 @@ Implemented against the binding core recorded in `AGENTS.md` ("Enforcement Scope
 15. **RLS is implemented** (migration `EnableRowLevelSecurity`, the one hand-written migration body `AGENTS.md` permits). All nine tables above are `ENABLE` + `FORCE ROW LEVEL SECURITY` with a `tenant_isolation` policy on `tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::bigint` for both `USING` and `WITH CHECK`. `NULLIF` is required: after a transaction-local setting ends, `current_setting` returns `''` rather than `NULL` on that pooled connection, and `''::bigint` fails. The application sets the value per transaction with `CrmDbContextTenantExtensions.SetTenantContextAsync`, which refuses to run outside an explicit transaction. The runtime role is created by `scripts/create-runtime-role.sql`, which also revokes `UPDATE`/`DELETE` on `evidence_records` (append-only at the privilege level, not just by convention).
 16. **First command.** `CRM.Application.CompleteOpportunityHandler` writes the state change, outbox row, evidence row and idempotency record in one `SaveChanges()` inside one transaction, with the tenant context set on that transaction. Outbox: `enterprise.crmsales.opportunity.completed.v1`, source `/enterprise/crm-sales`, subject `opportunities/{id}`. A retry with the same key replays the stored response; the same key with a different request throws `IdempotencyKeyReusedException`; another tenant's opportunity is reported as `OpportunityNotFoundException`.
 
+## Revision 5 (2026-09-16): Lifecycle/Pipeline foundation (Phase 1)
+
+Lifecycle and Pipeline infrastructure, replacing Revision 4's Waiting/Offered/Completed/Canceled lifecycle with the Phase 1 target model's Draft/Open/Won/Lost states, and adding tenant-configurable pipeline stages versioned by definition.
+
+17. **`OpportunityStatus` lifecycle values renamed.** `Waiting → Draft`, `Offered → Open`, `Completed → Won`, `Canceled → Lost`. Methods renamed to match: `Offer()→Open()`, `Complete()→Win()`, `Cancel()→Lose()`. New CHECK constraint: `ck_opportunities_status` with values `('draft','open','won','lost')`. Date/reason fields renamed: `offer_date → opened_date`, `sale_date → won_date`, `cancel_reason → lost_reason`, `cancel_date → lost_date`. All four related state-machine CHECK constraints renamed and updated (including `ck_opportunities_expiry_required_once_open`, see item 20 below). Pure rename — no behavioral change, the state machine logic and all guard clauses are identical, only the vocabulary changed. `CancelLine`/line-level cancellation is unrelated vocabulary and was intentionally left unrenamed.
+
+18. **`Party` moved to the `masterdata` module, `Opportunity.PartyRef` replaces `Opportunity.PartyId`.** The CRM schema no longer contains a `parties` table. `Opportunity` now carries a single `party_ref_party_id` column (the `PartyRef`'s `TenantId` half is the opportunity's own `tenant_id` — not a second stored column, since it must always match and a separate column inviting drift would be worse than deriving it). No FK is possible (`MasterData` is a separate schema/module); tenant-safety is recovered by a domain-level guard in `Opportunity.Create(...)` (`partyRef.TenantId == tenantId`) plus a CHECK constraint: `ck_opportunities_party_ref_party_id_positive` ensures `party_ref_party_id > 0`. This is Phase 1 Task 3's data migration and domain model cutover; `crm.parties`' existing rows were backfilled into `masterdata.parties` (defaulting `party_type = 'organization'`) before the table was dropped.
+
+19. **Three new pipeline tables: `pipeline_definitions`, `pipeline_definition_versions`, `pipeline_stages`.** Tenant-scoped, versioned pipeline configuration, purely additive. A `pipeline_definitions` row (just `id`/`tenant_id`/`name`) is the parent; `pipeline_definition_versions` versions it by an integer `version_number` — editing an in-use definition's stages never remaps opportunities already pointing at an older version, since each version's stages are independent (two versions can freely reuse the same stage names/sort orders). Each version contains N `pipeline_stages` (`name`, `sort_order`), unique per version. `Opportunity` gains two nullable columns with no setter and no domain method assigning them (`pipeline_definition_version_id`, `pipeline_stage_id`) — not yet used by any command, reserved for a later phase's `ChangePipelineStage`. All three tables carry `tenant_id` and tenant-safe composite FKs (`DeleteBehavior.Restrict`). Each gets RLS policies matching every other table.
+
+20. **`expiry_date`'s required-once-`Open` CHECK is unchanged, just renamed.** `ck_opportunities_expiry_required_once_offered` → `ck_opportunities_expiry_required_once_open`, same expression shape (`status NOT IN ('open','won') OR expiry_date IS NOT NULL`), same mechanism as before this task — `expiry_date` was already a nullable column with a conditional CHECK in Revision 4, and stays exactly that.
+
 **Still open on this schema:**
 - `row_version` has no database-level `DEFAULT 1` (the diagram above says it should). EF always writes the value, but raw SQL inserts (seeds, legacy import) would fail.
 - Expired idempotency records are still replayed, and nothing purges them yet.
 - Two concurrent first attempts with the same key: the loser gets a unique-violation `DbUpdateException`, not the replayed response, so the caller has to retry.
 - `estimated_amount` is still supplied by the caller instead of being summed from the selected `customer_needs` (revision 2, item 2).
+- Pipeline stages are not enforced on Opportunity state machine transitions yet (Phase 2 concern).

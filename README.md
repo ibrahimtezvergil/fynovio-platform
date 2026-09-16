@@ -2,7 +2,7 @@
 
 Modular-monolith backend for Fynovio, a multi-tenant B2B SaaS platform. Built on .NET 10 / C# 13 with PostgreSQL, following a strict module-boundary architecture designed to scale toward eventual service extraction without paying microservice tax up front.
 
-> **Status:** early-stage. Implemented: the `Contracts` project; the `CRM` module (entities, EF Core mapping, migrations with Row-Level Security, and a first command, `CompleteOpportunity`); the `MasterData` module's Party foundation (`Party`/`PartyRelationship`/`PartyExternalIdentity`, RLS, `CreateParty`/`MergeParty`/`ResolveOrCreateParty`, `IPartyDirectory`/`IPartyIdentityResolver` wired into `Host`); the `Access` module's Identity+Access schema (entities and first migration). `Organization` and `TenantLifecycle` are placeholders. `Host` registers the CRM and MasterData `DbContext`s and exposes only `/` and `/health/db`; `Worker` is still the template. There are CRM and MasterData test suites and a CI workflow.
+> **Status:** early-stage. **Phase 1 (Lifecycle/Pipeline foundation) complete.** Implemented: the `Contracts` project (now with `PartyRef`, `PartyType`, `PartyDirectoryEntry`, `IPartyDirectory`, `IPartyIdentityResolver`); the `CRM` module (entities with Phase 1 lifecycle/pipeline shapes, EF Core mapping, 10 migrations including RLS, `CompleteOpportunity` command); the `MasterData` module's Party foundation (`Party`/`PartyRelationship`/`PartyExternalIdentity` with `party_type`, RLS, commands, contracts implementations wired into `Host`); the `Access` module's Identity+Access schema (entities and first migration — no RLS, tests or Host registration yet). `Organization` and `TenantLifecycle` are placeholders. `Host` registers CRM and MasterData `DbContext`s and exposes `/`, `/health/db`. Test suites: `tests/CRM.Tests` (46 tests), `tests/MasterData.Tests` (30 tests), both green locally. CI workflow present, not yet run against this branch.
 
 ## Architecture
 
@@ -28,11 +28,12 @@ src/
                          MasterData DbContexts
   Worker/               .NET Worker Service composition root (background jobs) — template only
   Modules/
-    CRM/                Pilot module: Parties, Opportunities, Opportunity Lines/Needs,
-                         Customer Needs, tenant field customization, outbox,
-                         idempotency, evidence records, the CompleteOpportunity
-                         command, EF Core persistence and migrations with RLS
-                         (PostgreSQL schema: crm)
+    CRM/                Pilot module: Opportunities (Draft/Open/Won/Lost lifecycle),
+                         Pipeline stages (versioned by definition), Opportunity
+                         Lines/Needs, Customer Needs, tenant field customization, outbox,
+                         idempotency, evidence records, the CompleteOpportunity command,
+                         references Party via PartyRef to masterdata, EF Core persistence
+                         and migrations with RLS (PostgreSQL schema: crm)
     Access/              Identity+Access schema: accounts, external identities,
                          tenant memberships, roles, permissions, role assignments
                          (PostgreSQL schemas: identity, access)

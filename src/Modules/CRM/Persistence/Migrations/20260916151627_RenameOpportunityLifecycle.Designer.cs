@@ -3,6 +3,7 @@ using System;
 using CRM.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM.Persistence.Migrations
 {
     [DbContext(typeof(CrmDbContext))]
-    partial class CrmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260916151627_RenameOpportunityLifecycle")]
+    partial class RenameOpportunityLifecycle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -168,17 +171,9 @@ namespace CRM.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("opened_date");
 
-                    b.Property<long>("PartyRefPartyId")
+                    b.Property<long>("PartyId")
                         .HasColumnType("bigint")
-                        .HasColumnName("party_ref_party_id");
-
-                    b.Property<long?>("PipelineDefinitionVersionId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("pipeline_definition_version_id");
-
-                    b.Property<long?>("PipelineStageId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("pipeline_stage_id");
+                        .HasColumnName("party_id");
 
                     b.Property<long>("RowVersion")
                         .IsConcurrencyToken()
@@ -216,14 +211,8 @@ namespace CRM.Persistence.Migrations
                     b.HasIndex("TenantId", "CreatedAt")
                         .HasDatabaseName("ix_opportunities_tenant_id_created_at");
 
-                    b.HasIndex("TenantId", "PartyRefPartyId")
-                        .HasDatabaseName("ix_opportunities_tenant_id_party_ref_party_id");
-
-                    b.HasIndex("TenantId", "PipelineDefinitionVersionId")
-                        .HasDatabaseName("ix_opportunities_tenant_id_pipeline_definition_version_id");
-
-                    b.HasIndex("TenantId", "PipelineStageId")
-                        .HasDatabaseName("ix_opportunities_tenant_id_pipeline_stage_id");
+                    b.HasIndex("TenantId", "PartyId")
+                        .HasDatabaseName("ix_opportunities_tenant_id_party_id");
 
                     b.HasIndex("TenantId", "Status")
                         .HasDatabaseName("ix_opportunities_tenant_id_status");
@@ -238,8 +227,6 @@ namespace CRM.Persistence.Migrations
                             t.HasCheckConstraint("ck_opportunities_expiry_required_once_open", "status NOT IN ('open','won') OR expiry_date IS NOT NULL");
 
                             t.HasCheckConstraint("ck_opportunities_lost_fields_required_once_lost", "status <> 'lost' OR (lost_date IS NOT NULL AND lost_reason IS NOT NULL)");
-
-                            t.HasCheckConstraint("ck_opportunities_party_ref_party_id_positive", "party_ref_party_id > 0");
 
                             t.HasCheckConstraint("ck_opportunities_status", "status IN ('draft','open','won','lost')");
 
@@ -353,7 +340,7 @@ namespace CRM.Persistence.Migrations
                     b.ToTable("opportunity_needs", "crm");
                 });
 
-            modelBuilder.Entity("CRM.Domain.PipelineDefinition", b =>
+            modelBuilder.Entity("CRM.Domain.Party", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -366,10 +353,36 @@ namespace CRM.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("CreationSource")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("creation_source");
+
+                    b.Property<string>("CustomFields")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("custom_fields");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text")
+                        .HasColumnName("email");
+
+                    b.Property<long?>("MergedIntoPartyId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("merged_into_party_id");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("name");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text")
+                        .HasColumnName("phone");
+
+                    b.Property<string>("Surname")
+                        .HasColumnType("text")
+                        .HasColumnName("surname");
 
                     b.Property<long>("TenantId")
                         .HasColumnType("bigint")
@@ -380,101 +393,21 @@ namespace CRM.Persistence.Migrations
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id")
-                        .HasName("pk_pipeline_definitions");
+                        .HasName("pk_parties");
 
                     b.HasAlternateKey("TenantId", "Id")
-                        .HasName("ak_pipeline_definitions_tenant_id_id");
+                        .HasName("ak_parties_tenant_id_id");
 
-                    b.HasIndex("TenantId", "Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_pipeline_definitions_tenant_id_name");
+                    b.HasIndex("TenantId", "Email")
+                        .HasDatabaseName("ix_parties_tenant_id_email");
 
-                    b.ToTable("pipeline_definitions", "crm");
-                });
+                    b.HasIndex("TenantId", "MergedIntoPartyId")
+                        .HasDatabaseName("ix_parties_tenant_id_merged_into_party_id");
 
-            modelBuilder.Entity("CRM.Domain.PipelineDefinitionVersion", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<long>("PipelineDefinitionId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("pipeline_definition_id");
-
-                    b.Property<long>("TenantId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("tenant_id");
-
-                    b.Property<int>("VersionNumber")
-                        .HasColumnType("integer")
-                        .HasColumnName("version_number");
-
-                    b.HasKey("Id")
-                        .HasName("pk_pipeline_definition_versions");
-
-                    b.HasAlternateKey("TenantId", "Id")
-                        .HasName("ak_pipeline_definition_versions_tenant_id_id");
-
-                    b.HasIndex("TenantId", "PipelineDefinitionId", "VersionNumber")
-                        .IsUnique()
-                        .HasDatabaseName("ix_pipeline_definition_versions_tenant_id_pipeline_definition_");
-
-                    b.ToTable("pipeline_definition_versions", "crm");
-                });
-
-            modelBuilder.Entity("CRM.Domain.PipelineStage", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<long>("PipelineDefinitionVersionId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("pipeline_definition_version_id");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("integer")
-                        .HasColumnName("sort_order");
-
-                    b.Property<long>("TenantId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("tenant_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_pipeline_stages");
-
-                    b.HasAlternateKey("TenantId", "Id")
-                        .HasName("ak_pipeline_stages_tenant_id_id");
-
-                    b.HasIndex("TenantId", "PipelineDefinitionVersionId", "Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_pipeline_stages_tenant_id_pipeline_definition_version_id_na");
-
-                    b.HasIndex("TenantId", "PipelineDefinitionVersionId", "SortOrder")
-                        .IsUnique()
-                        .HasDatabaseName("ix_pipeline_stages_tenant_id_pipeline_definition_version_id_so");
-
-                    b.ToTable("pipeline_stages", "crm");
+                    b.ToTable("parties", "crm", t =>
+                        {
+                            t.HasCheckConstraint("ck_parties_creation_source", "creation_source IN ('manual', 'ai_voice_capture')");
+                        });
                 });
 
             modelBuilder.Entity("CRM.Evidence.EvidenceRecord", b =>
@@ -681,19 +614,13 @@ namespace CRM.Persistence.Migrations
 
             modelBuilder.Entity("CRM.Domain.Opportunity", b =>
                 {
-                    b.HasOne("CRM.Domain.PipelineDefinitionVersion", null)
+                    b.HasOne("CRM.Domain.Party", null)
                         .WithMany()
-                        .HasForeignKey("TenantId", "PipelineDefinitionVersionId")
+                        .HasForeignKey("TenantId", "PartyId")
                         .HasPrincipalKey("TenantId", "Id")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_opportunities_pipeline_definition_versions_tenant_id_pipeli");
-
-                    b.HasOne("CRM.Domain.PipelineStage", null)
-                        .WithMany()
-                        .HasForeignKey("TenantId", "PipelineStageId")
-                        .HasPrincipalKey("TenantId", "Id")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_opportunities_pipeline_stages_tenant_id_pipeline_stage_id");
+                        .IsRequired()
+                        .HasConstraintName("fk_opportunities_parties_tenant_id_party_id");
                 });
 
             modelBuilder.Entity("CRM.Domain.OpportunityLine", b =>
@@ -726,26 +653,14 @@ namespace CRM.Persistence.Migrations
                         .HasConstraintName("fk_opportunity_needs_opportunities_tenant_id_opportunity_id");
                 });
 
-            modelBuilder.Entity("CRM.Domain.PipelineDefinitionVersion", b =>
+            modelBuilder.Entity("CRM.Domain.Party", b =>
                 {
-                    b.HasOne("CRM.Domain.PipelineDefinition", null)
+                    b.HasOne("CRM.Domain.Party", null)
                         .WithMany()
-                        .HasForeignKey("TenantId", "PipelineDefinitionId")
+                        .HasForeignKey("TenantId", "MergedIntoPartyId")
                         .HasPrincipalKey("TenantId", "Id")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_pipeline_definition_versions_pipeline_definitions_tenant_id");
-                });
-
-            modelBuilder.Entity("CRM.Domain.PipelineStage", b =>
-                {
-                    b.HasOne("CRM.Domain.PipelineDefinitionVersion", null)
-                        .WithMany()
-                        .HasForeignKey("TenantId", "PipelineDefinitionVersionId")
-                        .HasPrincipalKey("TenantId", "Id")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_pipeline_stages_pipeline_definition_versions_tenant_id_pipe");
+                        .HasConstraintName("fk_parties_parties_tenant_id_merged_into_party_id");
                 });
 
             modelBuilder.Entity("CRM.Domain.Opportunity", b =>

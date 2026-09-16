@@ -1,3 +1,4 @@
+using Contracts;
 using CRM.Domain;
 using Xunit;
 
@@ -5,18 +6,18 @@ namespace CRM.Tests.Domain;
 
 public sealed class OpportunityStateMachineTests
 {
-    private static Opportunity NewWaitingOpportunity()
+    private static Opportunity NewDraftOpportunity()
     {
         var tenant = TestData.NextTenant();
-        return Opportunity.Create(tenant, partyId: 1, TestData.Seller, "TRY", estimatedAmount: 1000m);
+        return Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", estimatedAmount: 1000m);
     }
 
     [Fact]
-    public void Create_starts_in_waiting()
+    public void Create_starts_in_draft()
     {
-        var opportunity = NewWaitingOpportunity();
+        var opportunity = NewDraftOpportunity();
 
-        Assert.Equal(OpportunityStatus.Waiting, opportunity.Status);
+        Assert.Equal(OpportunityStatus.Draft, opportunity.Status);
         Assert.Null(opportunity.ExpiryDate);
     }
 
@@ -26,85 +27,85 @@ public sealed class OpportunityStateMachineTests
         var tenant = TestData.NextTenant();
 
         Assert.Throws<ArgumentException>(() =>
-            Opportunity.Create(tenant, partyId: 1, TestData.Seller, "TRYX", 1000m));
+            Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRYX", 1000m));
     }
 
     [Fact]
-    public void Offer_requires_a_future_expiry_date()
+    public void Open_requires_a_future_expiry_date()
     {
-        var opportunity = NewWaitingOpportunity();
+        var opportunity = NewDraftOpportunity();
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            opportunity.Offer(DateTimeOffset.UtcNow.AddDays(-1)));
+            opportunity.Open(DateTimeOffset.UtcNow.AddDays(-1)));
     }
 
     [Fact]
-    public void Offer_moves_to_offered_and_stamps_offer_date()
+    public void Open_moves_to_open_and_stamps_opened_date()
     {
-        var opportunity = NewWaitingOpportunity();
+        var opportunity = NewDraftOpportunity();
 
-        opportunity.Offer(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
 
-        Assert.Equal(OpportunityStatus.Offered, opportunity.Status);
-        Assert.NotNull(opportunity.OfferDate);
+        Assert.Equal(OpportunityStatus.Open, opportunity.Status);
+        Assert.NotNull(opportunity.OpenedDate);
         Assert.NotNull(opportunity.ExpiryDate);
     }
 
     [Fact]
-    public void Complete_is_rejected_while_waiting()
+    public void Win_is_rejected_while_draft()
     {
-        var opportunity = NewWaitingOpportunity();
+        var opportunity = NewDraftOpportunity();
 
-        Assert.Throws<InvalidOperationException>(() => opportunity.Complete());
+        Assert.Throws<InvalidOperationException>(() => opportunity.Win());
     }
 
     [Fact]
-    public void Complete_is_rejected_without_an_active_required_line()
+    public void Win_is_rejected_without_an_active_required_line()
     {
-        var opportunity = NewWaitingOpportunity();
+        var opportunity = NewDraftOpportunity();
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m, isOptional: true);
-        opportunity.Offer(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
 
-        Assert.Throws<InvalidOperationException>(() => opportunity.Complete());
+        Assert.Throws<InvalidOperationException>(() => opportunity.Win());
     }
 
     [Fact]
-    public void Complete_succeeds_with_one_active_required_line()
+    public void Win_succeeds_with_one_active_required_line()
     {
-        var opportunity = NewWaitingOpportunity();
+        var opportunity = NewDraftOpportunity();
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 2, unitPrice: 50m);
-        opportunity.Offer(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
 
-        opportunity.Complete();
+        opportunity.Win();
 
-        Assert.Equal(OpportunityStatus.Completed, opportunity.Status);
-        Assert.NotNull(opportunity.SaleDate);
+        Assert.Equal(OpportunityStatus.Won, opportunity.Status);
+        Assert.NotNull(opportunity.WonDate);
     }
 
     [Fact]
-    public void Cancel_requires_a_reason()
+    public void Lose_requires_a_reason()
     {
-        var opportunity = NewWaitingOpportunity();
+        var opportunity = NewDraftOpportunity();
 
-        Assert.Throws<ArgumentException>(() => opportunity.Cancel("  "));
+        Assert.Throws<ArgumentException>(() => opportunity.Lose("  "));
     }
 
     [Fact]
-    public void Cancel_from_waiting_is_allowed()
+    public void Lose_from_draft_is_allowed()
     {
-        var opportunity = NewWaitingOpportunity();
+        var opportunity = NewDraftOpportunity();
 
-        opportunity.Cancel("müşteri vazgeçti");
+        opportunity.Lose("müşteri vazgeçti");
 
-        Assert.Equal(OpportunityStatus.Canceled, opportunity.Status);
-        Assert.NotNull(opportunity.CancelDate);
+        Assert.Equal(OpportunityStatus.Lost, opportunity.Status);
+        Assert.NotNull(opportunity.LostDate);
     }
 
     [Fact]
-    public void AddLine_is_rejected_after_offer()
+    public void AddLine_is_rejected_after_open()
     {
-        var opportunity = NewWaitingOpportunity();
-        opportunity.Offer(DateTimeOffset.UtcNow.AddDays(7));
+        var opportunity = NewDraftOpportunity();
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
 
         Assert.Throws<InvalidOperationException>(() =>
             opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 10m));

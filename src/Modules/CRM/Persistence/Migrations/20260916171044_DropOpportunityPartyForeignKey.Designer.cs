@@ -3,6 +3,7 @@ using System;
 using CRM.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM.Persistence.Migrations
 {
     [DbContext(typeof(CrmDbContext))]
-    partial class CrmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260916171044_DropOpportunityPartyForeignKey")]
+    partial class DropOpportunityPartyForeignKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -351,6 +354,76 @@ namespace CRM.Persistence.Migrations
                         .HasDatabaseName("ix_opportunity_needs_tenant_id_customer_need_id");
 
                     b.ToTable("opportunity_needs", "crm");
+                });
+
+            modelBuilder.Entity("CRM.Domain.Party", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreationSource")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("creation_source");
+
+                    b.Property<string>("CustomFields")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("custom_fields");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text")
+                        .HasColumnName("email");
+
+                    b.Property<long?>("MergedIntoPartyId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("merged_into_party_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text")
+                        .HasColumnName("phone");
+
+                    b.Property<string>("Surname")
+                        .HasColumnType("text")
+                        .HasColumnName("surname");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_parties");
+
+                    b.HasAlternateKey("TenantId", "Id")
+                        .HasName("ak_parties_tenant_id_id");
+
+                    b.HasIndex("TenantId", "Email")
+                        .HasDatabaseName("ix_parties_tenant_id_email");
+
+                    b.HasIndex("TenantId", "MergedIntoPartyId")
+                        .HasDatabaseName("ix_parties_tenant_id_merged_into_party_id");
+
+                    b.ToTable("parties", "crm", t =>
+                        {
+                            t.HasCheckConstraint("ck_parties_creation_source", "creation_source IN ('manual', 'ai_voice_capture')");
+                        });
                 });
 
             modelBuilder.Entity("CRM.Domain.PipelineDefinition", b =>
@@ -724,6 +797,16 @@ namespace CRM.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_opportunity_needs_opportunities_tenant_id_opportunity_id");
+                });
+
+            modelBuilder.Entity("CRM.Domain.Party", b =>
+                {
+                    b.HasOne("CRM.Domain.Party", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "MergedIntoPartyId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_parties_parties_tenant_id_merged_into_party_id");
                 });
 
             modelBuilder.Entity("CRM.Domain.PipelineDefinitionVersion", b =>

@@ -232,7 +232,7 @@ started — this table is the roadmap, not the script.
 |---|---|---|---|
 | 0 — Inspect / Delta Plan | This document + `docs/plans/2026-09-16-masterdata-party-foundation.md` | — | ✅ Done |
 | **0.5 — MasterData / Party foundation** *(new, 2026-09-16)* | `Party` (+`party_type`), `PartyRelationship`, `PartyExternalIdentity` in a new, previously-placeholder `MasterData` module; `PartyRef`/`IPartyDirectory`/`IPartyIdentityResolver` in `Contracts`; own RLS, own outbox, own idempotency, `tests/MasterData.Tests`. Built and tested **fully isolated from CRM** — `crm.parties` untouched. Design: `docs/plans/2026-09-16-masterdata-party-foundation.md`. Execution plan: `docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md` (11 tasks, all committed). | Nothing — this is now the foundation everything else sits on | ✅ Done — `tests/MasterData.Tests` 30/30, `tests/CRM.Tests` 41/41 (no regression) |
-| 1 — Lifecycle/Pipeline foundation | `OpportunityStatus` → `Draft/Open/Won/Lost`; new `pipeline_definitions`/`pipeline_definition_versions`/`pipeline_stages` tables + entities in `CRM.Domain`; `Opportunity` is built **directly** against `PartyRef` (no interim `long PartyId`+FK step — that would just be reworked at the old Phase 5); `OpportunityLine` left structurally untouched per §5.B (no destructive rewrite — it's flagged as a legacy/pilot artifact, not restructured); compatibility mapping so existing tests are updated, not silently broken | Phase 0.5 (done — so `Opportunity.PartyRef` is built once, correctly, not twice) | 🟡 Execution plan written (`docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md`), not yet run |
+| 1 — Lifecycle/Pipeline foundation | `OpportunityStatus` → `Draft/Open/Won/Lost`; new `pipeline_definitions`/`pipeline_definition_versions`/`pipeline_stages` tables + entities in `CRM.Domain`; `Opportunity` is built **directly** against `PartyRef` (no interim `long PartyId`+FK step — that would just be reworked at the old Phase 5); `OpportunityLine` left structurally untouched per §5.B (no destructive rewrite — it's flagged as a legacy/pilot artifact, not restructured); compatibility mapping so existing tests are updated, not silently broken | Phase 0.5 (done — so `Opportunity.PartyRef` is built once, correctly, not twice) | ✅ Done — `tests/CRM.Tests` 46/46, `tests/MasterData.Tests` 30/30 (no regression) |
 | **1.5 — Access enforcement baseline** *(new, 2026-09-16, per §5.D)* | Bring `Access` to the same enforcement-scope baseline CRM/MasterData already met: Host registration, tenant isolation/RLS where applicable, an authorization contract/policy, `tests/Access.Tests` (integration + architecture). No always-allow stub. | Independent of Phase 1's domain-model work — runs in **parallel** with Phase 1, not after it | ⚪ Not started — own execution plan not yet written |
 | 2 — Opportunity commands/API | `CreateOpportunity`, `OpenOpportunity`, `ChangePipelineStage`, `Add/Confirm/RejectOpportunityNeed`, `WinOpportunity`, `LoseOpportunity`, `ReopenOpportunity` (if enabled) as real `CRM.Application` commands + first HTTP endpoints; each gets idempotency, evidence (for risk-catalogued ones), outbox, RLS test coverage matching `CompleteOpportunityHandlerTests`'s pattern; `WinOpportunity` gets a real authorization gate per §5.A (no mandatory approval workflow, but no always-allow either) | Phase 1 **and** Phase 1.5 (Access baseline) both complete — §5.D's explicit prerequisite | ⚪ Not started |
 | 3 — Customer Need capability | `OpportunityNeed`/`CustomerNeed` gain `Source`/`Confidence`/`ConfirmationStatus`/`EvidenceRef`/`EstimatedValueSnapshot`; `estimated_amount` derivation from confirmed needs (closes an already-tracked gap) | Phase 2 (needs a real command surface to attach to) | ⚪ Not started |
@@ -378,6 +378,18 @@ Per Section 9 item 2's own promise. Full reasoning lives in
   all explicitly deferred, none scheduled. `OpportunityLine`'s exact Phase 5 physical
   fate (rename+move vs. fork) is a Phase 5-time decision, not resolved now — §5.B only
   settled *ownership* (Sales), not the migration mechanics.
+
+**Phase 1 complete (2026-09-16):** `Opportunity` now references Party by `PartyRef` as
+decided above — implemented as a single `party_ref_party_id` column (the `TenantId`
+half is `Opportunity`'s own `tenant_id`, not a second stored column) with tenant-safety
+recovered by a domain-level guard in `Opportunity.Create(...)` plus a
+`ck_opportunities_party_ref_party_id_positive` CHECK, rather than the same-table
+`CHECK (party_ref_tenant_id = tenant_id)` sketched above — a minor implementation
+detail, not a reversal of the decision. `OpportunityStatus` renamed to
+`Draft/Open/Won/Lost`; `pipeline_definitions`/`pipeline_definition_versions`/
+`pipeline_stages` added, additive and unenforced. Execution plan:
+`docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md`, all four
+tasks done.
 
 **Next step:** Phase 1's execution plan is written —
 `docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md` — not yet run.
