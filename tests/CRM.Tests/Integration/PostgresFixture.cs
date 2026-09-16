@@ -8,7 +8,8 @@ namespace CRM.Tests.Integration;
 
 /// <summary>Gerçek PostgreSQL üzerinde migration'ları uygular (AGENTS.md: paylaşılan dev
 /// veritabanı yok, Testcontainers). Konteynerin `postgres` kullanıcısı superuser'dır ve
-/// RLS'i bypass eder — yetkisiz runtime rolüyle yapılan izolasyon testi Task 7'de.</summary>
+/// RLS'i bypass eder — izolasyon testleri <see cref="RuntimeConnectionStringAsync"/> ile
+/// yetkisiz rolle çalışır (bkz. TenantIsolationTests).</summary>
 public sealed class PostgresFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:17-alpine")
