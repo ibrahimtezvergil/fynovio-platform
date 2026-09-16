@@ -1,7 +1,7 @@
 # Graph Report - fynovio-platform  (2026-09-16)
 
 ## Corpus Check
-- 177 files · ~78,830 words
+- 177 files · ~78,863 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f9701330`
+- Built from commit: `7214867b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -519,7 +519,7 @@ Cohesion: 0.50
 Nodes (3): DateTimeOffset, Guid, ModelBuilder
 
 ## Knowledge Gaps
-- **517 isolated node(s):** `Architecture`, `Repository layout`, `Stack`, `Installing PostgreSQL locally (macOS / Homebrew)`, `Runtime role (Row-Level Security)` (+512 more)
+- **517 isolated node(s):** `Task 0: Pre-flight design decisions — read and confirm before Task 3`, `Task 1: `OpportunityStatus` lifecycle rename — `Waiting/Offered/Completed/Canceled` → `Draft/Open/Won/Lost``, `Task 2: Pipeline definition/version/stage tables (additive)`, `Task 3: `Opportunity.PartyId` → `PartyRef` — MasterData cutover`, `Task 4: Docs, CI, memory sync` (+512 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 698 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -527,12 +527,12 @@ Nodes (3): DateTimeOffset, Guid, ModelBuilder
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Contracts` connect `Contracts` to `CustomerNeed`, `Party`, `.HandleAsync`, `IHasRowVersion`, `AccessDbContext`, `OpportunityNeed`, `.HandleAsync`, `Role`, `RoleAssignmentScopeType`, `Access.Domain.Authorization`, `PartyRef`, `EntityRef`, `IEntityTypeConfiguration`, `Access.Persistence.Configurations`, `CrmDbContext`, `EntityVersion`, `.CreateAdminContext`, `CRM.Persistence`, `OpportunityStatus`, `PrincipalRef`, `PartyExternalIdentity`, `.HandleAsync`, `.CreateAdminContext`, `CRM.Persistence.Configurations`, `MasterData.Application`, `ArgumentOutOfRangeException`, `MergePartyHandler.cs`, `CRM.Domain`, `PartyType`, `.SetTenantContextAsync`, `TenantId`?**
-  _High betweenness centrality (0.190) - this node is a cross-community bridge._
+  _High betweenness centrality (0.212) - this node is a cross-community bridge._
 - **Why does `CrmDbContext` connect `CrmDbContext` to `OpportunityLine`, `CustomerNeed`, `TenantFieldDefinition`, `.CreateAdminContext`, `AccessDbContext`, `OpportunityNeed`, `EvidenceRecord`, `CRM.Persistence.Configurations`, `IdempotencyRecord`?**
-  _High betweenness centrality (0.102) - this node is a cross-community bridge._
-- **Why does `CRM.Persistence` connect `CRM.Persistence` to `CrmDbContext`, `ModuleBoundaryTests`, `CRM.Persistence.Migrations`, `Migration`, `.BuildModel`, `CRM.Persistence.Configurations`, `MasterData.Application`?**
-  _High betweenness centrality (0.059) - this node is a cross-community bridge._
-- **What connects `Architecture`, `Repository layout`, `Stack` to the rest of the system?**
+  _High betweenness centrality (0.076) - this node is a cross-community bridge._
+- **Why does `MasterDataDbContext` connect `MasterDataDbContext` to `.SetTenantContextAsync`, `OutboxMessage`, `IdempotencyRecord`, `AccessDbContext`, `.HandleAsync`, `.CreateContext`, `.HandleAsync`, `PartyExternalIdentity`, `.HandleAsync`, `.CreateAdminContext`, `PartyRef`, `EvidenceRecord`, `MergePartyHandler.cs`, `PartyRelationship`, `Party`?**
+  _High betweenness centrality (0.071) - this node is a cross-community bridge._
+- **What connects `Task 0: Pre-flight design decisions — read and confirm before Task 3`, `Task 1: `OpportunityStatus` lifecycle rename — `Waiting/Offered/Completed/Canceled` → `Draft/Open/Won/Lost``, `Task 2: Pipeline definition/version/stage tables (additive)` to the rest of the system?**
   _517 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Opportunity` be split into smaller, more focused modules?**
   _Cohesion score 0.07881773399014778 - nodes in this community are weakly interconnected._
