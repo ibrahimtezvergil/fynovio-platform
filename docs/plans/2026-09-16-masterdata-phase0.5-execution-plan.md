@@ -56,13 +56,13 @@ merge zincirini takip eden canonical `PartyRef?`.
 
 `fynovio-platform.slnx` zaten `MasterData.csproj`'u içeriyor — dokunmaya gerek yok.
 
-- [ ] **Step 1: Placeholder'ı kaldır**
+- [x] **Step 1: Placeholder'ı kaldır**
 
 ```bash
 rm src/Modules/MasterData/Class1.cs
 ```
 
-- [ ] **Step 2: EF Core paketlerini ekle (CRM/Access ile aynı sürümler)**
+- [x] **Step 2: EF Core paketlerini ekle (CRM/Access ile aynı sürümler)**
 
 `src/Modules/MasterData/MasterData.csproj`'u şuna güncelle:
 
@@ -91,7 +91,7 @@ rm src/Modules/MasterData/Class1.cs
 </Project>
 ```
 
-- [ ] **Step 3: Derle — boş ama sağlam olmalı**
+- [x] **Step 3: Derle — boş ama sağlam olmalı**
 
 ```bash
 dotnet build src/Modules/MasterData/MasterData.csproj
@@ -99,7 +99,7 @@ dotnet build src/Modules/MasterData/MasterData.csproj
 
 Beklenen: `Build succeeded`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/Modules/MasterData
@@ -107,6 +107,7 @@ git commit -m "Scaffold MasterData as a real module (EF Core packages, drop plac
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+→ Commit: `d15147d` "Scaffold MasterData as a real module (EF Core packages, drop placeholder)"
 
 ---
 
@@ -119,7 +120,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Create: `src/Contracts/IPartyDirectory.cs`
 - Create: `src/Contracts/IPartyIdentityResolver.cs`
 
-- [ ] **Step 1: `PartyType`**
+- [x] **Step 1: `PartyType`**
 
 `src/Contracts/PartyType.cs`:
 
@@ -136,7 +137,7 @@ public enum PartyType
 }
 ```
 
-- [ ] **Step 2: `PartyRef`**
+- [x] **Step 2: `PartyRef`**
 
 `src/Contracts/PartyRef.cs`:
 
@@ -165,7 +166,7 @@ public readonly record struct PartyRef
 }
 ```
 
-- [ ] **Step 3: `PartyDirectoryEntry`**
+- [x] **Step 3: `PartyDirectoryEntry`**
 
 `src/Contracts/PartyDirectoryEntry.cs`:
 
@@ -178,7 +179,7 @@ namespace Contracts;
 public sealed record PartyDirectoryEntry(PartyRef PartyRef, PartyType PartyType, string Name, string? Surname, string? Email);
 ```
 
-- [ ] **Step 4: `IPartyDirectory`**
+- [x] **Step 4: `IPartyDirectory`**
 
 `src/Contracts/IPartyDirectory.cs`:
 
@@ -199,7 +200,7 @@ public interface IPartyDirectory
 }
 ```
 
-- [ ] **Step 5: `IPartyIdentityResolver`**
+- [x] **Step 5: `IPartyIdentityResolver`**
 
 `src/Contracts/IPartyIdentityResolver.cs`:
 
@@ -223,13 +224,13 @@ public interface IPartyIdentityResolver
 }
 ```
 
-- [ ] **Step 6: Derle**
+- [x] **Step 6: Derle**
 
 ```bash
 dotnet build src/Contracts/Contracts.csproj
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/Contracts
@@ -237,6 +238,7 @@ git commit -m "Add PartyRef, PartyType and the IPartyDirectory/IPartyIdentityRes
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+→ Commit: `89b331a` "Add PartyRef, PartyType and the IPartyDirectory/IPartyIdentityResolver contracts"
 
 ---
 
@@ -253,7 +255,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Create: `tests/MasterData.Tests/Domain/PartyRelationshipTests.cs`
 - Modify: `fynovio-platform.slnx`
 
-- [ ] **Step 1: Test projesini oluştur**
+- [x] **Step 1: Test projesini oluştur**
 
 ```bash
 dotnet new xunit -n MasterData.Tests -o tests/MasterData.Tests
@@ -265,7 +267,7 @@ rm tests/MasterData.Tests/UnitTest1.cs
 `tests/CRM.Tests/CRM.Tests.csproj`'ta not edilen xUnit sürümüyle aynı olmalı (Task 1,
 Step 2, pilot-enforcement.md) — şüphede kalırsan `dotnet list ... package` ile kontrol et.
 
-- [ ] **Step 2: Ortak test verisi**
+- [x] **Step 2: Ortak test verisi**
 
 `tests/MasterData.Tests/TestData.cs`:
 
@@ -284,7 +286,7 @@ public static class TestData
 }
 ```
 
-- [ ] **Step 3: Domain testlerini yaz (kırmızı)**
+- [x] **Step 3: Domain testlerini yaz (kırmızı)**
 
 `tests/MasterData.Tests/Domain/PartyTests.cs`:
 
@@ -432,7 +434,7 @@ public sealed class PartyRelationshipTests
 }
 ```
 
-- [ ] **Step 4: Testleri çalıştır — derlenmemeli**
+- [x] **Step 4: Testleri çalıştır — derlenmemeli**
 
 ```bash
 dotnet test tests/MasterData.Tests/MasterData.Tests.csproj
@@ -440,7 +442,7 @@ dotnet test tests/MasterData.Tests/MasterData.Tests.csproj
 
 Beklenen: derleme hatası — `MasterData.Domain` içinde `Party`/`PartyRelationship` yok.
 
-- [ ] **Step 5: `Party`'i yaz**
+- [x] **Step 5: `Party`'i yaz**
 
 `src/Modules/MasterData/Domain/Party.cs`:
 
@@ -520,7 +522,7 @@ public sealed class Party
 }
 ```
 
-- [ ] **Step 6: `PartyRelationship`'ı yaz**
+- [x] **Step 6: `PartyRelationship`'ı yaz**
 
 `src/Modules/MasterData/Domain/PartyRelationship.cs`:
 
@@ -603,7 +605,7 @@ public sealed class PartyRelationship
 }
 ```
 
-- [ ] **Step 7: `PartyExternalIdentity`'i yaz**
+- [x] **Step 7: `PartyExternalIdentity`'i yaz**
 
 `src/Modules/MasterData/Domain/PartyExternalIdentity.cs`:
 
@@ -658,7 +660,7 @@ public sealed class PartyExternalIdentity
 }
 ```
 
-- [ ] **Step 8: Testleri çalıştır**
+- [x] **Step 8: Testleri çalıştır**
 
 ```bash
 dotnet test tests/MasterData.Tests/MasterData.Tests.csproj
@@ -666,7 +668,7 @@ dotnet test tests/MasterData.Tests/MasterData.Tests.csproj
 
 Beklenen: `Passed!` — 10 test (3 `PartyTests` + 3 `PartyMergeTests` + 4 `PartyRelationshipTests`).
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/Modules/MasterData/Domain tests/MasterData.Tests fynovio-platform.slnx
@@ -674,6 +676,7 @@ git commit -m "Add MasterData.Tests and the Party/PartyRelationship/PartyExterna
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+→ Commit: `6096400` "Add MasterData.Tests and the Party/PartyRelationship/PartyExternalIdentity domain model" (deviation: `Party.MergeInto`'s self-merge guard originally compared `Id`, which is 0 for every unsaved test instance — switched to `ReferenceEquals`, correct both for domain tests and for the real EF path since the identity map returns the same tracked instance for a given Id within one DbContext)
 
 ---
 
@@ -683,13 +686,13 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Modify: `tests/MasterData.Tests/MasterData.Tests.csproj`
 - Create: `tests/MasterData.Tests/Architecture/ModuleBoundaryTests.cs`
 
-- [ ] **Step 1: NetArchTest paketini ekle**
+- [x] **Step 1: NetArchTest paketini ekle**
 
 ```bash
 dotnet add tests/MasterData.Tests/MasterData.Tests.csproj package NetArchTest.Rules
 ```
 
-- [ ] **Step 2: Testi yaz**
+- [x] **Step 2: Testi yaz**
 
 `tests/MasterData.Tests/Architecture/ModuleBoundaryTests.cs`:
 
@@ -735,7 +738,7 @@ public sealed class ModuleBoundaryTests
 }
 ```
 
-- [ ] **Step 3: Testleri çalıştır**
+- [x] **Step 3: Testleri çalıştır**
 
 ```bash
 dotnet test tests/MasterData.Tests/MasterData.Tests.csproj --filter FullyQualifiedName~ModuleBoundaryTests
@@ -743,7 +746,9 @@ dotnet test tests/MasterData.Tests/MasterData.Tests.csproj --filter FullyQualifi
 
 Beklenen: `Passed!` — 2 test.
 
-- [ ] **Step 4: `tests/CRM.Tests`'in kendi sınır testini de doğrula (regresyon yok)**
+(deviation: anchored the assembly reference on `Party` instead of `MasterDataDbContext` — the DbContext doesn't exist until Task 5, so the plan's original anchor wouldn't compile yet; `Types.InAssembly` only needs any type from the target assembly, so this is equivalent)
+
+- [x] **Step 4: `tests/CRM.Tests`'in kendi sınır testini de doğrula (regresyon yok)**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter FullyQualifiedName~ModuleBoundaryTests
@@ -752,7 +757,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter FullyQualifiedName~ModuleB
 Beklenen: hâlâ `Passed!` — CRM'in `"MasterData"`yı yasaklı listede taşıyan testi
 etkilenmemeli.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/MasterData.Tests
@@ -760,6 +765,7 @@ git commit -m "Add NetArchTest module boundary tests for MasterData
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+→ Commit: `2a3947c` "Add NetArchTest module boundary tests for MasterData"
 
 ---
 
@@ -777,29 +783,29 @@ Bu üç dosya, `src/Modules/CRM/Outbox/OutboxMessage.cs`,
 outbox/idempotency/evidence tablosunu taşır (AGENTS.md: "each module owns its own
 schema", paylaşılan tablo yok).
 
-- [ ] **Step 1: `OutboxMessage`**
+- [x] **Step 1: `OutboxMessage`**
 
 `src/Modules/MasterData/Outbox/OutboxMessage.cs` — `src/Modules/CRM/Outbox/OutboxMessage.cs`
 dosyasını oku, içeriği aynen kopyala, yalnızca `namespace CRM.Outbox;` satırını
 `namespace MasterData.Outbox;` yap.
 
-- [ ] **Step 2: `IdempotencyRecord`**
+- [x] **Step 2: `IdempotencyRecord`**
 
 `src/Modules/MasterData/Idempotency/IdempotencyRecord.cs` — aynı yöntem,
 `namespace CRM.Idempotency;` → `namespace MasterData.Idempotency;`.
 
-- [ ] **Step 3: `EvidenceRecord`**
+- [x] **Step 3: `EvidenceRecord`**
 
 `src/Modules/MasterData/Evidence/EvidenceRecord.cs` — aynı yöntem,
 `namespace CRM.Evidence;` → `namespace MasterData.Evidence;`.
 
-- [ ] **Step 4: Derle**
+- [x] **Step 4: Derle**
 
 ```bash
 dotnet build src/Modules/MasterData/MasterData.csproj
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/MasterData/Outbox src/Modules/MasterData/Idempotency src/Modules/MasterData/Evidence
@@ -807,6 +813,7 @@ git commit -m "Add MasterData's own outbox, idempotency and evidence entities
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+→ Commit: `fbc3938` "Add MasterData's own outbox, idempotency and evidence entities"
 
 ---
 
@@ -825,7 +832,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Create: `src/Modules/MasterData/Persistence/Configurations/EvidenceRecordConfiguration.cs`
 - Create: `src/Modules/MasterData/Persistence/Migrations/<timestamp>_InitialMasterDataSchema.cs` (üretilir)
 
-- [ ] **Step 1: `MasterDataConnectionString`**
+- [x] **Step 1: `MasterDataConnectionString`**
 
 `src/Modules/MasterData/Persistence/MasterDataConnectionString.cs` —
 `src/Modules/CRM/Persistence/CrmConnectionString.cs`'in aynısı, yalnızca env var adı
@@ -847,7 +854,7 @@ public static class MasterDataConnectionString
 }
 ```
 
-- [ ] **Step 2: `MasterDataDbContext`**
+- [x] **Step 2: `MasterDataDbContext`**
 
 `src/Modules/MasterData/Persistence/MasterDataDbContext.cs`:
 
@@ -887,7 +894,7 @@ public sealed class MasterDataDbContext : DbContext
 }
 ```
 
-- [ ] **Step 3: Design-time factory**
+- [x] **Step 3: Design-time factory**
 
 `src/Modules/MasterData/Persistence/MasterDataDbContextFactory.cs` —
 `src/Modules/CRM/Persistence/CrmDbContextFactory.cs`'in aynısı, `Crm`→`MasterData` isim
@@ -913,7 +920,7 @@ public sealed class MasterDataDbContextFactory : IDesignTimeDbContextFactory<Mas
 }
 ```
 
-- [ ] **Step 4: Tenant context extension**
+- [x] **Step 4: Tenant context extension**
 
 `src/Modules/MasterData/Persistence/MasterDataDbContextTenantExtensions.cs` —
 `src/Modules/CRM/Persistence/CrmDbContextTenantExtensions.cs`'in aynısı:
@@ -942,7 +949,7 @@ public static class MasterDataDbContextTenantExtensions
 }
 ```
 
-- [ ] **Step 5: `PartyConfiguration`**
+- [x] **Step 5: `PartyConfiguration`**
 
 `src/Modules/MasterData/Persistence/Configurations/PartyConfiguration.cs`:
 
@@ -1005,7 +1012,7 @@ public sealed class PartyConfiguration : IEntityTypeConfiguration<Party>
 }
 ```
 
-- [ ] **Step 6: `PartyRelationshipConfiguration`**
+- [x] **Step 6: `PartyRelationshipConfiguration`**
 
 `src/Modules/MasterData/Persistence/Configurations/PartyRelationshipConfiguration.cs`:
 
@@ -1095,7 +1102,7 @@ public sealed class PartyRelationshipConfiguration : IEntityTypeConfiguration<Pa
 }
 ```
 
-- [ ] **Step 7: `PartyExternalIdentityConfiguration` — COALESCE tekilliği**
+- [x] **Step 7: `PartyExternalIdentityConfiguration` — COALESCE tekilliği**
 
 `src/Modules/MasterData/Persistence/Configurations/PartyExternalIdentityConfiguration.cs`:
 
@@ -1143,7 +1150,7 @@ public sealed class PartyExternalIdentityConfiguration : IEntityTypeConfiguratio
 }
 ```
 
-- [ ] **Step 8: Outbox/Idempotency/Evidence configurations**
+- [x] **Step 8: Outbox/Idempotency/Evidence configurations**
 
 Bu üçü de CRM'inkilerin birebir kopyası, yalnızca `using CRM.X;` → `using MasterData.X;`:
 
@@ -1157,7 +1164,7 @@ aynı yöntem, `IdempotencyRecordConfiguration.cs`'den.
 `src/Modules/MasterData/Persistence/Configurations/EvidenceRecordConfiguration.cs` —
 aynı yöntem, `EvidenceRecordConfiguration.cs`'den.
 
-- [ ] **Step 9: İlk migration'ı üret**
+- [x] **Step 9: İlk migration'ı üret**
 
 ```bash
 dotnet ef migrations add InitialMasterDataSchema \
@@ -1166,7 +1173,7 @@ dotnet ef migrations add InitialMasterDataSchema \
   --output-dir Persistence/Migrations
 ```
 
-- [ ] **Step 10: Üretilen migration'ı doğrula**
+- [x] **Step 10: Üretilen migration'ı doğrula**
 
 Migration dosyasını aç: `parties`, `party_relationships`, `party_external_identities`
 (kendi CHECK'leri ve `external_type_key` computed column'uyla), `outbox_messages`,
@@ -1174,7 +1181,7 @@ Migration dosyasını aç: `parties`, `party_relationships`, `party_external_ide
 şemasında. Elle düzenleme yapma — eksik/yanlış bir şey varsa Step 5-8'deki
 configuration'a dön, migration'ı sil ve yeniden üret.
 
-- [ ] **Step 11: Veritabanını güncelle ve derle**
+- [x] **Step 11: Veritabanını güncelle ve derle**
 
 ```bash
 dotnet ef database update \
@@ -1183,7 +1190,7 @@ dotnet ef database update \
 dotnet build src/Modules/MasterData/MasterData.csproj
 ```
 
-- [ ] **Step 12: Commit**
+- [x] **Step 12: Commit**
 
 ```bash
 git add src/Modules/MasterData/Persistence
@@ -1191,6 +1198,7 @@ git commit -m "Add MasterDataDbContext, entity configurations and the initial sc
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+→ Commit: `9da795c` "Add MasterDataDbContext, entity configurations and the initial schema migration"
 
 ---
 
@@ -1200,7 +1208,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Create: `src/Modules/MasterData/Persistence/Migrations/<timestamp>_EnableRowLevelSecurity.cs` (üretilir, gövdesi elle yazılır — AGENTS.md'nin tek istisnası)
 - Modify: `scripts/create-runtime-role.sql`
 
-- [ ] **Step 1: Boş migration üret**
+- [x] **Step 1: Boş migration üret**
 
 ```bash
 dotnet ef migrations add EnableRowLevelSecurity \
@@ -1211,7 +1219,7 @@ dotnet ef migrations add EnableRowLevelSecurity \
 
 Beklenen: model değişmediği için boş `Up`/`Down`.
 
-- [ ] **Step 2: Migration gövdesini yaz**
+- [x] **Step 2: Migration gövdesini yaz**
 
 `src/Modules/CRM/Persistence/Migrations/20260916081636_EnableRowLevelSecurity.cs`'in
 aynı deseni, `crm.` → `masterdata.`, tablo listesi bu modülün altısı:
@@ -1252,7 +1260,7 @@ aynı deseni, `crm.` → `masterdata.`, tablo listesi bu modülün altısı:
         ];
 ```
 
-- [ ] **Step 3: `create-runtime-role.sql`'e MasterData bloğu ekle**
+- [x] **Step 3: `create-runtime-role.sql`'e MasterData bloğu ekle**
 
 `scripts/create-runtime-role.sql`'in sonuna ekle (aynı `fynovio_app` rolü, ikinci şema):
 
@@ -1270,7 +1278,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA masterdata
 REVOKE UPDATE, DELETE ON masterdata.evidence_records FROM fynovio_app;
 ```
 
-- [ ] **Step 4: Veritabanını güncelle**
+- [x] **Step 4: Veritabanını güncelle**
 
 ```bash
 dotnet ef database update \
@@ -1278,7 +1286,7 @@ dotnet ef database update \
   --startup-project src/Modules/MasterData/MasterData.csproj
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/MasterData/Persistence scripts/create-runtime-role.sql
@@ -1286,6 +1294,7 @@ git commit -m "Enable RLS on masterdata tables and grant the runtime role
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+→ Commit: `a3baafd` "Enable RLS on masterdata tables and grant the runtime role"
 
 ---
 
@@ -1296,13 +1305,13 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Create: `tests/MasterData.Tests/Integration/PostgresCollection.cs`
 - Create: `tests/MasterData.Tests/Integration/TenantIsolationTests.cs`
 
-- [ ] **Step 1: Testcontainers paketini ekle**
+- [x] **Step 1: Testcontainers paketini ekle**
 
 ```bash
 dotnet add tests/MasterData.Tests/MasterData.Tests.csproj package Testcontainers.PostgreSql
 ```
 
-- [ ] **Step 2: Fixture'ı yaz**
+- [x] **Step 2: Fixture'ı yaz**
 
 `tests/MasterData.Tests/Integration/PostgresFixture.cs` —
 `tests/CRM.Tests/Integration/PostgresFixture.cs`'in aynısı, `CrmDbContext`→`MasterDataDbContext`,
@@ -1387,7 +1396,7 @@ public sealed class PostgresCollection : ICollectionFixture<PostgresFixture>;
 xUnit 2.x kullanılıyorsa (Task 2 Step 1'de not edilen sürüm), `InitializeAsync`/
 `DisposeAsync` imzalarını `pilot-enforcement.md` Task 3'teki gibi `ValueTask`'a çevir.
 
-- [ ] **Step 3: İzolasyon testlerini yaz**
+- [x] **Step 3: İzolasyon testlerini yaz**
 
 `tests/MasterData.Tests/Integration/TenantIsolationTests.cs` —
 `tests/CRM.Tests/Integration/TenantIsolationTests.cs`'in aynı 7 testi, `Party`
@@ -1540,7 +1549,7 @@ public sealed class TenantIsolationTests
 }
 ```
 
-- [ ] **Step 4: Testleri çalıştır**
+- [x] **Step 4: Testleri çalıştır**
 
 ```bash
 dotnet test tests/MasterData.Tests/MasterData.Tests.csproj --filter FullyQualifiedName~TenantIsolationTests
@@ -1548,7 +1557,7 @@ dotnet test tests/MasterData.Tests/MasterData.Tests.csproj --filter FullyQualifi
 
 Beklenen: `Passed!` — 7 test.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/MasterData.Tests
@@ -1556,6 +1565,7 @@ git commit -m "Add Testcontainers fixture and tenant isolation tests for MasterD
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+→ Commit: `4762089` "Add Testcontainers fixture and tenant isolation tests for MasterData" (deviation: `PostgresFixture`/`PostgresCollection` written to match CRM's actual current files rather than the plan's template verbatim — `PostgreSqlBuilder("postgres:17-alpine")` constructor form, `NOSUPERUSER NOBYPASSRLS` on the runtime role, and `PostgresCollection` split into its own file; all 7 tests passed unmodified)
 
 ---
 
@@ -1588,7 +1598,7 @@ oluşturur, ikincisinde bulur — çift Party üretmez. Bu, doc 20 kural 4'ün (
 state-changing command idempotent") *niyetini* karşılıyor, mekanizmasını değil — kayıt
 olarak burada bırakıyoruz, mekanik olarak zorlamıyoruz.
 
-- [ ] **Step 1: `CreateParty` — komut, sonuç, exception'lar**
+- [x] **Step 1: `CreateParty` — komut, sonuç, exception'lar**
 
 `src/Modules/MasterData/Application/CreatePartyCommand.cs`:
 
@@ -1644,7 +1654,7 @@ public sealed class PartyNotFoundException : InvalidOperationException
 }
 ```
 
-- [ ] **Step 2: `CreatePartyHandler`**
+- [x] **Step 2: `CreatePartyHandler`**
 
 `src/Modules/MasterData/Application/CreatePartyHandler.cs` — `CompleteOpportunityHandler`'ın
 aynı iskeleti (transaction → tenant context → idempotency lookup → iş → outbox → tek
@@ -1763,7 +1773,7 @@ komut bağlanmadı, tıpkı bugünkü `CompleteOpportunity`'nin de HTTP'siz olma
 Geçici olarak `("system", Operation)` kullanıldı — bir HTTP yüzeyi eklendiğinde gerçek
 principal'a değiştirilmeli. Bunu TODO olarak bırak, sessizce "doğru" gibi işaretleme.
 
-- [ ] **Step 3: `CreatePartyHandlerTests` — kırmızı → yeşil**
+- [x] **Step 3: `CreatePartyHandlerTests` — kırmızı → yeşil**
 
 `tests/MasterData.Tests/Integration/CreatePartyHandlerTests.cs` —
 `CompleteOpportunityHandlerTests`'in ilk üç testinin aynı deseni:
@@ -1849,7 +1859,7 @@ dotnet test tests/MasterData.Tests/MasterData.Tests.csproj --filter FullyQualifi
 
 Beklenen: `Passed!` — 3 test.
 
-- [ ] **Step 4: `MergeParty` — komut, sonuç**
+- [x] **Step 4: `MergeParty` — komut, sonuç**
 
 `src/Modules/MasterData/Application/MergePartyCommand.cs`:
 
@@ -1883,7 +1893,7 @@ namespace MasterData.Application;
 internal sealed record MergedPartyPayload(long SourcePartyId, long CanonicalPartyId);
 ```
 
-- [ ] **Step 5: `MergePartyHandler` — tek-hop çözümleme, tombstone repoint, external identity taşıma**
+- [x] **Step 5: `MergePartyHandler` — tek-hop çözümleme, tombstone repoint, external identity taşıma**
 
 `src/Modules/MasterData/Application/MergePartyHandler.cs`:
 
@@ -2026,7 +2036,7 @@ public sealed class MergePartyHandler
 }
 ```
 
-- [ ] **Step 6: `MergePartyHandlerTests` — merge zinciri çözümleme dahil**
+- [x] **Step 6: `MergePartyHandlerTests` — merge zinciri çözümleme dahil**
 
 `tests/MasterData.Tests/Integration/MergePartyHandlerTests.cs`:
 
@@ -2140,7 +2150,7 @@ dotnet test tests/MasterData.Tests/MasterData.Tests.csproj --filter FullyQualifi
 
 Beklenen: `Passed!` — 3 test.
 
-- [ ] **Step 7: `ResolveOrCreateParty`**
+- [x] **Step 7: `ResolveOrCreateParty`**
 
 `src/Modules/MasterData/Application/ResolveOrCreatePartyCommand.cs`:
 
@@ -2238,7 +2248,7 @@ public sealed class ResolveOrCreatePartyHandler
 }
 ```
 
-- [ ] **Step 8: `ResolveOrCreatePartyTests` — doğal idempotency**
+- [x] **Step 8: `ResolveOrCreatePartyTests` — doğal idempotency**
 
 `tests/MasterData.Tests/Integration/ResolveOrCreatePartyTests.cs`:
 
@@ -2310,7 +2320,7 @@ Beklenen: `Passed!` — 2 test. İkinci test, Task 5 Step 7'deki COALESCE tekill
 gerçekten çalıştığını (iki farklı `source_instance_ref`, aynı `external_id` — çakışma
 yok) doğruluyor.
 
-- [ ] **Step 9: Tüm paketi çalıştır**
+- [x] **Step 9: Tüm paketi çalıştır**
 
 ```bash
 dotnet test tests/MasterData.Tests/MasterData.Tests.csproj
@@ -2319,7 +2329,7 @@ dotnet test tests/MasterData.Tests/MasterData.Tests.csproj
 Beklenen: `Passed!` — bu ana kadarki tüm testler (Domain 10 + Architecture 2 +
 TenantIsolation 7 + CreateParty 3 + MergeParty 3 + ResolveOrCreate 2 = 27).
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add src/Modules/MasterData/Application tests/MasterData.Tests
@@ -2327,6 +2337,7 @@ git commit -m "Add CreateParty, MergeParty and ResolveOrCreateParty commands wit
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+→ Commit: `976d3ce` "Add CreateParty, MergeParty and ResolveOrCreateParty commands with atomic outbox/idempotency/evidence" (deviations: (1) test files need `using Contracts;` for `PartyType`, not `using MasterData.Domain;` as the plan's snippets implied; (2) `MergePartyHandlerTests` had two local variables named `b`/`c` redeclared in a sibling scope — CS0136 — renamed to `mergedB`/`mergedC`; (3) `External_identities_move_to_the_survivor_at_merge_time`'s verification query didn't filter by tenant, so it broke under the full suite once `ResolveOrCreatePartyTests` also used external id "1001" on a different tenant against the same RLS-bypassing admin connection — added `e.TenantId == tenant` to the query. Full package: 27/27 passed.)
 
 ---
 
@@ -2338,7 +2349,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Modify: `src/Host/Program.cs`
 - Create: `tests/MasterData.Tests/Integration/PartyDirectoryTests.cs`
 
-- [ ] **Step 1: `PartyDirectory` — merge zincirini takip eder**
+- [x] **Step 1: `PartyDirectory` — merge zincirini takip eder**
 
 `src/Modules/MasterData/Application/PartyDirectory.cs`:
 
@@ -2409,7 +2420,7 @@ public sealed class PartyDirectory : IPartyDirectory
 }
 ```
 
-- [ ] **Step 2: `PartyIdentityResolver`**
+- [x] **Step 2: `PartyIdentityResolver`**
 
 `src/Modules/MasterData/Application/PartyIdentityResolver.cs`:
 
@@ -2455,7 +2466,7 @@ public sealed class PartyIdentityResolver : IPartyIdentityResolver
 }
 ```
 
-- [ ] **Step 3: `Host`'a kaydet**
+- [x] **Step 3: `Host`'a kaydet**
 
 `src/Host/Program.cs`'e ekle (CRM'in yanına, ikinci bir `AddDbContext` + DI kaydı):
 
@@ -2477,13 +2488,13 @@ builder.Services.AddScoped<IPartyIdentityResolver, PartyIdentityResolver>();
 Mevcut `app.MapGet("/health/db", ...)`'i değiştirme — istersen ayrı bir
 `/health/masterdata-db` ekleyebilirsin ama bu plan kapsamında zorunlu değil.
 
-- [ ] **Step 4: Derle**
+- [x] **Step 4: Derle**
 
 ```bash
 dotnet build src/Host/Host.csproj
 ```
 
-- [ ] **Step 5: `IPartyDirectory`/`IPartyIdentityResolver` entegrasyon testleri**
+- [x] **Step 5: `IPartyDirectory`/`IPartyIdentityResolver` entegrasyon testleri**
 
 `tests/MasterData.Tests/Integration/PartyDirectoryTests.cs`:
 
@@ -2583,7 +2594,7 @@ dotnet test tests/MasterData.Tests/MasterData.Tests.csproj --filter FullyQualifi
 
 Beklenen: `Passed!` — 3 test.
 
-- [ ] **Step 6: Tüm MasterData paketini çalıştır**
+- [x] **Step 6: Tüm MasterData paketini çalıştır**
 
 ```bash
 dotnet test tests/MasterData.Tests/MasterData.Tests.csproj
@@ -2591,7 +2602,7 @@ dotnet test tests/MasterData.Tests/MasterData.Tests.csproj
 
 Beklenen: `Passed!` — 30 test (Task 8'deki 27 + bu task'ın 3'ü).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/Modules/MasterData/Application src/Host tests/MasterData.Tests
@@ -2599,6 +2610,7 @@ git commit -m "Implement IPartyDirectory/IPartyIdentityResolver and wire them in
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+→ Commit: `f2fec34` "Implement IPartyDirectory/IPartyIdentityResolver and wire them into Host" — full package 30/30 (27 from Task 8 + 3 here)
 
 ---
 
@@ -2612,7 +2624,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Modify: `docs/plans/2026-09-16-masterdata-party-foundation.md` (Progress notunu güncelle)
 - Modify: `graphify-out/` (post-commit hook otomatik günceller, elle dokunma)
 
-- [ ] **Step 1: CI'ı doğrula**
+- [x] **Step 1: CI'ı doğrula**
 
 ```bash
 cat .github/workflows/ci.yml
@@ -2622,7 +2634,7 @@ cat .github/workflows/ci.yml
 doğrula — muhtemelen zaten kapsıyor (çözüm seviyesinde çalışıyor), değişiklik
 gerekmeyebilir. Gerekiyorsa güncelle.
 
-- [ ] **Step 2: `dotnet format` + tam build**
+- [x] **Step 2: `dotnet format` + tam build**
 
 ```bash
 dotnet format --verify-no-changes
@@ -2632,24 +2644,26 @@ dotnet test
 
 Beklenen: hepsi yeşil, CRM'in 41 testi + MasterData'nın 30 testi = 71 test.
 
-- [ ] **Step 3: `README.md`'yi güncelle**
+(not: `dotnet test` çözüm seviyesinde iki Testcontainers paketini paralel başlattığında bu makinede ara sıra Docker kaynak çakışması görüldü — her paket ayrı ayrı çalıştırıldığında 41/41 ve 30/30, tutarlı yeşil. Kod regresyonu değil, yerel Docker eşzamanlılık sınırı.)
+
+- [x] **Step 3: `README.md`'yi güncelle**
 
 Repository layout bölümüne `MasterData/` girdisini ekle (şu an "Placeholder" diyor,
 gerçek içeriği yansıt); "Status" satırına MasterData'yı ekle; runtime rolü bölümüne
 `masterdata` şeması grant'lerinin de uygulanması gerektiğini not et.
 
-- [ ] **Step 4: `AGENTS.md`'nin Status bölümünü güncelle**
+- [x] **Step 4: `AGENTS.md`'nin Status bölümünü güncelle**
 
 `## Status` altına MasterData'nın eklendiğini, `party_type`/`PartyRelationship`/
 `PartyExternalIdentity`'nin tarihini, ve toplam test sayısını yansıt.
 
-- [ ] **Step 5: Plan dosyalarındaki durum işaretlerini güncelle**
+- [x] **Step 5: Plan dosyalarındaki durum işaretlerini güncelle**
 
 `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §6'daki Phase 0.5
 satırının Status hücresini `🟡` → `✅ Done` yap. `docs/plans/2026-09-16-masterdata-party-foundation.md`'nin
 üstündeki "Progress" notunu güncelle.
 
-- [ ] **Step 6: Graph'ı güncelle ve commit**
+- [x] **Step 6: Graph'ı güncelle ve commit**
 
 ```bash
 graphify update .
@@ -2658,10 +2672,16 @@ git commit -m "Sync docs, plan status and CI with the completed MasterData/Party
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+→ Commit: `9c4a00d` "Sync docs, plan status and CI with the completed MasterData/Party foundation"
+
+(not: `.github/workflows/ci.yml` değişiklik gerektirmedi — `dotnet test` zaten çözüm seviyesinde çalışıyor, `MasterData.Tests` otomatik kapsanıyor.)
 
 ---
 
 ## Kabul kriterleri (bu planın "bitti" demesi için)
+
+**Durum: TAMAMLANDI (2026-09-16).** 11 görev, 11 commit, `tests/MasterData.Tests` 30/30,
+`tests/CRM.Tests` 41/41 (regresyon yok), `dotnet format --verify-no-changes` temiz.
 
 Tümü `docs/plans/2026-09-16-masterdata-party-foundation.md` §10'un birebir aynısı:
 
