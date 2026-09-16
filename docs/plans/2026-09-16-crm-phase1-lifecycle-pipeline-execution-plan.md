@@ -6,10 +6,9 @@
 > tracking"):** mark a step `[x]` only once its commit exists, and add a
 > `→ Commit: \`<hash>\` "<message>"` line under it — never mark ahead of actual state.
 >
-> **Status: Task 0 confirmed (2026-09-16, commit `7214867`). Tasks 1–3 done (2026-09-16,
-> on branch `crm-phase1-lifecycle-pipeline`, worktree
-> `.worktrees/crm-phase1-lifecycle-pipeline`, not yet merged to `main`). Task 4 NOT YET
-> RUN.** Read
+> **Status: All tasks done (2026-09-16).** Task 0 confirmed on `main` (commit
+> `7214867`). Tasks 1–4 done on branch `crm-phase1-lifecycle-pipeline` (worktree
+> `.worktrees/crm-phase1-lifecycle-pipeline`), not yet merged to `main`. Read
 > `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §5 (all five items now
 > RESOLVED), §11 (decision record) and §12 (dependency graph) before starting — this
 > plan implements Phase 1 of that roadmap. Do not re-litigate any decision recorded
@@ -740,7 +739,7 @@ Step 7's deviation note. Branch: `crm-phase1-lifecycle-pipeline`, not yet merged
   → ✅ Done; §11 gets a short Phase 1 completion note)
 - Modify: `graphify-out/` (`graphify update .`, no manual edits)
 
-- [ ] **Step 1: `dotnet format --verify-no-changes` + full build/test**
+- [x] **Step 1: `dotnet format --verify-no-changes` + full build/test**
 
 ```bash
 dotnet format --verify-no-changes
@@ -748,24 +747,53 @@ dotnet build -c Release
 dotnet test
 ```
 
-- [ ] **Step 2: Update `docs/schema/crm-sales-schema.md`**
+→ Format clean, Release build clean, 46 CRM + 30 MasterData tests green (all
+independently confirmed by the controller outside the sandbox restriction that blocked
+the implementer's own runs).
+
+- [x] **Step 2: Update `docs/schema/crm-sales-schema.md`**
 
 Lifecycle enum values, the dropped `Party` FK (now `PartyRef`, no cross-schema FK),
 the new pipeline tables — same doc-sync discipline used for Phase 0.5
 (`docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md` Task 10).
 
-- [ ] **Step 3: Update `README.md` and `AGENTS.md`'s Status section**
+→ **Deviation found:** the implementer's first pass (commit `5fc9e2d`) fabricated
+several pipeline-table fields that don't exist in the actual entities (a `description`
+column, `effective_from`/`effective_to` dates, `color`/`is_terminal`/`exit_criteria` on
+stages), described `Opportunity.PartyRef` as two stored columns instead of one, claimed
+an `IPartyIdentityResolver`-based enforcement mechanism that isn't what's used, and
+falsely claimed `expiry_date`'s CHECK was removed (it's unchanged, just renamed) — the
+implementer's own build/test/graphify were all blocked by the sandbox restriction, so
+none of this was checked against the actual source before being written. The controller
+verified every claim against the actual domain entities/EF configurations and fixed all
+of it (commit `1b36f6b`). See Step 5.
+
+- [x] **Step 3: Update `README.md` and `AGENTS.md`'s Status section**
 
 Mirror how Phase 0.5's Task 10 updated them — new test count, new tables, `Opportunity`
 now referencing `MasterData` through `PartyRef`/`IPartyDirectory` instead of an
 in-schema FK.
 
-- [ ] **Step 4: Update the delta plan's phase table and decision record**
+→ **Deviation found:** the first pass also claimed `Host` registers `AccessDbContext`
+(self-contradicted by the same sentence's own claim, two clauses later, that Access has
+"no ... Host registration yet") and stated "6 migrations" where there are 10; README
+additionally overclaimed "CI workflow passing" for a branch that was never pushed / had
+CI run against it. Fixed in the same follow-up commit as Step 2.
+
+- [x] **Step 4: Update the delta plan's phase table and decision record**
 
 `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §6: Phase 1 row Status →
 `✅ Done`. §11: append a short "Phase 1 complete" line mirroring Phase 0.5's.
 
-- [ ] **Step 5: Graph + final commit**
+→ §6 was updated correctly in the first pass. §11's completion note was missed
+entirely in the first pass — added by the controller in a separate follow-up commit
+(`8050650`), also correcting one detail: the original §11 decision record sketched a
+same-table `CHECK (party_ref_tenant_id = tenant_id)`, but the actual implementation
+uses a domain-level guard plus a `party_ref_party_id > 0` CHECK instead (a minor
+implementation detail, not a reversal of the underlying decision — noted rather than
+silently left inconsistent).
+
+- [x] **Step 5: Graph + final commit**
 
 ```bash
 graphify update .
@@ -774,6 +802,19 @@ git commit -m "Sync docs with the completed Lifecycle/Pipeline foundation (Phase
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 ```
+
+→ Commit: `5fc9e2d` "Sync docs with the completed Lifecycle/Pipeline foundation (Phase
+1)" (follow-up fix: `1b36f6b` "Fix factual errors in Phase 1 doc sync" — corrected
+fabricated schema details, wrong migration/DbContext-registration claims, and an
+overclaimed CI status; follow-up fix: `8050650` "Add Phase 1 completion note to delta
+plan §11"). A dedicated accuracy-review subagent independently re-verified every
+domain-entity field, CHECK constraint, table name, migration count, and test count
+against the actual current source after the fixes — all confirmed accurate. Note: the
+first-pass commit's own `Co-Authored-By` trailer says "Claude Haiku 4.5" rather than
+this session's "Claude Sonnet 5" (the dispatched subagent used its own default
+attribution instead of the one specified) — left as-is per this repo's "always create
+new commits, never amend" convention; flagged here rather than silently left
+unexplained. Branch: `crm-phase1-lifecycle-pipeline`, not yet merged to `main`.
 
 ---
 
@@ -791,3 +832,11 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 - `dotnet format --verify-no-changes` clean; CI green.
 - **Untouched, as scoped:** `OpportunityLine`'s monetary shape (§5.B, Phase 5's job);
   no new commands/endpoints/authorization (Phase 2's job, gated on Phase 1.5 per §5.D).
+
+→ **All criteria met (2026-09-16) except the literal "CI green"** — this branch hasn't
+been pushed, so no CI run has actually executed against it yet; `dotnet format
+--verify-no-changes` + full local `dotnet test` (46 CRM + 30 MasterData, both green)
+stand in as the local equivalent. Everything else confirmed directly: `OpportunityStatus`
+is `Draft/Open/Won/Lost` throughout, the three pipeline tables exist additive and
+unenforced, `crm.parties` is dropped with `masterdata.parties` holding the backfilled
+data, `OpportunityLine` and Phase 2's command surface are untouched.
