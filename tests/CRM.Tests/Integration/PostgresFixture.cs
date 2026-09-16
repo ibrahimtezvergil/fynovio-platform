@@ -10,8 +10,7 @@ namespace CRM.Tests.Integration;
 /// RLS'i bypass eder — yetkisiz runtime rolüyle yapılan izolasyon testi Task 7'de.</summary>
 public sealed class PostgresFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
-        .WithImage("postgres:17-alpine")
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:17-alpine")
         .WithDatabase("fynovio_platform_test")
         .WithUsername("postgres")
         .WithPassword("postgres")
