@@ -37,6 +37,8 @@ public sealed class OpportunityLine
             throw new ArgumentOutOfRangeException(nameof(quantity), "Quantity must be positive.");
         if (unitPrice < 0)
             throw new ArgumentOutOfRangeException(nameof(unitPrice), "Unit price cannot be negative.");
+        if (decimal.Round(unitPrice, 2) != unitPrice)
+            throw new ArgumentException("Unit price is an entered value and must have at most two decimal places.", nameof(unitPrice));
 
         return new OpportunityLine
         {
@@ -48,6 +50,8 @@ public sealed class OpportunityLine
             UnitPrice = unitPrice,
             IsOptional = isOptional,
             SortOrder = sortOrder,
+            // Hesaplanan değer: 4 hanede tutulur; yuvarlama yalnızca Opportunity.Complete()'te.
+            LineTotal = decimal.Round(quantity * unitPrice, 4, MidpointRounding.AwayFromZero),
             CreatedAt = DateTimeOffset.UtcNow
         };
     }

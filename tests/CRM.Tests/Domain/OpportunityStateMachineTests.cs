@@ -55,7 +55,7 @@ public sealed class OpportunityStateMachineTests
     {
         var opportunity = NewWaitingOpportunity();
 
-        Assert.Throws<InvalidOperationException>(() => opportunity.Complete(1000m));
+        Assert.Throws<InvalidOperationException>(() => opportunity.Complete());
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public sealed class OpportunityStateMachineTests
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m, isOptional: true);
         opportunity.Offer(DateTimeOffset.UtcNow.AddDays(7));
 
-        Assert.Throws<InvalidOperationException>(() => opportunity.Complete(100m));
+        Assert.Throws<InvalidOperationException>(() => opportunity.Complete());
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public sealed class OpportunityStateMachineTests
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 2, unitPrice: 50m);
         opportunity.Offer(DateTimeOffset.UtcNow.AddDays(7));
 
-        opportunity.Complete(100m);
+        opportunity.Complete();
 
         Assert.Equal(OpportunityStatus.Completed, opportunity.Status);
         Assert.NotNull(opportunity.SaleDate);

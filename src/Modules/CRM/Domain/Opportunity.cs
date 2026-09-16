@@ -54,6 +54,8 @@ public sealed class Opportunity : IHasRowVersion
             throw new ArgumentException("Currency must be a 3-letter ISO code.", nameof(currency));
         if (estimatedAmount < 0)
             throw new ArgumentOutOfRangeException(nameof(estimatedAmount), "Estimated amount cannot be negative.");
+        if (decimal.Round(estimatedAmount, 2) != estimatedAmount)
+            throw new ArgumentException("Estimated amount is an entered value and must have at most two decimal places.", nameof(estimatedAmount));
 
         var now = DateTimeOffset.UtcNow;
         return new Opportunity
@@ -97,20 +99,24 @@ public sealed class Opportunity : IHasRowVersion
     }
 
     /// <summary>Enforces the one cross-row invariant CHECK cannot express: at least one
-    /// active (non-canceled), required (non-optional) line must exist.</summary>
-    public void Complete(decimal totalAmount)
+    /// active (non-canceled), required (non-optional) line must exist. The total is derived
+    /// from those lines here — optional lines are unselected alternatives and do not count —
+    /// and this is the single declared rounding point (17 §3.4).</summary>
+    public void Complete()
     {
         if (Status != OpportunityStatus.Offered)
             throw new InvalidOperationException($"Cannot complete an opportunity in status {Status}. It must be offered first.");
-        if (totalAmount < 0)
-            throw new ArgumentOutOfRangeException(nameof(totalAmount), "Total amount cannot be negative.");
-        if (!_lines.Any(line => !line.IsOptional && !line.IsCanceled))
+
+        var billableLines = _lines.Where(line => !line.IsOptional && !line.IsCanceled).ToList();
+        if (billableLines.Count == 0)
             throw new InvalidOperationException("Cannot complete an opportunity without at least one active required line.");
+
+        var computedTotal = billableLines.Sum(line => line.LineTotal ?? 0m);
 
         Status = OpportunityStatus.Completed;
         // Single declared rounding point (17 §3.4): 4dp computed total rounds to the
         // currency's 2dp minor unit exactly once, here.
-        TotalAmount = Math.Round(totalAmount, 2, MidpointRounding.AwayFromZero);
+        TotalAmount = decimal.Round(computedTotal, 2, MidpointRounding.AwayFromZero);
         SaleDate = DateTimeOffset.UtcNow;
         Touch();
     }

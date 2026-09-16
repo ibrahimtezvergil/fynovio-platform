@@ -46,7 +46,7 @@ public sealed class OpportunityConcurrencyTests
         fromB.CancelLine(fromB.Lines.Single(), "stokta yok");
         await contextB.SaveChangesAsync();
 
-        fromA.Complete(100m);
+        fromA.Complete();
 
         await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => contextA.SaveChangesAsync());
     }
