@@ -6,9 +6,11 @@
 > tracking"):** mark a step `[x]` only once its commit exists, and add a
 > `→ Commit: \`<hash>\` "<message>"` line under it — never mark ahead of actual state.
 >
-> **Status: All tasks done (2026-09-16).** Task 0 confirmed on `main` (commit
-> `7214867`). Tasks 1–4 done on branch `crm-phase1-lifecycle-pipeline` (worktree
-> `.worktrees/crm-phase1-lifecycle-pipeline`), not yet merged to `main`. Read
+> **Status: All tasks done and merged to `main` (2026-09-16).** Task 0 confirmed on
+> `main` (commit `7214867`). Tasks 1–4 done on branch `crm-phase1-lifecycle-pipeline`
+> (developed/reviewed on an isolated worktree/branch by a peer session), merged into
+> `main` via `6aa9b5a`. Post-merge verification on `main`: clean build (0 warnings, 0
+> errors), full suite green — 46 CRM + 30 MasterData tests. Read
 > `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §5 (all five items now
 > RESOLVED), §11 (decision record) and §12 (dependency graph) before starting — this
 > plan implements Phase 1 of that roadmap. Do not re-litigate any decision recorded
