@@ -3,6 +3,7 @@ using System;
 using CRM.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM.Persistence.Migrations
 {
     [DbContext(typeof(CrmDbContext))]
-    partial class CrmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260916170813_BackfillMasterDataParties")]
+    partial class BackfillMasterDataParties
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -168,9 +171,9 @@ namespace CRM.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("opened_date");
 
-                    b.Property<long>("PartyRefPartyId")
+                    b.Property<long>("PartyId")
                         .HasColumnType("bigint")
-                        .HasColumnName("party_ref_party_id");
+                        .HasColumnName("party_id");
 
                     b.Property<long?>("PipelineDefinitionVersionId")
                         .HasColumnType("bigint")
@@ -216,8 +219,8 @@ namespace CRM.Persistence.Migrations
                     b.HasIndex("TenantId", "CreatedAt")
                         .HasDatabaseName("ix_opportunities_tenant_id_created_at");
 
-                    b.HasIndex("TenantId", "PartyRefPartyId")
-                        .HasDatabaseName("ix_opportunities_tenant_id_party_ref_party_id");
+                    b.HasIndex("TenantId", "PartyId")
+                        .HasDatabaseName("ix_opportunities_tenant_id_party_id");
 
                     b.HasIndex("TenantId", "PipelineDefinitionVersionId")
                         .HasDatabaseName("ix_opportunities_tenant_id_pipeline_definition_version_id");
@@ -238,8 +241,6 @@ namespace CRM.Persistence.Migrations
                             t.HasCheckConstraint("ck_opportunities_expiry_required_once_open", "status NOT IN ('open','won') OR expiry_date IS NOT NULL");
 
                             t.HasCheckConstraint("ck_opportunities_lost_fields_required_once_lost", "status <> 'lost' OR (lost_date IS NOT NULL AND lost_reason IS NOT NULL)");
-
-                            t.HasCheckConstraint("ck_opportunities_party_ref_party_id_positive", "party_ref_party_id > 0");
 
                             t.HasCheckConstraint("ck_opportunities_status", "status IN ('draft','open','won','lost')");
 
@@ -751,6 +752,14 @@ namespace CRM.Persistence.Migrations
 
             modelBuilder.Entity("CRM.Domain.Opportunity", b =>
                 {
+                    b.HasOne("CRM.Domain.Party", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PartyId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_opportunities_parties_tenant_id_party_id");
+
                     b.HasOne("CRM.Domain.PipelineDefinitionVersion", null)
                         .WithMany()
                         .HasForeignKey("TenantId", "PipelineDefinitionVersionId")

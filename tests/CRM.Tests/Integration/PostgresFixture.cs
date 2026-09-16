@@ -1,4 +1,5 @@
 using CRM.Persistence;
+using MasterData.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Testcontainers.PostgreSql;
@@ -39,6 +40,10 @@ public sealed class PostgresFixture : IAsyncLifetime
                 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA crm TO fynovio_app;
                 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA crm TO fynovio_app;
                 REVOKE UPDATE, DELETE ON crm.evidence_records FROM fynovio_app;
+                GRANT USAGE ON SCHEMA masterdata TO fynovio_app;
+                GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA masterdata TO fynovio_app;
+                GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA masterdata TO fynovio_app;
+                REVOKE UPDATE, DELETE ON masterdata.evidence_records FROM fynovio_app;
                 """);
         }
 
@@ -55,13 +60,17 @@ public sealed class PostgresFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         await _container.StartAsync();
-        await using var context = CreateAdminContext();
-        await context.Database.MigrateAsync();
+        await using var crmContext = CreateAdminContext();
+        await crmContext.Database.MigrateAsync();
+        await using var masterDataContext = CreateMasterDataContext();
+        await masterDataContext.Database.MigrateAsync();
     }
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
 
     public CrmDbContext CreateAdminContext() => CreateContext(AdminConnectionString);
+
+    public MasterDataDbContext CreateMasterDataContext() => CreateMasterDataContext(AdminConnectionString);
 
     public static CrmDbContext CreateContext(string connectionString)
     {
@@ -73,5 +82,17 @@ public sealed class PostgresFixture : IAsyncLifetime
             .Options;
 
         return new CrmDbContext(options);
+    }
+
+    public static MasterDataDbContext CreateMasterDataContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<MasterDataDbContext>()
+            .UseNpgsql(
+                connectionString,
+                npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", MasterDataDbContext.Schema))
+            .UseSnakeCaseNamingConvention()
+            .Options;
+
+        return new MasterDataDbContext(options);
     }
 }

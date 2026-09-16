@@ -14,21 +14,20 @@ public sealed class OpportunityPersistenceTests
     [Fact]
     public async Task Losing_a_draft_opportunity_persists()
     {
-        await using var context = _fixture.CreateAdminContext();
+        await using var crmContext = _fixture.CreateAdminContext();
+        await using var masterDataContext = _fixture.CreateMasterDataContext();
         var tenant = TestData.NextTenant();
 
-        var party = Party.Create(tenant, "Acme", PartyCreationSource.Manual);
-        context.Parties.Add(party);
-        await context.SaveChangesAsync();
+        var partyRef = await TestData.CreatePartyAsync(masterDataContext, tenant, "Acme");
 
-        var opportunity = Opportunity.Create(tenant, party.Id, TestData.Seller, "TRY", 1000m);
-        context.Opportunities.Add(opportunity);
-        await context.SaveChangesAsync();
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
+        crmContext.Opportunities.Add(opportunity);
+        await crmContext.SaveChangesAsync();
 
         opportunity.Lose("müşteri vazgeçti");
-        await context.SaveChangesAsync();
+        await crmContext.SaveChangesAsync();
 
-        var reloaded = await context.Opportunities.AsNoTracking()
+        var reloaded = await crmContext.Opportunities.AsNoTracking()
             .SingleAsync(o => o.Id == opportunity.Id);
         Assert.Equal(OpportunityStatus.Lost, reloaded.Status);
     }
@@ -36,22 +35,21 @@ public sealed class OpportunityPersistenceTests
     [Fact]
     public async Task Losing_an_open_opportunity_persists()
     {
-        await using var context = _fixture.CreateAdminContext();
+        await using var crmContext = _fixture.CreateAdminContext();
+        await using var masterDataContext = _fixture.CreateMasterDataContext();
         var tenant = TestData.NextTenant();
 
-        var party = Party.Create(tenant, "Acme", PartyCreationSource.Manual);
-        context.Parties.Add(party);
-        await context.SaveChangesAsync();
+        var partyRef = await TestData.CreatePartyAsync(masterDataContext, tenant, "Acme");
 
-        var opportunity = Opportunity.Create(tenant, party.Id, TestData.Seller, "TRY", 1000m);
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
         opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
-        context.Opportunities.Add(opportunity);
-        await context.SaveChangesAsync();
+        crmContext.Opportunities.Add(opportunity);
+        await crmContext.SaveChangesAsync();
 
         opportunity.Lose("bütçe onaylanmadı");
-        await context.SaveChangesAsync();
+        await crmContext.SaveChangesAsync();
 
-        var reloaded = await context.Opportunities.AsNoTracking()
+        var reloaded = await crmContext.Opportunities.AsNoTracking()
             .SingleAsync(o => o.Id == opportunity.Id);
         Assert.Equal(OpportunityStatus.Lost, reloaded.Status);
     }
@@ -59,19 +57,18 @@ public sealed class OpportunityPersistenceTests
     [Fact]
     public async Task Line_total_and_won_total_are_persisted()
     {
-        await using var context = _fixture.CreateAdminContext();
+        await using var crmContext = _fixture.CreateAdminContext();
+        await using var masterDataContext = _fixture.CreateMasterDataContext();
         var tenant = TestData.NextTenant();
 
-        var party = Party.Create(tenant, "Acme", PartyCreationSource.Manual);
-        context.Parties.Add(party);
-        await context.SaveChangesAsync();
+        var partyRef = await TestData.CreatePartyAsync(masterDataContext, tenant, "Acme");
 
-        var opportunity = Opportunity.Create(tenant, party.Id, TestData.Seller, "TRY", 0m);
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 0m);
         opportunity.AddLine(TestData.ProductRef(tenant), quantity: 3, unitPrice: 33.33m);
         opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
         opportunity.Win();
-        context.Opportunities.Add(opportunity);
-        await context.SaveChangesAsync();
+        crmContext.Opportunities.Add(opportunity);
+        await crmContext.SaveChangesAsync();
 
         await using var verification = _fixture.CreateAdminContext();
         var reloaded = await verification.Opportunities.AsNoTracking()

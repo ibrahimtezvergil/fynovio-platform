@@ -102,17 +102,16 @@ public sealed class CompleteOpportunityHandlerTests
         var tenant = TestData.NextTenant();
         long opportunityId;
 
-        await using (var seed = _fixture.CreateAdminContext())
+        await using (var seedCrm = _fixture.CreateAdminContext())
+        await using (var seedMasterData = _fixture.CreateMasterDataContext())
         {
-            var party = Party.Create(tenant, "Acme", PartyCreationSource.Manual);
-            seed.Parties.Add(party);
-            await seed.SaveChangesAsync();
+            var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
 
             // Still in Draft: Win() will reject it.
-            var opportunity = Opportunity.Create(tenant, party.Id, TestData.Seller, "TRY", 100m);
+            var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 100m);
             opportunity.AddLine(TestData.ProductRef(tenant), quantity: 1, unitPrice: 100m);
-            seed.Opportunities.Add(opportunity);
-            await seed.SaveChangesAsync();
+            seedCrm.Opportunities.Add(opportunity);
+            await seedCrm.SaveChangesAsync();
             opportunityId = opportunity.Id;
         }
 
@@ -166,17 +165,16 @@ public sealed class CompleteOpportunityHandlerTests
     private async Task<(TenantId TenantId, long OpportunityId)> SeedOpenOpportunityAsync(TenantId? tenant = null)
     {
         var tenantId = tenant ?? TestData.NextTenant();
-        await using var seed = _fixture.CreateAdminContext();
+        await using var seedCrm = _fixture.CreateAdminContext();
+        await using var seedMasterData = _fixture.CreateMasterDataContext();
 
-        var party = Party.Create(tenantId, "Acme", PartyCreationSource.Manual);
-        seed.Parties.Add(party);
-        await seed.SaveChangesAsync();
+        var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenantId, "Acme");
 
-        var opportunity = Opportunity.Create(tenantId, party.Id, TestData.Seller, "TRY", 100m);
+        var opportunity = Opportunity.Create(tenantId, partyRef, TestData.Seller, "TRY", 100m);
         opportunity.AddLine(TestData.ProductRef(tenantId), quantity: 1, unitPrice: 100m);
         opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
-        seed.Opportunities.Add(opportunity);
-        await seed.SaveChangesAsync();
+        seedCrm.Opportunities.Add(opportunity);
+        await seedCrm.SaveChangesAsync();
 
         return (tenantId, opportunity.Id);
     }

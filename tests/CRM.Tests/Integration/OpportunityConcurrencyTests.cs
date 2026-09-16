@@ -21,17 +21,16 @@ public sealed class OpportunityConcurrencyTests
         long opportunityId;
         var tenant = TestData.NextTenant();
 
-        await using (var seed = _fixture.CreateAdminContext())
+        await using (var seedCrm = _fixture.CreateAdminContext())
+        await using (var seedMasterData = _fixture.CreateMasterDataContext())
         {
-            var party = Party.Create(tenant, "Acme", PartyCreationSource.Manual);
-            seed.Parties.Add(party);
-            await seed.SaveChangesAsync();
+            var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
 
-            var opportunity = Opportunity.Create(tenant, party.Id, TestData.Seller, "TRY", 1000m);
+            var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
             opportunity.AddLine(TestData.ProductRef(tenant), quantity: 1, unitPrice: 100m);
             opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
-            seed.Opportunities.Add(opportunity);
-            await seed.SaveChangesAsync();
+            seedCrm.Opportunities.Add(opportunity);
+            await seedCrm.SaveChangesAsync();
             opportunityId = opportunity.Id;
         }
 

@@ -33,12 +33,9 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
         // it inside domain methods; EF captures the original value for the UPDATE ... WHERE.
         builder.Property(o => o.RowVersion).IsConcurrencyToken().IsRequired();
 
-        builder.HasOne<Party>()
-            .WithMany()
-            .HasForeignKey(o => new { o.TenantId, o.PartyId })
-            .HasPrincipalKey(p => new { p.TenantId, p.Id })
-            .OnDelete(DeleteBehavior.Restrict)
-            .IsRequired();
+        // PartyRef: tenant-safety via CHECK, no cross-schema FK to MasterData.Party
+        builder.Property(o => o.PartyRefPartyId).IsRequired();
+        builder.Ignore(o => o.PartyRef);
 
         // Optional pipeline version and stage references — no enforcement yet (Phase 2's ChangePipelineStage does).
         builder.HasOne<PipelineDefinitionVersion>()
@@ -75,10 +72,11 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
             t.HasCheckConstraint(
                 "ck_opportunities_lost_fields_required_once_lost",
                 "status <> 'lost' OR (lost_date IS NOT NULL AND lost_reason IS NOT NULL)");
+            t.HasCheckConstraint("ck_opportunities_party_ref_party_id_positive", "party_ref_party_id > 0");
         });
 
         builder.HasIndex(o => new { o.TenantId, o.Status });
-        builder.HasIndex(o => new { o.TenantId, o.PartyId });
+        builder.HasIndex(o => new { o.TenantId, o.PartyRefPartyId });
         // Issuer+subject together, matching PrincipalRef's own identity pair (doc 19 §9
         // amendment) — an index on subject alone contradicted the primitive it indexes.
         // Explicit short name: EF Core's auto-generated name exceeds Postgres's 63-byte

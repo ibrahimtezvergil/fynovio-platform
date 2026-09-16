@@ -19,7 +19,7 @@ public sealed class Opportunity : IHasRowVersion
 {
     public long Id { get; private set; }
     public TenantId TenantId { get; private set; }
-    public long PartyId { get; private set; }
+    public long PartyRefPartyId { get; private set; }
     public long? PipelineDefinitionVersionId { get; private set; }
     public long? PipelineStageId { get; private set; }
     public string AssignedPrincipalIssuer { get; private set; } = null!;
@@ -42,16 +42,19 @@ public sealed class Opportunity : IHasRowVersion
     public IReadOnlyCollection<OpportunityLine> Lines => _lines;
 
     public PrincipalRef AssignedPrincipal => new(AssignedPrincipalIssuer, AssignedPrincipalSubject);
+    public PartyRef PartyRef => new(TenantId, PartyRefPartyId);
 
     private Opportunity() { }
 
     public static Opportunity Create(
         TenantId tenantId,
-        long partyId,
+        PartyRef partyRef,
         PrincipalRef assignedPrincipal,
         string currency,
         decimal estimatedAmount)
     {
+        if (partyRef.TenantId != tenantId)
+            throw new ArgumentException("PartyRef's tenant must match the opportunity's tenant.", nameof(partyRef));
         if (currency is not { Length: 3 })
             throw new ArgumentException("Currency must be a 3-letter ISO code.", nameof(currency));
         if (estimatedAmount < 0)
@@ -63,7 +66,7 @@ public sealed class Opportunity : IHasRowVersion
         return new Opportunity
         {
             TenantId = tenantId,
-            PartyId = partyId,
+            PartyRefPartyId = partyRef.PartyId,
             AssignedPrincipalIssuer = assignedPrincipal.Issuer,
             AssignedPrincipalSubject = assignedPrincipal.Subject,
             Status = OpportunityStatus.Draft,
