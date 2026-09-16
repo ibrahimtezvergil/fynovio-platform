@@ -45,7 +45,7 @@ ask"). Both are **narrow, low-risk, and reversible** given no production tenants
 ([[project-scope-local-only]]) — but confirm before Task 3 runs, since data-shape
 choices are more annoying to unwind than a rename.
 
-- [ ] **Decision 0.1 — `CRM.Domain.Party`'s `CreationSource` and `CustomFields` have no
+- [x] **Decision 0.1 — `CRM.Domain.Party`'s `CreationSource` and `CustomFields` have no
   `MasterData.Domain.Party` equivalent.** `MasterData.Party`'s frozen shape (design doc
   §3) is `Id/TenantId/PartyType/Name/Surname/Phone/Email/MergedIntoPartyId` only — no
   `CreationSource` (Manual/AiVoiceCapture), no `CustomFields` (jsonb).
@@ -56,7 +56,7 @@ choices are more annoying to unwind than a rename.
   there's no evidence Party-level custom fields were ever used. If either turns out to
   be load-bearing, add it to `MasterData.Party` as a real, intentional extension later
   — don't route around the loss by keeping two Party tables.
-- [ ] **Decision 0.2 — pipeline-stage assignment is optional in Phase 1, not enforced.**
+- [x] **Decision 0.2 — pipeline-stage assignment is optional in Phase 1, not enforced.**
   `Opportunity.PipelineDefinitionVersionId`/`PipelineStageId` (Task 2) are nullable and
   Phase 1 adds no CHECK requiring them once `Open`. **Recommendation:** keep it that way
   through Phase 1 — enforcing "a stage is required once Open" belongs with the command
@@ -66,6 +66,11 @@ choices are more annoying to unwind than a rename.
 
 If either recommendation is rejected, stop before Task 3 (Decision 0.1) or before
 finishing Task 2's CHECK constraints (Decision 0.2) and get the actual answer instead.
+
+→ **Confirmed by Ibrahim (2026-09-16):** both recommendations approved as written, no
+changes. Also confirmed at the same time: Task 3 Step 1's `party_type` default of
+`'organization'` for the `crm.parties` → `masterdata.parties` backfill, approved as
+written.
 
 ---
 
