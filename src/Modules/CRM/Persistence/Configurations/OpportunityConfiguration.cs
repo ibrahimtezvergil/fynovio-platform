@@ -51,7 +51,12 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
             t.HasCheckConstraint("ck_opportunities_status", "status IN ('waiting','offered','completed','canceled')");
             t.HasCheckConstraint("ck_opportunities_estimated_amount_non_negative", "estimated_amount >= 0");
             // waiting → offered is a DB-enforced gate (17 §2): expiry_date required once offered.
-            t.HasCheckConstraint("ck_opportunities_expiry_required_once_offered", "status = 'waiting' OR expiry_date IS NOT NULL");
+            // expiry_date yalnızca offered/completed durumlarında zorunlu. Eski ifade
+            // (status = 'waiting' OR ...) waiting → canceled geçişini de kapsıyordu ve
+            // teklif verilmemiş bir opportunity'nin iptalini imkansız kılıyordu.
+            t.HasCheckConstraint(
+                "ck_opportunities_expiry_required_once_offered",
+                "status NOT IN ('offered','completed') OR expiry_date IS NOT NULL");
             t.HasCheckConstraint("ck_opportunities_sale_date_required_once_completed", "status <> 'completed' OR sale_date IS NOT NULL");
             t.HasCheckConstraint(
                 "ck_opportunities_cancel_fields_required_once_canceled",
