@@ -13,8 +13,7 @@ public sealed class CrmDbContextFactory : IDesignTimeDbContextFactory<CrmDbConte
         var optionsBuilder = new DbContextOptionsBuilder<CrmDbContext>();
         optionsBuilder
             .UseNpgsql(CrmConnectionString.Resolve(), npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", CrmDbContext.Schema))
-            .UseSnakeCaseNamingConvention()
-            .AddInterceptors(new RowVersionInterceptor());
+            .UseSnakeCaseNamingConvention();
 
         return new CrmDbContext(optionsBuilder.Options);
     }

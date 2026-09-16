@@ -77,7 +77,7 @@ public sealed class Opportunity : IHasRowVersion
 
         var line = OpportunityLine.Create(TenantId, productRef, quantity, unitPrice, isOptional, sortOrder);
         _lines.Add(line);
-        UpdatedAt = DateTimeOffset.UtcNow;
+        Touch();
         return line;
     }
 
@@ -93,7 +93,7 @@ public sealed class Opportunity : IHasRowVersion
         Status = OpportunityStatus.Offered;
         ExpiryDate = expiryDate;
         OfferDate = DateTimeOffset.UtcNow;
-        UpdatedAt = DateTimeOffset.UtcNow;
+        Touch();
     }
 
     /// <summary>Enforces the one cross-row invariant CHECK cannot express: at least one
@@ -112,7 +112,7 @@ public sealed class Opportunity : IHasRowVersion
         // currency's 2dp minor unit exactly once, here.
         TotalAmount = Math.Round(totalAmount, 2, MidpointRounding.AwayFromZero);
         SaleDate = DateTimeOffset.UtcNow;
-        UpdatedAt = DateTimeOffset.UtcNow;
+        Touch();
     }
 
     public void Cancel(string cancelReason)
@@ -125,7 +125,27 @@ public sealed class Opportunity : IHasRowVersion
         Status = OpportunityStatus.Canceled;
         CancelReason = cancelReason;
         CancelDate = DateTimeOffset.UtcNow;
+        Touch();
+    }
+
+    public void CancelLine(OpportunityLine line, string cancelReason)
+    {
+        if (!_lines.Contains(line))
+            throw new InvalidOperationException("Line does not belong to this opportunity.");
+        if (Status is OpportunityStatus.Completed or OpportunityStatus.Canceled)
+            throw new InvalidOperationException($"Cannot cancel a line on an opportunity in status {Status}.");
+
+        line.Cancel(cancelReason);
+        Touch();
+    }
+
+    /// <summary>Tek versiyon artış noktası. Interceptor yerine burada artırılıyor: outbox ve
+    /// evidence kayıtları aynı transaction içinde `RowVersion`'ı okuyor, interceptor
+    /// SaveChanges sırasında artırdığı için bir eski değer yazılıyordu.</summary>
+    private void Touch()
+    {
         UpdatedAt = DateTimeOffset.UtcNow;
+        RowVersion++;
     }
 
     void IHasRowVersion.IncrementRowVersion() => RowVersion++;

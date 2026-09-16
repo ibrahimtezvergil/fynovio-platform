@@ -52,7 +52,8 @@ public sealed class OpportunityLine
         };
     }
 
-    public void Cancel(string cancelReason)
+    /// <summary>Yalnızca aggregate root üzerinden çağrılır — bkz. Opportunity.CancelLine.</summary>
+    internal void Cancel(string cancelReason)
     {
         if (string.IsNullOrWhiteSpace(cancelReason))
             throw new ArgumentException("Cancel reason is required.", nameof(cancelReason));

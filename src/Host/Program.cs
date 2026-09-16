@@ -7,8 +7,7 @@ builder.Services.AddDbContext<CrmDbContext>(options => options
     .UseNpgsql(
         builder.Configuration.GetConnectionString("Crm") ?? CrmConnectionString.Resolve(),
         npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", CrmDbContext.Schema))
-    .UseSnakeCaseNamingConvention()
-    .AddInterceptors(new RowVersionInterceptor()));
+    .UseSnakeCaseNamingConvention());
 
 var app = builder.Build();
 

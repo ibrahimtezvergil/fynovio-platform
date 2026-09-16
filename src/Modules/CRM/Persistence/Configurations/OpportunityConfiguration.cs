@@ -29,8 +29,8 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
         builder.Property(o => o.TotalAmount).HasColumnType("numeric(19,4)");
         builder.Property(o => o.CustomFields).HasColumnType("jsonb");
 
-        // Explicit bigint concurrency token (schema revision 2, item 4) — RowVersionInterceptor
-        // increments it pre-save; EF captures the original value for the UPDATE ... WHERE.
+        // Explicit bigint concurrency token (schema revision 2, item 4) — Opportunity increments
+        // it inside domain methods; EF captures the original value for the UPDATE ... WHERE.
         builder.Property(o => o.RowVersion).IsConcurrencyToken().IsRequired();
 
         builder.HasOne<Party>()

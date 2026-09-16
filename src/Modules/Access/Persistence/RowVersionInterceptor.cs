@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 namespace Access.Persistence;
 
 /// <summary>Increments row_version on every modified IHasRowVersion entity before save.
-/// Identical mechanism to CRM.Persistence.RowVersionInterceptor — duplicated, not shared,
-/// because Contracts may not depend on EF Core (doc 08's "Contracts... no ORM" rule) and no
-/// module may reference another module's namespace (AGENTS.md's module boundary rule). Only
-/// the marker interface (Contracts.IHasRowVersion) is actually shared.</summary>
+/// Access uses an interceptor; CRM's Opportunity increments its own version inside domain
+/// methods instead. Both approaches avoid xmin, using an explicit bigint concurrency token.
+/// The marker interface (Contracts.IHasRowVersion) is shared; each module's implementation
+/// strategy is independent to suit its boundary needs.</summary>
 public sealed class RowVersionInterceptor : SaveChangesInterceptor
 {
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
