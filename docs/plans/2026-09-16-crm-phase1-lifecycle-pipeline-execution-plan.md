@@ -6,9 +6,9 @@
 > tracking"):** mark a step `[x]` only once its commit exists, and add a
 > `→ Commit: \`<hash>\` "<message>"` line under it — never mark ahead of actual state.
 >
-> **Status: Task 0 confirmed (2026-09-16, commit `7214867`). Task 1 done (2026-09-16, on
-> branch `crm-phase1-lifecycle-pipeline`, worktree
-> `.worktrees/crm-phase1-lifecycle-pipeline`, not yet merged to `main`). Tasks 2–4 NOT
+> **Status: Task 0 confirmed (2026-09-16, commit `7214867`). Tasks 1–2 done (2026-09-16,
+> on branch `crm-phase1-lifecycle-pipeline`, worktree
+> `.worktrees/crm-phase1-lifecycle-pipeline`, not yet merged to `main`). Tasks 3–4 NOT
 > YET RUN.** Read
 > `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §5 (all five items now
 > RESOLVED), §11 (decision record) and §12 (dependency graph) before starting — this
@@ -264,7 +264,7 @@ Versioned by design (PDF §5's explicit rule): changing a definition's stages mu
 remap opportunities already pointing at an older version. `Opportunity` therefore
 references a **version**, not the definition directly.
 
-- [ ] **Step 1: `PipelineDefinition`**
+- [x] **Step 1: `PipelineDefinition`**
 
 `src/Modules/CRM/Domain/PipelineDefinition.cs`:
 
@@ -318,7 +318,7 @@ public sealed class PipelineDefinition
 }
 ```
 
-- [ ] **Step 2: `PipelineDefinitionVersion`**
+- [x] **Step 2: `PipelineDefinitionVersion`**
 
 `src/Modules/CRM/Domain/PipelineDefinitionVersion.cs`:
 
@@ -365,7 +365,7 @@ public sealed class PipelineDefinitionVersion
 }
 ```
 
-- [ ] **Step 3: `PipelineStage`**
+- [x] **Step 3: `PipelineStage`**
 
 `src/Modules/CRM/Domain/PipelineStage.cs`:
 
@@ -403,7 +403,7 @@ public sealed class PipelineStage
 }
 ```
 
-- [ ] **Step 4: Domain tests (versioning invariant)**
+- [x] **Step 4: Domain tests (versioning invariant)**
 
 `tests/CRM.Tests/Domain/PipelineDefinitionVersionTests.cs` — cover: adding a duplicate
 version number rejected; adding a duplicate sort-order stage within one version
@@ -413,7 +413,7 @@ Write 3–4 focused tests in the style of `PartyRelationshipTests.cs`
 (`docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md` Task 2 Step 3) — small,
 one behavior per test, tenant via `TestData.NextTenant()`.
 
-- [ ] **Step 5: Configurations**
+- [x] **Step 5: Configurations**
 
 `PipelineDefinitionConfiguration`: `ToTable("pipeline_definitions")`, PK `Id`,
 alternate key `(TenantId, Id)`, `HasIndex(TenantId, Name)` unique (a tenant's pipeline
@@ -434,7 +434,19 @@ Follow `PartyRelationshipConfiguration.cs`'s exact composite-FK pattern
 (`docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md` Task 5 Step 6) — same
 shape, new tables.
 
-- [ ] **Step 6: `Opportunity` gains two nullable fields — no enforcement yet**
+→ **Deviation found:** the first pass configured relationships from both the parent
+side (`HasMany(...).WithOne()`) and the child side (`HasOne<T>().WithMany()`), which
+made EF Core generate duplicate/shadow FKs — one tenant-safe composite (correct) and one
+tenant-unsafe single-column FK with the wrong `Cascade` delete behavior (wrong). Caught
+by spec-compliance review reading the generated migration, fixed by removing the
+parent-side `HasMany(...)` blocks and adding `builder.Ignore(p => p.Versions)` /
+`builder.Ignore(v => v.Stages)` instead (`PartyRelationshipConfiguration.cs` has no
+parent-side collection nav at all, so this codebase's reference pattern didn't cover
+this exact shape). This means `PipelineDefinition.Versions`/
+`PipelineDefinitionVersion.Stages` are **not** EF-loaded collections — populated only via
+`AddVersion()`/`AddStage()` — documented inline in both configuration files. See Step 8.
+
+- [x] **Step 6: `Opportunity` gains two nullable fields — no enforcement yet**
 
 Add `public long? PipelineDefinitionVersionId { get; private set; }` and
 `public long? PipelineStageId { get; private set; }` to `Opportunity`. **No setter, no
@@ -444,7 +456,7 @@ add the two tenant-safe composite FKs (`IsRequired(false)`), matching `Party`'s
 optional self-FK pattern from `PartyConfiguration.cs`
 (masterdata-phase0.5-execution-plan.md Task 5 Step 5).
 
-- [ ] **Step 7: Build, migrate, test**
+- [x] **Step 7: Build, migrate, test**
 
 ```bash
 dotnet build src/Modules/CRM/CRM.csproj
@@ -461,7 +473,9 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj
 Expected: 41 existing + new `PipelineDefinitionVersionTests` all pass; no existing test
 touches pipeline fields, so none should need changes (purely additive).
 
-- [ ] **Step 8: Commit**
+→ 45/45 pass (41 from Task 1 + 4 new), confirmed independently by the controller.
+
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/Modules/CRM/Domain src/Modules/CRM/Persistence tests/CRM.Tests
@@ -469,6 +483,13 @@ git commit -m "Add pipeline_definitions/pipeline_definition_versions/pipeline_st
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 ```
+
+→ Commit: `2993aba` "Add pipeline_definitions/pipeline_definition_versions/pipeline_stages
+(additive)" (follow-up fix: `c1636df` "Fix duplicate FK configuration in pipeline tables
+(parent+child both configuring same relationship)"; follow-up fix: `342459b` "Document
+why Versions/Stages are Ignore()'d, not EF-loaded"). Spec-compliance review found and
+confirmed the FK-duplication fix; code-quality review approved with one documentation
+request, applied. Branch: `crm-phase1-lifecycle-pipeline`, not yet merged to `main`.
 
 ---
 
