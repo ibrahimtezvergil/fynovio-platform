@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Format check
+        run: dotnet format --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      # AGENTS.md binding core rule 7 / doc 12 FF36. JSON output keeps this independent of
+      # the CLI's display language; any vulnerable package in any project fails the job.
+      - name: Vulnerable package check
+        run: |
+          dotnet list package --vulnerable --include-transitive --format json > vulnerable.json
+          count=$(jq '[.projects[].frameworks[]? | (.topLevelPackages // []) + (.transitivePackages // []) | .[]] | length' vulnerable.json)
+          echo "Vulnerable packages: $count"
+          if [ "$count" -ne 0 ]; then
+            jq '.projects[] | select(.frameworks != null)' vulnerable.json
+            exit 1
+          fi
+
+      # Testcontainers uses the runner's Docker daemon (PostgreSQL 17).
+      - name: Test
+        run: dotnet test --no-build --configuration Release --verbosity normal
