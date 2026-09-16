@@ -6,11 +6,13 @@
 > tracking"):** mark a step `[x]` only once its commit exists, and add a
 > `→ Commit: \`<hash>\` "<message>"` line under it — never mark ahead of actual state.
 >
-> **Status: written, NOT YET RUN.** No code has been touched for this plan. Read
+> **Status: Task 0 confirmed (2026-09-16, commit `7214867`), Tasks 1–4 NOT YET RUN.** No
+> code has been touched for this plan. Read
 > `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §5 (all five items now
 > RESOLVED), §11 (decision record) and §12 (dependency graph) before starting — this
 > plan implements Phase 1 of that roadmap. Do not re-litigate any decision recorded
-> there.
+> there. Task 0's two design decisions and Task 3 Step 1's `party_type` default are all
+> confirmed as written — nothing blocks starting Task 1.
 
 **Goal:** Rename `OpportunityStatus` to the target model's `Draft/Open/Won/Lost`; add
 additive pipeline-definition/version/stage tables; cut `Opportunity` over from a raw
@@ -498,14 +500,12 @@ protected override void Down(MigrationBuilder migrationBuilder)
 }
 ```
 
-**Open sub-question inside this step:** the `'organization'` literal above is a
-placeholder — `crm.parties` has no `party_type` today, and `MasterData.Party` requires
-one. Every CRM party seeded so far is a company/organization contact record in
-practice, per `CRM_CURRENT_STATE_ANALYSIS.md`'s domain description, so defaulting to
-`Organization` is the defensible reading — but this is exactly the kind of silent
-default the PDF's protocol says to flag rather than bury in a migration file. **Confirm
-this default before running Step 1**, or supply a real per-row rule if some existing
-seed data is actually person-shaped.
+**Sub-question, RESOLVED (see Task 0's confirmation note above):** the `'organization'`
+literal above was flagged rather than silently buried, since `crm.parties` has no
+`party_type` today and `MasterData.Party` requires one. **Confirmed by Ibrahim
+(2026-09-16), as written** — every CRM party seeded so far is a company/organization
+contact record in practice, per `CRM_CURRENT_STATE_ANALYSIS.md`'s domain description, so
+defaulting to `Organization` is correct. No per-row rule needed.
 
 - [ ] **Step 2: Data/invariant verification test**
 
