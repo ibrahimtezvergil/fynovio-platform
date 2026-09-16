@@ -4,10 +4,10 @@ namespace CRM.Domain;
 
 public enum OpportunityStatus
 {
-    Waiting,
-    Offered,
-    Completed,
-    Canceled
+    Draft,
+    Open,
+    Won,
+    Lost
 }
 
 /// <summary>Aggregate root for the merged CRM+Sales pilot domain
@@ -23,14 +23,14 @@ public sealed class Opportunity : IHasRowVersion
     public string AssignedPrincipalIssuer { get; private set; } = null!;
     public string AssignedPrincipalSubject { get; private set; } = null!;
     public OpportunityStatus Status { get; private set; }
-    public string? CancelReason { get; private set; }
+    public string? LostReason { get; private set; }
     public string Currency { get; private set; } = null!;
     public decimal EstimatedAmount { get; private set; }
     public decimal? TotalAmount { get; private set; }
     public DateTimeOffset? ExpiryDate { get; private set; }
-    public DateTimeOffset? OfferDate { get; private set; }
-    public DateTimeOffset? SaleDate { get; private set; }
-    public DateTimeOffset? CancelDate { get; private set; }
+    public DateTimeOffset? OpenedDate { get; private set; }
+    public DateTimeOffset? WonDate { get; private set; }
+    public DateTimeOffset? LostDate { get; private set; }
     public string? CustomFields { get; private set; }
     public long RowVersion { get; private set; } = 1;
     public DateTimeOffset CreatedAt { get; private set; }
@@ -64,7 +64,7 @@ public sealed class Opportunity : IHasRowVersion
             PartyId = partyId,
             AssignedPrincipalIssuer = assignedPrincipal.Issuer,
             AssignedPrincipalSubject = assignedPrincipal.Subject,
-            Status = OpportunityStatus.Waiting,
+            Status = OpportunityStatus.Draft,
             Currency = currency,
             EstimatedAmount = estimatedAmount,
             CreatedAt = now,
@@ -74,7 +74,7 @@ public sealed class Opportunity : IHasRowVersion
 
     public OpportunityLine AddLine(EntityRef productRef, int quantity, decimal unitPrice, bool isOptional = false, int sortOrder = 0)
     {
-        if (Status != OpportunityStatus.Waiting)
+        if (Status != OpportunityStatus.Draft)
             throw new InvalidOperationException($"Cannot add a line to an opportunity in status {Status}.");
 
         var line = OpportunityLine.Create(TenantId, productRef, quantity, unitPrice, isOptional, sortOrder);
@@ -83,55 +83,55 @@ public sealed class Opportunity : IHasRowVersion
         return line;
     }
 
-    /// <summary>waiting → offered is a DB-enforced gate (17 §2): expiry_date becomes
+    /// <summary>draft → open is a DB-enforced gate (17 §2): expiry_date becomes
     /// mandatory from this point on, diverging from legacy's skip-behavior on purpose.</summary>
-    public void Offer(DateTimeOffset expiryDate)
+    public void Open(DateTimeOffset expiryDate)
     {
-        if (Status != OpportunityStatus.Waiting)
-            throw new InvalidOperationException($"Cannot offer an opportunity in status {Status}.");
+        if (Status != OpportunityStatus.Draft)
+            throw new InvalidOperationException($"Cannot open an opportunity in status {Status}.");
         if (expiryDate <= DateTimeOffset.UtcNow)
             throw new ArgumentOutOfRangeException(nameof(expiryDate), "Expiry date must be in the future.");
 
-        Status = OpportunityStatus.Offered;
+        Status = OpportunityStatus.Open;
         ExpiryDate = expiryDate;
-        OfferDate = DateTimeOffset.UtcNow;
+        OpenedDate = DateTimeOffset.UtcNow;
         Touch();
     }
 
     /// <summary>Enforces the one cross-row invariant CHECK cannot express: at least one
-    /// active (non-canceled), required (non-optional) line must exist. The total is derived
+    /// active (non-lost), required (non-optional) line must exist. The total is derived
     /// from those lines here — optional lines are unselected alternatives and do not count —
     /// and this is the single declared rounding point (17 §3.4).</summary>
-    public void Complete()
+    public void Win()
     {
-        if (Status != OpportunityStatus.Offered)
-            throw new InvalidOperationException($"Cannot complete an opportunity in status {Status}. It must be offered first.");
+        if (Status != OpportunityStatus.Open)
+            throw new InvalidOperationException($"Cannot win an opportunity in status {Status}. It must be open first.");
 
         var billableLines = _lines.Where(line => !line.IsOptional && !line.IsCanceled).ToList();
         if (billableLines.Count == 0)
-            throw new InvalidOperationException("Cannot complete an opportunity without at least one active required line.");
+            throw new InvalidOperationException("Cannot win an opportunity without at least one active required line.");
 
         // line_total is NULL on rows persisted before it was computed; derive it rather than count it as zero.
         var computedTotal = billableLines.Sum(line => line.LineTotal ?? line.Quantity * line.UnitPrice);
 
-        Status = OpportunityStatus.Completed;
+        Status = OpportunityStatus.Won;
         // Single declared rounding point (17 §3.4): 4dp computed total rounds to the
         // currency's 2dp minor unit exactly once, here.
         TotalAmount = decimal.Round(computedTotal, 2, MidpointRounding.AwayFromZero);
-        SaleDate = DateTimeOffset.UtcNow;
+        WonDate = DateTimeOffset.UtcNow;
         Touch();
     }
 
-    public void Cancel(string cancelReason)
+    public void Lose(string lostReason)
     {
-        if (Status is OpportunityStatus.Completed or OpportunityStatus.Canceled)
-            throw new InvalidOperationException($"Cannot cancel an opportunity in status {Status}.");
-        if (string.IsNullOrWhiteSpace(cancelReason))
-            throw new ArgumentException("Cancel reason is required.", nameof(cancelReason));
+        if (Status is OpportunityStatus.Won or OpportunityStatus.Lost)
+            throw new InvalidOperationException($"Cannot lose an opportunity in status {Status}.");
+        if (string.IsNullOrWhiteSpace(lostReason))
+            throw new ArgumentException("Lost reason is required.", nameof(lostReason));
 
-        Status = OpportunityStatus.Canceled;
-        CancelReason = cancelReason;
-        CancelDate = DateTimeOffset.UtcNow;
+        Status = OpportunityStatus.Lost;
+        LostReason = lostReason;
+        LostDate = DateTimeOffset.UtcNow;
         Touch();
     }
 
@@ -139,7 +139,7 @@ public sealed class Opportunity : IHasRowVersion
     {
         if (!_lines.Contains(line))
             throw new InvalidOperationException("Line does not belong to this opportunity.");
-        if (Status is OpportunityStatus.Completed or OpportunityStatus.Canceled)
+        if (Status is OpportunityStatus.Won or OpportunityStatus.Lost)
             throw new InvalidOperationException($"Cannot cancel a line on an opportunity in status {Status}.");
 
         line.Cancel(cancelReason);

@@ -12,7 +12,7 @@ public sealed class OpportunityPersistenceTests
     public OpportunityPersistenceTests(PostgresFixture fixture) => _fixture = fixture;
 
     [Fact]
-    public async Task Canceling_a_waiting_opportunity_persists()
+    public async Task Losing_a_draft_opportunity_persists()
     {
         await using var context = _fixture.CreateAdminContext();
         var tenant = TestData.NextTenant();
@@ -25,16 +25,16 @@ public sealed class OpportunityPersistenceTests
         context.Opportunities.Add(opportunity);
         await context.SaveChangesAsync();
 
-        opportunity.Cancel("müşteri vazgeçti");
+        opportunity.Lose("müşteri vazgeçti");
         await context.SaveChangesAsync();
 
         var reloaded = await context.Opportunities.AsNoTracking()
             .SingleAsync(o => o.Id == opportunity.Id);
-        Assert.Equal(OpportunityStatus.Canceled, reloaded.Status);
+        Assert.Equal(OpportunityStatus.Lost, reloaded.Status);
     }
 
     [Fact]
-    public async Task Canceling_an_offered_opportunity_persists()
+    public async Task Losing_an_open_opportunity_persists()
     {
         await using var context = _fixture.CreateAdminContext();
         var tenant = TestData.NextTenant();
@@ -44,20 +44,20 @@ public sealed class OpportunityPersistenceTests
         await context.SaveChangesAsync();
 
         var opportunity = Opportunity.Create(tenant, party.Id, TestData.Seller, "TRY", 1000m);
-        opportunity.Offer(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
         context.Opportunities.Add(opportunity);
         await context.SaveChangesAsync();
 
-        opportunity.Cancel("bütçe onaylanmadı");
+        opportunity.Lose("bütçe onaylanmadı");
         await context.SaveChangesAsync();
 
         var reloaded = await context.Opportunities.AsNoTracking()
             .SingleAsync(o => o.Id == opportunity.Id);
-        Assert.Equal(OpportunityStatus.Canceled, reloaded.Status);
+        Assert.Equal(OpportunityStatus.Lost, reloaded.Status);
     }
 
     [Fact]
-    public async Task Line_total_and_completed_total_are_persisted()
+    public async Task Line_total_and_won_total_are_persisted()
     {
         await using var context = _fixture.CreateAdminContext();
         var tenant = TestData.NextTenant();
@@ -68,8 +68,8 @@ public sealed class OpportunityPersistenceTests
 
         var opportunity = Opportunity.Create(tenant, party.Id, TestData.Seller, "TRY", 0m);
         opportunity.AddLine(TestData.ProductRef(tenant), quantity: 3, unitPrice: 33.33m);
-        opportunity.Offer(DateTimeOffset.UtcNow.AddDays(7));
-        opportunity.Complete();
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Win();
         context.Opportunities.Add(opportunity);
         await context.SaveChangesAsync();
 

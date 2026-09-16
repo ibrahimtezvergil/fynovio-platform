@@ -63,7 +63,7 @@ public sealed class CompleteOpportunityHandler
             .SingleOrDefaultAsync(o => o.Id == command.OpportunityId, cancellationToken)
             ?? throw new OpportunityNotFoundException(command.OpportunityId);
 
-        opportunity.Complete();
+        opportunity.Win();
 
         var payload = new CompletedPayload(
             opportunity.Id,
@@ -89,7 +89,7 @@ public sealed class CompleteOpportunityHandler
             aggregateId: opportunity.Id,
             aggregateVersion: opportunity.RowVersion,
             principal: command.Principal,
-            action: "Opportunity.Complete",
+            action: "Opportunity.Win",
             detail: payloadJson,
             correlationId: command.CorrelationId));
 
