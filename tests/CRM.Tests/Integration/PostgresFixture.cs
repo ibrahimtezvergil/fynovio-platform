@@ -1,5 +1,6 @@
 using CRM.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -16,7 +17,39 @@ public sealed class PostgresFixture : IAsyncLifetime
         .WithPassword("postgres")
         .Build();
 
+    private string? _runtimeConnectionString;
+
     public string AdminConnectionString => _container.GetConnectionString();
+
+    /// <summary>Migration'ları uygulayan superuser'dan ayrı, RLS'e tabi rol (FF03).
+    /// Superuser ve BYPASSRLS rolleri RLS'i her koşulda atlar; izolasyon yalnızca bu rolle
+    /// test edilebilir.</summary>
+    public async Task<string> RuntimeConnectionStringAsync()
+    {
+        if (_runtimeConnectionString is not null)
+            return _runtimeConnectionString;
+
+        await using (var context = CreateAdminContext())
+        {
+            await context.Database.ExecuteSqlRawAsync(
+                """
+                CREATE ROLE fynovio_app LOGIN PASSWORD 'runtime' NOSUPERUSER NOBYPASSRLS;
+                GRANT USAGE ON SCHEMA crm TO fynovio_app;
+                GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA crm TO fynovio_app;
+                GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA crm TO fynovio_app;
+                REVOKE UPDATE, DELETE ON crm.evidence_records FROM fynovio_app;
+                """);
+        }
+
+        var builder = new NpgsqlConnectionStringBuilder(AdminConnectionString)
+        {
+            Username = "fynovio_app",
+            Password = "runtime"
+        };
+
+        _runtimeConnectionString = builder.ConnectionString;
+        return _runtimeConnectionString;
+    }
 
     public async Task InitializeAsync()
     {
