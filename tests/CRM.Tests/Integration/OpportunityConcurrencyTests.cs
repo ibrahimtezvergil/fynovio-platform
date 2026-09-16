@@ -29,7 +29,7 @@ public sealed class OpportunityConcurrencyTests
 
             var opportunity = Opportunity.Create(tenant, party.Id, TestData.Seller, "TRY", 1000m);
             opportunity.AddLine(TestData.ProductRef(tenant), quantity: 1, unitPrice: 100m);
-            opportunity.Offer(DateTimeOffset.UtcNow.AddDays(7));
+            opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
             seed.Opportunities.Add(opportunity);
             await seed.SaveChangesAsync();
             opportunityId = opportunity.Id;
@@ -46,7 +46,7 @@ public sealed class OpportunityConcurrencyTests
         fromB.CancelLine(fromB.Lines.Single(), "stokta yok");
         await contextB.SaveChangesAsync();
 
-        fromA.Complete();
+        fromA.Win();
 
         await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => contextA.SaveChangesAsync());
     }
