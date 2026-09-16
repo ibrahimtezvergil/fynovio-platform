@@ -6,13 +6,15 @@
 > tracking"):** mark a step `[x]` only once its commit exists, and add a
 > `→ Commit: \`<hash>\` "<message>"` line under it — never mark ahead of actual state.
 >
-> **Status: Task 0 confirmed (2026-09-16, commit `7214867`), Tasks 1–4 NOT YET RUN.** No
-> code has been touched for this plan. Read
+> **Status: Task 0 confirmed (2026-09-16, commit `7214867`). Task 1 done (2026-09-16, on
+> branch `crm-phase1-lifecycle-pipeline`, worktree
+> `.worktrees/crm-phase1-lifecycle-pipeline`, not yet merged to `main`). Tasks 2–4 NOT
+> YET RUN.** Read
 > `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §5 (all five items now
 > RESOLVED), §11 (decision record) and §12 (dependency graph) before starting — this
 > plan implements Phase 1 of that roadmap. Do not re-litigate any decision recorded
 > there. Task 0's two design decisions and Task 3 Step 1's `party_type` default are all
-> confirmed as written — nothing blocks starting Task 1.
+> confirmed as written.
 
 **Goal:** Rename `OpportunityStatus` to the target model's `Draft/Open/Won/Lost`; add
 additive pipeline-definition/version/stage tables; cut `Opportunity` over from a raw
@@ -108,7 +110,7 @@ Phase 1 to resolve — preserving it under the new name is the narrow, reversibl
 `LostReason` stays free text (see this plan's header — structured taxonomy is
 out of scope).
 
-- [ ] **Step 1: Confirm the exact blast radius**
+- [x] **Step 1: Confirm the exact blast radius**
 
 ```bash
 grep -rn "OpportunityStatus\.\(Waiting\|Offered\|Completed\|Canceled\)\|\"waiting\"\|\"offered\"\|\"completed\"\|\"canceled\"" \
@@ -119,7 +121,15 @@ Confirm it still matches only the five files listed above (it did when this plan
 written — re-verify, since the codebase may have moved since). If it matches more,
 update this task's file list before proceeding.
 
-- [ ] **Step 2: Rename in `Opportunity.cs`**
+→ **Deviation found:** this grep pattern only matches enum/string literals, not
+method-call sites (`.Offer(`, `.Complete(`). It missed three files that call the old
+methods directly: `tests/CRM.Tests/Domain/OpportunityRowVersionTests.cs`,
+`tests/CRM.Tests/Domain/OpportunityMoneyTests.cs`, and
+`src/Modules/CRM/Application/CompleteOpportunityHandler.cs`. Caught by the controller's
+independent `dotnet test` run (outside the sandbox restriction that blocked the
+implementer) and fixed in follow-up commits — see Step 9.
+
+- [x] **Step 2: Rename in `Opportunity.cs`**
 
 Apply the table above. `OpportunityStatus` enum values, `Open(DateTimeOffset
 expiryDate)` (renamed from `Offer`, body unchanged except the status it sets),
@@ -131,7 +141,7 @@ line being canceled is unrelated to the opportunity's own Won/Lost vocabulary. U
 every doc comment that names the old status values (e.g. the `Complete()` XML doc's
 "cross-row invariant" note, the class-level comment).
 
-- [ ] **Step 3: Rename in `OpportunityConfiguration.cs`**
+- [x] **Step 3: Rename in `OpportunityConfiguration.cs`**
 
 `ToDb`/`FromDb` switch expressions get the new string values (`"draft"`, `"open"`,
 `"won"`, `"lost"`). CHECK constraint renames (name **and** expression):
@@ -146,19 +156,24 @@ every doc comment that names the old status values (e.g. the `Complete()` XML do
   `ck_opportunities_lost_fields_required_once_lost`, expression
   `status <> 'lost' OR (lost_date IS NOT NULL AND lost_reason IS NOT NULL)`.
 
-- [ ] **Step 4: Update the five test files (mechanical rename, same behavior)**
+- [x] **Step 4: Update the five test files (mechanical rename, same behavior)**
 
 Read each file, replace old enum/method/field names with new ones per the table. No
 new test cases needed — this step proves the *existing* invariants still hold under
 the new names. Don't add pipeline-related assertions here (that's Task 2's job).
 
-- [ ] **Step 5: Compile and run — expect the old suite to still pass, renamed**
+→ Actually touched 8 test files, not 5 — see Step 1's deviation note. Also fixed 2
+stale doc comments a spec-compliance reviewer flagged (`OpportunityLine.cs`'s
+`Opportunity.Complete()` reference, `CompleteOpportunityHandlerTests.cs`'s "Still
+waiting" comment) in a follow-up commit — see Step 9.
+
+- [x] **Step 5: Compile and run — expect the old suite to still pass, renamed**
 
 ```bash
 dotnet build src/Modules/CRM/CRM.csproj
 ```
 
-- [ ] **Step 6: Generate the migration**
+- [x] **Step 6: Generate the migration**
 
 ```bash
 dotnet ef migrations add RenameOpportunityLifecycle \
@@ -167,7 +182,7 @@ dotnet ef migrations add RenameOpportunityLifecycle \
   --output-dir Persistence/Migrations
 ```
 
-- [ ] **Step 7: Verify the generated migration**
+- [x] **Step 7: Verify the generated migration**
 
 Since no production tenants exist, a straightforward `ALTER TABLE ... DROP
 CONSTRAINT` + `ADD CONSTRAINT` (new names/expressions) plus a data `UPDATE` remapping
@@ -194,7 +209,7 @@ migrationBuilder.Sql("""
 Place this **before** the new CHECK constraint is added in `Up` (so old values don't
 violate it mid-migration), and add the reverse mapping to `Down`.
 
-- [ ] **Step 8: Apply and test**
+- [x] **Step 8: Apply and test**
 
 ```bash
 dotnet ef database update \
@@ -205,7 +220,13 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj
 
 Expected: all 41 tests still pass, renamed.
 
-- [ ] **Step 9: Commit**
+→ No standalone dev Postgres to run `database update` against; verified via
+Testcontainers-driven `dotnet test`, which migrates fresh each run. 41/41 pass,
+confirmed independently by the controller outside the sandbox restriction that blocked
+the implementer's own runs (`System.Net.Sockets.SocketException (13): Permission
+denied` on MSBuild's named-pipe node — environment issue, not a code issue).
+
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/Modules/CRM/Domain/Opportunity.cs src/Modules/CRM/Persistence tests/CRM.Tests
@@ -213,6 +234,14 @@ git commit -m "Rename OpportunityStatus to Draft/Open/Won/Lost per the target mo
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 ```
+
+→ Commit: `e523b12` "Rename OpportunityStatus to Draft/Open/Won/Lost per the target model"
+(follow-up fix: `2718b25` "Fix remaining Offer/Complete/Cancel call sites missed by
+Task 1's grep"; follow-up fix: `12d96ba` "Fix last leftover NewWaitingOpportunity() call
+site"; follow-up fix: `5ffe212` "Fix two stale Complete()/waiting doc-comment
+references"). Spec-compliance and code-quality subagent reviews both passed after the
+doc-comment fix. Branch: `crm-phase1-lifecycle-pipeline` (worktree
+`.worktrees/crm-phase1-lifecycle-pipeline`), not yet merged to `main`.
 
 ---
 
