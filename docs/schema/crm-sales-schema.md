@@ -19,8 +19,7 @@ erDiagram
     PIPELINE_DEFINITIONS {
         bigint id PK
         bigint tenant_id "NOT NULL, UNIQUE(tenant_id,id)"
-        text name "NOT NULL"
-        text description
+        text name "NOT NULL, UNIQUE(tenant_id,name)"
         timestamptz created_at
         timestamptz updated_at
     }
@@ -29,9 +28,7 @@ erDiagram
         bigint id PK
         bigint tenant_id "NOT NULL"
         bigint pipeline_definition_id FK "NOT NULL, tenant-safe composite"
-        int version_number "NOT NULL"
-        timestamptz effective_from "NOT NULL"
-        timestamptz effective_to "nullable"
+        int version_number "NOT NULL, UNIQUE(tenant_id,pipeline_definition_id,version_number)"
         timestamptz created_at
     }
 
@@ -39,11 +36,8 @@ erDiagram
         bigint id PK
         bigint tenant_id "NOT NULL"
         bigint pipeline_definition_version_id FK "NOT NULL, tenant-safe composite"
-        text name "NOT NULL"
-        int sequence_order "NOT NULL"
-        text color "nullable"
-        boolean is_terminal "DEFAULT false"
-        text exit_criteria "nullable, jsonb in implementation"
+        text name "NOT NULL, UNIQUE(tenant_id,pipeline_definition_version_id,name)"
+        int sort_order "NOT NULL, UNIQUE(tenant_id,pipeline_definition_version_id,sort_order)"
         timestamptz created_at
     }
 
@@ -64,8 +58,7 @@ erDiagram
     OPPORTUNITIES {
         bigint id PK
         bigint tenant_id "NOT NULL, UNIQUE(tenant_id,id)"
-        bigint party_id_tenant "PartyRef tenant_id, no FK (Party in MasterData)"
-        bigint party_id "PartyRef party_id, no FK (Party in MasterData)"
+        bigint party_ref_party_id "PartyRef's PartyId half, CHECK > 0, no FK (Party in MasterData) — TenantId half is this row's own tenant_id, not a stored column"
         text assigned_principal_issuer "PrincipalRef, no FK (Identity module)"
         text assigned_principal_subject "PrincipalRef, no FK (Identity module)"
         text status "CHECK: draft|open|won|lost (Phase 1 lifecycle foundation)"
@@ -73,7 +66,7 @@ erDiagram
         char_3 currency "NOT NULL"
         numeric_19_2 estimated_amount "entered, 2dp, CHECK >= 0"
         numeric_19_4 total_amount "computed, 4dp, nullable"
-        timestamptz expiry_date "nullable"
+        timestamptz expiry_date "NOT NULL once open/won (CHECK, unchanged from Revision 4 aside from the rename)"
         timestamptz opened_date "nullable (replaces offer_date)"
         timestamptz won_date "nullable (replaces sale_date)"
         timestamptz lost_date "nullable (replaces cancel_date)"
@@ -226,13 +219,13 @@ Implemented against the binding core recorded in `AGENTS.md` ("Enforcement Scope
 
 Lifecycle and Pipeline infrastructure, replacing Revision 4's Waiting/Offered/Completed/Canceled lifecycle with the Phase 1 target model's Draft/Open/Won/Lost states, and adding tenant-configurable pipeline stages versioned by definition.
 
-17. **`OpportunityStatus` lifecycle values renamed.** `Waiting → Draft`, `Offered → Open`, `Completed → Won`, `Canceled → Lost`. New CHECK constraint: `ck_opportunities_status` with values `('draft','open','won','lost')`. Date fields renamed to match: `offer_date → opened_date`, `sale_date → won_date`, `cancel_reason → lost_reason`, `cancel_date → lost_date`. All five related state-machine CHECK constraints updated. All 10 existing tests updated mechanically (no behavioral change — the state machine logic is identical, only the enum names changed).
+17. **`OpportunityStatus` lifecycle values renamed.** `Waiting → Draft`, `Offered → Open`, `Completed → Won`, `Canceled → Lost`. Methods renamed to match: `Offer()→Open()`, `Complete()→Win()`, `Cancel()→Lose()`. New CHECK constraint: `ck_opportunities_status` with values `('draft','open','won','lost')`. Date/reason fields renamed: `offer_date → opened_date`, `sale_date → won_date`, `cancel_reason → lost_reason`, `cancel_date → lost_date`. All four related state-machine CHECK constraints renamed and updated (including `ck_opportunities_expiry_required_once_open`, see item 20 below). Pure rename — no behavioral change, the state machine logic and all guard clauses are identical, only the vocabulary changed. `CancelLine`/line-level cancellation is unrelated vocabulary and was intentionally left unrenamed.
 
-18. **`Party` moved to the `masterdata` module, `Opportunity.PartyRef` replaces `Opportunity.PartyId`.** The CRM schema no longer contains a `parties` table. `Opportunity` now carries `party_id_tenant` and `party_id` (no FK, enforced at the application level via `IPartyIdentityResolver`), forming a `PartyRef` composite that points to `masterdata.parties`. A CHECK constraint recovers tenant-safety: `ck_opportunities_party_ref_party_id_positive` ensures `party_id > 0`. This is Phase 1 Task 3's data migration and domain model cutover.
+18. **`Party` moved to the `masterdata` module, `Opportunity.PartyRef` replaces `Opportunity.PartyId`.** The CRM schema no longer contains a `parties` table. `Opportunity` now carries a single `party_ref_party_id` column (the `PartyRef`'s `TenantId` half is the opportunity's own `tenant_id` — not a second stored column, since it must always match and a separate column inviting drift would be worse than deriving it). No FK is possible (`MasterData` is a separate schema/module); tenant-safety is recovered by a domain-level guard in `Opportunity.Create(...)` (`partyRef.TenantId == tenantId`) plus a CHECK constraint: `ck_opportunities_party_ref_party_id_positive` ensures `party_ref_party_id > 0`. This is Phase 1 Task 3's data migration and domain model cutover; `crm.parties`' existing rows were backfilled into `masterdata.parties` (defaulting `party_type = 'organization'`) before the table was dropped.
 
-19. **Three new pipeline tables: `pipeline_definitions`, `pipeline_definition_versions`, `pipeline_stages`.** Tenant-scoped, versioned pipeline configuration. A `pipeline_definitions` row is the parent; `pipeline_definition_versions` versions it by effective date (no deletion, just effective_to). Each version contains N `pipeline_stages`, ordered by sequence_order, each with optional color, terminal flag, and exit criteria. `Opportunity` gains two nullable, unenforced columns (`pipeline_definition_version_id`, `pipeline_stage_id`) — not yet used in commands, reserved for Phase 2 and later. All three tables carry `tenant_id` and composite FKs following the tenant-safety pattern. Each gets RLS policies matching every other table.
+19. **Three new pipeline tables: `pipeline_definitions`, `pipeline_definition_versions`, `pipeline_stages`.** Tenant-scoped, versioned pipeline configuration, purely additive. A `pipeline_definitions` row (just `id`/`tenant_id`/`name`) is the parent; `pipeline_definition_versions` versions it by an integer `version_number` — editing an in-use definition's stages never remaps opportunities already pointing at an older version, since each version's stages are independent (two versions can freely reuse the same stage names/sort orders). Each version contains N `pipeline_stages` (`name`, `sort_order`), unique per version. `Opportunity` gains two nullable columns with no setter and no domain method assigning them (`pipeline_definition_version_id`, `pipeline_stage_id`) — not yet used by any command, reserved for a later phase's `ChangePipelineStage`. All three tables carry `tenant_id` and tenant-safe composite FKs (`DeleteBehavior.Restrict`). Each gets RLS policies matching every other table.
 
-20. **Opportunity lifecycle no longer enforces expiry_date.** In Revision 4, `status = 'offered'` required `expiry_date`. The Draft/Open/Won/Lost model treats expiry as a business property, not a state guard. `expiry_date` becomes nullable; if needed by application logic (e.g., "an open opportunity without an expiry is invalid"), that's an aggregate-level domain invariant, not a database CHECK. One less coupled constraint.
+20. **`expiry_date`'s required-once-`Open` CHECK is unchanged, just renamed.** `ck_opportunities_expiry_required_once_offered` → `ck_opportunities_expiry_required_once_open`, same expression shape (`status NOT IN ('open','won') OR expiry_date IS NOT NULL`), same mechanism as before this task — `expiry_date` was already a nullable column with a conditional CHECK in Revision 4, and stays exactly that.
 
 **Still open on this schema:**
 - `row_version` has no database-level `DEFAULT 1` (the diagram above says it should). EF always writes the value, but raw SQL inserts (seeds, legacy import) would fail.
