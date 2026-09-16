@@ -20,6 +20,8 @@ public sealed class Opportunity : IHasRowVersion
     public long Id { get; private set; }
     public TenantId TenantId { get; private set; }
     public long PartyId { get; private set; }
+    public long? PipelineDefinitionVersionId { get; private set; }
+    public long? PipelineStageId { get; private set; }
     public string AssignedPrincipalIssuer { get; private set; } = null!;
     public string AssignedPrincipalSubject { get; private set; } = null!;
     public OpportunityStatus Status { get; private set; }

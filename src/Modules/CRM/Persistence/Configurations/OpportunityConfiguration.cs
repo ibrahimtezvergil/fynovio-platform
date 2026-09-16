@@ -40,6 +40,21 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired();
 
+        // Optional pipeline version and stage references — no enforcement yet (Phase 2's ChangePipelineStage does).
+        builder.HasOne<PipelineDefinitionVersion>()
+            .WithMany()
+            .HasForeignKey(o => new { o.TenantId, o.PipelineDefinitionVersionId })
+            .HasPrincipalKey(v => new { v.TenantId, v.Id })
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        builder.HasOne<PipelineStage>()
+            .WithMany()
+            .HasForeignKey(o => new { o.TenantId, o.PipelineStageId })
+            .HasPrincipalKey(s => new { s.TenantId, s.Id })
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
         builder.HasMany(o => o.Lines)
             .WithOne()
             .HasForeignKey(l => new { l.TenantId, l.OpportunityId })
