@@ -11,4 +11,7 @@
     <Project Path="src/Modules/Organization/Organization.csproj" />
     <Project Path="src/Modules/TenantLifecycle/TenantLifecycle.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CRM.Tests/CRM.Tests.csproj" />
+  </Folder>
 </Solution>
