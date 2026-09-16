@@ -6,10 +6,10 @@
 > tracking"):** mark a step `[x]` only once its commit exists, and add a
 > `→ Commit: \`<hash>\` "<message>"` line under it — never mark ahead of actual state.
 >
-> **Status: Task 0 confirmed (2026-09-16, commit `7214867`). Tasks 1–2 done (2026-09-16,
+> **Status: Task 0 confirmed (2026-09-16, commit `7214867`). Tasks 1–3 done (2026-09-16,
 > on branch `crm-phase1-lifecycle-pipeline`, worktree
-> `.worktrees/crm-phase1-lifecycle-pipeline`, not yet merged to `main`). Tasks 3–4 NOT
-> YET RUN.** Read
+> `.worktrees/crm-phase1-lifecycle-pipeline`, not yet merged to `main`). Task 4 NOT YET
+> RUN.** Read
 > `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §5 (all five items now
 > RESOLVED), §11 (decision record) and §12 (dependency graph) before starting — this
 > plan implements Phase 1 of that roadmap. Do not re-litigate any decision recorded
@@ -516,7 +516,7 @@ done**, from Phase 0.5. This task does the data move and the `Opportunity` cutov
 
 **Confirm Task 0 Decision 0.1 before Step 1.**
 
-- [ ] **Step 1: Backfill migration — copy `crm.parties` into `masterdata.parties`**
+- [x] **Step 1: Backfill migration — copy `crm.parties` into `masterdata.parties`**
 
 Generate an empty CRM migration, then hand-write the data copy into its `Up` (same
 "EF-generated schema, hand-written `Sql()` data move" pattern as
@@ -557,7 +557,7 @@ literal above was flagged rather than silently buried, since `crm.parties` has n
 contact record in practice, per `CRM_CURRENT_STATE_ANALYSIS.md`'s domain description, so
 defaulting to `Organization` is correct. No per-row rule needed.
 
-- [ ] **Step 2: Data/invariant verification test**
+- [x] **Step 2: Data/invariant verification test**
 
 `tests/CRM.Tests/Integration/PartyBackfillVerificationTests.cs` — Testcontainers test
 seeding a handful of `crm.parties` rows pre-migration (or verifying post-migration
@@ -566,7 +566,17 @@ row-count match between `crm.parties` and `masterdata.parties`, and that every
 `(tenant_id, id)` pair in `crm.parties` exists in `masterdata.parties`. This is
 `masterdata-party-foundation.md` §9 step 3.
 
-- [ ] **Step 3: `Opportunity.PartyId` → `PartyRef`**
+→ **Deviation:** the row-count/column comparison against `crm.parties` became
+untestable once Step 7's drop landed in migration history — Testcontainers always
+migrates a fresh database to the tip, so `crm.parties` never exists by test time. It was
+also never meaningful in this harness to begin with: a fresh Testcontainers database has
+no pre-existing `crm.parties` rows before the backfill migration runs, so the comparison
+would only ever prove 0 == 0. Reduced from 3 tests to 1
+(`A_party_seeded_through_masterdata_is_readable_back`), which proves what's actually
+testable and valuable here: `PostgresFixture`'s dual-DbContext migration wiring and the
+`masterdata` schema grants (both added in this task) genuinely work.
+
+- [x] **Step 3: `Opportunity.PartyId` → `PartyRef`**
 
 Replace `public long PartyId { get; private set; }` with a `PartyRef`-shaped pair:
 `public long PartyRefPartyId { get; private set; }` (the `TenantId` half is
@@ -591,7 +601,7 @@ This is the `Contracts`-level `PartyRef` pattern the party-foundation design doc
 describes: tenant-safety recovered by construction (the ref always carries the
 opportunity's own `TenantId`), not by a cross-schema FK Postgres can't express anyway.
 
-- [ ] **Step 4: `crm.parties`' FK-dropping migration**
+- [x] **Step 4: `crm.parties`' FK-dropping migration**
 
 ```bash
 dotnet ef migrations add DropOpportunityPartyForeignKey \
@@ -605,7 +615,7 @@ this is a data-preserving `ALTER TABLE ... RENAME COLUMN` you should add by hand
 than let EF drop the column and lose the data, same discipline as Step 1's hand-written
 `Sql()`).
 
-- [ ] **Step 5: Update `PostgresFixture` to run both DbContexts' migrations**
+- [x] **Step 5: Update `PostgresFixture` to run both DbContexts' migrations**
 
 `tests/CRM.Tests/Integration/PostgresFixture.cs`'s `InitializeAsync` currently runs
 only `CrmDbContext.Database.MigrateAsync()`. It now needs `MasterDataDbContext`'s
@@ -614,7 +624,13 @@ migrations too (same container, same database, two schemas) — add a second
 string. Mirror `RuntimeConnectionStringAsync`'s grant SQL to include the `masterdata`
 schema grants too (currently CRM-only).
 
-- [ ] **Step 6: Update `TestData.cs` and every test that seeds a Party**
+→ **Deviation found:** the first pass ran `CrmDbContext`'s migrations before
+`MasterDataDbContext`'s — backwards, since `BackfillMasterDataParties` (Step 1) inserts
+into `masterdata.parties`, which must already exist. Caught by the controller's
+independent `dotnet test` run (`relation "masterdata.parties" does not exist`), fixed by
+swapping the order. See Step 8.
+
+- [x] **Step 6: Update `TestData.cs` and every test that seeds a Party**
 
 `tests/CRM.Tests/TestData.cs` gets a helper seeding through `MasterData.Domain.Party`
 against a `MasterDataDbContext` (same connection string as the CRM context under test —
@@ -625,7 +641,21 @@ changes from `Party.Create(tenant, "Acme", PartyCreationSource.Manual)` +
 `Opportunity.Create(tenant, party.Id, ...)` to the new helper + `Opportunity.Create(
 tenant, partyRef, ...)`.
 
-- [ ] **Step 7: Build, test, then the final drop (only after everything above is green)**
+→ **Deviation found:** the implementer's own `dotnet build`/`dotnet test` were blocked
+by a sandbox socket restriction for the entire task, so several gaps in this step went
+undetected until the controller independently verified afterward: `tests/CRM.Tests/CRM.Tests.csproj`
+was missing a `ProjectReference` to `MasterData.csproj` (test project didn't compile at
+all); three domain test files not in this step's file list
+(`OpportunityMoneyTests.cs`, `OpportunityRowVersionTests.cs`,
+`OpportunityStateMachineTests.cs`) still called the old `Opportunity.Create(partyId:
+long, ...)` signature (same failure mode as Task 1's grep gap — a file list assembled
+before the codebase's full call-site surface was checked); `TenantIsolationTests.cs`
+was left entirely unconverted ("examined but left unchanged... table still exists until
+Step 7 drops it" — wrong, since Testcontainers always migrates fresh databases to the
+tip, past Step 7's drop). All fixed: `TenantIsolationTests` retargeted from the removed
+`Party` entity onto `Opportunity`, same 5 RLS-isolation tests and assertions. See Step 8.
+
+- [x] **Step 7: Build, test, then the final drop (only after everything above is green)**
 
 ```bash
 dotnet build
@@ -644,7 +674,24 @@ recreates the table shape (data is *not* restorable by `Down` — that's expecte
 fine per `masterdata-party-foundation.md` §9's "reversible at every step 1–6; nothing
 dropped until 7"). Apply and run the full suite one more time.
 
-- [ ] **Step 8: Commit**
+→ **Deviation (the one that matters most in this task):** the "only after everything
+above is green" ordering was violated in actual history — the sandbox restriction meant
+the implementer never got a passing build or test run before committing `DropCrmParties`
+(irreversible in practice). The controller caught this, fixed the gaps listed above, and
+retroactively got the suite green (46 CRM + 30 MasterData, `dotnet format
+--verify-no-changes` clean) before treating Task 3 as done. Given no production tenants
+exist, the practical risk was low, but the sequencing itself was wrong and is recorded
+here rather than glossed over. A follow-up code-quality review also flagged that
+`BackfillMasterDataParties`'s `Down()` doesn't fully reverse if rolled back *past*
+`DropCrmParties`'s own already-accepted non-restoring `Down()` — documented inline in
+that migration rather than engineered around (commit `74f2a5a`). Separately flagged but
+explicitly OUT of this task's scope: `TenantFieldAggregateType.Party` in
+`TenantFieldDefinition.cs` is a vestigial enum value (Task 0 Decision 0.1 already found
+"no evidence Party-level custom fields were ever used" before this task started) —
+fixing it needs its own CHECK-constraint migration, unrelated to the PartyRef cutover;
+left as a future cleanup item.
+
+- [x] **Step 8: Commit**
 
 Consider splitting Steps 1–6 into one commit and the drop (Step 7's second half) into a
 separate commit — the drop is the one irreversible-in-practice step in this task and
@@ -662,6 +709,23 @@ git commit -m "Drop crm.parties now that Opportunity resolves Party through Mast
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 ```
+
+→ Commit: `72d5bf8` "Cut Opportunity over from Party FK to PartyRef, backfill
+masterdata.parties" (Steps 1–6); `d5506ef` "Drop crm.parties now that Opportunity
+resolves Party through MasterData" (Step 7's drop, committed before verification per the
+deviation noted above) (follow-up fix: `153061b` "Fix Task 3 verification gaps found
+after Docker recovered" — missing MasterData test-project reference, stale
+`Opportunity.Create` call sites in 3 domain test files, backwards migration order in
+`PostgresFixture`, removal of dangling `CRM.Domain.Party`/its EF config/DbSet with a
+`RemoveCrmPartyEntity` reconciliation migration, `TenantIsolationTests` retargeted to
+`Opportunity`, `PartyBackfillVerificationTests` reduced to 1 test; follow-up fix:
+`74f2a5a` "Document BackfillMasterDataParties Down()'s rollback-chain caveat"). 46 CRM +
+30 MasterData tests green, `dotnet format --verify-no-changes` clean. Spec-compliance
+review: 14/14 independent checks passed. Code-quality review: 1 Critical finding
+(reversibility documentation gap) fixed and applied, 1 Important finding
+(`TenantFieldAggregateType.Party`) scoped out as pre-existing, unrelated tech debt — see
+Step 7's deviation note. Branch: `crm-phase1-lifecycle-pipeline`, not yet merged to
+`main`.
 
 ---
 
