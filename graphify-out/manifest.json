@@ -384,9 +384,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1789564367.1515696,
-    "seen": 1789564413.298578,
-    "ast_hash": "df123ec6b7638304bf2d2ab4358ceb45",
+    "mtime": 1789565857.8108485,
+    "seen": 1789565915.3832262,
+    "ast_hash": "cbe14cc4ab45b1a9b214e9d46552c45b",
     "semantic_hash": ""
   },
   "src/Contracts/IHasRowVersion.cs": {
@@ -720,9 +720,9 @@
     "semantic_hash": ""
   },
   "docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md": {
-    "mtime": 1789564395.5661001,
-    "seen": 1789564413.298636,
-    "ast_hash": "ca6d10f76b3ad20845b97d2d0a4f894f",
+    "mtime": 1789565584.372669,
+    "seen": 1789565915.38323,
+    "ast_hash": "fe570976e0c1181448f685229fd6dfd5",
     "semantic_hash": ""
   },
   "docs/plans/2026-09-16-masterdata-party-foundation.md": {
@@ -1065,6 +1065,12 @@
     "mtime": 1789564204.778292,
     "seen": 1789564246.715612,
     "ast_hash": "d11a5f0709ed68a0ee40a57d83f6a861",
+    "semantic_hash": ""
+  },
+  "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md": {
+    "mtime": 1789565848.065956,
+    "seen": 1789565915.38323,
+    "ast_hash": "a93c181f7710e034b7ad76c58889f16f",
     "semantic_hash": ""
   }
 }
