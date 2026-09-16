@@ -1,6 +1,6 @@
 # MasterData / Party Foundation — Design Reference (Phase 0.5)
 
-> **Status:** design reference, approved, **no code written yet**. This is the detailed
+> **Status:** design reference, approved, **implemented**. This is the detailed
 > record behind `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §11 —
 > that file's §5.C question ("Contact — build now or defer?") opened this larger
 > reconciliation, which settled Party ownership, external identity, merge semantics,
@@ -8,16 +8,12 @@
 > reached through several rounds of explicit review with the platform owner; none is
 > silently inferred.
 >
-> **Next step:** write a task/step/commit execution plan for Phase 0.5 in the
-> `docs/plans/2026-09-16-pilot-enforcement.md` format and run it subagent-driven. This
-> document is the design that plan implements — not itself a script to follow.
->
 > **Progress:** this design is not a checkbox task list (see §10's acceptance criteria
 > for what "done" means). Section-level status: §§1–9 (design) are settled and frozen;
-> §11 (deferred items) stays deferred by definition. **The execution plan now exists:**
-> `docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md` (11 tasks, checkbox
-> tracking per `CLAUDE.md`'s standard) — that's where step-level progress is tracked,
-> not here. Status also mirrored in
+> §11 (deferred items) stays deferred by definition. **The execution plan ran to
+> completion:** `docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md` (11 tasks,
+> all 11 committed, §10's acceptance criteria met — `tests/MasterData.Tests` 30/30,
+> `tests/CRM.Tests` 41/41 with no regression). Status also mirrored in
 > `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §6's phase table.
 
 ## 1. Why Party moves out of CRM

@@ -204,7 +204,7 @@ started — this table is the roadmap, not the script.
 | Phase | Deliverable in this repo | Depends on | Status |
 |---|---|---|---|
 | 0 — Inspect / Delta Plan | This document + `docs/plans/2026-09-16-masterdata-party-foundation.md` | — | ✅ Done |
-| **0.5 — MasterData / Party foundation** *(new, 2026-09-16)* | `Party` (+`party_type`), `PartyRelationship`, `PartyExternalIdentity` in a new, previously-placeholder `MasterData` module; `PartyRef`/`IPartyDirectory`/`IPartyIdentityResolver` in `Contracts`; own RLS, own outbox, own idempotency, `tests/MasterData.Tests`. Built and tested **fully isolated from CRM** — `crm.parties` untouched. Design: `docs/plans/2026-09-16-masterdata-party-foundation.md`. Execution plan: `docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md` (11 tasks). | Nothing — this is now the foundation everything else sits on | 🟡 Execution plan written, no code yet — ready to run |
+| **0.5 — MasterData / Party foundation** *(new, 2026-09-16)* | `Party` (+`party_type`), `PartyRelationship`, `PartyExternalIdentity` in a new, previously-placeholder `MasterData` module; `PartyRef`/`IPartyDirectory`/`IPartyIdentityResolver` in `Contracts`; own RLS, own outbox, own idempotency, `tests/MasterData.Tests`. Built and tested **fully isolated from CRM** — `crm.parties` untouched. Design: `docs/plans/2026-09-16-masterdata-party-foundation.md`. Execution plan: `docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md` (11 tasks, all committed). | Nothing — this is now the foundation everything else sits on | ✅ Done — `tests/MasterData.Tests` 30/30, `tests/CRM.Tests` 41/41 (no regression) |
 | 1 — Lifecycle/Pipeline foundation | `OpportunityStatus` → `Draft/Open/Won/Lost`; new `pipeline_definitions`/`pipeline_definition_versions`/`pipeline_stages` tables + entities in `CRM.Domain`; `Opportunity` is built **directly** against `PartyRef` (no interim `long PartyId`+FK step — that would just be reworked at the old Phase 5); compatibility mapping so existing tests are updated, not silently broken | Phase 0.5 (so `Opportunity.PartyRef` is built once, correctly, not twice); §5.A resolved (affects whether `Open→Won` needs a gate placeholder) | ⚪ Blocked on §5.A |
 | 2 — Opportunity commands/API | `CreateOpportunity`, `OpenOpportunity`, `ChangePipelineStage`, `Add/Confirm/RejectOpportunityNeed`, `WinOpportunity`, `LoseOpportunity`, `ReopenOpportunity` (if enabled) as real `CRM.Application` commands + first HTTP endpoints; each gets idempotency, evidence (for risk-catalogued ones), outbox, RLS test coverage matching `CompleteOpportunityHandlerTests`'s pattern | Phase 1; §5.D (authorization strategy) | ⚪ Not started |
 | 3 — Customer Need capability | `OpportunityNeed`/`CustomerNeed` gain `Source`/`Confidence`/`ConfirmationStatus`/`EvidenceRef`/`EstimatedValueSnapshot`; `estimated_amount` derivation from confirmed needs (closes an already-tracked gap) | Phase 2 (needs a real command surface to attach to) | ⚪ Not started |
@@ -330,7 +330,7 @@ Per Section 9 item 2's own promise. Full reasoning lives in
   identity resolution, a full automation engine, `PartyRelationship.metadata` usage —
   all explicitly deferred, none scheduled.
 
-**Next step:** Phase 0.5 is approved to implement (design doc's own acceptance
-criteria). A task/step/commit execution plan for it, in the
-`2026-09-16-pilot-enforcement.md` format, is the next document to write — once written,
-implementation proceeds subagent-driven the same way the CRM pilot work did.
+**Next step:** Phase 0.5 is done — `docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md`
+ran to completion, all 11 tasks committed, `tests/MasterData.Tests` at 30/30 and no
+regression in `tests/CRM.Tests` (41/41). Phase 1 (Lifecycle/Pipeline foundation) is next,
+but is blocked on §5.A (the approval-step decision) until the owner resolves it.

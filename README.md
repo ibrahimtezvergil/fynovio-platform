@@ -2,7 +2,7 @@
 
 Modular-monolith backend for Fynovio, a multi-tenant B2B SaaS platform. Built on .NET 10 / C# 13 with PostgreSQL, following a strict module-boundary architecture designed to scale toward eventual service extraction without paying microservice tax up front.
 
-> **Status:** early-stage. Implemented: the `Contracts` project; the `CRM` module (entities, EF Core mapping, migrations with Row-Level Security, and a first command, `CompleteOpportunity`); the `Access` module's Identity+Access schema (entities and first migration). `MasterData`, `Organization`, and `TenantLifecycle` are placeholders. `Host` registers the CRM `DbContext` and exposes only `/` and `/health/db`; `Worker` is still the template. There is a CRM test suite and a CI workflow.
+> **Status:** early-stage. Implemented: the `Contracts` project; the `CRM` module (entities, EF Core mapping, migrations with Row-Level Security, and a first command, `CompleteOpportunity`); the `MasterData` module's Party foundation (`Party`/`PartyRelationship`/`PartyExternalIdentity`, RLS, `CreateParty`/`MergeParty`/`ResolveOrCreateParty`, `IPartyDirectory`/`IPartyIdentityResolver` wired into `Host`); the `Access` module's Identity+Access schema (entities and first migration). `Organization` and `TenantLifecycle` are placeholders. `Host` registers the CRM and MasterData `DbContext`s and exposes only `/` and `/health/db`; `Worker` is still the template. There are CRM and MasterData test suites and a CI workflow.
 
 ## Architecture
 
@@ -24,7 +24,8 @@ Multi-tenancy is enforced in the database, not just in application code: every t
 src/
   Contracts/            Shared, dependency-free types every module may reference
                          (TenantId, EntityRef, PrincipalRef, EntityVersion)
-  Host/                 ASP.NET Core composition root (API) — registers the CRM DbContext
+  Host/                 ASP.NET Core composition root (API) — registers the CRM and
+                         MasterData DbContexts
   Worker/               .NET Worker Service composition root (background jobs) — template only
   Modules/
     CRM/                Pilot module: Parties, Opportunities, Opportunity Lines/Needs,
@@ -35,7 +36,11 @@ src/
     Access/              Identity+Access schema: accounts, external identities,
                          tenant memberships, roles, permissions, role assignments
                          (PostgreSQL schemas: identity, access)
-    MasterData/          Placeholder
+    MasterData/          Party foundation: Party (+ party_type), PartyRelationship,
+                         PartyExternalIdentity, own outbox/idempotency/evidence, RLS,
+                         CreateParty/MergeParty/ResolveOrCreateParty commands,
+                         IPartyDirectory/IPartyIdentityResolver implementations
+                         (PostgreSQL schema: masterdata)
     Organization/        Placeholder
     TenantLifecycle/     Placeholder
 docs/
@@ -49,6 +54,7 @@ scripts/
 tests/
   CRM.Tests/               Domain, architecture (NetArchTest) and PostgreSQL
                             integration tests (Testcontainers)
+  MasterData.Tests/        Same shape as CRM.Tests, for the MasterData module
 web/                     Frontend (not started)
 graphify-out/            Committed code-graph artifacts (graph.json, GRAPH_REPORT.md,
                           manifest.json) used by AI coding agents for navigation
@@ -91,18 +97,21 @@ Verify it's reachable:
 PGPASSWORD=postgres psql -h localhost -U postgres -d fynovio_platform -c "SELECT 1;"
 ```
 
-Then apply the CRM module's migrations to create its schema (`crm.*` tables):
+Then apply each module's migrations to create its schema (`crm.*` and `masterdata.*` tables):
 
 ```bash
 dotnet tool restore   # one-time per clone: restores dotnet-ef
 dotnet ef database update \
   --project src/Modules/CRM/CRM.csproj \
   --startup-project src/Modules/CRM/CRM.csproj
+dotnet ef database update \
+  --project src/Modules/MasterData/MasterData.csproj \
+  --startup-project src/Modules/MasterData/MasterData.csproj
 ```
 
 ### Runtime role (Row-Level Security)
 
-Migrations run as `postgres`, a superuser — and superusers bypass Row-Level Security entirely. **An application connected as `postgres` gets no tenant isolation from the database.** After applying migrations, create the unprivileged runtime role once (edit the password in the script first):
+Migrations run as `postgres`, a superuser — and superusers bypass Row-Level Security entirely. **An application connected as `postgres` gets no tenant isolation from the database.** After applying migrations, create the unprivileged runtime role once (edit the password in the script first) — `scripts/create-runtime-role.sql` grants it access to both the `crm` and `masterdata` schemas:
 
 ```bash
 psql -h localhost -U postgres -d fynovio_platform -f scripts/create-runtime-role.sql
@@ -112,9 +121,10 @@ Then point the application at that role:
 
 ```bash
 export ConnectionStrings__Crm="Host=localhost;Database=fynovio_platform;Username=fynovio_app;Password=<password>"
+export ConnectionStrings__MasterData="Host=localhost;Database=fynovio_platform;Username=fynovio_app;Password=<password>"
 ```
 
-`ConnectionStrings__Crm` is what `Host` reads first; `FYNOVIO_CRM_CONNECTION_STRING` is the fallback, and it is also what `dotnet ef` uses — keep that one on the `postgres` role, since migrations need it.
+`ConnectionStrings__Crm`/`ConnectionStrings__MasterData` are what `Host` reads first; `FYNOVIO_CRM_CONNECTION_STRING`/`FYNOVIO_MASTERDATA_CONNECTION_STRING` are the fallbacks, and are also what `dotnet ef` uses — keep those on the `postgres` role, since migrations need it.
 
 ## Getting started
 
@@ -142,6 +152,15 @@ dotnet ef migrations add <Name> \
   --output-dir Persistence/Migrations
 ```
 
+Add a new MasterData migration:
+
+```bash
+dotnet ef migrations add <Name> \
+  --project src/Modules/MasterData/MasterData.csproj \
+  --startup-project src/Modules/MasterData/MasterData.csproj \
+  --output-dir Persistence/Migrations
+```
+
 EF Core migrations under `Persistence/Migrations/` are generated output — regenerate them with `dotnet ef migrations add`, never hand-edit a migration or its model snapshot. The one exception is RLS policy SQL, which has no EF Core model representation (see `AGENTS.md`, "Enforcement Scope").
 
 ## Documentation for contributors and coding agents
@@ -150,7 +169,7 @@ EF Core migrations under `Persistence/Migrations/` are generated output — rege
 - **`CLAUDE.md`** — Claude Code-specific tool routing and methodology (retrieval order, when to use which skill, reasoning-effort guidance).
 - **`docs/architecture-analysis/`** — current-state analyses (e.g. `CRM_CURRENT_STATE_ANALYSIS.md`) and target-model specs (e.g. `Enterprise_CRM_Target_Model_Binding_Implementation_Specification.pdf`) for a module.
 - **`docs/schema/`** — the physical schema designs behind each module's EF Core model (`crm-sales-schema.md`, `identity-access-schema.md`, `tenant-network-schema.md`).
-- **`docs/plans/`** — implementation plans, e.g. `2026-09-16-pilot-enforcement.md`, `2026-09-16-crm-target-model-phase0-delta-plan.md`, `2026-09-16-masterdata-party-foundation.md` (design), `2026-09-16-masterdata-phase0.5-execution-plan.md` (task/step/commit execution plan, not yet run).
+- **`docs/plans/`** — implementation plans, e.g. `2026-09-16-pilot-enforcement.md`, `2026-09-16-crm-target-model-phase0-delta-plan.md`, `2026-09-16-masterdata-party-foundation.md` (design), `2026-09-16-masterdata-phase0.5-execution-plan.md` (task/step/commit execution plan — complete, MasterData's Party foundation is implemented).
 - **`docs/ai-tooling.md`** — what AI tooling is active in this repo and why.
 - **`docs/dotnet-guide.md`** — a .NET/EF Core primer for contributors coming from another ecosystem (e.g. Laravel), covering solution/project structure, DI, EF Core, migrations, and how this repo's connection-string resolution works.
 
