@@ -61,13 +61,6 @@ namespace CRM.Persistence.Migrations
                     table.PrimaryKey("pk_pipeline_definition_versions", x => x.id);
                     table.UniqueConstraint("ak_pipeline_definition_versions_tenant_id_id", x => new { x.tenant_id, x.id });
                     table.ForeignKey(
-                        name: "fk_pipeline_definition_versions_pipeline_definitions_pipeline_",
-                        column: x => x.pipeline_definition_id,
-                        principalSchema: "crm",
-                        principalTable: "pipeline_definitions",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
                         name: "fk_pipeline_definition_versions_pipeline_definitions_tenant_id",
                         columns: x => new { x.tenant_id, x.pipeline_definition_id },
                         principalSchema: "crm",
@@ -94,13 +87,6 @@ namespace CRM.Persistence.Migrations
                     table.PrimaryKey("pk_pipeline_stages", x => x.id);
                     table.UniqueConstraint("ak_pipeline_stages_tenant_id_id", x => new { x.tenant_id, x.id });
                     table.ForeignKey(
-                        name: "fk_pipeline_stages_pipeline_definition_versions_pipeline_defin",
-                        column: x => x.pipeline_definition_version_id,
-                        principalSchema: "crm",
-                        principalTable: "pipeline_definition_versions",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
                         name: "fk_pipeline_stages_pipeline_definition_versions_tenant_id_pipe",
                         columns: x => new { x.tenant_id, x.pipeline_definition_version_id },
                         principalSchema: "crm",
@@ -122,12 +108,6 @@ namespace CRM.Persistence.Migrations
                 columns: new[] { "tenant_id", "pipeline_stage_id" });
 
             migrationBuilder.CreateIndex(
-                name: "ix_pipeline_definition_versions_pipeline_definition_id",
-                schema: "crm",
-                table: "pipeline_definition_versions",
-                column: "pipeline_definition_id");
-
-            migrationBuilder.CreateIndex(
                 name: "ix_pipeline_definition_versions_tenant_id_pipeline_definition_",
                 schema: "crm",
                 table: "pipeline_definition_versions",
@@ -140,12 +120,6 @@ namespace CRM.Persistence.Migrations
                 table: "pipeline_definitions",
                 columns: new[] { "tenant_id", "name" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "ix_pipeline_stages_pipeline_definition_version_id",
-                schema: "crm",
-                table: "pipeline_stages",
-                column: "pipeline_definition_version_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_pipeline_stages_tenant_id_pipeline_definition_version_id_na",

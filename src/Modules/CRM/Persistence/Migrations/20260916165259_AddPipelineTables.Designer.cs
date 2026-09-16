@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM.Persistence.Migrations
 {
     [DbContext(typeof(CrmDbContext))]
-    [Migration("20260916155743_AddPipelineTables")]
+    [Migration("20260916165259_AddPipelineTables")]
     partial class AddPipelineTables
     {
         /// <inheritdoc />
@@ -494,9 +494,6 @@ namespace CRM.Persistence.Migrations
                     b.HasAlternateKey("TenantId", "Id")
                         .HasName("ak_pipeline_definition_versions_tenant_id_id");
 
-                    b.HasIndex("PipelineDefinitionId")
-                        .HasDatabaseName("ix_pipeline_definition_versions_pipeline_definition_id");
-
                     b.HasIndex("TenantId", "PipelineDefinitionId", "VersionNumber")
                         .IsUnique()
                         .HasDatabaseName("ix_pipeline_definition_versions_tenant_id_pipeline_definition_");
@@ -539,9 +536,6 @@ namespace CRM.Persistence.Migrations
 
                     b.HasAlternateKey("TenantId", "Id")
                         .HasName("ak_pipeline_stages_tenant_id_id");
-
-                    b.HasIndex("PipelineDefinitionVersionId")
-                        .HasDatabaseName("ix_pipeline_stages_pipeline_definition_version_id");
 
                     b.HasIndex("TenantId", "PipelineDefinitionVersionId", "Name")
                         .IsUnique()
@@ -824,13 +818,6 @@ namespace CRM.Persistence.Migrations
             modelBuilder.Entity("CRM.Domain.PipelineDefinitionVersion", b =>
                 {
                     b.HasOne("CRM.Domain.PipelineDefinition", null)
-                        .WithMany("Versions")
-                        .HasForeignKey("PipelineDefinitionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_pipeline_definition_versions_pipeline_definitions_pipeline_");
-
-                    b.HasOne("CRM.Domain.PipelineDefinition", null)
                         .WithMany()
                         .HasForeignKey("TenantId", "PipelineDefinitionId")
                         .HasPrincipalKey("TenantId", "Id")
@@ -841,13 +828,6 @@ namespace CRM.Persistence.Migrations
 
             modelBuilder.Entity("CRM.Domain.PipelineStage", b =>
                 {
-                    b.HasOne("CRM.Domain.PipelineDefinitionVersion", null)
-                        .WithMany("Stages")
-                        .HasForeignKey("PipelineDefinitionVersionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_pipeline_stages_pipeline_definition_versions_pipeline_defin");
-
                     b.HasOne("CRM.Domain.PipelineDefinitionVersion", null)
                         .WithMany()
                         .HasForeignKey("TenantId", "PipelineDefinitionVersionId")
@@ -860,16 +840,6 @@ namespace CRM.Persistence.Migrations
             modelBuilder.Entity("CRM.Domain.Opportunity", b =>
                 {
                     b.Navigation("Lines");
-                });
-
-            modelBuilder.Entity("CRM.Domain.PipelineDefinition", b =>
-                {
-                    b.Navigation("Versions");
-                });
-
-            modelBuilder.Entity("CRM.Domain.PipelineDefinitionVersion", b =>
-                {
-                    b.Navigation("Stages");
                 });
 #pragma warning restore 612, 618
         }

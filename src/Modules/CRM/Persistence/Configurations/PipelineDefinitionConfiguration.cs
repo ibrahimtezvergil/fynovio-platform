@@ -20,11 +20,7 @@ public sealed class PipelineDefinitionConfiguration : IEntityTypeConfiguration<P
 
         builder.Property(p => p.Name).IsRequired();
 
-        builder.HasMany(p => p.Versions)
-            .WithOne()
-            .HasForeignKey(v => new { v.TenantId, v.PipelineDefinitionId })
-            .HasPrincipalKey(p => new { p.TenantId, p.Id })
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.Ignore(p => p.Versions);
 
         builder.HasIndex(p => new { p.TenantId, p.Name }).IsUnique();
     }

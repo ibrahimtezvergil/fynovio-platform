@@ -23,11 +23,7 @@ public sealed class PipelineDefinitionVersionConfiguration : IEntityTypeConfigur
             .HasPrincipalKey(p => new { p.TenantId, p.Id })
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasMany(v => v.Stages)
-            .WithOne()
-            .HasForeignKey(s => new { s.TenantId, s.PipelineDefinitionVersionId })
-            .HasPrincipalKey(v => new { v.TenantId, v.Id })
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.Ignore(v => v.Stages);
 
         builder.HasIndex(v => new { v.TenantId, v.PipelineDefinitionId, v.VersionNumber }).IsUnique();
     }
