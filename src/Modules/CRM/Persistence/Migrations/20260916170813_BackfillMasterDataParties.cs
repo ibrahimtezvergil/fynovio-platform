@@ -21,7 +21,13 @@ namespace CRM.Persistence.Migrations
                 """);
         }
 
-        /// <inheritdoc />
+        /// <summary>Reverses cleanly on its own (deletes exactly the rows this migration
+        /// copied, matched against crm.parties' still-intact data). Rolling back further,
+        /// past DropCrmParties — whose own Down() recreates an empty crm.parties table,
+        /// not the original data (documented there as expected/fine, since no production
+        /// tenants exist) — leaves this Down() with nothing to match against, so those
+        /// rows are not removed. That's a consequence of DropCrmParties' already-accepted
+        /// non-restoring Down(), not a new gap introduced here.</summary>
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("DELETE FROM masterdata.parties WHERE id IN (SELECT id FROM crm.parties);");
