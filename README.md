@@ -116,5 +116,6 @@ EF Core migrations under `Persistence/Migrations/` are generated output — rege
 - **`CLAUDE.md`** — Claude Code-specific tool routing and methodology (retrieval order, when to use which skill, reasoning-effort guidance).
 - **`docs/schema/crm-sales-schema.md`** — the physical schema design behind the CRM module's EF Core model.
 - **`docs/ai-tooling.md`** — what AI tooling is active in this repo and why.
+- **`docs/dotnet-guide.md`** — a .NET/EF Core primer for contributors coming from another ecosystem (e.g. Laravel), covering solution/project structure, DI, EF Core, migrations, and how this repo's connection-string resolution works.
 
 This repo also maintains a Graphify code graph under `graphify-out/` (committed `graph.json`, `GRAPH_REPORT.md`, `manifest.json`) that AI coding agents use for fast, scoped code navigation instead of broad repository scans. It's kept current automatically by a local git `post-commit` hook.
