@@ -2,8 +2,16 @@
 
 Physical schema decided in `docs/architecture-analysis/19_IDENTITY_ACCESS_AND_DEALER_NETWORK.md`
 (in the research project, sibling to this repo). Revision 3 — EF Core entities, `AccessDbContext`
-and configurations written (`src/Modules/Access/`); no migration yet (needs `dotnet ef migrations
-add`, not hand-written per AGENTS.md).
+and configurations written (`src/Modules/Access/`); `InitialAccessSchema` migration generated and
+applied (2026-09-14).
+
+**Not yet implemented here (tracked as the Access follow-up to
+`docs/plans/2026-09-16-pilot-enforcement.md`):** RLS on the tenant-scoped tables
+(`tenant_memberships`, `role_assignments`, tenant-owned `roles`); `row_version DEFAULT 1` at the
+database level; tenant safety of `role_assignments.role_id → roles.id` (a plain FK today, so an
+assignment in one tenant can point at another tenant's role — needs a decision because system roles
+have `tenant_id = NULL`); a `(tenant_id, name)` uniqueness rule for roles; no Access module tests yet;
+Access is not registered in `Host`.
 
 **Tenant network tables moved out.** `NETWORKS` and `TENANT_NETWORK_MEMBERSHIPS` no longer live in
 this file — they were never Identity/Access's tables, only referenced by `role_assignments.scope_type
@@ -98,6 +106,8 @@ A manufacturer employee's `role_assignment` with `scope_type = 'network'` only g
 Revision 1 left `tenant_memberships` and `role_assignments` without a concurrency token. That was a gap, not a deliberate exclusion: this codebase already has a generic mechanism (`IHasRowVersion` + `RowVersionInterceptor`, built for CRM) — apply it uniformly to every mutable entity here rather than deciding table-by-table. Both tables now carry `row_version`.
 
 **Revision 3 correction:** "reuses the existing mechanism" turned out to mean the *marker interface* only, not the interceptor class. `CRM.Persistence.IHasRowVersion` referenced EF Core nowhere, but doc 08's Contracts row forbids "no ORM, I/O, policy evaluation or service locator" in `Contracts` — and `RowVersionInterceptor : SaveChangesInterceptor` *is* an EF Core dependency, so it cannot move there. Landed as: `Contracts.IHasRowVersion` (bare marker, no ORM reference, shareable) plus one `RowVersionInterceptor` per module (`CRM.Persistence.RowVersionInterceptor`, `Access.Persistence.RowVersionInterceptor` — identical code, deliberately duplicated, not shared, since a module may reference `Contracts` only, never another module's namespace, AGENTS.md).
+
+**2026-09-16 note:** CRM no longer uses an interceptor — `CRM.Persistence.RowVersionInterceptor` was removed and `Opportunity` increments its own version in its domain methods (`crm-sales-schema.md` Revision 4, item 13). `Access.Persistence.RowVersionInterceptor` is unchanged. An aggregate must use exactly one of the two mechanisms, never both.
 
 This is a **different mechanism** from Access's "decision epoch" (doc 08's "decision metadata/epochs" line): `row_version` protects a single row from a lost update; a decision epoch is a separate, still-undesigned counter for invalidating cached `Authorize()` results whenever *any* grant changes. Do not conflate the two when Access gets real code.
 

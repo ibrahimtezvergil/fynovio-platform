@@ -2,13 +2,13 @@
 
 Modular-monolith backend for Fynovio, a multi-tenant B2B SaaS platform. Built on .NET 10 / C# 13 with PostgreSQL, following a strict module-boundary architecture designed to scale toward eventual service extraction without paying microservice tax up front.
 
-> **Status:** early-stage. The `Contracts` project and the `CRM` module (entities, EF Core mapping, first migration) are implemented. `Access`, `MasterData`, `Organization`, and `TenantLifecycle` are placeholder module projects. `Host` and `Worker` are unmodified ASP.NET Core / Worker Service scaffolds — no HTTP endpoints or background jobs exist yet beyond the templates.
+> **Status:** early-stage. Implemented: the `Contracts` project; the `CRM` module (entities, EF Core mapping, migrations with Row-Level Security, and a first command, `CompleteOpportunity`); the `Access` module's Identity+Access schema (entities and first migration). `MasterData`, `Organization`, and `TenantLifecycle` are placeholders. `Host` registers the CRM `DbContext` and exposes only `/` and `/health/db`; `Worker` is still the template. There is a CRM test suite and a CI workflow.
 
 ## Architecture
 
 The system is a **modular monolith**: independently-boundaried modules that share a process and deployment unit today, but are structured so any module could be pulled into its own service later without a rewrite.
 
-Binding rules (enforced by fitness functions once CI exists — see `AGENTS.md`):
+Binding rules (see `AGENTS.md`; the module-boundary and tenant-isolation rules are enforced by tests in CI):
 
 - A module (`src/Modules/*`) may depend on `Contracts` only — never on another module's project, namespace, or database schema.
 - No cross-module ACID transactions. Modules coordinate through an outbox and published, versioned, past-tense facts (e.g. `OpportunityCompleted`), never shared private domain events.
@@ -24,22 +24,30 @@ Multi-tenancy is enforced in the database, not just in application code: every t
 src/
   Contracts/            Shared, dependency-free types every module may reference
                          (TenantId, EntityRef, PrincipalRef, EntityVersion)
-  Host/                 ASP.NET Core composition root (API) — scaffold only so far
-  Worker/               .NET Worker Service composition root (background jobs) — scaffold only so far
+  Host/                 ASP.NET Core composition root (API) — registers the CRM DbContext
+  Worker/               .NET Worker Service composition root (background jobs) — template only
   Modules/
-    CRM/                Implemented pilot module: Parties, Opportunities, Opportunity
-                         Lines/Needs, Customer Needs, tenant field customization,
-                         outbox, idempotency, evidence records, EF Core persistence
-                         and migrations (PostgreSQL schema: crm)
-    Access/              Placeholder
+    CRM/                Pilot module: Parties, Opportunities, Opportunity Lines/Needs,
+                         Customer Needs, tenant field customization, outbox,
+                         idempotency, evidence records, the CompleteOpportunity
+                         command, EF Core persistence and migrations with RLS
+                         (PostgreSQL schema: crm)
+    Access/              Identity+Access schema: accounts, external identities,
+                         tenant memberships, roles, permissions, role assignments
+                         (PostgreSQL schemas: identity, access)
     MasterData/          Placeholder
     Organization/        Placeholder
     TenantLifecycle/     Placeholder
 docs/
-  schema/crm-sales-schema.md   Physical schema design for the CRM module (read before
-                                 changing the EF Core model)
+  schema/                      Physical schema designs (read before changing an EF Core model)
+  plans/                       Implementation plans
+  dotnet-guide.md              .NET/EF Core primer for contributors coming from Laravel
   ai-tooling.md                Record of the AI development-environment setup for this repo
-tests/                   Test projects mirroring src/Modules/* (none yet — pending first module test)
+scripts/
+  create-runtime-role.sql      Creates the RLS-bound application role (run after migrations)
+tests/
+  CRM.Tests/               Domain, architecture (NetArchTest) and PostgreSQL
+                            integration tests (Testcontainers)
 web/                     Frontend (not started)
 graphify-out/            Committed code-graph artifacts (graph.json, GRAPH_REPORT.md,
                           manifest.json) used by AI coding agents for navigation
@@ -58,6 +66,7 @@ The full architecture rationale (module boundaries, canonical domain concepts, f
 
 - **.NET 10 SDK**
 - **PostgreSQL 17** (local dev is expected to run against Postgres, not an in-memory provider)
+- **Docker** (Docker Desktop on macOS) — the integration tests start their own PostgreSQL container
 
 ### Installing PostgreSQL locally (macOS / Homebrew)
 
@@ -90,14 +99,38 @@ dotnet ef database update \
   --startup-project src/Modules/CRM/CRM.csproj
 ```
 
+### Runtime role (Row-Level Security)
+
+Migrations run as `postgres`, a superuser — and superusers bypass Row-Level Security entirely. **An application connected as `postgres` gets no tenant isolation from the database.** After applying migrations, create the unprivileged runtime role once (edit the password in the script first):
+
+```bash
+psql -h localhost -U postgres -d fynovio_platform -f scripts/create-runtime-role.sql
+```
+
+Then point the application at that role:
+
+```bash
+export ConnectionStrings__Crm="Host=localhost;Database=fynovio_platform;Username=fynovio_app;Password=<password>"
+```
+
+`ConnectionStrings__Crm` is what `Host` reads first; `FYNOVIO_CRM_CONNECTION_STRING` is the fallback, and it is also what `dotnet ef` uses — keep that one on the `postgres` role, since migrations need it.
+
 ## Getting started
 
 ```bash
 dotnet tool restore     # one-time per clone: restores dotnet-ef
 dotnet build            # build the solution
-dotnet test             # run all tests (none exist yet)
+dotnet test             # run all tests (Docker must be running)
 dotnet format           # apply formatting rules before committing
 ```
+
+If the integration tests fail to find Docker on macOS, point Testcontainers at Docker Desktop's socket:
+
+```bash
+export DOCKER_HOST=unix://$HOME/.docker/run/docker.sock
+```
+
+CI (`.github/workflows/ci.yml`) runs a format check, a Release build, a vulnerable-package check and the full test suite on every push to `main` and every pull request.
 
 Add a new CRM migration:
 
@@ -108,13 +141,14 @@ dotnet ef migrations add <Name> \
   --output-dir Persistence/Migrations
 ```
 
-EF Core migrations under `Persistence/Migrations/` are generated output — regenerate them with `dotnet ef migrations add`, never hand-edit a migration or its model snapshot.
+EF Core migrations under `Persistence/Migrations/` are generated output — regenerate them with `dotnet ef migrations add`, never hand-edit a migration or its model snapshot. The one exception is RLS policy SQL, which has no EF Core model representation (see `AGENTS.md`, "Enforcement Scope").
 
 ## Documentation for contributors and coding agents
 
 - **`AGENTS.md`** — the model-independent engineering contract: stack, code conventions, architecture and database rules, testing expectations, and generated-artifact policy. Read this first.
 - **`CLAUDE.md`** — Claude Code-specific tool routing and methodology (retrieval order, when to use which skill, reasoning-effort guidance).
-- **`docs/schema/crm-sales-schema.md`** — the physical schema design behind the CRM module's EF Core model.
+- **`docs/schema/`** — the physical schema designs behind each module's EF Core model (`crm-sales-schema.md`, `identity-access-schema.md`, `tenant-network-schema.md`).
+- **`docs/plans/`** — implementation plans, e.g. `2026-09-16-pilot-enforcement.md`.
 - **`docs/ai-tooling.md`** — what AI tooling is active in this repo and why.
 - **`docs/dotnet-guide.md`** — a .NET/EF Core primer for contributors coming from another ecosystem (e.g. Laravel), covering solution/project structure, DI, EF Core, migrations, and how this repo's connection-string resolution works.
 

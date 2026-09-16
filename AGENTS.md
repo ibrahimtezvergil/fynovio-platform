@@ -6,8 +6,8 @@ Approved 2026-09-14 — binding, not a draft.
 
 ## Stack
 - .NET 10 (LTS, supported until ~2028), C# 13; ASP.NET Core (`Host`), PostgreSQL via `Npgsql.EntityFrameworkCore.PostgreSQL`.
-- Architecture source of truth: `../enterprise ve B2B mimari araştırma/docs/architecture-analysis/` (18 numbered decision docs; see especially 04 Canonical Concepts, 08 Module Boundaries, 12 Fitness Functions, 17 CRM+Sales Pilot Domain).
-- Physical schema design lives in `docs/schema/` in this repo (`crm-sales-schema.md` is the current checkpoint for the CRM module) — read it before changing the EF Core model.
+- Architecture source of truth: `../enterprise ve B2B mimari araştırma/docs/architecture-analysis/` (20 numbered decision docs; see especially 04 Canonical Concepts, 08 Module Boundaries, 12 Fitness Functions, 17 CRM+Sales Pilot Domain, 19 Identity/Access, 20 Pilot Enforcement Scope). That directory is not a git repository.
+- Physical schema design lives in `docs/schema/` in this repo (`crm-sales-schema.md` for CRM, `identity-access-schema.md` for Identity+Access, `tenant-network-schema.md` for the unassigned network tables) — read the relevant one before changing an EF Core model.
 
 ## Code Conventions
 - Enable `<Nullable>enable</Nullable>` and `<ImplicitUsings>enable</ImplicitUsings>` in every `.csproj`.
@@ -54,15 +54,16 @@ Evidence records are required only for risk-catalogued commands (money-carrying 
 **Named exception to the generated-migration rule:** PostgreSQL RLS has no EF Core model representation, so RLS policies live in an otherwise-empty generated migration whose `Up`/`Down` bodies are written by hand with `migrationBuilder.Sql(...)`. This is the only permitted hand-written migration content.
 
 ## Testing / Definition of Done
-- xUnit, one test project per module under `tests/`, mirroring `src/Modules/*` (not yet created — pending first module test).
-- Architecture/dependency-rule tests (e.g. NetArchTest) enforcing the "Architecture Rules" above must run in CI, not just be reviewed by eye.
-- Integration tests against PostgreSQL use Testcontainers — no shared/mutable dev database in CI.
+- xUnit, one test project per module under `tests/`, mirroring `src/Modules/*` (`tests/CRM.Tests` exists: `Domain/`, `Architecture/`, `Integration/`).
+- Architecture/dependency-rule tests (NetArchTest) enforcing the "Architecture Rules" above run in CI, not just by eye.
+- Integration tests against PostgreSQL use Testcontainers — no shared/mutable dev database. Docker must be running. On macOS Docker Desktop, Testcontainers may not find the daemon; export `DOCKER_HOST=unix://$HOME/.docker/run/docker.sock` before `dotnet test` if it doesn't.
+- Tenant-isolation tests connect as the unprivileged runtime role (`PostgresFixture.RuntimeConnectionStringAsync()`), never as the superuser that runs migrations.
 - A change is done when: it builds clean (`dotnet build`), it doesn't violate an Architecture or Database Rule above, and — for schema changes — the migration has been checked against `docs/schema/*.md` line by line (composite FKs, CHECK constraints, indexes all present).
 
 ## Formatting & Tooling
-- Run `dotnet format` before every commit; CI should fail on unformatted code once CI exists.
-- Treat nullable-reference and analyzer warnings as errors (`<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`) once the codebase is clean enough to turn it on.
-- `.editorconfig` at repo root should be added to make these rules machine-enforced (not yet created).
+- Run `dotnet format` before every commit; CI (`.github/workflows/ci.yml`) fails on unformatted code, on any vulnerable package, and on failing tests.
+- Treat nullable-reference and analyzer warnings as errors (`<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`) once the codebase is clean enough to turn it on. The build is currently warning-free; keep it that way.
+- `.editorconfig` at repo root holds the machine-enforced formatting rules; it marks `**/Persistence/Migrations/*.cs` as generated so `dotnet format` never rewrites migrations. It is intentionally minimal — extend it rule by rule.
 - `dotnet-ef` is a repo-local tool (`.config/dotnet-tools.json`) — run `dotnet tool restore` once per clone, then `dotnet ef ...` or `dotnet tool run dotnet-ef ...`.
 
 ## Generated / Derived Artifacts — don't hand-edit
@@ -80,14 +81,19 @@ This repo has a Graphify code graph at `graphify-out/`. Prefer `graphify query "
 ## Commands
 ```bash
 dotnet build                              # Build the solution
-dotnet test                               # Run all tests (none exist yet)
+dotnet test                               # Run all tests (Docker required)
 dotnet format                             # Apply formatting rules
+dotnet format --verify-no-changes         # What CI runs
 dotnet tool restore                       # Restore repo-local tools (dotnet-ef) once per clone
 dotnet ef migrations add <Name> \
   --project src/Modules/CRM/CRM.csproj \
   --startup-project src/Modules/CRM/CRM.csproj \
-  --output-dir Persistence/Migrations     # Add a CRM migration
+  --output-dir Persistence/Migrations     # Add a CRM migration (same shape for Access)
+dotnet ef migrations has-pending-model-changes \
+  --project src/Modules/CRM/CRM.csproj \
+  --startup-project src/Modules/CRM/CRM.csproj   # Must report no changes before committing
+psql -d fynovio_platform -f scripts/create-runtime-role.sql   # Create the RLS-bound runtime role (after migrations)
 ```
 
 ## Status
-`Contracts` primitives and the CRM+Sales pilot module (entities, `CrmDbContext`, first migration) are implemented as of 2026-09-14; see `docs/schema/crm-sales-schema.md` for the design. This file and `CLAUDE.md` are approved and binding, but some rules (e.g. `TreatWarningsAsErrors`, CI) are intentionally aspirational until more of the codebase exists to exercise them against — that's a scoping note, not a draft status.
+As of 2026-09-16: `Contracts` primitives; the CRM+Sales pilot module (entities, `CrmDbContext`, four migrations including RLS, the `CompleteOpportunity` command writing state + outbox + evidence + idempotency atomically); the Identity+Access schema (entities, `AccessDbContext`, first migration — no RLS, tests or Host registration yet). `Host` registers `CrmDbContext` only. `tests/CRM.Tests` covers the domain, module boundaries, persistence, concurrency, tenant isolation and the command. The runtime baseline is .NET 10 LTS — the explicit supported-runtime decision doc 07 §1 asked for in place of .NET 8. Work in progress is planned in `docs/plans/`. This file and `CLAUDE.md` are approved and binding; `TreatWarningsAsErrors` is the one rule still deferred.
