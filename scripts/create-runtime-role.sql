@@ -17,3 +17,15 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA crm
 
 -- evidence_records is append-only (docs/schema/crm-sales-schema.md, revision 3, item 10).
 REVOKE UPDATE, DELETE ON crm.evidence_records FROM fynovio_app;
+
+-- MasterData module.
+GRANT USAGE ON SCHEMA masterdata TO fynovio_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA masterdata TO fynovio_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA masterdata TO fynovio_app;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA masterdata
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO fynovio_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA masterdata
+    GRANT USAGE, SELECT ON SEQUENCES TO fynovio_app;
+
+REVOKE UPDATE, DELETE ON masterdata.evidence_records FROM fynovio_app;
