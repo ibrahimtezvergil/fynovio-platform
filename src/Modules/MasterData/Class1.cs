@@ -1,4 +1,4 @@
-﻿namespace MasterData;
+namespace MasterData;
 
 public class Class1
 {

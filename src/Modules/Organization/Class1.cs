@@ -1,4 +1,4 @@
-﻿namespace Organization;
+namespace Organization;
 
 public class Class1
 {
