@@ -1,11 +1,15 @@
+using System.Text;
 using Access.Application;
 using Access.Persistence;
 using Contracts;
 using CRM.Application;
 using CRM.Persistence;
+using Host.Authentication;
 using MasterData.Application;
 using MasterData.Persistence;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +40,28 @@ builder.Services.AddScoped<IActionCatalog, AccessActionCatalogService>();
 builder.Services.AddScoped<IAuthorizer, AccessAuthorizer>();
 builder.Services.AddScoped<IAccessScopeResolver, AccessScopeResolver>();
 
+var jwtOptions = builder.Configuration.GetSection("Authentication:Jwt").Get<JwtOptions>()
+    ?? throw new InvalidOperationException("Authentication:Jwt configuration section is required.");
+builder.Services.AddSingleton(jwtOptions);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+            ValidateLifetime = true,
+            NameClaimType = "sub"
+        };
+    });
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -45,6 +71,10 @@ using (var scope = app.Services.CreateScope())
         .Concat(CrmActionCatalog.All.Select(d => new ActionRegistryDescriptor(d.ActionKey, "CRM", d.ResourceType, d.RiskClass)));
     await AccessActionCatalogSeeder.EnsureSeededAsync(accessDb, manifest);
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseMiddleware<ActorContextMiddleware>();
 
 app.MapGet("/", () => "Hello World!");
 
