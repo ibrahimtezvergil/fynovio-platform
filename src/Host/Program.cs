@@ -1,3 +1,5 @@
+using Access.Application;
+using Access.Persistence;
 using Contracts;
 using CRM.Persistence;
 using MasterData.Application;
@@ -18,10 +20,28 @@ builder.Services.AddDbContext<MasterDataDbContext>(options => options
         npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", MasterDataDbContext.Schema))
     .UseSnakeCaseNamingConvention());
 
+builder.Services.AddDbContext<AccessDbContext>(options => options
+    .UseNpgsql(
+        builder.Configuration.GetConnectionString("Access") ?? AccessConnectionString.Resolve(),
+        npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", AccessDbContext.AccessSchema))
+    .UseSnakeCaseNamingConvention()
+    .AddInterceptors(new RowVersionInterceptor()));
+
 builder.Services.AddScoped<IPartyDirectory, PartyDirectory>();
 builder.Services.AddScoped<IPartyIdentityResolver, PartyIdentityResolver>();
 
+builder.Services.AddScoped<PrincipalResolver>();
+builder.Services.AddScoped<IActionCatalog, AccessActionCatalogService>();
+builder.Services.AddScoped<IAuthorizer, AccessAuthorizer>();
+builder.Services.AddScoped<IAccessScopeResolver, AccessScopeResolver>();
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var accessDb = scope.ServiceProvider.GetRequiredService<AccessDbContext>();
+    await AccessActionCatalogSeeder.EnsureSeededAsync(accessDb);
+}
 
 app.MapGet("/", () => "Hello World!");
 
