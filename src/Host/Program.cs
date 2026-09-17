@@ -1,6 +1,7 @@
 using Access.Application;
 using Access.Persistence;
 using Contracts;
+using CRM.Application;
 using CRM.Persistence;
 using MasterData.Application;
 using MasterData.Persistence;
@@ -40,7 +41,9 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var accessDb = scope.ServiceProvider.GetRequiredService<AccessDbContext>();
-    await AccessActionCatalogSeeder.EnsureSeededAsync(accessDb);
+    var manifest = AccessActionCatalog.All
+        .Concat(CrmActionCatalog.All.Select(d => new ActionRegistryDescriptor(d.ActionKey, "CRM", d.ResourceType, d.RiskClass)));
+    await AccessActionCatalogSeeder.EnsureSeededAsync(accessDb, manifest);
 }
 
 app.MapGet("/", () => "Hello World!");

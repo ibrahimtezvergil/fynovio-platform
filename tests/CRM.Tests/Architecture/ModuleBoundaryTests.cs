@@ -33,6 +33,17 @@ public sealed class ModuleBoundaryTests
         Assert.True(result.IsSuccessful, Describe(result));
     }
 
+    [Fact]
+    public void Crm_does_not_reference_Access()
+    {
+        var result = Types.InAssembly(CrmAssembly)
+            .ShouldNot()
+            .HaveDependencyOn("Access")
+            .GetResult();
+
+        Assert.True(result.IsSuccessful, Describe(result));
+    }
+
     private static string Describe(TestResult result) =>
         result.FailingTypeNames is null ? "OK" : string.Join(", ", result.FailingTypeNames);
 }

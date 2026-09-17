@@ -5,15 +5,22 @@ using Microsoft.EntityFrameworkCore;
 namespace Access.Application;
 
 /// <summary>Idempotent upsert, deprecate-not-delete (gap-closure §3). Runs once at
-/// Host startup, no admin UI, no reconciler loop.</summary>
+/// Host startup, no admin UI, no reconciler loop. Accepts the manifest from the
+/// caller rather than hardcoding AccessActionCatalog.All, because Phase 2 needs to
+/// seed CRM's action keys too, and Access must not reference CRM to do it — Host
+/// composes both manifests and passes the union here.</summary>
 public static class AccessActionCatalogSeeder
 {
-    public static async Task EnsureSeededAsync(AccessDbContext context, CancellationToken cancellationToken = default)
+    public static async Task EnsureSeededAsync(
+        AccessDbContext context,
+        IEnumerable<ActionRegistryDescriptor> manifest,
+        CancellationToken cancellationToken = default)
     {
         var existing = await context.Actions.ToDictionaryAsync(a => a.ActionKey, cancellationToken);
-        var manifestKeys = AccessActionCatalog.All.Select(d => d.ActionKey).ToHashSet();
+        var descriptors = manifest.ToList();
+        var manifestKeys = descriptors.Select(d => d.ActionKey).ToHashSet();
 
-        foreach (var descriptor in AccessActionCatalog.All)
+        foreach (var descriptor in descriptors)
         {
             if (existing.TryGetValue(descriptor.ActionKey, out var entry))
             {

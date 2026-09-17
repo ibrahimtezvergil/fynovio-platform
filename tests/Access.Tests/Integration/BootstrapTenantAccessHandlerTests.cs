@@ -25,7 +25,7 @@ public sealed class BootstrapTenantAccessHandlerTests : IClassFixture<PostgresFi
             // action, so PermissionSetItem's FK to access.actions requires this row
             // to exist first — the FK violation this seeding fixes is real, not a
             // handler bug.
-            await AccessActionCatalogSeeder.EnsureSeededAsync(seed);
+            await AccessActionCatalogSeeder.EnsureSeededAsync(seed, AccessActionCatalog.All);
 
             var account = Account.Create($"{principal.Subject}@test.local", principal.Subject);
             seed.Accounts.Add(account);
@@ -67,7 +67,7 @@ public sealed class BootstrapTenantAccessHandlerTests : IClassFixture<PostgresFi
 
         await using (var seed = _fixture.CreateAdminContext())
         {
-            await AccessActionCatalogSeeder.EnsureSeededAsync(seed);
+            await AccessActionCatalogSeeder.EnsureSeededAsync(seed, AccessActionCatalog.All);
 
             var account = Account.Create($"{principal.Subject}@test.local", principal.Subject);
             seed.Accounts.Add(account);
@@ -102,7 +102,7 @@ public sealed class BootstrapTenantAccessHandlerTests : IClassFixture<PostgresFi
 
         await using (var seed = _fixture.CreateAdminContext())
         {
-            await AccessActionCatalogSeeder.EnsureSeededAsync(seed);
+            await AccessActionCatalogSeeder.EnsureSeededAsync(seed, AccessActionCatalog.All);
 
             var account = Account.Create($"{principal.Subject}@test.local", principal.Subject);
             seed.Accounts.Add(account);

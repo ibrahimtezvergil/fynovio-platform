@@ -41,7 +41,7 @@ public sealed class GrantRevokeRoleAssignmentHandlerTests : IClassFixture<Postgr
 
         await using (var seed = _fixture.CreateAdminContext())
         {
-            await AccessActionCatalogSeeder.EnsureSeededAsync(seed);
+            await AccessActionCatalogSeeder.EnsureSeededAsync(seed, AccessActionCatalog.All);
             admin = await SeedActiveMemberAsync(seed, tenantId, "admin");
             grantee = await SeedActiveMemberAsync(seed, tenantId, "grantee");
             thirdAccount = await SeedActiveMemberAsync(seed, tenantId, "third");
@@ -124,7 +124,7 @@ public sealed class GrantRevokeRoleAssignmentHandlerTests : IClassFixture<Postgr
 
         await using (var seed = _fixture.CreateAdminContext())
         {
-            await AccessActionCatalogSeeder.EnsureSeededAsync(seed);
+            await AccessActionCatalogSeeder.EnsureSeededAsync(seed, AccessActionCatalog.All);
             admin = await SeedActiveMemberAsync(seed, tenantId, "admin");
             grantee = await SeedActiveMemberAsync(seed, tenantId, "grantee");
         }
