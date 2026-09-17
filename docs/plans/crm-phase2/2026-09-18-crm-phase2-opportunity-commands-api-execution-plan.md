@@ -176,7 +176,7 @@ keep running as postgres to create tables and enable RLS in the first place."
 
 Resolves architecture plan §2.3/§2.4: `IsEntry` (exactly one `true` per `PipelineDefinitionVersion`), `IsActive` (defaults `true`, no data migration needed).
 
-- [ ] **Step 1: Write the failing domain test for the entry-stage invariant**
+- [x] **Step 1: Write the failing domain test for the entry-stage invariant**
 
 Add to `tests/CRM.Tests/Domain/PipelineDefinitionVersionTests.cs`:
 
@@ -219,7 +219,7 @@ public void MarkEntry_moves_the_entry_flag_to_the_target_stage_only()
 
 (`NewVersion()` is the existing private helper in that test file — confirm its exact name by reading the file first; if it is named differently, use the existing name rather than introducing a second helper.)
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~PipelineDefinitionVersionTests"
@@ -227,7 +227,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Pipeli
 
 Expected: compile error — `PipelineStage.IsEntry`/`IsActive` and `PipelineDefinitionVersion.MarkEntry` don't exist yet.
 
-- [ ] **Step 3: Add `IsActive`/`IsEntry` to `PipelineStage` and `MarkEntry` to `PipelineDefinitionVersion`**
+- [x] **Step 3: Add `IsActive`/`IsEntry` to `PipelineStage` and `MarkEntry` to `PipelineDefinitionVersion`**
 
 `src/Modules/CRM/Domain/PipelineStage.cs`:
 
@@ -341,7 +341,7 @@ public sealed class PipelineDefinitionVersion
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~PipelineDefinitionVersionTests"
@@ -349,7 +349,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Pipeli
 
 Expected: PASS (3 new facts, existing ones unaffected).
 
-- [ ] **Step 5: Update `PipelineStageConfiguration` for the two new columns and the partial unique index**
+- [x] **Step 5: Update `PipelineStageConfiguration` for the two new columns and the partial unique index**
 
 ```csharp
 using Contracts;
@@ -395,7 +395,7 @@ public sealed class PipelineStageConfiguration : IEntityTypeConfiguration<Pipeli
 }
 ```
 
-- [ ] **Step 6: Generate the migration**
+- [x] **Step 6: Generate the migration**
 
 ```bash
 dotnet ef migrations add AddPipelineStageActiveAndEntryFlags \
@@ -406,7 +406,7 @@ dotnet ef migrations add AddPipelineStageActiveAndEntryFlags \
 
 Expected: a new migration adding `is_active boolean NOT NULL DEFAULT TRUE`, `is_entry boolean NOT NULL DEFAULT FALSE`, and the partial unique index `ux_pipeline_stages_one_entry_per_version` to `pipeline_stages`. Open the generated file and confirm both `Up` and `Down` are present and the `Down` method drops the index and both columns — EF Core generates this automatically; do not hand-edit it (AGENTS.md: migrations are generated, never hand-edited, except the one named RLS-`Sql()` exception, which does not apply here).
 
-- [ ] **Step 7: Add a DB-level negative test proving the partial unique index actually blocks a second entry stage**
+- [x] **Step 7: Add a DB-level negative test proving the partial unique index actually blocks a second entry stage**
 
 Add to `tests/CRM.Tests/Integration/PipelineConstraintTests.cs`:
 
@@ -442,7 +442,7 @@ public async Task Two_entry_stages_in_the_same_version_violate_the_partial_uniqu
 
 (Confirm the exact class/namespace names — `PipelineDefinition`, `AddVersion` — by reading `PipelineDefinition.cs` before writing this test; adjust only if the actual signature differs from what §3.4 of the architecture plan describes.)
 
-- [ ] **Step 8: Run the full CRM test suite**
+- [x] **Step 8: Run the full CRM test suite**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj
@@ -450,7 +450,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj
 
 Expected: PASS, no regression (79 existing + 4 new).
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/Modules/CRM/Domain/PipelineStage.cs src/Modules/CRM/Domain/PipelineDefinitionVersion.cs src/Modules/CRM/Persistence/Configurations/PipelineStageConfiguration.cs src/Modules/CRM/Persistence/Migrations tests/CRM.Tests/Domain/PipelineDefinitionVersionTests.cs tests/CRM.Tests/Integration/PipelineConstraintTests.cs
@@ -461,6 +461,10 @@ version becomes its entry stage by default; MarkEntry moves it. A partial
 unique index enforces at most one entry stage per version at the database
 level, not just in the aggregate."
 ```
+
+→ Commit: `be63eb3` "feat(crm): add PipelineStage.IsActive/IsEntry with a one-entry-per-version invariant"
+→ Follow-up fix: `c7aea74` "fix(crm-tests): seed the first pipeline stage before asserting on it" — the implementer subagent never actually ran `dotnet test` (VSTest fails outright in this sandbox without `dangerouslyDisableSandbox` — see memory `project_sandbox_msbuild_hang`) and reported DONE based on "compiles cleanly." Independent verification found the new integration test (Step 7) crashed with "Sequence contains no elements" because it assumed `SeedVersionAsync()` already created a first stage; fixed by seeding it explicitly, matching this test file's existing pattern.
+→ Verified (controller, with `dangerouslyDisableSandbox: true`): domain tests 7/7 pass, `PipelineConstraintTests` 8/8 pass, full `CRM.Tests` suite 83/83 pass (79 existing + 4 new), 0 failures.
 
 ---
 
