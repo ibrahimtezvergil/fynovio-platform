@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Access.Persistence.Migrations
 {
     [DbContext(typeof(AccessDbContext))]
-    [Migration("20260917083335_RebuildAccessAuthorizationModel")]
+    [Migration("20260917084915_RebuildAccessAuthorizationModel")]
     partial class RebuildAccessAuthorizationModel
     {
         /// <inheritdoc />
@@ -289,11 +289,18 @@ namespace Access.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("permission_set_id");
 
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
                     b.HasKey("RoleId", "PermissionSetId")
                         .HasName("pk_role_permission_sets");
 
-                    b.HasIndex("PermissionSetId")
-                        .HasDatabaseName("ix_role_permission_sets_permission_set_id");
+                    b.HasIndex("TenantId", "PermissionSetId")
+                        .HasDatabaseName("ix_role_permission_sets_tenant_id_permission_set_id");
+
+                    b.HasIndex("TenantId", "RoleId")
+                        .HasDatabaseName("ix_role_permission_sets_tenant_id_role_id");
 
                     b.ToTable("role_permission_sets", "access");
                 });
@@ -689,17 +696,19 @@ namespace Access.Persistence.Migrations
                 {
                     b.HasOne("Access.Domain.Authorization.PermissionSet", null)
                         .WithMany()
-                        .HasForeignKey("PermissionSetId")
+                        .HasForeignKey("TenantId", "PermissionSetId")
+                        .HasPrincipalKey("TenantId", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_role_permission_sets_permission_sets_permission_set_id");
+                        .HasConstraintName("fk_role_permission_sets_permission_sets_tenant_id_permission_s");
 
                     b.HasOne("Access.Domain.Authorization.Role", null)
                         .WithMany()
-                        .HasForeignKey("RoleId")
+                        .HasForeignKey("TenantId", "RoleId")
+                        .HasPrincipalKey("TenantId", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_role_permission_sets_roles_role_id");
+                        .HasConstraintName("fk_role_permission_sets_roles_tenant_id_role_id");
                 });
 
             modelBuilder.Entity("Access.Domain.Identity.ExternalIdentity", b =>

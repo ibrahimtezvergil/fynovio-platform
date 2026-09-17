@@ -15,7 +15,7 @@ public readonly partial record struct ActionKey
             throw new ArgumentException("Value is required.", nameof(value));
         if (!Format().IsMatch(value))
             throw new ArgumentException(
-                "ActionKey must be at least three lowercase dot-separated segments, e.g. 'crm.opportunity.win'.",
+                "ActionKey must be at least three lowercase dot-separated segments (letters, digits, underscore), e.g. 'crm.opportunity.win' or 'access.role_assignment.grant'.",
                 nameof(value));
 
         Value = value;
@@ -23,6 +23,6 @@ public readonly partial record struct ActionKey
 
     public override string ToString() => Value;
 
-    [GeneratedRegex(@"^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*){2,}$")]
+    [GeneratedRegex(@"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){2,}$")]
     private static partial Regex Format();
 }

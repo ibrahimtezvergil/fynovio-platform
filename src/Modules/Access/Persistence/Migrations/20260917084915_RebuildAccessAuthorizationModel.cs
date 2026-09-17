@@ -267,24 +267,25 @@ namespace Access.Persistence.Migrations
                 columns: table => new
                 {
                     role_id = table.Column<long>(type: "bigint", nullable: false),
-                    permission_set_id = table.Column<long>(type: "bigint", nullable: false)
+                    permission_set_id = table.Column<long>(type: "bigint", nullable: false),
+                    tenant_id = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_role_permission_sets", x => new { x.role_id, x.permission_set_id });
                     table.ForeignKey(
-                        name: "fk_role_permission_sets_permission_sets_permission_set_id",
-                        column: x => x.permission_set_id,
+                        name: "fk_role_permission_sets_permission_sets_tenant_id_permission_s",
+                        columns: x => new { x.tenant_id, x.permission_set_id },
                         principalSchema: "access",
                         principalTable: "permission_sets",
-                        principalColumn: "id",
+                        principalColumns: new[] { "tenant_id", "id" },
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "fk_role_permission_sets_roles_role_id",
-                        column: x => x.role_id,
+                        name: "fk_role_permission_sets_roles_tenant_id_role_id",
+                        columns: x => new { x.tenant_id, x.role_id },
                         principalSchema: "access",
                         principalTable: "roles",
-                        principalColumn: "id",
+                        principalColumns: new[] { "tenant_id", "id" },
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -403,10 +404,16 @@ namespace Access.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "ix_role_permission_sets_permission_set_id",
+                name: "ix_role_permission_sets_tenant_id_permission_set_id",
                 schema: "access",
                 table: "role_permission_sets",
-                column: "permission_set_id");
+                columns: new[] { "tenant_id", "permission_set_id" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_role_permission_sets_tenant_id_role_id",
+                schema: "access",
+                table: "role_permission_sets",
+                columns: new[] { "tenant_id", "role_id" });
 
             migrationBuilder.AddForeignKey(
                 name: "fk_role_assignments_roles_tenant_id_role_id",

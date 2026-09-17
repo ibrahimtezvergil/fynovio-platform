@@ -38,7 +38,7 @@ public sealed class BootstrapTenantAccessHandler(AccessDbContext context)
         context.Roles.Add(role);
         await context.SaveChangesAsync(cancellationToken); // assigns Id to permissionSet/role before the join row
 
-        context.RolePermissionSets.Add(RolePermissionSet.Create(role.Id, permissionSet.Id));
+        context.RolePermissionSets.Add(RolePermissionSet.Create(command.TenantId, role.Id, permissionSet.Id));
 
         var assignment = RoleAssignment.Grant(command.TenantId, accountId, role.Id, accountId, RoleAssignment.SourceBootstrap, reason: "Tenant bootstrap");
         context.RoleAssignments.Add(assignment);
