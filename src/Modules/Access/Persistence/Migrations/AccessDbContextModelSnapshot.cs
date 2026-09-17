@@ -22,7 +22,40 @@ namespace Access.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Access.Domain.Authorization.Permission", b =>
+            modelBuilder.Entity("Access.Domain.Authorization.ActionRegistryEntry", b =>
+                {
+                    b.Property<string>("ActionKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("action_key");
+
+                    b.Property<bool>("IsDeprecated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deprecated");
+
+                    b.Property<string>("OwnerModule")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("owner_module");
+
+                    b.Property<string>("ResourceType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("resource_type");
+
+                    b.Property<string>("RiskClass")
+                        .HasColumnType("text")
+                        .HasColumnName("risk_class");
+
+                    b.HasKey("ActionKey")
+                        .HasName("pk_actions");
+
+                    b.ToTable("actions", "access");
+                });
+
+            modelBuilder.Entity("Access.Domain.Authorization.PermissionSet", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -31,23 +64,89 @@ namespace Access.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
                     b.Property<string>("Key")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("key");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Origin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("origin");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
                     b.HasKey("Id")
-                        .HasName("pk_permissions");
+                        .HasName("pk_permission_sets");
 
-                    b.HasIndex("Key")
+                    b.HasAlternateKey("TenantId", "Id")
+                        .HasName("ak_permission_sets_tenant_id_id");
+
+                    b.HasIndex("TenantId", "Id")
                         .IsUnique()
-                        .HasDatabaseName("ix_permissions_key");
+                        .HasDatabaseName("ix_permission_sets_tenant_id_id");
 
-                    b.ToTable("permissions", "access");
+                    b.HasIndex("TenantId", "Key")
+                        .IsUnique()
+                        .HasDatabaseName("ix_permission_sets_tenant_id_key");
+
+                    b.ToTable("permission_sets", "access", t =>
+                        {
+                            t.HasCheckConstraint("ck_permission_sets_origin", "origin IN ('tenant','system_template')");
+                        });
+                });
+
+            modelBuilder.Entity("Access.Domain.Authorization.PermissionSetItem", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ActionKey")
+                        .IsRequired()
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("action_key");
+
+                    b.Property<long>("PermissionSetId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("permission_set_id");
+
+                    b.Property<string>("Relation")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("relation");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_permission_set_items");
+
+                    b.HasIndex("ActionKey")
+                        .HasDatabaseName("ix_permission_set_items_action_key");
+
+                    b.HasIndex("TenantId", "ActionKey")
+                        .HasDatabaseName("ix_permission_set_items_tenant_id_action_key");
+
+                    b.HasIndex("TenantId", "PermissionSetId")
+                        .HasDatabaseName("ix_permission_set_items_tenant_id_permission_set_id");
+
+                    b.ToTable("permission_set_items", "access", t =>
+                        {
+                            t.HasCheckConstraint("ck_permission_set_items_relation", "relation IS NULL OR relation = 'owner'");
+                        });
                 });
 
             modelBuilder.Entity("Access.Domain.Authorization.Role", b =>
@@ -59,25 +158,48 @@ namespace Access.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<bool>("IsSystem")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_system");
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("key");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("name");
 
-                    b.Property<long?>("TenantId")
+                    b.Property<string>("Origin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("origin");
+
+                    b.Property<long>("TenantId")
                         .HasColumnType("bigint")
                         .HasColumnName("tenant_id");
 
                     b.HasKey("Id")
                         .HasName("pk_roles");
 
-                    b.ToTable("roles", "access");
+                    b.HasAlternateKey("TenantId", "Id")
+                        .HasName("ak_roles_tenant_id_id");
+
+                    b.HasIndex("TenantId", "Id")
+                        .IsUnique()
+                        .HasDatabaseName("ix_roles_tenant_id_id");
+
+                    b.HasIndex("TenantId", "Key")
+                        .IsUnique()
+                        .HasDatabaseName("ix_roles_tenant_id_key");
+
+                    b.HasIndex("TenantId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_roles_tenant_id_name");
+
+                    b.ToTable("roles", "access", t =>
+                        {
+                            t.HasCheckConstraint("ck_roles_origin", "origin IN ('tenant','system_template')");
+                        });
                 });
 
             modelBuilder.Entity("Access.Domain.Authorization.RoleAssignment", b =>
@@ -93,6 +215,21 @@ namespace Access.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("account_id");
 
+                    b.Property<long>("GrantedByAccountId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("granted_by_account_id");
+
+                    b.Property<string>("PrincipalType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("principal_type");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reason");
+
                     b.Property<long>("RoleId")
                         .HasColumnType("bigint")
                         .HasColumnName("role_id");
@@ -102,15 +239,11 @@ namespace Access.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("row_version");
 
-                    b.Property<long?>("ScopeId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("scope_id");
-
-                    b.Property<string>("ScopeType")
+                    b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)")
-                        .HasColumnName("scope_type");
+                        .HasColumnName("source");
 
                     b.Property<long>("TenantId")
                         .HasColumnType("bigint")
@@ -127,35 +260,69 @@ namespace Access.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_role_assignments");
 
-                    b.HasIndex("RoleId")
-                        .HasDatabaseName("ix_role_assignments_role_id");
-
                     b.HasIndex("TenantId", "AccountId")
                         .HasDatabaseName("ix_role_assignments_tenant_id_account_id");
 
+                    b.HasIndex("TenantId", "RoleId")
+                        .HasDatabaseName("ix_role_assignments_tenant_id_role_id");
+
                     b.ToTable("role_assignments", "access", t =>
                         {
-                            t.HasCheckConstraint("ck_role_assignments_scope_type", "scope_type IN ('tenant','organization_unit','network')");
+                            t.HasCheckConstraint("ck_role_assignments_principal_type", "principal_type = 'user'");
+
+                            t.HasCheckConstraint("ck_role_assignments_source", "source IN ('manual','bootstrap')");
+
+                            t.HasCheckConstraint("ck_role_assignments_valid_range", "valid_to IS NULL OR valid_to > valid_from");
                         });
                 });
 
-            modelBuilder.Entity("Access.Domain.Authorization.RolePermission", b =>
+            modelBuilder.Entity("Access.Domain.Authorization.RolePermissionSet", b =>
                 {
                     b.Property<long>("RoleId")
                         .HasColumnType("bigint")
                         .HasColumnName("role_id");
 
-                    b.Property<long>("PermissionId")
+                    b.Property<long>("PermissionSetId")
                         .HasColumnType("bigint")
-                        .HasColumnName("permission_id");
+                        .HasColumnName("permission_set_id");
 
-                    b.HasKey("RoleId", "PermissionId")
-                        .HasName("pk_role_permissions");
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
 
-                    b.HasIndex("PermissionId")
-                        .HasDatabaseName("ix_role_permissions_permission_id");
+                    b.HasKey("RoleId", "PermissionSetId")
+                        .HasName("pk_role_permission_sets");
 
-                    b.ToTable("role_permissions", "access");
+                    b.HasIndex("TenantId", "PermissionSetId")
+                        .HasDatabaseName("ix_role_permission_sets_tenant_id_permission_set_id");
+
+                    b.HasIndex("TenantId", "RoleId")
+                        .HasDatabaseName("ix_role_permission_sets_tenant_id_role_id");
+
+                    b.ToTable("role_permission_sets", "access");
+                });
+
+            modelBuilder.Entity("Access.Domain.Authorization.TenantAccessState", b =>
+                {
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<long>("Revision")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("revision");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("row_version");
+
+                    b.HasKey("TenantId")
+                        .HasName("pk_tenant_access_state");
+
+                    b.ToTable("tenant_access_state", "access");
                 });
 
             modelBuilder.Entity("Access.Domain.Identity.Account", b =>
@@ -295,31 +462,250 @@ namespace Access.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Access.Evidence.EvidenceRecord", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("action");
+
+                    b.Property<long>("AggregateId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("aggregate_id");
+
+                    b.Property<string>("AggregateType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("aggregate_type");
+
+                    b.Property<long>("AggregateVersion")
+                        .HasColumnType("bigint")
+                        .HasColumnName("aggregate_version");
+
+                    b.Property<Guid>("CorrelationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<string>("Detail")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("detail");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<string>("PrincipalIssuer")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("principal_issuer");
+
+                    b.Property<string>("PrincipalSubject")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("principal_subject");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_evidence_records");
+
+                    b.HasIndex("CorrelationId")
+                        .HasDatabaseName("ix_evidence_records_correlation_id");
+
+                    b.HasIndex("TenantId", "AggregateType", "AggregateId")
+                        .HasDatabaseName("ix_evidence_records_tenant_id_aggregate_type_aggregate_id");
+
+                    b.ToTable("evidence_records", "access");
+                });
+
+            modelBuilder.Entity("Access.Idempotency.IdempotencyRecord", b =>
+                {
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("PrincipalIssuer")
+                        .HasColumnType("text")
+                        .HasColumnName("principal_issuer");
+
+                    b.Property<string>("PrincipalSubject")
+                        .HasColumnType("text")
+                        .HasColumnName("principal_subject");
+
+                    b.Property<string>("Operation")
+                        .HasColumnType("text")
+                        .HasColumnName("operation");
+
+                    b.Property<string>("IdempotencyKey")
+                        .HasColumnType("text")
+                        .HasColumnName("idempotency_key");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("request_hash");
+
+                    b.Property<string>("ResponsePayload")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("response_payload");
+
+                    b.Property<int>("ResponseStatus")
+                        .HasColumnType("integer")
+                        .HasColumnName("response_status");
+
+                    b.HasKey("TenantId", "PrincipalIssuer", "PrincipalSubject", "Operation", "IdempotencyKey")
+                        .HasName("pk_idempotency_records");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_idempotency_records_expires_at");
+
+                    b.ToTable("idempotency_records", "access");
+                });
+
+            modelBuilder.Entity("Access.Outbox.OutboxMessage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("AggregateId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("aggregate_id");
+
+                    b.Property<string>("AggregateType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("aggregate_type");
+
+                    b.Property<long>("AggregateVersion")
+                        .HasColumnType("bigint")
+                        .HasColumnName("aggregate_version");
+
+                    b.Property<Guid?>("CausationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("causation_id");
+
+                    b.Property<Guid>("CorrelationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("event_type");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<DateTimeOffset?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("source");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("subject");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_outbox_messages");
+
+                    b.HasIndex("EventId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_outbox_messages_event_id");
+
+                    b.HasIndex("TenantId", "ProcessedAt")
+                        .HasDatabaseName("ix_outbox_messages_tenant_id_processed_at");
+
+                    b.ToTable("outbox_messages", "access");
+                });
+
+            modelBuilder.Entity("Access.Domain.Authorization.PermissionSetItem", b =>
+                {
+                    b.HasOne("Access.Domain.Authorization.ActionRegistryEntry", null)
+                        .WithMany()
+                        .HasForeignKey("ActionKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_permission_set_items_actions_action_key");
+
+                    b.HasOne("Access.Domain.Authorization.PermissionSet", null)
+                        .WithMany("Items")
+                        .HasForeignKey("TenantId", "PermissionSetId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_permission_set_items_permission_sets_tenant_id_permission_s");
+                });
+
             modelBuilder.Entity("Access.Domain.Authorization.RoleAssignment", b =>
                 {
                     b.HasOne("Access.Domain.Authorization.Role", null)
                         .WithMany()
-                        .HasForeignKey("RoleId")
+                        .HasForeignKey("TenantId", "RoleId")
+                        .HasPrincipalKey("TenantId", "Id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_role_assignments_roles_role_id");
+                        .HasConstraintName("fk_role_assignments_roles_tenant_id_role_id");
                 });
 
-            modelBuilder.Entity("Access.Domain.Authorization.RolePermission", b =>
+            modelBuilder.Entity("Access.Domain.Authorization.RolePermissionSet", b =>
                 {
-                    b.HasOne("Access.Domain.Authorization.Permission", null)
+                    b.HasOne("Access.Domain.Authorization.PermissionSet", null)
                         .WithMany()
-                        .HasForeignKey("PermissionId")
+                        .HasForeignKey("TenantId", "PermissionSetId")
+                        .HasPrincipalKey("TenantId", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_role_permissions_permissions_permission_id");
+                        .HasConstraintName("fk_role_permission_sets_permission_sets_tenant_id_permission_s");
 
                     b.HasOne("Access.Domain.Authorization.Role", null)
                         .WithMany()
-                        .HasForeignKey("RoleId")
+                        .HasForeignKey("TenantId", "RoleId")
+                        .HasPrincipalKey("TenantId", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_role_permissions_roles_role_id");
+                        .HasConstraintName("fk_role_permission_sets_roles_tenant_id_role_id");
                 });
 
             modelBuilder.Entity("Access.Domain.Identity.ExternalIdentity", b =>
@@ -340,6 +726,11 @@ namespace Access.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_tenant_memberships_accounts_account_id");
+                });
+
+            modelBuilder.Entity("Access.Domain.Authorization.PermissionSet", b =>
+                {
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

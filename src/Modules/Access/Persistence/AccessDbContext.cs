@@ -24,9 +24,15 @@ public sealed class AccessDbContext : DbContext
     public DbSet<ExternalIdentity> ExternalIdentities => Set<ExternalIdentity>();
     public DbSet<TenantMembership> TenantMemberships => Set<TenantMembership>();
     public DbSet<Role> Roles => Set<Role>();
-    public DbSet<Permission> Permissions => Set<Permission>();
-    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<ActionRegistryEntry> Actions => Set<ActionRegistryEntry>();
+    public DbSet<PermissionSet> PermissionSets => Set<PermissionSet>();
+    public DbSet<PermissionSetItem> PermissionSetItems => Set<PermissionSetItem>();
+    public DbSet<RolePermissionSet> RolePermissionSets => Set<RolePermissionSet>();
     public DbSet<RoleAssignment> RoleAssignments => Set<RoleAssignment>();
+    public DbSet<TenantAccessState> TenantAccessStates => Set<TenantAccessState>();
+    public DbSet<Access.Outbox.OutboxMessage> OutboxMessages => Set<Access.Outbox.OutboxMessage>();
+    public DbSet<Access.Evidence.EvidenceRecord> EvidenceRecords => Set<Access.Evidence.EvidenceRecord>();
+    public DbSet<Access.Idempotency.IdempotencyRecord> IdempotencyRecords => Set<Access.Idempotency.IdempotencyRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

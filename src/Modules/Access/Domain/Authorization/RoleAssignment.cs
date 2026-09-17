@@ -2,33 +2,28 @@ using Contracts;
 
 namespace Access.Domain.Authorization;
 
-public enum RoleAssignmentScopeType
-{
-    Tenant,
-    OrganizationUnit,
-    Network
-}
-
-/// <summary>Grants, separate from membership (doc 08's Access row). `ScopeType`/`ScopeId`
-/// resolve through Organization's `ResolveScopeAt` when `OrganizationUnit`, and reference a
-/// `tenant-network-schema.md` network id by value (no FK — same `EntityRef`-style convention
-/// as <see cref="Contracts.PrincipalRef"/>) when `Network`.
-///
-/// <b>Intentionally under-validated for now:</b> this enum's exact list and per-value
-/// invariants are still open (docs/architecture-analysis/19_IDENTITY_ACCESS_AND_DEALER_NETWORK.md
-/// §9, "needs to be finalized once Organization's ResolveScopeAt contract is implemented") —
-/// do not add a cross-field `ScopeId` invariant here until that lands, or it will need
-/// unwinding.</summary>
+/// <summary>Grants, separate from membership. Every assignment is tenant-wide in
+/// Phase 1.5 — `ScopeType`/`ScopeId` are removed, not reserved-and-denied
+/// (gap-closure §1): Organization's fact provider doesn't exist, and a perpetually
+/// deny-only enum value is dead weight. Org-node scope is added additively in the
+/// migration that ships alongside a real Organization module. `Network` (cross-tenant)
+/// is gone unconditionally (round 3 §6) — cross-tenant access is never modeled as an
+/// ordinary assignment scope.</summary>
 public sealed class RoleAssignment : IHasRowVersion
 {
+    public const string SourceManual = "manual";
+    public const string SourceBootstrap = "bootstrap";
+
     public long Id { get; private set; }
     public TenantId TenantId { get; private set; }
+    public PrincipalType PrincipalType { get; private set; }
     public long AccountId { get; private set; }
     public long RoleId { get; private set; }
-    public RoleAssignmentScopeType ScopeType { get; private set; }
-    public long? ScopeId { get; private set; }
     public DateTimeOffset ValidFrom { get; private set; }
     public DateTimeOffset? ValidTo { get; private set; }
+    public string Source { get; private set; } = null!;
+    public long GrantedByAccountId { get; private set; }
+    public string? Reason { get; private set; }
     public long RowVersion { get; private set; } = 1;
 
     private RoleAssignment() { }
@@ -37,17 +32,23 @@ public sealed class RoleAssignment : IHasRowVersion
         TenantId tenantId,
         long accountId,
         long roleId,
-        RoleAssignmentScopeType scopeType,
-        long? scopeId,
+        long grantedByAccountId,
+        string source,
+        string? reason = null,
         DateTimeOffset? validFrom = null)
     {
+        if (source is not (SourceManual or SourceBootstrap))
+            throw new ArgumentException("Source must be 'manual' or 'bootstrap'.", nameof(source));
+
         return new RoleAssignment
         {
             TenantId = tenantId,
+            PrincipalType = Authorization.PrincipalType.User,
             AccountId = accountId,
             RoleId = roleId,
-            ScopeType = scopeType,
-            ScopeId = scopeId,
+            GrantedByAccountId = grantedByAccountId,
+            Source = source,
+            Reason = reason,
             ValidFrom = validFrom ?? DateTimeOffset.UtcNow
         };
     }
@@ -57,8 +58,14 @@ public sealed class RoleAssignment : IHasRowVersion
         if (ValidTo is not null)
             throw new InvalidOperationException("Assignment is already revoked.");
 
-        ValidTo = at ?? DateTimeOffset.UtcNow;
+        var revokedAt = at ?? DateTimeOffset.UtcNow;
+        if (revokedAt < ValidFrom)
+            throw new ArgumentOutOfRangeException(nameof(at), "Cannot revoke before the assignment's valid_from.");
+
+        ValidTo = revokedAt;
     }
+
+    public bool IsActiveAt(DateTimeOffset at) => ValidFrom <= at && (ValidTo is null || at < ValidTo);
 
     void IHasRowVersion.IncrementRowVersion() => RowVersion++;
 }

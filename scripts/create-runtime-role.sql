@@ -29,3 +29,25 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA masterdata
     GRANT USAGE, SELECT ON SEQUENCES TO fynovio_app;
 
 REVOKE UPDATE, DELETE ON masterdata.evidence_records FROM fynovio_app;
+
+-- Identity + Access modules (share one assembly/DbContext, two schemas).
+GRANT USAGE ON SCHEMA identity TO fynovio_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA identity TO fynovio_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA identity TO fynovio_app;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA identity
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO fynovio_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA identity
+    GRANT USAGE, SELECT ON SEQUENCES TO fynovio_app;
+
+GRANT USAGE ON SCHEMA access TO fynovio_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA access TO fynovio_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA access TO fynovio_app;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA access
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO fynovio_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA access
+    GRANT USAGE, SELECT ON SEQUENCES TO fynovio_app;
+
+-- access.evidence_records is append-only, same convention as crm/masterdata.
+REVOKE UPDATE, DELETE ON access.evidence_records FROM fynovio_app;

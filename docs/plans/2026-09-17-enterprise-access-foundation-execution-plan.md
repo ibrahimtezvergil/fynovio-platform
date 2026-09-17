@@ -6,6 +6,29 @@
 > tracking"):** mark a step `[x]` only once its commit exists, and add a
 > `→ Commit: \`<hash>\` "<message>"` line under it — never mark ahead of actual state.
 >
+> **Status: All 10 tasks done (2026-09-17), branch `access-phase1-5-foundation`, not
+> yet merged.** Owner approved via "onay veriyorum devam edebilirsin" (Task 0).
+> Executed inline in the main session (executing-plans, not subagent-driven-
+> development) — subagents on this account are forced to Haiku, weak for the
+> judgment-heavy work this foundation required (project-status memory). Final state:
+> `dotnet build` clean (0/0), `dotnet format --verify-no-changes` clean,
+> `dotnet ef migrations has-pending-model-changes` reports none, full suite
+> **109/109** (Access 33 + CRM 46 + MasterData 30, no regression). **Three real bugs**
+> were found only by running against a real Postgres container (not visible from
+> code review): `role_permission_sets` was missing `tenant_id` entirely (RLS
+> migration failed); `Contracts.ActionKey`'s own regex rejected the underscores in
+> its own production keys (`access.role_assignment.grant`); test fixtures needed the
+> action registry seeded before bootstrapping, matching what `Host` does at startup.
+> All three fixed in place — see commit `77a3ea4`. **Two deviations from the plan's
+> exact task boundaries**, both for build-safety (never a broken-build intermediate
+> commit, per this repo's own convention): Tasks 1–3 (Contracts primitives, Access
+> domain rebuild, persistence configs + migration) were combined into one commit
+> (`ac97550`) because the Persistence layer can't compile against the old
+> `Permission`/`RolePermission` types once the domain model changes them out from
+> under it; Task 5's two RLS migrations collapsed into Task 4's single one, since
+> Task 3's migration already created all ten tables in one pass (see `010b807`'s
+> migration for the full table list).
+>
 > **Read before starting, in order:**
 > 1. `docs/plans/2026-09-17-enterprise-access-foundation-review.md` (round 1 — full
 >    benchmark research, target data model rationale, freeze list)
@@ -56,12 +79,12 @@ an Architecture Delta note → get owner approval → update this plan's scope**
 
 **No code in this task.**
 
-- [ ] **Step 1:** Read all five documents listed in the header above, in order.
-- [ ] **Step 2:** Confirm with the platform owner that no new information since round 4
+- [x] **Step 1:** Read all five documents listed in the header above, in order.
+- [x] **Step 2:** Confirm with the platform owner that no new information since round 4
   changes the two remaining owner-input items (system catalog template lifecycle —
   OPEN, not needed for this plan; CRM Opportunity owner field mapping — resolved as
   `AssignedPrincipal`, not touched by this plan).
-- [ ] **Step 3:** Confirm the gap-closure document's 9 HOW-decisions (RoleAssignment
+- [x] **Step 3:** Confirm the gap-closure document's 9 HOW-decisions (RoleAssignment
   scope removal, text ActionKey PK, runtime-not-CI registry enforcement, minimal
   Contracts surface, self-check escalation guard, bootstrap handler, `relation="owner"`
   only, Access-internal `PrincipalType`, CRM-owner-is-Phase-2) as the concrete basis
@@ -73,6 +96,7 @@ as written, proceeding to Task 1.
 ---
 
 ## Task 1: Contracts — authorization primitives
+→ Commit: `ac97550` "feat(access): rebuild domain model + persistence configs + RebuildAccessAuthorizationModel migration" (combined with Tasks 2–3, see status banner)
 
 **Files:**
 - Create: `src/Contracts/ActionKey.cs`
@@ -94,7 +118,7 @@ as written, proceeding to Task 1.
 No ORM, no I/O — matches `Contracts`'s existing rule (doc 08's "no ORM, I/O, policy
 evaluation or service locator" row; `AGENTS.md` Architecture Rules).
 
-- [ ] **Step 1: `ActionKey`**
+- [x] **Step 1: `ActionKey`**
 
 ```csharp
 // src/Contracts/ActionKey.cs
@@ -128,7 +152,7 @@ public readonly partial record struct ActionKey
 }
 ```
 
-- [ ] **Step 2: `ActorContext`**
+- [x] **Step 2: `ActorContext`**
 
 ```csharp
 // src/Contracts/ActorContext.cs
@@ -153,7 +177,7 @@ public readonly record struct ActorContext
 }
 ```
 
-- [ ] **Step 3: `ResourceDescriptor`**
+- [x] **Step 3: `ResourceDescriptor`**
 
 ```csharp
 // src/Contracts/ResourceDescriptor.cs
@@ -183,7 +207,7 @@ public readonly record struct ResourceDescriptor
 }
 ```
 
-- [ ] **Step 4: `AuthorizationEffect`, `AuthorizationDecision`, `AuthorizationRequest`**
+- [x] **Step 4: `AuthorizationEffect`, `AuthorizationDecision`, `AuthorizationRequest`**
 
 ```csharp
 // src/Contracts/AuthorizationEffect.cs
@@ -245,7 +269,7 @@ public readonly record struct AuthorizationRequest
 }
 ```
 
-- [ ] **Step 5: `IAuthorizer`**
+- [x] **Step 5: `IAuthorizer`**
 
 ```csharp
 // src/Contracts/IAuthorizer.cs
@@ -259,7 +283,7 @@ public interface IAuthorizer
 }
 ```
 
-- [ ] **Step 6: `AccessScope`, `ScopeTerm`, `IAccessScopeResolver`**
+- [x] **Step 6: `AccessScope`, `ScopeTerm`, `IAccessScopeResolver`**
 
 ```csharp
 // src/Contracts/ScopeTerm.cs
@@ -304,7 +328,7 @@ public interface IAccessScopeResolver
 }
 ```
 
-- [ ] **Step 7: `IActionCatalog`**
+- [x] **Step 7: `IActionCatalog`**
 
 ```csharp
 // src/Contracts/IActionCatalog.cs
@@ -321,7 +345,7 @@ public interface IActionCatalog
 }
 ```
 
-- [ ] **Step 8: Build and commit**
+- [x] **Step 8: Build and commit**
 
 ```bash
 dotnet build src/Contracts/Contracts.csproj
@@ -337,6 +361,7 @@ git commit -m "feat(contracts): add authorization primitives (ActionKey, ActorCo
 ---
 
 ## Task 2: Access domain model rebuild
+→ Commit: `ac97550` (same commit as Task 1 — see status banner) plus a follow-up fix in `77a3ea4` (RolePermissionSet was missing `TenantId` entirely, found by the RLS migration failing against a real database)
 
 **Files:**
 - Delete: `src/Modules/Access/Domain/Authorization/Permission.cs`
@@ -358,7 +383,7 @@ git commit -m "feat(contracts): add authorization primitives (ActionKey, ActorCo
 Task 9's `.csproj` exists; don't run them until then, or move the four test files into
 Task 9 if your workflow needs green tests every commit.)
 
-- [ ] **Step 1: `ActionRegistryEntry`** (replaces `Permission`)
+- [x] **Step 1: `ActionRegistryEntry`** (replaces `Permission`)
 
 ```csharp
 // src/Modules/Access/Domain/Authorization/ActionRegistryEntry.cs
@@ -405,7 +430,7 @@ public sealed class ActionRegistryEntry
 }
 ```
 
-- [ ] **Step 2: `PermissionSetItem`**
+- [x] **Step 2: `PermissionSetItem`**
 
 ```csharp
 // src/Modules/Access/Domain/Authorization/PermissionSetItem.cs
@@ -447,7 +472,7 @@ public sealed class PermissionSetItem
 }
 ```
 
-- [ ] **Step 3: `PermissionSet`**
+- [x] **Step 3: `PermissionSet`**
 
 ```csharp
 // src/Modules/Access/Domain/Authorization/PermissionSet.cs
@@ -500,7 +525,7 @@ public sealed class PermissionSet
 }
 ```
 
-- [ ] **Step 4: `RolePermissionSet`** (replaces `RolePermission`)
+- [x] **Step 4: `RolePermissionSet`** (replaces `RolePermission`)
 
 ```csharp
 // src/Modules/Access/Domain/Authorization/RolePermissionSet.cs
@@ -521,7 +546,7 @@ public sealed class RolePermissionSet
 }
 ```
 
-- [ ] **Step 5: `Role` (revised)**
+- [x] **Step 5: `Role` (revised)**
 
 ```csharp
 // src/Modules/Access/Domain/Authorization/Role.cs
@@ -561,7 +586,7 @@ public sealed class Role
 }
 ```
 
-- [ ] **Step 6: `PrincipalType`**
+- [x] **Step 6: `PrincipalType`**
 
 ```csharp
 // src/Modules/Access/Domain/Authorization/PrincipalType.cs
@@ -577,7 +602,7 @@ public enum PrincipalType
 }
 ```
 
-- [ ] **Step 7: `RoleAssignment` (revised — scope columns removed)**
+- [x] **Step 7: `RoleAssignment` (revised — scope columns removed)**
 
 ```csharp
 // src/Modules/Access/Domain/Authorization/RoleAssignment.cs
@@ -654,7 +679,7 @@ public sealed class RoleAssignment : IHasRowVersion
 }
 ```
 
-- [ ] **Step 8: `TenantAccessState`**
+- [x] **Step 8: `TenantAccessState`**
 
 ```csharp
 // src/Modules/Access/Domain/Authorization/TenantAccessState.cs
@@ -681,7 +706,7 @@ public sealed class TenantAccessState
 }
 ```
 
-- [ ] **Step 9: Domain tests**
+- [x] **Step 9: Domain tests**
 
 ```csharp
 // tests/Access.Tests/Domain/RoleTests.cs
@@ -786,7 +811,7 @@ public sealed class TenantAccessStateTests
 }
 ```
 
-- [ ] **Step 10: Commit** (test project not wired to solution yet — build the module only)
+- [x] **Step 10: Commit** (test project not wired to solution yet — build the module only)
 
 ```bash
 dotnet build src/Modules/Access/Access.csproj
@@ -800,6 +825,7 @@ git commit -m "feat(access): rebuild domain model — ActionRegistryEntry, Permi
 ---
 
 ## Task 3: Access persistence configurations + schema migration
+→ Commit: `ac97550` (same commit as Tasks 1–2) plus the `77a3ea4` follow-up fix (migration regenerated after the RolePermissionSet tenant_id fix)
 
 **Files:**
 - Delete: `src/Modules/Access/Persistence/Configurations/PermissionConfiguration.cs`
@@ -814,7 +840,7 @@ git commit -m "feat(access): rebuild domain model — ActionRegistryEntry, Permi
 - Create: `src/Modules/Access/Persistence/Configurations/TenantAccessStateConfiguration.cs`
 - Create (generated): `src/Modules/Access/Persistence/Migrations/<timestamp>_RebuildAccessAuthorizationModel.cs`
 
-- [ ] **Step 1: `ActionRegistryEntryConfiguration`**
+- [x] **Step 1: `ActionRegistryEntryConfiguration`**
 
 ```csharp
 // src/Modules/Access/Persistence/Configurations/ActionRegistryEntryConfiguration.cs
@@ -844,7 +870,7 @@ public sealed class ActionRegistryEntryConfiguration : IEntityTypeConfiguration<
 }
 ```
 
-- [ ] **Step 2: `PermissionSetConfiguration` + `PermissionSetItemConfiguration`**
+- [x] **Step 2: `PermissionSetConfiguration` + `PermissionSetItemConfiguration`**
 
 ```csharp
 // src/Modules/Access/Persistence/Configurations/PermissionSetConfiguration.cs
@@ -926,7 +952,7 @@ public sealed class PermissionSetItemConfiguration : IEntityTypeConfiguration<Pe
 }
 ```
 
-- [ ] **Step 3: `RolePermissionSetConfiguration`**
+- [x] **Step 3: `RolePermissionSetConfiguration`**
 
 ```csharp
 // src/Modules/Access/Persistence/Configurations/RolePermissionSetConfiguration.cs
@@ -957,7 +983,7 @@ public sealed class RolePermissionSetConfiguration : IEntityTypeConfiguration<Ro
 }
 ```
 
-- [ ] **Step 4: `RoleConfiguration` (revised)**
+- [x] **Step 4: `RoleConfiguration` (revised)**
 
 ```csharp
 // src/Modules/Access/Persistence/Configurations/RoleConfiguration.cs
@@ -997,7 +1023,7 @@ public sealed class RoleConfiguration : IEntityTypeConfiguration<Role>
 }
 ```
 
-- [ ] **Step 5: `RoleAssignmentConfiguration` (revised)**
+- [x] **Step 5: `RoleAssignmentConfiguration` (revised)**
 
 ```csharp
 // src/Modules/Access/Persistence/Configurations/RoleAssignmentConfiguration.cs
@@ -1053,7 +1079,7 @@ public sealed class RoleAssignmentConfiguration : IEntityTypeConfiguration<RoleA
 }
 ```
 
-- [ ] **Step 6: `TenantAccessStateConfiguration`**
+- [x] **Step 6: `TenantAccessStateConfiguration`**
 
 ```csharp
 // src/Modules/Access/Persistence/Configurations/TenantAccessStateConfiguration.cs
@@ -1083,7 +1109,7 @@ public sealed class TenantAccessStateConfiguration : IEntityTypeConfiguration<Te
 }
 ```
 
-- [ ] **Step 7: `AccessDbContext` — add the new `DbSet`s**
+- [x] **Step 7: `AccessDbContext` — add the new `DbSet`s**
 
 ```csharp
 // src/Modules/Access/Persistence/AccessDbContext.cs
@@ -1102,7 +1128,7 @@ public sealed class TenantAccessStateConfiguration : IEntityTypeConfiguration<Te
 
 (Remove the old `Permissions`/`RolePermissions` DbSets — their types no longer exist.)
 
-- [ ] **Step 8: Generate the migration**
+- [x] **Step 8: Generate the migration**
 
 ```bash
 dotnet tool restore
@@ -1133,7 +1159,7 @@ dotnet ef migrations has-pending-model-changes \
 
 Expected (after generating): "No changes."
 
-- [ ] **Step 9: `dotnet format` + commit**
+- [x] **Step 9: `dotnet format` + commit**
 
 ```bash
 dotnet format
@@ -1144,13 +1170,14 @@ git commit -m "feat(access): persistence configs + RebuildAccessAuthorizationMod
 ---
 
 ## Task 4: Access RLS + runtime role grants
+→ Commit: `010b807` "feat(access): RLS on all tenant-scoped Access/Identity tables + runtime role grants". Covers all 10 tenant-scoped tables in one migration, not just Task 3's 7 — see the deviation note in the status banner (Task 5's planned second RLS migration was unnecessary since table creation wasn't split across two migrations during execution).
 
 **Files:**
 - Create (generated shell, hand-written body — the one permitted exception):
   `src/Modules/Access/Persistence/Migrations/<timestamp>_EnableAccessRowLevelSecurity.cs`
 - Modify: `scripts/create-runtime-role.sql`
 
-- [ ] **Step 1: Generate the empty migration shell**
+- [x] **Step 1: Generate the empty migration shell**
 
 ```bash
 dotnet ef migrations add EnableAccessRowLevelSecurity \
@@ -1161,7 +1188,7 @@ dotnet ef migrations add EnableAccessRowLevelSecurity \
 
 Expected: an empty `Up`/`Down` pair (no model changes — RLS has no EF representation).
 
-- [ ] **Step 2: Hand-write the RLS body** (mirrors
+- [x] **Step 2: Hand-write the RLS body** (mirrors
   `src/Modules/CRM/Persistence/Migrations/20260916081636_EnableRowLevelSecurity.cs`
   exactly — same `NULLIF(current_setting(...), '')::bigint` pattern, same
   `FORCE ROW LEVEL SECURITY`)
@@ -1227,7 +1254,7 @@ namespace Access.Persistence.Migrations
 }
 ```
 
-- [ ] **Step 3: Update `scripts/create-runtime-role.sql`** — append after the existing
+- [x] **Step 3: Update `scripts/create-runtime-role.sql`** — append after the existing
   MasterData block:
 
 ```sql
@@ -1254,7 +1281,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA access
 REVOKE UPDATE, DELETE ON access.evidence_records FROM fynovio_app;
 ```
 
-- [ ] **Step 4: `dotnet format` + commit**
+- [x] **Step 4: `dotnet format` + commit**
 
 ```bash
 dotnet format
@@ -1265,6 +1292,7 @@ git commit -m "feat(access): RLS on all tenant-scoped Access/Identity tables + r
 ---
 
 ## Task 5: Action Registry — manifest + idempotent seeder
+→ Commit: `a733b66` "feat(access): action registry manifest + idempotent seeder + IActionCatalog service". The Outbox/Evidence/Idempotency entities + configs this task also called for were created earlier, in `ac97550`, alongside the domain rebuild (they're referenced by `AccessDbContext`'s DbSets from the start). The step's own second RLS migration was folded into Task 4's single migration (see above) — deviated deliberately, not an omission.
 
 **Files:**
 - Create: `src/Modules/Access/Application/AccessActionCatalog.cs`
@@ -1286,7 +1314,7 @@ Access needs its **own** copies of `OutboxMessage`/`EvidenceRecord`/`Idempotency
 (`AGENTS.md`), same deliberate duplication already documented for
 `RowVersionInterceptor` (`docs/schema/identity-access-schema.md` Revision 3 note).
 
-- [ ] **Step 1: Copy the three CRM shapes into Access**, changing only the namespace.
+- [x] **Step 1: Copy the three CRM shapes into Access**, changing only the namespace.
 
 ```csharp
 // src/Modules/Access/Outbox/OutboxMessage.cs
@@ -1435,7 +1463,7 @@ public sealed class IdempotencyRecord
 }
 ```
 
-- [ ] **Step 2: EF configurations** (mirror the CRM configurations' shape — composite
+- [x] **Step 2: EF configurations** (mirror the CRM configurations' shape — composite
   PK for `IdempotencyRecord`, `evidence_records` append-only at the DB-grant level
   from Task 4's script, standard columns otherwise)
 
@@ -1509,7 +1537,7 @@ public sealed class IdempotencyRecordConfiguration : IEntityTypeConfiguration<Id
 }
 ```
 
-- [ ] **Step 3: `AccessDbContext` — add the three `DbSet`s**
+- [x] **Step 3: `AccessDbContext` — add the three `DbSet`s**
 
 ```csharp
 // add alongside the existing DbSets:
@@ -1518,7 +1546,7 @@ public sealed class IdempotencyRecordConfiguration : IEntityTypeConfiguration<Id
     public DbSet<Access.Idempotency.IdempotencyRecord> IdempotencyRecords => Set<Access.Idempotency.IdempotencyRecord>();
 ```
 
-- [ ] **Step 4: `AccessActionCatalog`** — the static manifest. Phase 1.5 registers
+- [x] **Step 4: `AccessActionCatalog`** — the static manifest. Phase 1.5 registers
   **only Access's own vocabulary** — `crm.opportunity.*` is NOT seeded here
   (gap-closure §3; CRM isn't touched by this plan).
 
@@ -1543,7 +1571,7 @@ public static class AccessActionCatalog
 }
 ```
 
-- [ ] **Step 5: `AccessActionCatalogSeeder`** — idempotent upsert, deprecate-not-delete.
+- [x] **Step 5: `AccessActionCatalogSeeder`** — idempotent upsert, deprecate-not-delete.
 
 ```csharp
 // src/Modules/Access/Application/AccessActionCatalogSeeder.cs
@@ -1581,7 +1609,7 @@ public static class AccessActionCatalogSeeder
 }
 ```
 
-- [ ] **Step 6: `AccessActionCatalogService`** (implements `Contracts.IActionCatalog`)
+- [x] **Step 6: `AccessActionCatalogService`** (implements `Contracts.IActionCatalog`)
 
 ```csharp
 // src/Modules/Access/Application/AccessActionCatalogService.cs
@@ -1598,7 +1626,7 @@ public sealed class AccessActionCatalogService(AccessDbContext context) : IActio
 }
 ```
 
-- [ ] **Step 7: Generate the table-creation migration**
+- [x] **Step 7: Generate the table-creation migration**
 
 ```bash
 dotnet ef migrations add AddAccessOutboxIdempotencyEvidence \
@@ -1607,7 +1635,7 @@ dotnet ef migrations add AddAccessOutboxIdempotencyEvidence \
   --output-dir Persistence/Migrations
 ```
 
-- [ ] **Step 8: RLS for these three tables** — a second hand-written RLS migration,
+- [x] **Step 8: RLS for these three tables** — a second hand-written RLS migration,
   generated *after* Step 7's so it applies later in timestamp order (Task 4's RLS
   migration already covers `tenant_memberships`/`roles`/`permission_sets`/
   `permission_set_items`/`role_permission_sets`/`role_assignments`/
@@ -1668,7 +1696,7 @@ namespace Access.Persistence.Migrations
 }
 ```
 
-- [ ] **Step 9: `dotnet format` + commit**
+- [x] **Step 9: `dotnet format` + commit**
 
 ```bash
 dotnet format
@@ -1680,6 +1708,7 @@ git commit -m "feat(access): action registry manifest + idempotent seeder + outb
 ---
 
 ## Task 6: PDP (`IAuthorizer`) and query scope resolver (`IAccessScopeResolver`)
+→ Commit: `9f0bb74` "feat(access): default-deny PDP (AccessAuthorizer) and query scope resolver (AccessScopeResolver)". The equivalence contract test and additional authorizer unit tests (Steps 4–5) were written in Task 9's commit (`77a3ea4`) once `tests/Access.Tests` existed, per this task's own note.
 
 **Files:**
 - Create: `src/Modules/Access/Application/AccessAuthorizer.cs`
@@ -1688,7 +1717,7 @@ git commit -m "feat(access): action registry manifest + idempotent seeder + outb
 - Test: `tests/Access.Tests/Application/AccessAuthorizerTests.cs`
 - Test: `tests/Access.Tests/Application/AuthorizeResolveAccessScopeEquivalenceTests.cs`
 
-- [ ] **Step 1: `PrincipalResolver`** — shared `PrincipalRef → AccountId` lookup, used
+- [x] **Step 1: `PrincipalResolver`** — shared `PrincipalRef → AccountId` lookup, used
   by both the PDP and the scope resolver, and by Task 7's handlers.
 
 ```csharp
@@ -1711,7 +1740,7 @@ public sealed class PrincipalResolver(AccessDbContext context)
 }
 ```
 
-- [ ] **Step 2: `AccessAuthorizer`**
+- [x] **Step 2: `AccessAuthorizer`**
 
 ```csharp
 // src/Modules/Access/Application/AccessAuthorizer.cs
@@ -1776,7 +1805,7 @@ public sealed class AccessAuthorizer(
 }
 ```
 
-- [ ] **Step 3: `AccessScopeResolver`**
+- [x] **Step 3: `AccessScopeResolver`**
 
 ```csharp
 // src/Modules/Access/Application/AccessScopeResolver.cs
@@ -1824,7 +1853,7 @@ public sealed class AccessScopeResolver(
 }
 ```
 
-- [ ] **Step 4: The equivalence contract test** (round 3 §5 — the load-bearing test)
+- [x] **Step 4: The equivalence contract test** (round 3 §5 — the load-bearing test)
 
 ```csharp
 // tests/Access.Tests/Application/AuthorizeResolveAccessScopeEquivalenceTests.cs
@@ -1875,7 +1904,7 @@ Testcontainers-backed `AccessDbContext` — write it in Task 9 alongside
 `PostgresFixture`, since both need the same container-backed context. If you reach
 this step before Task 9, write a minimal version here now and consolidate in Task 9.)
 
-- [ ] **Step 5: Additional authorizer unit tests**
+- [x] **Step 5: Additional authorizer unit tests**
 
 ```csharp
 // tests/Access.Tests/Application/AccessAuthorizerTests.cs — add cases for:
@@ -1887,7 +1916,7 @@ this step before Task 9, write a minimal version here now and consolidate in Tas
 // Each case follows the same Arrange/Act/Assert shape as Step 4's fixture.
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/Modules/Access/Application/AccessAuthorizer.cs src/Modules/Access/Application/AccessScopeResolver.cs \
@@ -1898,6 +1927,7 @@ git commit -m "feat(access): default-deny PDP (AccessAuthorizer) and query scope
 ---
 
 ## Task 7: Bootstrap + Grant/Revoke commands
+→ Commit: `db6b192` "feat(access): bootstrap handler + Grant/Revoke RoleAssignment commands", with a follow-up fix in `77a3ea4` (`BootstrapTenantAccessHandler.RolePermissionSet.Create` call updated for the `TenantId` parameter added by the Task 2/3 fix). Integration tests (Step 5) written in `77a3ea4`.
 
 **Files:**
 - Create: `src/Modules/Access/Application/BootstrapTenantAccessCommand.cs`
@@ -1917,7 +1947,7 @@ correction from round 3 §9: **authorize before the idempotency lookup**, since 
 Revoke's own authorization gate now exists (unlike `CompleteOpportunityHandler`, which
 had none to get the ordering wrong against).
 
-- [ ] **Step 1: `AccessDbContext` tenant-context extension** (mirror `CrmDbContextTenantExtensions`)
+- [x] **Step 1: `AccessDbContext` tenant-context extension** (mirror `CrmDbContextTenantExtensions`)
 
 ```csharp
 // src/Modules/Access/Persistence/AccessDbContextTenantExtensions.cs
@@ -1939,7 +1969,7 @@ public static class AccessDbContextTenantExtensions
 }
 ```
 
-- [ ] **Step 2: `BootstrapTenantAccessHandler`** (gap-closure §6 — the one path with no
+- [x] **Step 2: `BootstrapTenantAccessHandler`** (gap-closure §6 — the one path with no
   `Authorize()` call, and it must stay that way)
 
 ```csharp
@@ -2018,7 +2048,7 @@ public sealed class BootstrapTenantAccessHandler(AccessDbContext context)
 }
 ```
 
-- [ ] **Step 3: `GrantRoleAssignmentCommand`/`Handler`**
+- [x] **Step 3: `GrantRoleAssignmentCommand`/`Handler`**
 
 ```csharp
 // src/Modules/Access/Application/GrantRoleAssignmentCommand.cs
@@ -2169,7 +2199,7 @@ public sealed class GrantRoleAssignmentHandler(AccessDbContext context, IAuthori
 }
 ```
 
-- [ ] **Step 4: `RevokeRoleAssignmentCommand`/`Handler`** — same shape as Step 3,
+- [x] **Step 4: `RevokeRoleAssignmentCommand`/`Handler`** — same shape as Step 3,
   using `access.role_assignment.revoke`, calling `assignment.Revoke()`, event type
   `enterprise.access.role_assignment.revoked.v1`. Write the full handler body
   following `GrantRoleAssignmentHandler`'s exact structure (authorize → idempotency
@@ -2177,13 +2207,13 @@ public sealed class GrantRoleAssignmentHandler(AccessDbContext context, IAuthori
   evidence/outbox/idempotency → commit). Do not skip the authorize-before-idempotency
   ordering.
 
-- [ ] **Step 5: Integration tests** — bootstrap → grant → replay (same idempotency
+- [x] **Step 5: Integration tests** — bootstrap → grant → replay (same idempotency
   key + same request → `Replayed: true`, no second `RoleAssignment` row) → reused key
   with a different request → `IdempotencyKeyReusedException` → revoke → attempt a
   second grant by the now-unauthorized revoked principal → `AuthorizationDeniedException`.
   Use `PostgresFixture` (Task 9) for a real transactional/RLS-backed run.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 dotnet format
@@ -2195,11 +2225,12 @@ git commit -m "feat(access): bootstrap handler + Grant/Revoke RoleAssignment com
 ---
 
 ## Task 8: Host registration
+→ Commit: `b74cdb5` "feat(host): register AccessDbContext, IAuthorizer, IAccessScopeResolver; seed action registry at startup"
 
 **Files:**
 - Modify: `src/Host/Program.cs`
 
-- [ ] **Step 1: Register `AccessDbContext`, the PDP/scope-resolver, and seed the catalog**
+- [x] **Step 1: Register `AccessDbContext`, the PDP/scope-resolver, and seed the catalog**
 
 ```csharp
 // src/Host/Program.cs — add alongside the existing AddDbContext calls:
@@ -2226,7 +2257,7 @@ using (var scope = app.Services.CreateScope())
 }
 ```
 
-- [ ] **Step 2: Build and run migrations locally, verify**
+- [x] **Step 2: Build and run migrations locally, verify**
 
 ```bash
 dotnet ef database update \
@@ -2239,7 +2270,7 @@ Expected: 0 warnings, 0 errors; `access.*`/`identity.*` tables exist with RLS en
 (spot-check: `psql -d fynovio_platform -c "\d+ access.role_assignments"` shows the
 `tenant_isolation` policy).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/Host/Program.cs
@@ -2249,6 +2280,7 @@ git commit -m "feat(host): register AccessDbContext, IAuthorizer, IAccessScopeRe
 ---
 
 ## Task 9: `tests/Access.Tests` — the full test project
+→ Commit: `77a3ea4` "test(access): tests/Access.Tests + three real bugs found by running against real Postgres" — 33/33 passing, 109/109 across the full solution. This commit's message documents the three real bugs the test run caught (see status banner) — none were visible from code review alone.
 
 **Files:**
 - Create: `tests/Access.Tests/Access.Tests.csproj`
@@ -2260,7 +2292,7 @@ git commit -m "feat(host): register AccessDbContext, IAuthorizer, IAccessScopeRe
   `Application/*`, `Integration/BootstrapTenantAccessHandlerTests.cs`,
   `Integration/GrantRevokeRoleAssignmentHandlerTests.cs`
 
-- [ ] **Step 1: `.csproj`** (mirrors `tests/CRM.Tests/CRM.Tests.csproj`)
+- [x] **Step 1: `.csproj`** (mirrors `tests/CRM.Tests/CRM.Tests.csproj`)
 
 ```xml
 <!-- tests/Access.Tests/Access.Tests.csproj -->
@@ -2293,7 +2325,7 @@ git commit -m "feat(host): register AccessDbContext, IAuthorizer, IAccessScopeRe
 </Project>
 ```
 
-- [ ] **Step 2: `PostgresFixture`** (mirrors `tests/CRM.Tests/Integration/PostgresFixture.cs`)
+- [x] **Step 2: `PostgresFixture`** (mirrors `tests/CRM.Tests/Integration/PostgresFixture.cs`)
 
 ```csharp
 // tests/Access.Tests/Integration/PostgresFixture.cs
@@ -2363,14 +2395,14 @@ public sealed class PostgresFixture : IAsyncLifetime
 }
 ```
 
-- [ ] **Step 3: `AccessRlsTests`** — mirror the CRM tenant-isolation integration test
+- [x] **Step 3: `AccessRlsTests`** — mirror the CRM tenant-isolation integration test
   pattern: seed two tenants' `Role`/`RoleAssignment` rows via the admin (superuser)
   connection, then connect via `RuntimeConnectionStringAsync()` (unprivileged
   `fynovio_app`), set `app.tenant_id` for tenant A, and assert tenant B's rows are
   invisible on every RLS-covered table from Task 4's and Task 5's migrations. This is FF03 — run as the
   unprivileged role, never the superuser (`AGENTS.md` binding-core #2).
 
-- [ ] **Step 4: `Architecture/ModuleBoundaryTests.cs`** (new, in `Access.Tests`)
+- [x] **Step 4: `Architecture/ModuleBoundaryTests.cs`** (new, in `Access.Tests`)
 
 ```csharp
 // tests/Access.Tests/Architecture/ModuleBoundaryTests.cs
@@ -2411,12 +2443,12 @@ public sealed class ModuleBoundaryTests
 }
 ```
 
-- [ ] **Step 5: Symmetry check in `tests/CRM.Tests`** — `ModuleBoundaryTests.
+- [x] **Step 5: Symmetry check in `tests/CRM.Tests`** — `ModuleBoundaryTests.
   Crm_does_not_depend_on_another_module` already lists `"Access"` in its
   `HaveDependencyOnAny` call (verified in Round 1's repo scan) — no change needed,
   just confirm it still passes once `Access.csproj` gains real content.
 
-- [ ] **Step 6: Wire the solution, run everything**
+- [x] **Step 6: Wire the solution, run everything**
 
 ```bash
 dotnet sln add tests/Access.Tests/Access.Tests.csproj   # if not auto-discovered
@@ -2428,7 +2460,7 @@ dotnet test   # full suite — confirm no CRM/MasterData regression
 Expected: all `Access.Tests` green; CRM.Tests and MasterData.Tests unchanged (46 + 30,
 per the last recorded status).
 
-- [ ] **Step 7: `dotnet format` + commit**
+- [x] **Step 7: `dotnet format` + commit**
 
 ```bash
 dotnet format
@@ -2439,13 +2471,14 @@ git commit -m "test(access): tests/Access.Tests — domain, architecture, applic
 ---
 
 ## Task 10: Docs and CI sync
+→ Commit: `c381629` "docs(access): sync identity-access-schema.md and AGENTS.md status to the rebuilt Access module"
 
 **Files:**
 - Modify: `docs/schema/identity-access-schema.md`
 - Modify: `AGENTS.md` (Status section)
 - Regenerate: `graphify-out/graph.json`, `graphify-out/GRAPH_REPORT.md`, `graphify-out/manifest.json`
 
-- [ ] **Step 1: Rewrite `docs/schema/identity-access-schema.md`** to Revision 4 —
+- [x] **Step 1: Rewrite `docs/schema/identity-access-schema.md`** to Revision 4 —
   replace the ERD and design notes to match Tasks 2-7's actual shape: drop
   `PERMISSIONS`/`ROLE_PERMISSIONS`, add `ACTIONS`/`PERMISSION_SETS`/
   `PERMISSION_SET_ITEMS`/`ROLE_PERMISSION_SETS`/`TENANT_ACCESS_STATE`; `ROLES.tenant_id`
@@ -2454,20 +2487,20 @@ git commit -m "test(access): tests/Access.Tests — domain, architecture, applic
   the four review/decision documents as the design authority, same as the existing
   file references doc 19.
 
-- [ ] **Step 2: Update `AGENTS.md` "Status"** — replace "the Identity+Access schema
+- [x] **Step 2: Update `AGENTS.md` "Status"** — replace "the Identity+Access schema
   (entities, `AccessDbContext`, first migration — no RLS, tests or Host registration
   yet)" with the new state: Access module rebuilt (ActionRegistry/PermissionSet/Role/
   RoleAssignment/TenantAccessState), RLS enabled, `tests/Access.Tests` (N tests) green,
   registered in `Host`, `IAuthorizer`/`IAccessScopeResolver` available for Phase 2 to
   consume. Note explicitly: **no CRM command yet calls `Authorize()`** — that's Phase 2.
 
-- [ ] **Step 3: Regenerate the graph**
+- [x] **Step 3: Regenerate the graph**
 
 ```bash
 graphify update .
 ```
 
-- [ ] **Step 4: Final full-suite verification**
+- [x] **Step 4: Final full-suite verification**
 
 ```bash
 dotnet build
@@ -2481,7 +2514,7 @@ dotnet test
 
 Expected: clean build, no format diffs, no pending model changes, full suite green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/schema/identity-access-schema.md AGENTS.md graphify-out/
@@ -2492,24 +2525,29 @@ git commit -m "docs(access): sync identity-access-schema.md, AGENTS.md status, a
 
 ## Definition of Done
 
-- [ ] All 10 tasks committed, each with a `→ Commit:` line filled in per
+- [x] All 10 tasks committed, each with a `→ Commit:` line filled in per
   `CLAUDE.md`'s plan checkbox tracking standard.
-- [ ] `tests/Access.Tests` exists and is green (domain, architecture/NetArchTest,
+- [x] `tests/Access.Tests` exists and is green (domain, architecture/NetArchTest,
   application incl. the Authorize/ResolveAccessScope equivalence test, integration
   incl. RLS-as-unprivileged-role and bootstrap/grant/revoke).
-- [ ] `AccessDbContext` registered in `Host`, connecting through the same
-  `fynovio_app` unprivileged role CRM/MasterData use (verify `ConnectionStrings__Access`
-  in the deployment config actually points at it — the same gap CRM had until its RLS
-  task, per `project-status` memory).
-- [ ] `dotnet ef migrations has-pending-model-changes` reports none for Access.
-- [ ] `dotnet format --verify-no-changes` passes.
-- [ ] Full `dotnet test` green — CRM (46) + MasterData (30) unchanged, Access (new)
+- [x] `AccessDbContext` registered in `Host` (code-level: `AddDbContext` + DI wiring,
+  commit `b74cdb5`). **Not verified/not done:** no local or deployment
+  `ConnectionStrings__Access` has been set to the `fynovio_app` unprivileged role —
+  the default connection string resolves to the `postgres` superuser, same gap CRM
+  had until wired (`project-status` memory). This means RLS is proven by
+  `tests/Access.Tests` (which does connect as `fynovio_app`) but does **not** yet
+  protect a locally-run `Host` process. Flagging explicitly rather than checking
+  this off as done — it's a real remaining task, likely bundled with Phase 2's own
+  environment setup.
+- [x] `dotnet ef migrations has-pending-model-changes` reports none for Access.
+- [x] `dotnet format --verify-no-changes` passes.
+- [x] Full `dotnet test` green — CRM (46) + MasterData (30) unchanged, Access (new)
   all passing.
-- [ ] `docs/schema/identity-access-schema.md` and `AGENTS.md` reflect the rebuilt
+- [x] `docs/schema/identity-access-schema.md` and `AGENTS.md` reflect the rebuilt
   module; `graphify-out/` regenerated.
-- [ ] **No CRM file was modified.** `Opportunity.Reassign()`, action-key enforcement
+- [x] **No CRM file was modified.** `Opportunity.Reassign()`, action-key enforcement
   on `CompleteOpportunityHandler`, and any HTTP surface are confirmed still Phase 2.
-- [ ] The two owner-open items from round 4 (system catalog template lifecycle,
+- [x] The two owner-open items from round 4 (system catalog template lifecycle,
   which this plan deliberately leaves un-automated per gap-closure §6; CRM owner
   field mapping, which this plan doesn't touch) remain correctly open — not silently
   resolved by this plan's code.
