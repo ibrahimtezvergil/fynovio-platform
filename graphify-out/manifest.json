@@ -348,9 +348,9 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1789636929.73067,
-    "seen": 1789637079.768789,
-    "ast_hash": "acf0b4c1fc4f8298b49e187341beae68",
+    "mtime": 1789639085.3948514,
+    "seen": 1789641647.528013,
+    "ast_hash": "9c0530c489eb0660cdf50dc6441fc61f",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -1410,9 +1410,9 @@
     "semantic_hash": ""
   },
   "tests/Access.Tests/Application/AccessTestFixture.cs": {
-    "mtime": 1789635723.4826233,
-    "seen": 1789637079.768755,
-    "ast_hash": "d8e63e7b24e54676640af83eb396ee2a",
+    "mtime": 1789638799.1394126,
+    "seen": 1789641647.527981,
+    "ast_hash": "79cc732621eee165e792a8aba0e6ed7c",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Architecture/ModuleBoundaryTests.cs": {
@@ -1434,9 +1434,9 @@
     "semantic_hash": ""
   },
   "tests/Access.Tests/Domain/RoleAssignmentTests.cs": {
-    "mtime": 1789635723.4835172,
-    "seen": 1789637079.768758,
-    "ast_hash": "982d038af5d4b299ee9ffb18bd4ba804",
+    "mtime": 1789638856.9014544,
+    "seen": 1789641647.5279841,
+    "ast_hash": "69c9128dd362daac2b0af7faa571aebf",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Domain/RoleTests.cs": {
@@ -1452,15 +1452,15 @@
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/AccessRlsTests.cs": {
-    "mtime": 1789635723.484696,
-    "seen": 1789637079.76876,
-    "ast_hash": "acb910c6e53e2a2be55bf98675f5639e",
+    "mtime": 1789638889.8138387,
+    "seen": 1789641647.527987,
+    "ast_hash": "380f440baedce4bb70ec5cadf755b813",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/PostgresFixture.cs": {
-    "mtime": 1789635723.485509,
-    "seen": 1789637079.768762,
-    "ast_hash": "7638889a046c5efce0cf9dfc0d6eee30",
+    "mtime": 1789638806.597128,
+    "seen": 1789641647.527989,
+    "ast_hash": "3c4e014f3325de3e285b9859840e0c69",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Migrations/20260917084915_RebuildAccessAuthorizationModel.Designer.cs": {
@@ -1488,9 +1488,9 @@
     "semantic_hash": ""
   },
   "tests/Access.Tests/Application/AccessAuthorizerTests.cs": {
-    "mtime": 1789635723.4824939,
-    "seen": 1789637079.768754,
-    "ast_hash": "9dee2d7a2997a0b6ed9552ad6c7247e2",
+    "mtime": 1789638848.4510388,
+    "seen": 1789641647.52798,
+    "ast_hash": "e5a1a257e84146d6ac4c56184764b0a4",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Application/AuthorizeResolveAccessScopeEquivalenceTests.cs": {
@@ -1500,15 +1500,15 @@
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/BootstrapTenantAccessHandlerTests.cs": {
-    "mtime": 1789635723.4849002,
-    "seen": 1789637079.7687612,
-    "ast_hash": "831efe7372100e563bc51676df0c5c5e",
+    "mtime": 1789639020.8475208,
+    "seen": 1789641647.527988,
+    "ast_hash": "23056131f81813544199d5e7833ac9ac",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/GrantRevokeRoleAssignmentHandlerTests.cs": {
-    "mtime": 1789635723.4850986,
-    "seen": 1789637079.768762,
-    "ast_hash": "cbddfab5d1aeb9ca1573caaa689af79e",
+    "mtime": 1789638995.9383051,
+    "seen": 1789641647.527988,
+    "ast_hash": "1cb74ae98d6a628aed38511c348760ac",
     "semantic_hash": ""
   },
   "docs/plans/crm-phase1/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md": {
@@ -1569,6 +1569,24 @@
     "mtime": 1789596632.941668,
     "seen": 1789637079.7688031,
     "ast_hash": "122cf2983d0796c68db872db74513d2d",
+    "semantic_hash": ""
+  },
+  "tests/Access.Tests/Integration/AccessConstraintTests.cs": {
+    "mtime": 1789638937.0845678,
+    "seen": 1789641647.527987,
+    "ast_hash": "eb09da7d0883227fecfa11782bee4fc8",
+    "semantic_hash": ""
+  },
+  "docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-test-plan.md": {
+    "mtime": 1789639232.3096952,
+    "seen": 1789641647.528023,
+    "ast_hash": "76728cf12d0aa14e59906434841d7585",
+    "semantic_hash": ""
+  },
+  "docs/plans/enterprise-access-foundation/Enterprise_Access_Phase_1_5_Test_Coverage_Review.pdf": {
+    "mtime": 1789638229.7891636,
+    "seen": 1789641647.5280268,
+    "ast_hash": "9a8f91a6f1a2a493b144d085ec493239",
     "semantic_hash": ""
   }
 }
