@@ -149,8 +149,7 @@ public sealed class PipelineConstraintTests
     [Fact]
     public async Task Two_entry_stages_in_the_same_version_violate_the_partial_unique_index()
     {
-        var (tenant, versionId) = await SeedVersionAsync();
-        _ = tenant;
+        var (_, versionId) = await SeedVersionAsync();
 
         await using (var seed = _fixture.CreateAdminContext())
         {
@@ -173,6 +172,73 @@ public sealed class PipelineConstraintTests
         context.PipelineStages.Add(second);
 
         await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+    }
+
+    /// <summary>A single `SaveChangesAsync()` that both unsets the old entry stage and sets the
+    /// new one is NOT guaranteed safe: the partial unique index is a plain Postgres index, not
+    /// a deferrable constraint (Postgres has no deferrable *partial* unique constraints), so it
+    /// is checked immediately after each UPDATE statement, not at commit. EF Core's statement
+    /// order for two unrelated sibling entities is undefined, and empirically follows query/
+    /// tracking order here — which, depending on direction, can emit the "set true" statement
+    /// before the "set false" one and spuriously violate the index even though the final state
+    /// is valid (proven while writing this test: moving entry to a *lower*-Id stage in a single
+    /// save threw `23505` here). `MarkEntry`'s doc comment documents the safe two-phase pattern
+    /// this test proves: unset the old entry stage and save, then set the new one and save.</summary>
+    [Fact]
+    public async Task MarkEntry_persisted_via_the_safe_two_phase_pattern_moves_entry_either_direction()
+    {
+        var (_, versionId) = await SeedVersionAsync();
+
+        long firstId, secondId;
+        await using (var seed = _fixture.CreateAdminContext())
+        {
+            var seedVersion = await seed.PipelineDefinitionVersions.SingleAsync(v => v.Id == versionId);
+            var first = seedVersion.AddStage("Bekliyor", sortOrder: 0);
+            var second = seedVersion.AddStage("Teklif Verildi", sortOrder: 1);
+            seed.PipelineStages.AddRange(first, second);
+            await seed.SaveChangesAsync();
+            firstId = first.Id;
+            secondId = second.Id;
+        }
+
+        // Direction 1: move entry to the higher-Id stage (second).
+        await MoveEntryTwoPhaseAsync(versionId, fromId: firstId, toId: secondId);
+        await AssertEntryIsAsync(firstId: firstId, secondId: secondId, entryIsFirst: false);
+
+        // Direction 2: move entry back to the lower-Id stage (first) — the riskier direction.
+        await MoveEntryTwoPhaseAsync(versionId, fromId: secondId, toId: firstId);
+        await AssertEntryIsAsync(firstId: firstId, secondId: secondId, entryIsFirst: true);
+    }
+
+    private async Task MoveEntryTwoPhaseAsync(long versionId, long fromId, long toId)
+    {
+        // Phase 1: unset the current entry stage and flush before touching the new one.
+        await using (var unset = _fixture.CreateAdminContext())
+        {
+            var current = await unset.PipelineStages.SingleAsync(s => s.Id == fromId);
+            typeof(PipelineStage).GetMethod("SetEntry", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                .Invoke(current, [false]);
+            await unset.SaveChangesAsync();
+        }
+
+        // Phase 2: only now set the new entry stage — the old one is already false in the DB,
+        // so there is never a moment with two `is_entry = true` rows.
+        await using (var set = _fixture.CreateAdminContext())
+        {
+            var target = await set.PipelineStages.SingleAsync(s => s.Id == toId);
+            typeof(PipelineStage).GetMethod("SetEntry", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                .Invoke(target, [true]);
+            await set.SaveChangesAsync();
+        }
+    }
+
+    private async Task AssertEntryIsAsync(long firstId, long secondId, bool entryIsFirst)
+    {
+        await using var verify = _fixture.CreateAdminContext();
+        var first = await verify.PipelineStages.SingleAsync(s => s.Id == firstId);
+        var second = await verify.PipelineStages.SingleAsync(s => s.Id == secondId);
+        Assert.Equal(entryIsFirst, first.IsEntry);
+        Assert.Equal(!entryIsFirst, second.IsEntry);
     }
 
     private async Task<(Contracts.TenantId TenantId, long DefinitionId)> SeedDefinitionAsync()
