@@ -67,7 +67,7 @@ The architecture plan's §2.3 resolved *which stage* an Opportunity enters (`Pip
 
 This is not testable by a unit test (it's a default-value choice), so this task has a verification step instead of a red/green test cycle — every other task in this plan is TDD as usual.
 
-- [ ] **Step 1: Point the Host's default connection strings at the unprivileged runtime role, not the superuser**
+- [x] **Step 1: Point the Host's default connection strings at the unprivileged runtime role, not the superuser**
 
 Every module's `*ConnectionString.cs` currently hardcodes `Username=postgres;Password=postgres` as `LocalDevDefault`. Change the default to `fynovio_app` (the role `scripts/create-runtime-role.sql` already creates), keeping the environment-variable override mechanism unchanged.
 
@@ -94,7 +94,7 @@ public static class CrmConnectionString
 
 Apply the identical edit (same `LocalDevDefault` value, same doc-comment reasoning) to `AccessConnectionString.cs` and `MasterDataConnectionString.cs`. Do **not** touch `CrmDbContextFactory`/`AccessDbContextFactory`/`MasterDataDbContextFactory` (the design-time factories `dotnet ef migrations add` uses) — those must keep running as `postgres`, since only a superuser/owner can create tables and enable RLS in the first place. Confirm this by reading each `*DbContextFactory.cs` before editing anything; if a factory already hardcodes `postgres` independently of `*ConnectionString.Resolve()`, leave it exactly as is.
 
-- [ ] **Step 2: Make `Host`'s own `appsettings.json` explicit about the connection strings it expects**
+- [x] **Step 2: Make `Host`'s own `appsettings.json` explicit about the connection strings it expects**
 
 `src/Host/appsettings.json` currently has no `ConnectionStrings` section at all, so `builder.Configuration.GetConnectionString("Crm")` (Program.cs) always falls through to `CrmConnectionString.Resolve()`. Leave production `appsettings.json` free of literal credentials (per AGENTS.md safety rules — never commit secrets), but add commented documentation of the expected keys so an operator knows what to set:
 
@@ -130,7 +130,7 @@ Apply the identical edit (same `LocalDevDefault` value, same doc-comment reasoni
 }
 ```
 
-- [ ] **Step 3: Verify no test or tool relies on the old superuser default**
+- [x] **Step 3: Verify no test or tool relies on the old superuser default**
 
 Run:
 
@@ -140,7 +140,7 @@ grep -rn "Username=postgres" src/ tests/ scripts/
 
 Expected: matches only inside `*DbContextFactory.cs` files (design-time, intentionally superuser) and `tests/CRM.Tests/Integration/PostgresFixture.cs` (Testcontainers admin connection, intentionally superuser — it creates the `fynovio_app` role itself). If any other match appears, stop and investigate before continuing — it means something else silently depended on the old default.
 
-- [ ] **Step 4: Build**
+- [x] **Step 4: Build**
 
 ```bash
 dotnet build
@@ -148,7 +148,7 @@ dotnet build
 
 Expected: succeeds, 0 warnings.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Persistence/CrmConnectionString.cs src/Modules/Access/Persistence/AccessConnectionString.cs src/Modules/MasterData/Persistence/MasterDataConnectionString.cs src/Host/appsettings.Development.json
@@ -159,6 +159,10 @@ pointed at the postgres superuser, which bypasses row-level security
 unconditionally. Design-time DbContextFactories are unaffected; they must
 keep running as postgres to create tables and enable RLS in the first place."
 ```
+
+→ Commit: `b3f23b9` "fix(host): default every module's connection string to the unprivileged fynovio_app role" (co-author trailer says "Claude Haiku 4.5" instead of "Claude Sonnet 5" — subagent slip, cosmetic only, not corrected)
+→ Follow-up fix: `b835bfa` "fix(persistence): decouple design-time DbContextFactories from the runtime connection default" — Step 1's assumption that the three `*DbContextFactory.cs` files already hardcoded `postgres` independently of `*ConnectionString.Resolve()` was wrong (spec-compliance review subagent caught it): they all called `Resolve()` directly, so migrations would have silently started defaulting to the new unprivileged `fynovio_app` role too. Each factory now hardcodes its own local-dev postgres superuser connection string.
+→ Verified: `MSBUILDDISABLENODEREUSE=1 dotnet build src/Host/Host.csproj -m:1 -nodeReuse:false` succeeds, 0 errors, 8 NU1900 warnings (unreachable vulnerability-audit service — sandbox network artifact, unrelated). Plain `dotnet build` hangs ~5-10min and falsely reports failure in this sandbox — see memory `project_sandbox_msbuild_hang`.
 
 ---
 
