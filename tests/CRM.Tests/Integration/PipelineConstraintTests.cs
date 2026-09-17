@@ -146,6 +146,27 @@ public sealed class PipelineConstraintTests
         await Assert.ThrowsAsync<DbUpdateException>(() => second.SaveChangesAsync());
     }
 
+    [Fact]
+    public async Task Two_entry_stages_in_the_same_version_violate_the_partial_unique_index()
+    {
+        var (tenant, versionId) = await SeedVersionAsync();
+
+        await using var context = _fixture.CreateAdminContext();
+        var version = await context.PipelineDefinitionVersions.SingleAsync(v => v.Id == versionId);
+
+        var first = await context.PipelineStages.SingleAsync(s => s.PipelineDefinitionVersionId == versionId);
+        Assert.True(first.IsEntry);
+
+        // AddStage only makes the *first* stage entry by default; force a second entry row
+        // directly to prove the database — not just the aggregate's MarkEntry — rejects it.
+        var second = version.AddStage("Teklif Verildi", sortOrder: 1);
+        typeof(PipelineStage).GetMethod("SetEntry", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .Invoke(second, [true]);
+        context.PipelineStages.Add(second);
+
+        await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+    }
+
     private async Task<(Contracts.TenantId TenantId, long DefinitionId)> SeedDefinitionAsync()
     {
         var tenant = TestData.NextTenant();

@@ -62,4 +62,45 @@ public sealed class PipelineDefinitionVersionTests
         Assert.Equal(2, v1.Stages.Count);
         Assert.Equal(2, v2.Stages.Count);
     }
+
+    [Fact]
+    public void AddStage_the_first_stage_added_becomes_entry_by_default()
+    {
+        var tenant = TestData.NextTenant();
+        var definition = PipelineDefinition.Create(tenant, "Sales Pipeline");
+        var version = definition.AddVersion(versionNumber: 1);
+
+        var stage = version.AddStage("Bekliyor", sortOrder: 0);
+
+        Assert.True(stage.IsEntry);
+        Assert.True(stage.IsActive);
+    }
+
+    [Fact]
+    public void AddStage_a_second_stage_is_not_entry_by_default()
+    {
+        var tenant = TestData.NextTenant();
+        var definition = PipelineDefinition.Create(tenant, "Sales Pipeline");
+        var version = definition.AddVersion(versionNumber: 1);
+        version.AddStage("Bekliyor", sortOrder: 0);
+
+        var second = version.AddStage("Teklif Verildi", sortOrder: 1);
+
+        Assert.False(second.IsEntry);
+    }
+
+    [Fact]
+    public void MarkEntry_moves_the_entry_flag_to_the_target_stage_only()
+    {
+        var tenant = TestData.NextTenant();
+        var definition = PipelineDefinition.Create(tenant, "Sales Pipeline");
+        var version = definition.AddVersion(versionNumber: 1);
+        var first = version.AddStage("Bekliyor", sortOrder: 0);
+        var second = version.AddStage("Teklif Verildi", sortOrder: 1);
+
+        version.MarkEntry(second);
+
+        Assert.False(first.IsEntry);
+        Assert.True(second.IsEntry);
+    }
 }
