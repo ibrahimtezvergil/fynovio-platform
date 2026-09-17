@@ -61,6 +61,7 @@ public sealed class PostgresFixture : IAsyncLifetime
         var options = new DbContextOptionsBuilder<AccessDbContext>()
             .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", AccessDbContext.AccessSchema))
             .UseSnakeCaseNamingConvention()
+            .AddInterceptors(new RowVersionInterceptor())
             .Options;
         return new AccessDbContext(options);
     }

@@ -39,4 +39,16 @@ public sealed class RoleAssignmentTests
 
         Assert.Throws<ArgumentOutOfRangeException>(() => assignment.Revoke(validFrom.AddMinutes(-1)));
     }
+
+    /// <summary>H6 regression guard: `ScopeType`/`ScopeId` were removed outright
+    /// (gap-closure §1), not deprecated — this locks that shape so a future change
+    /// can't quietly reintroduce a per-assignment scope.</summary>
+    [Fact]
+    public void Legacy_network_scope_fields_do_not_exist()
+    {
+        var propertyNames = typeof(RoleAssignment).GetProperties().Select(p => p.Name);
+
+        Assert.DoesNotContain("ScopeType", propertyNames);
+        Assert.DoesNotContain("ScopeId", propertyNames);
+    }
 }
