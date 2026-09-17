@@ -150,6 +150,14 @@ public sealed class PipelineConstraintTests
     public async Task Two_entry_stages_in_the_same_version_violate_the_partial_unique_index()
     {
         var (tenant, versionId) = await SeedVersionAsync();
+        _ = tenant;
+
+        await using (var seed = _fixture.CreateAdminContext())
+        {
+            var seedVersion = await seed.PipelineDefinitionVersions.SingleAsync(v => v.Id == versionId);
+            seed.PipelineStages.Add(seedVersion.AddStage("Bekliyor", sortOrder: 0));
+            await seed.SaveChangesAsync();
+        }
 
         await using var context = _fixture.CreateAdminContext();
         var version = await context.PipelineDefinitionVersions.SingleAsync(v => v.Id == versionId);
