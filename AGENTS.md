@@ -72,6 +72,7 @@ Evidence records are required only for risk-catalogued commands (money-carrying 
 
 ## Repository Intelligence (cross-agent, tool-agnostic)
 This repo has a Graphify code graph at `graphify-out/`. Prefer `graphify query "<question>"`, `graphify explain "<symbol>"`, or `graphify path "<A>" "<B>"` over a broad repository grep when the installed agent supports it; fall back to targeted `rg` for exact literals/config/generated text, and to a full file read only once the relevant region is identified. A git `post-commit` hook rebuilds the graph automatically after each commit on this local clone (re-run `graphify hook install` on a fresh clone to get it there too).
+- **Whoever made the commit that triggered the rebuild owns the follow-up commit.** Don't leave a dirty `graphify-out/` for the developer to notice and clean up later — after your commit, check `git status --short`; if the hook produced changes, commit them immediately as `chore(graphify): refresh graph after <short reason>` before ending your turn or moving to the next task.
 
 ## Cross-Agent / Multi-Agent Policy
 - Default isolation: **1 task = 1 branch = 1 worktree = 1 agent session**. Two agents (e.g. Claude Code and Codex) must not concurrently edit the same working tree.
