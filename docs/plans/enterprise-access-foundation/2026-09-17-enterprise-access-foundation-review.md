@@ -1,7 +1,7 @@
 # Enterprise Access Foundation — Phase 1.5 Adversarial Architecture Review
 
 > **Durum:** yalnızca inceleme. Kod, migration ya da paket değişikliği yok. İncelenen:
-> `docs/plans/Enterprise_Access_Foundation_Phase_1_5_Target_Architecture.pdf` (11 sayfa, tamamı).
+> `docs/plans/enterprise-access-foundation/Enterprise_Access_Foundation_Phase_1_5_Target_Architecture.pdf` (11 sayfa, tamamı).
 > Ölçüt: `AGENTS.md`, `docs/schema/identity-access-schema.md`, doc 08 / doc 19 (araştırma projesi),
 > `src/Modules/Access/**`, `src/Contracts/**`, `src/Host/Program.cs`, `tests/**`.
 > Tarih: 2026-09-17. Owner onayı olmadan execution planına geçilmez.

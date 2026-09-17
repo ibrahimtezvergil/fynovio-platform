@@ -1,6 +1,6 @@
 # Enterprise Access Foundation — Phase 1.5 İnceleme (Round 2)
 
-> **Girdi:** `docs/plans/Enterprise_Access_Foundation_Phase_1_5_RECONCILED_FINAL.pdf` (12 sayfa,
+> **Girdi:** `docs/plans/enterprise-access-foundation/Enterprise_Access_Foundation_Phase_1_5_RECONCILED_FINAL.pdf` (12 sayfa,
 > tamamı okundu). Bu doküman round 1'in ([[2026-09-17-enterprise-access-foundation-review.md]])
 > mutabakat turu — PDF'in kendi §2'si "What Changed After the Claude Review" tablosuyla bunu
 > açıkça belirtiyor. Round 1 dosyası **değiştirilmedi**, denetim izi olarak kalıyor.
@@ -141,6 +141,6 @@ Owner onayı gereken tek şey değişmedi: **system katalog stratejisi** ve **CR
 
 ---
 
-*Round 1 dosyası: `docs/plans/2026-09-17-enterprise-access-foundation-review.md` (tam benchmark
+*Round 1 dosyası: `docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-review.md` (tam benchmark
 kaynakları ve ayrıntılı veri modeli/pipeline/freeze listesi orada duruyor, bu round onu
 tekrarlamıyor).*

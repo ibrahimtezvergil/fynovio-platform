@@ -2620,7 +2620,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Modify: `.github/workflows/ci.yml` (gerekirse — muhtemelen değişiklik gerekmez, zaten `dotnet test` tüm çözümü çalıştırıyor olmalı)
 - Modify: `README.md`
 - Modify: `AGENTS.md`
-- Modify: `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` (§6 Phase 0.5 satırının Status'unu ✅ yap)
+- Modify: `docs/plans/crm-phase1/2026-09-16-crm-target-model-phase0-delta-plan.md` (§6 Phase 0.5 satırının Status'unu ✅ yap)
 - Modify: `docs/plans/2026-09-16-masterdata-party-foundation.md` (Progress notunu güncelle)
 - Modify: `graphify-out/` (post-commit hook otomatik günceller, elle dokunma)
 
@@ -2659,7 +2659,7 @@ gerçek içeriği yansıt); "Status" satırına MasterData'yı ekle; runtime rol
 
 - [x] **Step 5: Plan dosyalarındaki durum işaretlerini güncelle**
 
-`docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §6'daki Phase 0.5
+`docs/plans/crm-phase1/2026-09-16-crm-target-model-phase0-delta-plan.md` §6'daki Phase 0.5
 satırının Status hücresini `🟡` → `✅ Done` yap. `docs/plans/2026-09-16-masterdata-party-foundation.md`'nin
 üstündeki "Progress" notunu güncelle.
 

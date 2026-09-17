@@ -11,7 +11,7 @@
 > (developed/reviewed on an isolated worktree/branch by a peer session), merged into
 > `main` via `6aa9b5a`. Post-merge verification on `main`: clean build (0 warnings, 0
 > errors), full suite green — 46 CRM + 30 MasterData tests. Read
-> `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §5 (all five items now
+> `docs/plans/crm-phase1/2026-09-16-crm-target-model-phase0-delta-plan.md` §5 (all five items now
 > RESOLVED), §11 (decision record) and §12 (dependency graph) before starting — this
 > plan implements Phase 1 of that roadmap. Do not re-litigate any decision recorded
 > there. Task 0's two design decisions and Task 3 Step 1's `party_type` default are all
@@ -737,7 +737,7 @@ Step 7's deviation note. Branch: `crm-phase1-lifecycle-pipeline`, not yet merged
 - Modify: `AGENTS.md`
 - Modify: `docs/schema/crm-sales-schema.md` (lifecycle values, Party section — note the
   FK is gone, `PartyRef` is now the link; pipeline tables)
-- Modify: `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` (§6 Phase 1 row
+- Modify: `docs/plans/crm-phase1/2026-09-16-crm-target-model-phase0-delta-plan.md` (§6 Phase 1 row
   → ✅ Done; §11 gets a short Phase 1 completion note)
 - Modify: `graphify-out/` (`graphify update .`, no manual edits)
 
@@ -784,7 +784,7 @@ CI run against it. Fixed in the same follow-up commit as Step 2.
 
 - [x] **Step 4: Update the delta plan's phase table and decision record**
 
-`docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §6: Phase 1 row Status →
+`docs/plans/crm-phase1/2026-09-16-crm-target-model-phase0-delta-plan.md` §6: Phase 1 row Status →
 `✅ Done`. §11: append a short "Phase 1 complete" line mirroring Phase 0.5's.
 
 → §6 was updated correctly in the first pass. §11's completion note was missed

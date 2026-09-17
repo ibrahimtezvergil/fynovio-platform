@@ -8,14 +8,14 @@ is `NOT NULL`; `RoleAssignment` drops `ScopeType`/`ScopeId` entirely; `TenantAcc
 Access's own `Outbox`/`Evidence`/`Idempotency` records added; RLS enabled on every tenant-scoped
 table; `tests/Access.Tests` (33 tests) added; registered in `Host`. Design authority for this
 revision:
-- `docs/plans/2026-09-17-enterprise-access-foundation-review.md` (round 1),
-- `docs/plans/2026-09-17-enterprise-access-foundation-review-round2.md` (round 2),
-- `docs/plans/2026-09-17-enterprise-access-foundation-review-round3-final.md` (round 3),
-- `docs/plans/2026-09-17-enterprise-access-owner-decisions-final.md` (round 4, the two owner
+- `docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-review.md` (round 1),
+- `docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-review-round2.md` (round 2),
+- `docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-review-round3-final.md` (round 3),
+- `docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-owner-decisions-final.md` (round 4, the two owner
   decisions this revision implements),
-- `docs/plans/2026-09-17-enterprise-access-foundation-gap-closure.md` (the HOW-level technical
+- `docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-gap-closure.md` (the HOW-level technical
   decisions — table shapes, the bootstrap problem, the `ActionKey` format),
-- `docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md` (the task-by-task plan
+- `docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-execution-plan.md` (the task-by-task plan
   this revision was built from).
 
 **Not yet implemented (deliberately, per the execution plan's scope lock — DESIGN/FREEZE, not

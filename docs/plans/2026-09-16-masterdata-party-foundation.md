@@ -1,7 +1,7 @@
 # MasterData / Party Foundation — Design Reference (Phase 0.5)
 
 > **Status:** design reference, approved, **implemented**. This is the detailed
-> record behind `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §11 —
+> record behind `docs/plans/crm-phase1/2026-09-16-crm-target-model-phase0-delta-plan.md` §11 —
 > that file's §5.C question ("Contact — build now or defer?") opened this larger
 > reconciliation, which settled Party ownership, external identity, merge semantics,
 > and the CRM/Sales boundary for commercial transactions. Every decision below was
@@ -14,7 +14,7 @@
 > completion:** `docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md` (11 tasks,
 > all 11 committed, §10's acceptance criteria met — `tests/MasterData.Tests` 30/30,
 > `tests/CRM.Tests` 41/41 with no regression). Status also mirrored in
-> `docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md` §6's phase table.
+> `docs/plans/crm-phase1/2026-09-16-crm-target-model-phase0-delta-plan.md` §6's phase table.
 
 ## 1. Why Party moves out of CRM
 

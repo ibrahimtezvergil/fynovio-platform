@@ -30,16 +30,16 @@
 > migration for the full table list).
 >
 > **Read before starting, in order:**
-> 1. `docs/plans/2026-09-17-enterprise-access-foundation-review.md` (round 1 — full
+> 1. `docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-review.md` (round 1 — full
 >    benchmark research, target data model rationale, freeze list)
-> 2. `docs/plans/2026-09-17-enterprise-access-foundation-review-round2.md` (round 2 —
+> 2. `docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-review-round2.md` (round 2 —
 >    reconciliation against the owner's revised PDF)
-> 3. `docs/plans/2026-09-17-enterprise-access-foundation-review-round3-final.md`
+> 3. `docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-review-round3-final.md`
 >    (round 3 — closure matrix, final ownership matrix, final pipeline)
-> 4. `docs/plans/2026-09-17-enterprise-access-owner-decisions-final.md` (round 4 —
+> 4. `docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-owner-decisions-final.md` (round 4 —
 >    the two owner decisions: system catalog template→tenant-local, Opportunity
 >    Owner = AssignedPrincipal + explicit Reassign)
-> 5. `docs/plans/2026-09-17-enterprise-access-foundation-gap-closure.md` (HOW-level
+> 5. `docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-gap-closure.md` (HOW-level
 >    technical decisions this plan is built on — RoleAssignment scope removal, text
 >    ActionKey PK, Contracts surface, escalation guard, **the bootstrap problem**)
 >

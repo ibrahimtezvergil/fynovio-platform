@@ -26,7 +26,7 @@
 > remains open. See Section 11 for the consolidated decision record and Section 12 for
 > the revised dependency graph (a new Phase 1.5, Access enforcement baseline, now runs
 > parallel to Phase 1 and gates Phase 2). Phase 1's execution plan is written —
-> `docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md` — but not yet
+> `docs/plans/crm-phase1/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md` — but not yet
 > run.
 
 ## 0. Context and the decision this plan corrects
@@ -388,11 +388,11 @@ recovered by a domain-level guard in `Opportunity.Create(...)` plus a
 detail, not a reversal of the decision. `OpportunityStatus` renamed to
 `Draft/Open/Won/Lost`; `pipeline_definitions`/`pipeline_definition_versions`/
 `pipeline_stages` added, additive and unenforced. Execution plan:
-`docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md`, all four
+`docs/plans/crm-phase1/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md`, all four
 tasks done.
 
 **Next step:** Phase 1's execution plan is written —
-`docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md` — not yet run.
+`docs/plans/crm-phase1/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md` — not yet run.
 Phase 1.5 (Access baseline) needs its own execution plan before Phase 2 can start; not
 yet written.
 
