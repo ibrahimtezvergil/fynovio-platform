@@ -625,8 +625,8 @@
   },
   "scripts/create-runtime-role.sql": {
     "mtime": 1789635723.4608362,
-    "seen": 1789637079.768631,
-    "ast_hash": "",
+    "seen": 1789647695.9162722,
+    "ast_hash": "80ffe8ed80c8a481b6a6cf4283849f81",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/CompleteOpportunityCommand.cs": {
