@@ -1588,5 +1588,17 @@
     "seen": 1789641647.5280268,
     "ast_hash": "9a8f91a6f1a2a493b144d085ec493239",
     "semantic_hash": ""
+  },
+  "docs/plans/crm-phase1/2026-09-17-crm-phase1-test-plan.md": {
+    "mtime": 1789643308.6288416,
+    "seen": 1789645001.6724029,
+    "ast_hash": "3e5acf98cf4b2787076ffa88e013c10a",
+    "semantic_hash": ""
+  },
+  "docs/plans/crm-phase1/CRM_Phase1_Test_Coverage_Verification_Report.pdf": {
+    "mtime": 1789644632.578007,
+    "seen": 1789645001.672411,
+    "ast_hash": "b35f9e1b7ce758a0d49eb1e3699558f4",
+    "semantic_hash": ""
   }
 }
