@@ -479,7 +479,7 @@ level, not just in the aggregate."
 
 `AccessActionCatalog.All` (`src/Modules/Access/Application/AccessActionCatalog.cs`) only seeds Access's own vocabulary today, by explicit design ("`crm.opportunity.*` is NOT seeded here... CRM isn't touched by this plan" — Phase 1.5's own comment). CRM cannot add to that list directly: a module may reference `Contracts` only (AGENTS.md Architecture Rules), and `ActionRegistryDescriptor`/`AccessActionCatalogSeeder` are `Access.Application` types. `Host`, the composition root, bridges the two without either module referencing the other.
 
-- [ ] **Step 1: Write the failing architecture test that pins the boundary**
+- [x] **Step 1: Write the failing architecture test that pins the boundary**
 
 Add to `tests/CRM.Tests/Architecture/ModuleBoundaryTests.cs`:
 
@@ -498,7 +498,7 @@ public void Crm_does_not_reference_Access()
 
 (Confirm the existing test file's exact NetArchTest usage style — `Types.InAssembly(...).Should()...` — by reading the current `ModuleBoundaryTests.cs` first, and match its established pattern rather than introducing a new one.)
 
-- [ ] **Step 2: Run it to verify it passes today (it should — CRM doesn't reference Access yet) and stays green after this task**
+- [x] **Step 2: Run it to verify it passes today (it should — CRM doesn't reference Access yet) and stays green after this task**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~ModuleBoundaryTests"
@@ -506,7 +506,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Module
 
 Expected: PASS before any other change in this task — this is the regression lock, not a red/green step; it must still pass after Steps 3–5 below, or the task's design is wrong.
 
-- [ ] **Step 3: Define CRM's own action manifest (a CRM-local descriptor type, not Access's)**
+- [x] **Step 3: Define CRM's own action manifest (a CRM-local descriptor type, not Access's)**
 
 ```csharp
 namespace CRM.Application;
@@ -537,7 +537,7 @@ public static class CrmActionCatalog
 }
 ```
 
-- [ ] **Step 4: Let the seeder accept an external manifest instead of hardcoding Access's own**
+- [x] **Step 4: Let the seeder accept an external manifest instead of hardcoding Access's own**
 
 `src/Modules/Access/Application/AccessActionCatalogSeeder.cs`:
 
@@ -585,7 +585,7 @@ public static class AccessActionCatalogSeeder
 }
 ```
 
-- [ ] **Step 5: Wire both manifests together in `Program.cs`**
+- [x] **Step 5: Wire both manifests together in `Program.cs`**
 
 Change the seeding block in `src/Host/Program.cs` from:
 
@@ -611,7 +611,7 @@ using (var scope = app.Services.CreateScope())
 
 Add `using CRM.Application;` to `Program.cs`'s using block (it already has `using CRM.Persistence;`).
 
-- [ ] **Step 6: Run the architecture test again, then the full Access suite (the seeder's own existing tests must still pass with the new parameter)**
+- [x] **Step 6: Run the architecture test again, then the full Access suite (the seeder's own existing tests must still pass with the new parameter)**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~ModuleBoundaryTests"
@@ -620,7 +620,7 @@ dotnet test tests/Access.Tests/Access.Tests.csproj
 
 Expected: both PASS. If `Access.Tests` has a test calling `AccessActionCatalogSeeder.EnsureSeededAsync(context)` with the old one-argument signature, update its call site to pass `AccessActionCatalog.All` explicitly — this is a mechanical signature-change fix, not a behavior change, since `Program.cs`'s new call already reproduces the old seeding behavior for Access's own keys plus CRM's.
 
-- [ ] **Step 7: Build and run the full solution's tests**
+- [x] **Step 7: Build and run the full solution's tests**
 
 ```bash
 dotnet build
@@ -629,7 +629,7 @@ dotnet test
 
 Expected: 0 warnings, all green, no regression.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/CrmActionCatalog.cs src/Modules/Access/Application/AccessActionCatalogSeeder.cs src/Host/Program.cs tests/CRM.Tests/Architecture/ModuleBoundaryTests.cs tests/Access.Tests
@@ -640,6 +640,10 @@ hardcoding Access's own list. Host composes Access's + CRM's manifests at
 startup — the only place allowed to know about both modules. CRM still
 references Contracts only; the architecture-boundary test proves it."
 ```
+
+→ Commit: `6f4b9b6` "feat(access,crm): seed CRM's action manifest through Host without a cross-module reference"
+→ Follow-up fix: `8aeebfa` "docs(access): warn that EnsureSeededAsync's manifest must be complete" — code-quality review flagged a footgun (a caller passing a partial manifest silently deprecates every other module's actions); doc-comment-only, no behavior change.
+→ Verified (controller, independently re-run with `dangerouslyDisableSandbox: true`): `CRM.Tests` 85/85, `Access.Tests` 58/58, module boundary confirmed at the `.csproj` level (`grep -i access src/Modules/CRM/CRM.csproj` finds nothing), `Host` builds 0 errors.
 
 ---
 
