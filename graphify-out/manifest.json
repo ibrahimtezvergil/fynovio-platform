@@ -1,7 +1,7 @@
 {
   ".claude/settings.json": {
-    "mtime": 1789629226.6243935,
-    "seen": 1789633571.74821,
+    "mtime": 1789635697.90174,
+    "seen": 1789637079.768628,
     "ast_hash": "3454a3e55ccb7ee62ac8498f8131dfaf",
     "semantic_hash": ""
   },
@@ -12,8 +12,8 @@
     "semantic_hash": ""
   },
   "fynovio-platform.slnx": {
-    "mtime": 1789635194.5166647,
-    "seen": 1789635255.212917,
+    "mtime": 1789635723.4503827,
+    "seen": 1789637079.76863,
     "ast_hash": "d94a9d354d00a6b072d47016730d0127",
     "semantic_hash": ""
   },
@@ -54,8 +54,8 @@
     "semantic_hash": "dd81442239bb461fc5753fba91c419a9"
   },
   "src/Host/Program.cs": {
-    "mtime": 1789634350.5640306,
-    "seen": 1789634702.370867,
+    "mtime": 1789635723.465905,
+    "seen": 1789637079.768647,
     "ast_hash": "58e7beaa4a1a0328f3d446ea12914d46",
     "semantic_hash": ""
   },
@@ -348,9 +348,9 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1789635359.8450866,
-    "seen": 1789635371.6171808,
-    "ast_hash": "c4ad1d10d99f148b1c54002a8acde000",
+    "mtime": 1789636929.73067,
+    "seen": 1789637079.768789,
+    "ast_hash": "acf0b4c1fc4f8298b49e187341beae68",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -384,14 +384,14 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/Role.cs": {
-    "mtime": 1789633826.4349504,
-    "seen": 1789634141.005321,
+    "mtime": 1789635723.4723485,
+    "seen": 1789637079.768662,
     "ast_hash": "982d98c51aad62435b072b37f76e980c",
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/RoleAssignment.cs": {
-    "mtime": 1789633836.999354,
-    "seen": 1789634141.005322,
+    "mtime": 1789635723.472538,
+    "seen": 1789637079.768662,
     "ast_hash": "43810663a8a60727544166f655eefdf1",
     "semantic_hash": ""
   },
@@ -420,8 +420,8 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/AccessDbContext.cs": {
-    "mtime": 1789633938.8336077,
-    "seen": 1789634141.005425,
+    "mtime": 1789635723.4771523,
+    "seen": 1789637079.768668,
     "ast_hash": "a8944bfcf5e55b04f17638e1a84215b8",
     "semantic_hash": ""
   },
@@ -444,14 +444,14 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/RoleAssignmentConfiguration.cs": {
-    "mtime": 1789633917.8234162,
-    "seen": 1789634141.005503,
+    "mtime": 1789635723.478915,
+    "seen": 1789637079.768675,
     "ast_hash": "da34e7cb931e478dab71c2e41f5e83bc",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/RoleConfiguration.cs": {
-    "mtime": 1789633908.3864117,
-    "seen": 1789634141.005503,
+    "mtime": 1789635723.4791477,
+    "seen": 1789637079.768676,
     "ast_hash": "a5918447efe68171ad479958998277cc",
     "semantic_hash": ""
   },
@@ -474,8 +474,8 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Migrations/AccessDbContextModelSnapshot.cs": {
-    "mtime": 1789634977.8750436,
-    "seen": 1789635255.2129679,
+    "mtime": 1789635723.4821975,
+    "seen": 1789637079.768683,
     "ast_hash": "6352516cc698daf0e537f786f7059874",
     "semantic_hash": ""
   },
@@ -516,9 +516,9 @@
     "semantic_hash": ""
   },
   "docs/schema/identity-access-schema.md": {
-    "mtime": 1789635326.001157,
-    "seen": 1789635371.6175091,
-    "ast_hash": "cce300eef8595665c4ae0ef3f605b019",
+    "mtime": 1789636943.8028429,
+    "seen": 1789637079.768801,
+    "ast_hash": "e9c93e9452746aa2ce7dc3f9021ae068",
     "semantic_hash": ""
   },
   "docs/schema/tenant-network-schema.md": {
@@ -624,8 +624,8 @@
     "semantic_hash": ""
   },
   "scripts/create-runtime-role.sql": {
-    "mtime": 1789634125.8326054,
-    "seen": 1789635443.518919,
+    "mtime": 1789635723.4608362,
+    "seen": 1789637079.768631,
     "ast_hash": "80ffe8ed80c8a481b6a6cf4283849f81",
     "semantic_hash": ""
   },
@@ -683,22 +683,16 @@
     "ast_hash": "a85635a99be260695084316305edd47a",
     "semantic_hash": ""
   },
-  "docs/plans/2026-09-16-crm-target-model-phase0-delta-plan.md": {
-    "mtime": 1789587882.9904473,
-    "seen": 1789587953.3095949,
-    "ast_hash": "f5d44d28df430d81624be4e2c1f43b71",
-    "semantic_hash": ""
-  },
   "docs/plans/2026-09-16-masterdata-party-foundation.md": {
-    "mtime": 1789564407.4579916,
-    "seen": 1789587953.3095958,
-    "ast_hash": "08ab57ed148c30ee7a7ce2bbd9c00e10",
+    "mtime": 1789637039.4208913,
+    "seen": 1789637079.768793,
+    "ast_hash": "72604f1236191323a85289c4e216481c",
     "semantic_hash": ""
   },
   "docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md": {
-    "mtime": 1789564466.0267818,
-    "seen": 1789587953.309598,
-    "ast_hash": "6856377ffe7a37de62d3c30a70efb806",
+    "mtime": 1789637039.4194944,
+    "seen": 1789637079.768793,
+    "ast_hash": "d59ff0ff6fe1a177222e085163087717",
     "semantic_hash": ""
   },
   "docs/architecture-analysis/Enterprise_CRM_Target_Model_Binding_Implementation_Specification.pdf": {
@@ -1031,12 +1025,6 @@
     "ast_hash": "d11a5f0709ed68a0ee40a57d83f6a861",
     "semantic_hash": ""
   },
-  "docs/plans/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md": {
-    "mtime": 1789587948.6312814,
-    "seen": 1789587953.3095932,
-    "ast_hash": "4c1d5df20ba6242c68ee27b11dbc4a27",
-    "semantic_hash": ""
-  },
   "src/Modules/CRM/Domain/PipelineDefinition.cs": {
     "mtime": 1789587883.0077224,
     "seen": 1789587953.309387,
@@ -1157,418 +1145,430 @@
     "ast_hash": "604217a8f0a5cec6b1cf7fbfc0be4d53",
     "semantic_hash": ""
   },
-  "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md": {
-    "mtime": 1789635585.6041155,
-    "seen": 1789635605.475487,
-    "ast_hash": "bc85d066df253cd9531ce896676e26ab",
-    "semantic_hash": ""
-  },
-  "docs/plans/2026-09-17-enterprise-access-foundation-gap-closure.md": {
-    "mtime": 1789632398.1667547,
-    "seen": 1789633571.7483451,
-    "ast_hash": "35640b5a49a98447c0fccb76e1c586a8",
-    "semantic_hash": ""
-  },
-  "docs/plans/2026-09-17-enterprise-access-foundation-review-round2.md": {
-    "mtime": 1789629216.4191995,
-    "seen": 1789633571.7483451,
-    "ast_hash": "ba3c09d170bfbe79f797d456f9b5c9f0",
-    "semantic_hash": ""
-  },
-  "docs/plans/2026-09-17-enterprise-access-foundation-review-round3-final.md": {
-    "mtime": 1789631468.4003751,
-    "seen": 1789633571.748346,
-    "ast_hash": "c69eba870680255e72848b8f240f6659",
-    "semantic_hash": ""
-  },
-  "docs/plans/2026-09-17-enterprise-access-foundation-review.md": {
-    "mtime": 1789598938.1082704,
-    "seen": 1789633571.748346,
-    "ast_hash": "82cae616a88e677917b573cc1d47ec2b",
-    "semantic_hash": ""
-  },
-  "docs/plans/2026-09-17-enterprise-access-owner-decisions-final.md": {
-    "mtime": 1789631847.5687015,
-    "seen": 1789633571.7483468,
-    "ast_hash": "974fc2a363ae13e3510b288646376eee",
-    "semantic_hash": ""
-  },
-  "docs/plans/Enterprise_Access_Foundation_Phase_1_5_RECONCILED_FINAL.pdf": {
-    "mtime": 1789628479.2644045,
-    "seen": 1789633571.74835,
-    "ast_hash": "217f22ee54db34cf91efe7bdbeccf60e",
-    "semantic_hash": ""
-  },
-  "docs/plans/Enterprise_Access_Foundation_Phase_1_5_Target_Architecture.pdf": {
-    "mtime": 1789596632.941668,
-    "seen": 1789633571.7483509,
-    "ast_hash": "122cf2983d0796c68db872db74513d2d",
-    "semantic_hash": ""
-  },
   "src/Contracts/AccessScope.cs": {
-    "mtime": 1789633630.2261949,
-    "seen": 1789634141.004967,
+    "mtime": 1789635723.461473,
+    "seen": 1789637079.7686322,
     "ast_hash": "f7f8ef0b5ae767c1cbc7f130b4975244",
     "semantic_hash": ""
   },
   "src/Contracts/ActionKey.cs": {
-    "mtime": 1789635132.7846777,
-    "seen": 1789635255.21292,
+    "mtime": 1789635723.4617538,
+    "seen": 1789637079.7686322,
     "ast_hash": "427e29ff8505305acf6aab95bd096cf5",
     "semantic_hash": ""
   },
   "src/Contracts/ActorContext.cs": {
-    "mtime": 1789633589.9107194,
-    "seen": 1789634141.004969,
+    "mtime": 1789635723.462073,
+    "seen": 1789637079.7686331,
     "ast_hash": "7d10c94d52d0bd3c1e5266e28220978e",
     "semantic_hash": ""
   },
   "src/Contracts/AuthorizationDecision.cs": {
-    "mtime": 1789633609.5509508,
-    "seen": 1789634141.004969,
+    "mtime": 1789635723.462675,
+    "seen": 1789637079.768634,
     "ast_hash": "2b9be7a2ec8e1c0870f417d502ef051b",
     "semantic_hash": ""
   },
   "src/Contracts/AuthorizationEffect.cs": {
-    "mtime": 1789633602.9817219,
-    "seen": 1789634141.00497,
+    "mtime": 1789635723.4645662,
+    "seen": 1789637079.768634,
     "ast_hash": "c9935afae78eea322095d685ff583bb6",
     "semantic_hash": ""
   },
   "src/Contracts/AuthorizationRequest.cs": {
-    "mtime": 1789633614.8609898,
-    "seen": 1789634141.00497,
+    "mtime": 1789635723.464718,
+    "seen": 1789637079.7686348,
     "ast_hash": "62d9fcd49e47280ec808588e76ad98bf",
     "semantic_hash": ""
   },
   "src/Contracts/IAccessScopeResolver.cs": {
-    "mtime": 1789633635.4882786,
-    "seen": 1789634141.0050318,
+    "mtime": 1789635723.4648337,
+    "seen": 1789637079.768638,
     "ast_hash": "f328fc920b0bee35eef7d517f282519d",
     "semantic_hash": ""
   },
   "src/Contracts/IActionCatalog.cs": {
-    "mtime": 1789633641.2916234,
-    "seen": 1789634141.005033,
+    "mtime": 1789635723.4649427,
+    "seen": 1789637079.768638,
     "ast_hash": "f2ad266109e80a6790e346e4b4ee8875",
     "semantic_hash": ""
   },
   "src/Contracts/IAuthorizer.cs": {
-    "mtime": 1789633619.8553207,
-    "seen": 1789634141.005034,
+    "mtime": 1789635723.465057,
+    "seen": 1789637079.768639,
     "ast_hash": "54a17f2fd933beafe424cbac5f6a12e4",
     "semantic_hash": ""
   },
   "src/Contracts/ResourceDescriptor.cs": {
-    "mtime": 1789633597.5369763,
-    "seen": 1789634141.005173,
+    "mtime": 1789635723.465176,
+    "seen": 1789637079.768645,
     "ast_hash": "2089f9405806ec5e6f3803e29b9618ed",
     "semantic_hash": ""
   },
   "src/Contracts/ScopeTerm.cs": {
-    "mtime": 1789633625.1977277,
-    "seen": 1789634141.005174,
+    "mtime": 1789635723.465377,
+    "seen": 1789637079.768645,
     "ast_hash": "23aea491b7c46d5fab7c320b4fe45788",
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/ActionRegistryEntry.cs": {
-    "mtime": 1789633789.2485707,
-    "seen": 1789634141.0053189,
+    "mtime": 1789635723.4715412,
+    "seen": 1789637079.7686589,
     "ast_hash": "d81a336f4625930fd26c999ac644b51d",
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/PermissionSet.cs": {
-    "mtime": 1789633805.709377,
-    "seen": 1789634141.0053198,
+    "mtime": 1789635723.4716637,
+    "seen": 1789637079.76866,
     "ast_hash": "6029555076c596e6a392043c35b5d699",
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/PermissionSetItem.cs": {
-    "mtime": 1789633797.190651,
-    "seen": 1789634141.0053198,
+    "mtime": 1789635723.4718678,
+    "seen": 1789637079.76866,
     "ast_hash": "d4fffff3b07d46825d6ddfd4424176fe",
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/PrincipalType.cs": {
-    "mtime": 1789633817.649671,
-    "seen": 1789634141.005321,
+    "mtime": 1789635723.4719982,
+    "seen": 1789637079.768661,
     "ast_hash": "e416c19bd858025cd6790f334fbad617",
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/RolePermissionSet.cs": {
-    "mtime": 1789634901.839597,
-    "seen": 1789635255.212949,
+    "mtime": 1789635723.4728372,
+    "seen": 1789637079.768663,
     "ast_hash": "5ff860c2c3549f33ca7ed1744ea2c856",
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/TenantAccessState.cs": {
-    "mtime": 1789633843.5660005,
-    "seen": 1789634141.005323,
+    "mtime": 1789635723.4729533,
+    "seen": 1789637079.768663,
     "ast_hash": "0533224f23b780345b6dd48c49616f3a",
     "semantic_hash": ""
   },
   "src/Modules/Access/Evidence/EvidenceRecord.cs": {
-    "mtime": 1789633961.8465657,
-    "seen": 1789634141.005399,
+    "mtime": 1789635723.4731832,
+    "seen": 1789637079.768666,
     "ast_hash": "1b63d23372549ed833d4c93cb71695f9",
     "semantic_hash": ""
   },
   "src/Modules/Access/Idempotency/IdempotencyRecord.cs": {
-    "mtime": 1789633973.1330097,
-    "seen": 1789634141.005399,
+    "mtime": 1789635723.473485,
+    "seen": 1789637079.768667,
     "ast_hash": "2134285cbf77340dacdd6a3a8c5eaba1",
     "semantic_hash": ""
   },
   "src/Modules/Access/Outbox/OutboxMessage.cs": {
-    "mtime": 1789633953.3855317,
-    "seen": 1789634141.0054002,
+    "mtime": 1789635723.4736598,
+    "seen": 1789637079.768667,
     "ast_hash": "32a608706af2c0b0d27748015c741de8",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/ActionRegistryEntryConfiguration.cs": {
-    "mtime": 1789633878.356245,
-    "seen": 1789634141.005474,
+    "mtime": 1789635723.4775465,
+    "seen": 1789637079.768671,
     "ast_hash": "89b14493859a8eecebf460612820b34b",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/EvidenceRecordConfiguration.cs": {
-    "mtime": 1789633987.2649174,
-    "seen": 1789634141.005474,
+    "mtime": 1789635723.4781528,
+    "seen": 1789637079.768672,
     "ast_hash": "b50b85dc4cd99f39d452e9b077333dee",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/IdempotencyRecordConfiguration.cs": {
-    "mtime": 1789633993.9458976,
-    "seen": 1789634141.005501,
+    "mtime": 1789635723.478365,
+    "seen": 1789637079.768673,
     "ast_hash": "cd3f89899d6a86a5107aa2ecbe04b53f",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/OutboxMessageConfiguration.cs": {
-    "mtime": 1789633980.8540597,
-    "seen": 1789634141.005501,
+    "mtime": 1789635723.4784658,
+    "seen": 1789637079.7686741,
     "ast_hash": "85473c2dbddf78159c3836c4a89f94f7",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/PermissionSetConfiguration.cs": {
-    "mtime": 1789633886.2489052,
-    "seen": 1789634141.005502,
+    "mtime": 1789635723.4785697,
+    "seen": 1789637079.7686741,
     "ast_hash": "aea3648f9ed72d910dce1589037b1cb1",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/PermissionSetItemConfiguration.cs": {
-    "mtime": 1789633892.9139256,
-    "seen": 1789634141.005502,
+    "mtime": 1789635723.478676,
+    "seen": 1789637079.768675,
     "ast_hash": "b61f17c62d67bde6648bc4f06c4202ac",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/RolePermissionSetConfiguration.cs": {
-    "mtime": 1789634909.8213334,
-    "seen": 1789635255.2129622,
+    "mtime": 1789635723.4794586,
+    "seen": 1789637079.7686772,
     "ast_hash": "4d8f6b85a4545c1885c83b64dafe5eac",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/TenantAccessStateConfiguration.cs": {
-    "mtime": 1789633924.4245234,
-    "seen": 1789634141.005504,
+    "mtime": 1789635723.4795845,
+    "seen": 1789637079.7686772,
     "ast_hash": "b8227f4f7304e5e0b9a806f5fbed23b3",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/AccessActionCatalog.cs": {
-    "mtime": 1789634149.0769413,
-    "seen": 1789634180.0131829,
+    "mtime": 1789635723.4667704,
+    "seen": 1789637079.768651,
     "ast_hash": "4d9e526142f0fe5301e015400cec45f7",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/AccessActionCatalogSeeder.cs": {
-    "mtime": 1789634157.6133192,
-    "seen": 1789634180.013184,
+    "mtime": 1789635723.4670644,
+    "seen": 1789637079.768651,
     "ast_hash": "2719b3e08839ea8760d8b9ceecf826f2",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/AccessActionCatalogService.cs": {
-    "mtime": 1789634163.3599029,
-    "seen": 1789634180.013184,
+    "mtime": 1789635723.4677436,
+    "seen": 1789637079.768652,
     "ast_hash": "b455ee21c3a494acd02ad58a96810a20",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/AccessAuthorizer.cs": {
-    "mtime": 1789634196.7249222,
-    "seen": 1789634226.100456,
+    "mtime": 1789635723.4680057,
+    "seen": 1789637079.7686532,
     "ast_hash": "e2b20b3e126927046bec86d71ad2b123",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/AccessScopeResolver.cs": {
-    "mtime": 1789634206.3764188,
-    "seen": 1789634226.100457,
+    "mtime": 1789635723.4681847,
+    "seen": 1789637079.7686532,
     "ast_hash": "662925994f4a4c9bada45d0025cf537a",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/PrincipalResolver.cs": {
-    "mtime": 1789634185.7411766,
-    "seen": 1789634226.100457,
+    "mtime": 1789635723.4709048,
+    "seen": 1789637079.768657,
     "ast_hash": "5ebc8216cfe0a196bb6a1df00725e672",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/AuthorizationDeniedException.cs": {
-    "mtime": 1789634255.658284,
-    "seen": 1789634329.44901,
+    "mtime": 1789635723.4695432,
+    "seen": 1789637079.768654,
     "ast_hash": "f40f9a82f8e736163e57203d603af20e",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/BootstrapTenantAccessCommand.cs": {
-    "mtime": 1789634237.688929,
-    "seen": 1789634329.4490108,
+    "mtime": 1789635723.4698381,
+    "seen": 1789637079.768654,
     "ast_hash": "1ca48ad79ad621f88b305321b7b93873",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/BootstrapTenantAccessHandler.cs": {
-    "mtime": 1789634915.3263268,
-    "seen": 1789635255.2129412,
+    "mtime": 1789635723.4701016,
+    "seen": 1789637079.768655,
     "ast_hash": "4611cf17b7d4b940d50b981de2e14994",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/GrantRoleAssignmentCommand.cs": {
-    "mtime": 1789634265.3817458,
-    "seen": 1789634329.449012,
+    "mtime": 1789635723.4703145,
+    "seen": 1789637079.7686558,
     "ast_hash": "184d7cbfd0fb4ddc463910da52e58463",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/GrantRoleAssignmentHandler.cs": {
-    "mtime": 1789634285.2776027,
-    "seen": 1789634329.449013,
+    "mtime": 1789635723.4705505,
+    "seen": 1789637079.7686558,
     "ast_hash": "8f255e2d370262ba8191e5dac120ffec",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/IdempotencyKeyReusedException.cs": {
-    "mtime": 1789634260.1341488,
-    "seen": 1789634329.449013,
+    "mtime": 1789635723.470782,
+    "seen": 1789637079.768657,
     "ast_hash": "b1d048a8e0a7a421c90a4703961e257e",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/RevokeRoleAssignmentCommand.cs": {
-    "mtime": 1789634291.9813821,
-    "seen": 1789634329.449014,
+    "mtime": 1789635723.4711854,
+    "seen": 1789637079.768658,
     "ast_hash": "6be23deba86b814c22c6474954552497",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/RevokeRoleAssignmentHandler.cs": {
-    "mtime": 1789634311.147415,
-    "seen": 1789634329.4490151,
+    "mtime": 1789635723.4713378,
+    "seen": 1789637079.768658,
     "ast_hash": "e80d4474eb1d70f6d667da8edb913296",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/AccessDbContextTenantExtensions.cs": {
-    "mtime": 1789634231.7161987,
-    "seen": 1789634329.449027,
+    "mtime": 1789635723.4773002,
+    "seen": 1789637079.7686698,
     "ast_hash": "711fe635948ad81511a00b32dabd904f",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Access.Tests.csproj": {
-    "mtime": 1789634514.2355814,
-    "seen": 1789634702.370964,
+    "mtime": 1789635723.4823415,
+    "seen": 1789637079.768754,
     "ast_hash": "035a847220022fc91134f4b20241e072",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Application/AccessTestFixture.cs": {
-    "mtime": 1789635142.3992891,
-    "seen": 1789635255.213033,
+    "mtime": 1789635723.4826233,
+    "seen": 1789637079.768755,
     "ast_hash": "d8e63e7b24e54676640af83eb396ee2a",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Architecture/ModuleBoundaryTests.cs": {
-    "mtime": 1789634558.47682,
-    "seen": 1789634702.370965,
+    "mtime": 1789635723.4829206,
+    "seen": 1789637079.768756,
     "ast_hash": "572c1e0ccc7e1124a632da5631a8eaa9",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Domain/ActionKeyTests.cs": {
-    "mtime": 1789634520.5331779,
-    "seen": 1789634702.370965,
+    "mtime": 1789635723.4830813,
+    "seen": 1789637079.768757,
     "ast_hash": "84922ee38e2e9b35345b5c3ed7d04756",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Domain/PermissionSetTests.cs": {
-    "mtime": 1789634535.1454988,
-    "seen": 1789634702.370966,
+    "mtime": 1789635723.4832916,
+    "seen": 1789637079.768758,
     "ast_hash": "5bbb0bd70dc051db543eda27e9359258",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Domain/RoleAssignmentTests.cs": {
-    "mtime": 1789634543.554737,
-    "seen": 1789634702.370966,
+    "mtime": 1789635723.4835172,
+    "seen": 1789637079.768758,
     "ast_hash": "982d038af5d4b299ee9ffb18bd4ba804",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Domain/RoleTests.cs": {
-    "mtime": 1789634528.5542922,
-    "seen": 1789634702.3709671,
+    "mtime": 1789635723.483747,
+    "seen": 1789637079.768759,
     "ast_hash": "959934f4910639e83c04be9c9836c789",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Domain/TenantAccessStateTests.cs": {
-    "mtime": 1789634550.4903183,
-    "seen": 1789634702.370968,
+    "mtime": 1789635723.4839249,
+    "seen": 1789637079.76876,
     "ast_hash": "f7dd1454c85422d462fa4f8b5db39f04",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/AccessRlsTests.cs": {
-    "mtime": 1789634589.8565326,
-    "seen": 1789634702.370968,
+    "mtime": 1789635723.484696,
+    "seen": 1789637079.76876,
     "ast_hash": "acb910c6e53e2a2be55bf98675f5639e",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/PostgresFixture.cs": {
-    "mtime": 1789634570.7505445,
-    "seen": 1789634702.370969,
+    "mtime": 1789635723.485509,
+    "seen": 1789637079.768762,
     "ast_hash": "7638889a046c5efce0cf9dfc0d6eee30",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Migrations/20260917084915_RebuildAccessAuthorizationModel.Designer.cs": {
-    "mtime": 1789634955.478664,
-    "seen": 1789635255.212966,
+    "mtime": 1789635723.4809523,
+    "seen": 1789637079.7686799,
     "ast_hash": "4b9bde59d6eab3450f8119392b78161d",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Migrations/20260917084915_RebuildAccessAuthorizationModel.cs": {
-    "mtime": 1789634955.4785686,
-    "seen": 1789635255.212966,
+    "mtime": 1789635723.4812222,
+    "seen": 1789637079.768681,
     "ast_hash": "7496230fdca77d9a8b88bfee03ff271f",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Migrations/20260917084937_EnableAccessRowLevelSecurity.Designer.cs": {
-    "mtime": 1789634977.8749428,
-    "seen": 1789635255.212967,
+    "mtime": 1789635723.4817135,
+    "seen": 1789637079.768682,
     "ast_hash": "c9891f9ae4e836d287cf676a98fd9aec",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Migrations/20260917084937_EnableAccessRowLevelSecurity.cs": {
-    "mtime": 1789634990.8206556,
-    "seen": 1789635255.212967,
+    "mtime": 1789635723.481908,
+    "seen": 1789637079.768682,
     "ast_hash": "0251e94422d1eaf0e3aaa8b1661ccd6d",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Application/AccessAuthorizerTests.cs": {
-    "mtime": 1789634830.5628526,
-    "seen": 1789635255.213032,
+    "mtime": 1789635723.4824939,
+    "seen": 1789637079.768754,
     "ast_hash": "9dee2d7a2997a0b6ed9552ad6c7247e2",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Application/AuthorizeResolveAccessScopeEquivalenceTests.cs": {
-    "mtime": 1789634710.9070935,
-    "seen": 1789635255.213034,
+    "mtime": 1789635723.4827433,
+    "seen": 1789637079.768756,
     "ast_hash": "9967d1097e994c4d1bc081921ee436ae",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/BootstrapTenantAccessHandlerTests.cs": {
-    "mtime": 1789635079.6564336,
-    "seen": 1789635255.2130392,
+    "mtime": 1789635723.4849002,
+    "seen": 1789637079.7687612,
     "ast_hash": "831efe7372100e563bc51676df0c5c5e",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/GrantRevokeRoleAssignmentHandlerTests.cs": {
-    "mtime": 1789635091.7558887,
-    "seen": 1789635255.2130392,
+    "mtime": 1789635723.4850986,
+    "seen": 1789637079.768762,
     "ast_hash": "cbddfab5d1aeb9ca1573caaa689af79e",
+    "semantic_hash": ""
+  },
+  "docs/plans/crm-phase1/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md": {
+    "mtime": 1789636995.9003112,
+    "seen": 1789637079.7687948,
+    "ast_hash": "955db1fa94c19937acadf391b2ed3cd3",
+    "semantic_hash": ""
+  },
+  "docs/plans/crm-phase1/2026-09-16-crm-target-model-phase0-delta-plan.md": {
+    "mtime": 1789636995.8985436,
+    "seen": 1789637079.768796,
+    "ast_hash": "640ca8d1e99ff94a7ea69231a77e5e38",
+    "semantic_hash": ""
+  },
+  "docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-execution-plan.md": {
+    "mtime": 1789636983.1755927,
+    "seen": 1789637079.768796,
+    "ast_hash": "3d245db0c894a7b00aaa0f4fcaabfa3e",
+    "semantic_hash": ""
+  },
+  "docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-gap-closure.md": {
+    "mtime": 1789632398.1667547,
+    "seen": 1789637079.768797,
+    "ast_hash": "35640b5a49a98447c0fccb76e1c586a8",
+    "semantic_hash": ""
+  },
+  "docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-review-round2.md": {
+    "mtime": 1789636967.2606893,
+    "seen": 1789637079.7687979,
+    "ast_hash": "9b4baabf4d319baccc751f66a1452141",
+    "semantic_hash": ""
+  },
+  "docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-review-round3-final.md": {
+    "mtime": 1789631468.4003751,
+    "seen": 1789637079.7687979,
+    "ast_hash": "c69eba870680255e72848b8f240f6659",
+    "semantic_hash": ""
+  },
+  "docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-review.md": {
+    "mtime": 1789637030.7806332,
+    "seen": 1789637079.768799,
+    "ast_hash": "b75183fbe13548fcd4e0976ff522bdcc",
+    "semantic_hash": ""
+  },
+  "docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-owner-decisions-final.md": {
+    "mtime": 1789631847.5687015,
+    "seen": 1789637079.768799,
+    "ast_hash": "974fc2a363ae13e3510b288646376eee",
+    "semantic_hash": ""
+  },
+  "docs/plans/enterprise-access-foundation/Enterprise_Access_Foundation_Phase_1_5_RECONCILED_FINAL.pdf": {
+    "mtime": 1789628479.2644045,
+    "seen": 1789637079.7688031,
+    "ast_hash": "217f22ee54db34cf91efe7bdbeccf60e",
+    "semantic_hash": ""
+  },
+  "docs/plans/enterprise-access-foundation/Enterprise_Access_Foundation_Phase_1_5_Target_Architecture.pdf": {
+    "mtime": 1789596632.941668,
+    "seen": 1789637079.7688031,
+    "ast_hash": "122cf2983d0796c68db872db74513d2d",
     "semantic_hash": ""
   }
 }

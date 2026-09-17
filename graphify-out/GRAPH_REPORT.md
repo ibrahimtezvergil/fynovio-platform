@@ -1,7 +1,7 @@
 # Graph Report - fynovio-platform  (2026-09-17)
 
 ## Corpus Check
-- 258 files · ~123,339 words
+- 258 files · ~123,336 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8262b0ae`
+- Built from commit: `6274cfd1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -61,10 +61,10 @@
 - OpportunityNeed
 - .NewDraftOpportunity
 - .HandleAsync
-- Enterprise Access Foundation — Phase 1.5 Execution Plan
-- Enterprise Access Foundation — Phase 1.5 Adversarial Architecture Review
-- IdempotencyRecord
 - CRM Target Model — Phase 0 Delta Plan
+- Enterprise Access Foundation — Phase 1.5 Execution Plan
+- IdempotencyRecord
+- Enterprise Access Foundation — Phase 1.5 Adversarial Architecture Review
 - AddPipelineTables
 - Design notes
 - Enterprise Access Foundation — Phase 1.5 Round 3 Final Closure
@@ -97,20 +97,20 @@
 - CRM.Tests.csproj
 - EnableRowLevelSecurity
 - RemoveCrmPartyEntity
-- Enterprise Access Foundation — Owner Decisions Final Closure
+- CRM Phase 1 — Lifecycle/Pipeline Foundation — Execution Plan
 - EvidenceRecord
 - CompleteOpportunityHandler.cs
 - AccessAuthorizer
 - .ResolveAsync
 - IEntityTypeConfiguration
 - InitialMasterDataSchema
-- Enterprise Access Foundation — Phase 1.5 İnceleme (Round 2)
+- Enterprise Access Foundation — Owner Decisions Final Closure
 - TenantAccessState
 - CRM.Persistence
 - .HandleAsync
 - PermissionSet
 - .Create
-- CRM Phase 1 — Lifecycle/Pipeline Foundation — Execution Plan
+- Enterprise Access Foundation — Phase 1.5 İnceleme (Round 2)
 - 6. Current Repo Deltas
 - EntityRef
 - OpportunityStatus
@@ -340,21 +340,21 @@ Nodes (3): OpportunityRowVersionTests, Fact, InvalidOperationException
 Cohesion: 0.15
 Nodes (12): AccessActionCatalogSeeder, CancellationToken, Task, BootstrapTenantAccessCommand, Guid, BootstrapTenantAccessHandler, CancellationToken, Task (+4 more)
 
-### Community 46 - "Enterprise Access Foundation — Phase 1.5 Execution Plan"
+### Community 46 - "CRM Target Model — Phase 0 Delta Plan"
+Cohesion: 0.13
+Nodes (14): 0. Context and the decision this plan corrects, 10. Explicitly out of scope for this document, 11. Decisions recorded (2026-09-16, Party/MasterData reconciliation), 12. Revised dependency graph (2026-09-16, after §5.A/B/D/E), 1. Source-of-truth documents, 2. Current-state recap, 3. Decision matrix — current → target → migration strategy → compatibility risk, 4. Sales module re-introduction — concrete shape (+6 more)
+
+### Community 47 - "Enterprise Access Foundation — Phase 1.5 Execution Plan"
 Cohesion: 0.14
 Nodes (13): Definition of Done, Enterprise Access Foundation — Phase 1.5 Execution Plan, Task 0: Pre-flight — confirm the five source documents, Task 10: Docs and CI sync, Task 1: Contracts — authorization primitives, Task 2: Access domain model rebuild, Task 3: Access persistence configurations + schema migration, Task 4: Access RLS + runtime role grants (+5 more)
-
-### Community 47 - "Enterprise Access Foundation — Phase 1.5 Adversarial Architecture Review"
-Cohesion: 0.15
-Nodes (13): 11. Versioning / Audit / Evidence, 13. Freeze Decisions (owner onayı gerekli), 14. YAGNI / Overengineering Risks, 15. Migration Risks, 16. "How This Architecture Could Fail", 1. Executive Verdict, 3. Benchmark Corrections, 4. Architecture Decisions Review (+5 more)
 
 ### Community 48 - "IdempotencyRecord"
 Cohesion: 0.12
 Nodes (15): IdempotencyRecord, CreatedAt, ExpiresAt, IdempotencyKey, Operation, PrincipalIssuer, PrincipalSubject, RequestHash (+7 more)
 
-### Community 49 - "CRM Target Model — Phase 0 Delta Plan"
-Cohesion: 0.13
-Nodes (14): 0. Context and the decision this plan corrects, 10. Explicitly out of scope for this document, 11. Decisions recorded (2026-09-16, Party/MasterData reconciliation), 12. Revised dependency graph (2026-09-16, after §5.A/B/D/E), 1. Source-of-truth documents, 2. Current-state recap, 3. Decision matrix — current → target → migration strategy → compatibility risk, 4. Sales module re-introduction — concrete shape (+6 more)
+### Community 49 - "Enterprise Access Foundation — Phase 1.5 Adversarial Architecture Review"
+Cohesion: 0.15
+Nodes (13): 11. Versioning / Audit / Evidence, 13. Freeze Decisions (owner onayı gerekli), 14. YAGNI / Overengineering Risks, 15. Migration Risks, 16. "How This Architecture Could Fail", 1. Executive Verdict, 3. Benchmark Corrections, 4. Architecture Decisions Review (+5 more)
 
 ### Community 50 - "AddPipelineTables"
 Cohesion: 0.20
@@ -484,9 +484,9 @@ Nodes (5): MigrationBuilder, EnableRowLevelSecurity, DateTimeOffset, Guid, Model
 Cohesion: 0.22
 Nodes (5): MigrationBuilder, RemoveCrmPartyEntity, DateTimeOffset, Guid, ModelBuilder
 
-### Community 82 - "Enterprise Access Foundation — Owner Decisions Final Closure"
+### Community 82 - "CRM Phase 1 — Lifecycle/Pipeline Foundation — Execution Plan"
 Cohesion: 0.25
-Nodes (8): 1. Owner Decisions Closed, 2. Repository Impact (yalnızca liste — implementasyon yok), 3. Frozen Invariants, 4. Remaining Owner Decisions, 5. Final Architecture Gate, Decision A — System Catalog, Decision B — Opportunity Owner, Enterprise Access Foundation — Owner Decisions Final Closure
+Nodes (7): Acceptance criteria, CRM Phase 1 — Lifecycle/Pipeline Foundation — Execution Plan, Task 0: Pre-flight design decisions — read and confirm before Task 3, Task 1: `OpportunityStatus` lifecycle rename — `Waiting/Offered/Completed/Canceled` → `Draft/Open/Won/Lost`, Task 2: Pipeline definition/version/stage tables (additive), Task 3: `Opportunity.PartyId` → `PartyRef` — MasterData cutover, Task 4: Docs, CI, memory sync
 
 ### Community 83 - "EvidenceRecord"
 Cohesion: 0.13
@@ -512,9 +512,9 @@ Nodes (11): CRM.Tests.Domain, CRM.Persistence.Configurations, CRM.Domain, IEntit
 Cohesion: 0.08
 Nodes (17): MasterData.Persistence.Migrations, DateTimeOffset, Guid, MigrationBuilder, DateTimeOffset, Guid, ModelBuilder, InitialMasterDataSchema (+9 more)
 
-### Community 89 - "Enterprise Access Foundation — Phase 1.5 İnceleme (Round 2)"
-Cohesion: 0.29
-Nodes (7): 1. Executive Verdict, 2. Round 1 Bulgularının PDF'e Yansıması, 3. PDF'in İtiraz Ettiği İki Nokta — İkisinde de PDF Haklı, 4. Doğrulanması Gereken Uyumlar (round 1'in izlediği maddeler), 5. Hâlâ Eksik Olanlar (round 1'den taşınan, PDF'te hâlâ kapanmamış — 4 madde), 6. Final Recommendation, Enterprise Access Foundation — Phase 1.5 İnceleme (Round 2)
+### Community 89 - "Enterprise Access Foundation — Owner Decisions Final Closure"
+Cohesion: 0.25
+Nodes (8): 1. Owner Decisions Closed, 2. Repository Impact (yalnızca liste — implementasyon yok), 3. Frozen Invariants, 4. Remaining Owner Decisions, 5. Final Architecture Gate, Decision A — System Catalog, Decision B — Opportunity Owner, Enterprise Access Foundation — Owner Decisions Final Closure
 
 ### Community 90 - "TenantAccessState"
 Cohesion: 0.17
@@ -536,9 +536,9 @@ Nodes (11): PermissionSet, Id, Items, Key, Name, Origin, TenantId, IReadOnlyColl
 Cohesion: 0.16
 Nodes (14): MergedPartyPayload, Guid, MergePartyCommand, CancellationToken, Task, TimeSpan, MergePartyHandler, MergePartyResult (+6 more)
 
-### Community 95 - "CRM Phase 1 — Lifecycle/Pipeline Foundation — Execution Plan"
-Cohesion: 0.25
-Nodes (7): Acceptance criteria, CRM Phase 1 — Lifecycle/Pipeline Foundation — Execution Plan, Task 0: Pre-flight design decisions — read and confirm before Task 3, Task 1: `OpportunityStatus` lifecycle rename — `Waiting/Offered/Completed/Canceled` → `Draft/Open/Won/Lost`, Task 2: Pipeline definition/version/stage tables (additive), Task 3: `Opportunity.PartyId` → `PartyRef` — MasterData cutover, Task 4: Docs, CI, memory sync
+### Community 95 - "Enterprise Access Foundation — Phase 1.5 İnceleme (Round 2)"
+Cohesion: 0.29
+Nodes (7): 1. Executive Verdict, 2. Round 1 Bulgularının PDF'e Yansıması, 3. PDF'in İtiraz Ettiği İki Nokta — İkisinde de PDF Haklı, 4. Doğrulanması Gereken Uyumlar (round 1'in izlediği maddeler), 5. Hâlâ Eksik Olanlar (round 1'den taşınan, PDF'te hâlâ kapanmamış — 4 madde), 6. Final Recommendation, Enterprise Access Foundation — Phase 1.5 İnceleme (Round 2)
 
 ### Community 96 - "6. Current Repo Deltas"
 Cohesion: 0.29
@@ -705,7 +705,7 @@ Cohesion: 0.50
 Nodes (3): DateTimeOffset, Guid, ModelBuilder
 
 ## Knowledge Gaps
-- **690 isolated node(s):** `Task 0: Pre-flight — confirm the five source documents`, `Task 1: Contracts — authorization primitives`, `Task 2: Access domain model rebuild`, `Task 3: Access persistence configurations + schema migration`, `Task 4: Access RLS + runtime role grants` (+685 more)
+- **690 isolated node(s):** `Stack`, `Code Conventions`, `Architecture Rules (binding — enforced by fitness functions, doc 12)`, `Database Rules`, `Enforcement Scope (approved 2026-09-16)` (+685 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 980 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -713,14 +713,14 @@ Nodes (3): DateTimeOffset, Guid, ModelBuilder
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Contracts` connect `Contracts` to `PrincipalRef`, `Access.Domain.Authorization`, `CustomerNeed`, `TenantFieldDefinition`, `PipelineDefinitionVersion`, `.SetTenantContextAsync`, `RoleAssignment`, `TenantMembership`, `IdempotencyRecord`, `OpportunityNeed`, `.HandleAsync`, `.GetPartiesAsync`, `RolePermissionSet`, `MasterData.Domain`, `.HandleAsync`, `.Create`, `OutboxMessage`, `IdempotencyRecord`, `TestData`, `EvidenceRecord`, `CompleteOpportunityHandler.cs`, `AccessAuthorizer`, `.ResolveAsync`, `IEntityTypeConfiguration`, `TenantAccessState`, `CRM.Persistence`, `PermissionSet`, `EntityRef`, `OpportunityStatus`, `TenantId`, `PipelineDefinition`, `PermissionSetItem`, `Role`, `PipelineStage`, `.Grant_replay_revoke_then_denied_regrant_by_the_now_unauthorized_principal`, `.Create`, `TenantId`, `Access.Persistence.Configurations`, `.GivenGrantAsync`?**
-  _High betweenness centrality (0.236) - this node is a cross-community bridge._
+  _High betweenness centrality (0.217) - this node is a cross-community bridge._
+- **Why does `CRM.Persistence` connect `CRM.Persistence` to `BackfillMasterDataParties`, `.SetTenantContextAsync`, `ModuleBoundaryTests`, `DropOpportunityPartyForeignKey`, `Contracts`, `FixCancelExpiryCheck`, `DropCrmParties`, `CRM.Persistence.Migrations`, `EnableRowLevelSecurity`, `RemoveCrmPartyEntity`, `AddPipelineTables`, `CompleteOpportunityHandler.cs`, `CrmDbContextFactory`, `FixOpportunityAssignedPrincipalIndex`, `RenameOpportunityLifecycle`?**
+  _High betweenness centrality (0.085) - this node is a cross-community bridge._
 - **Why does `AccessDbContext` connect `AccessDbContext` to `Access.Domain.Authorization`, `ExternalIdentity`, `RoleAssignment`, `TenantMembership`, `Account`, `.HandleAsync`, `RolePermissionSet`, `PostgresFixture`, `MasterDataDbContext`, `.HandleAsync`, `OutboxMessage`, `IdempotencyRecord`, `EvidenceRecord`, `AccessAuthorizer`, `TenantAccessState`, `PermissionSet`, `PermissionSetItem`, `ActionRegistryEntry`, `Role`, `.Grant_replay_revoke_then_denied_regrant_by_the_now_unauthorized_principal`, `TenantId`, `AccessDbContextFactory`, `.GivenGrantAsync`?**
-  _High betweenness centrality (0.092) - this node is a cross-community bridge._
-- **Why does `PrincipalRef` connect `PrincipalRef` to `Opportunity`, `.HandleAsync`, `ExternalIdentity`, `IdempotencyRecord`, `.Create`, `.HandleAsync`, `IdempotencyRecord`, `EvidenceRecord`, `.Grant_replay_revoke_then_denied_regrant_by_the_now_unauthorized_principal`, `IdempotencyRecord`, `TestData`, `EvidenceRecord`, `.CreatePartyAsync`, `AccessAuthorizer`, `.ResolveAsync`, `EvidenceRecord`, `.GivenGrantAsync`, `.Create`?**
-  _High betweenness centrality (0.075) - this node is a cross-community bridge._
+  _High betweenness centrality (0.080) - this node is a cross-community bridge._
 - **Are the 8 inferred relationships involving `PrincipalRef` (e.g. with `.HandleAsync()` and `.Owner_relation_grant_denies_a_non_owned_resource()`) actually correct?**
   _`PrincipalRef` has 8 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `Task 0: Pre-flight — confirm the five source documents`, `Task 1: Contracts — authorization primitives`, `Task 2: Access domain model rebuild` to the rest of the system?**
+- **What connects `Stack`, `Code Conventions`, `Architecture Rules (binding — enforced by fitness functions, doc 12)` to the rest of the system?**
   _690 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Opportunity` be split into smaller, more focused modules?**
   _Cohesion score 0.0659536541889483 - nodes in this community are weakly interconnected._
