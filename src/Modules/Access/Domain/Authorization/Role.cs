@@ -2,25 +2,33 @@ using Contracts;
 
 namespace Access.Domain.Authorization;
 
-/// <summary>`tenant_id = null` means a platform system role (docs/schema/identity-access-schema.md
-/// §2.1). Permission catalog itself is static/seeded, not a tenant row — see
-/// <see cref="Permission"/>.</summary>
+/// <summary>A tenant-facing security persona (round 1 decision #7: Role is never
+/// organization hierarchy). `TenantId` is NOT NULL — the old `tenant_id = null` "system
+/// role" model is retired; a platform-template-provisioned row is still a real,
+/// tenant-owned row with `Origin = OriginSystemTemplate` (round 4 Decision A,
+/// gap-closure §6).</summary>
 public sealed class Role
 {
+    public const string OriginTenant = "tenant";
+    public const string OriginSystemTemplate = "system_template";
+
     public long Id { get; private set; }
-    public TenantId? TenantId { get; private set; }
+    public TenantId TenantId { get; private set; }
+    public string Key { get; private set; } = null!;
     public string Name { get; private set; } = null!;
-    public bool IsSystem { get; private set; }
+    public string Origin { get; private set; } = null!;
 
     private Role() { }
 
-    public static Role Create(string name, TenantId? tenantId = null, bool isSystem = false)
+    public static Role Create(TenantId tenantId, string key, string name, string origin = OriginTenant)
     {
+        if (string.IsNullOrWhiteSpace(key))
+            throw new ArgumentException("Key is required.", nameof(key));
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name is required.", nameof(name));
-        if (tenantId is not null && isSystem)
-            throw new ArgumentException("A system role cannot be tenant-scoped.", nameof(isSystem));
+        if (origin is not (OriginTenant or OriginSystemTemplate))
+            throw new ArgumentException("Origin must be 'tenant' or 'system_template'.", nameof(origin));
 
-        return new Role { Name = name, TenantId = tenantId, IsSystem = isSystem };
+        return new Role { TenantId = tenantId, Key = key, Name = name, Origin = origin };
     }
 }

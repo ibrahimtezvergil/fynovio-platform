@@ -13,14 +13,22 @@ public sealed class RoleConfiguration : IEntityTypeConfiguration<Role>
 
         builder.HasKey(r => r.Id);
 
-        // Nullable: NULL = platform system role. No FK to a `tenants` table — none exists
-        // yet, same convention as tenant_memberships.tenant_id.
+        // NOT NULL now — the tenant_id=null "system role" model is retired
+        // (round 4 Decision A, gap-closure §6).
         builder.Property(r => r.TenantId)
-            .HasConversion(
-                id => id.HasValue ? id.Value.Value : (long?)null,
-                value => value.HasValue ? new TenantId(value.Value) : (TenantId?)null);
+            .HasConversion(id => id.Value, value => new TenantId(value))
+            .IsRequired();
 
+        builder.Property(r => r.Key).IsRequired();
         builder.Property(r => r.Name).IsRequired();
-        builder.Property(r => r.IsSystem).HasDefaultValue(false);
+        builder.Property(r => r.Origin).HasMaxLength(20).IsRequired();
+
+        builder.HasIndex(r => new { r.TenantId, r.Id }).IsUnique();
+        builder.HasIndex(r => new { r.TenantId, r.Key }).IsUnique();
+        builder.HasIndex(r => new { r.TenantId, r.Name }).IsUnique();
+
+        builder.ToTable(t => t.HasCheckConstraint(
+            "ck_roles_origin",
+            "origin IN ('tenant','system_template')"));
     }
 }
