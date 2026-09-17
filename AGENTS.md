@@ -77,6 +77,7 @@ This repo has a Graphify code graph at `graphify-out/`. Prefer `graphify query "
 - Default isolation: **1 task = 1 branch = 1 worktree = 1 agent session**. Two agents (e.g. Claude Code and Codex) must not concurrently edit the same working tree.
 - Preferred cross-model review flow: one agent implements → verifies → exposes the branch/diff → the other agent reviews independently → the first agent validates findings against actual code/tests/runtime evidence and fixes only valid findings. The reverse flow is equally valid.
 - Codex CLI is present on this machine (detected, not configured by this repo) — cross-model review today is invoked manually by the developer, not automatically triggered by either agent.
+- **Branch hygiene:** once a branch is merged into `main` (via `finishing-a-development-branch` or otherwise), delete the branch and remove its worktree immediately — same step, not a follow-up. A merged branch's commits stay permanently reachable from `main`'s history regardless of whether the branch ref still exists, so keeping it around adds no rollback value; if a rollback point is explicitly wanted, tag the commit (`git tag <name> <hash>`) instead of leaving the branch alive. Only keep a branch when it has NOT yet been merged (still diverging from `main`).
 
 ## Commands
 ```bash
