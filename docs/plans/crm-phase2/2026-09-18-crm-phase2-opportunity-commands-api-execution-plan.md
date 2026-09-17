@@ -465,6 +465,7 @@ level, not just in the aggregate."
 → Commit: `be63eb3` "feat(crm): add PipelineStage.IsActive/IsEntry with a one-entry-per-version invariant"
 → Follow-up fix: `c7aea74` "fix(crm-tests): seed the first pipeline stage before asserting on it" — the implementer subagent never actually ran `dotnet test` (VSTest fails outright in this sandbox without `dangerouslyDisableSandbox` — see memory `project_sandbox_msbuild_hang`) and reported DONE based on "compiles cleanly." Independent verification found the new integration test (Step 7) crashed with "Sequence contains no elements" because it assumed `SeedVersionAsync()` already created a first stage; fixed by seeding it explicitly, matching this test file's existing pattern.
 → Verified (controller, with `dangerouslyDisableSandbox: true`): domain tests 7/7 pass, `PipelineConstraintTests` 8/8 pass, full `CRM.Tests` suite 83/83 pass (79 existing + 4 new), 0 failures.
+→ Follow-up fix: `808d017` "fix(crm): document MarkEntry's unsafe single-save persistence and prove the safe pattern" — code-quality review flagged a missing persisted-`MarkEntry` test; writing it surfaced a real bug (moving `IsEntry` to a lower-Id stage in one `SaveChangesAsync()` threw Postgres `23505`, since the partial unique index can't be deferrable and EF's statement order isn't guaranteed). `MarkEntry` has no caller anywhere in this plan yet, so this is a documented-contract fix (two-phase save required), not a live-path regression. See memory `project_ef_partial_unique_flag_ordering`. Full suite after fix: 84/84 pass.
 
 ---
 
