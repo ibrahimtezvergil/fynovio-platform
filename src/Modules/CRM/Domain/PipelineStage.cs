@@ -13,7 +13,7 @@ public sealed class PipelineStage
 
     private PipelineStage() { }
 
-    internal static PipelineStage Create(TenantId tenantId, string name, int sortOrder)
+    internal static PipelineStage Create(TenantId tenantId, long pipelineDefinitionVersionId, string name, int sortOrder)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name is required.", nameof(name));
@@ -23,6 +23,7 @@ public sealed class PipelineStage
         return new PipelineStage
         {
             TenantId = tenantId,
+            PipelineDefinitionVersionId = pipelineDefinitionVersionId,
             Name = name,
             SortOrder = sortOrder,
             CreatedAt = DateTimeOffset.UtcNow

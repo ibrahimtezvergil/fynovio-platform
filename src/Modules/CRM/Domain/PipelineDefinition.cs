@@ -34,12 +34,17 @@ public sealed class PipelineDefinition
         };
     }
 
+    /// <summary>Stamps the version with this definition's current `Id`. `Versions` is
+    /// EF-`Ignore()`d (see PipelineDefinitionConfiguration — prevents the duplicate/shadow-FK
+    /// bug a parent+child dual mapping caused earlier), so there is no navigation-based
+    /// fixup: call this only after the definition itself has been saved and has a real,
+    /// DB-assigned `Id`, or the version's FK will be persisted as 0.</summary>
     public PipelineDefinitionVersion AddVersion(int versionNumber)
     {
         if (_versions.Any(v => v.VersionNumber == versionNumber))
             throw new InvalidOperationException($"Version {versionNumber} already exists on this definition.");
 
-        var version = PipelineDefinitionVersion.Create(TenantId, versionNumber);
+        var version = PipelineDefinitionVersion.Create(TenantId, Id, versionNumber);
         _versions.Add(version);
         UpdatedAt = DateTimeOffset.UtcNow;
         return version;

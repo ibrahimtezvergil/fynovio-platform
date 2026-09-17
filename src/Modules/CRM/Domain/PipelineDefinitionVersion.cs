@@ -15,7 +15,7 @@ public sealed class PipelineDefinitionVersion
 
     private PipelineDefinitionVersion() { }
 
-    internal static PipelineDefinitionVersion Create(TenantId tenantId, int versionNumber)
+    internal static PipelineDefinitionVersion Create(TenantId tenantId, long pipelineDefinitionId, int versionNumber)
     {
         if (versionNumber <= 0)
             throw new ArgumentOutOfRangeException(nameof(versionNumber), "Version number must be positive.");
@@ -23,17 +23,21 @@ public sealed class PipelineDefinitionVersion
         return new PipelineDefinitionVersion
         {
             TenantId = tenantId,
+            PipelineDefinitionId = pipelineDefinitionId,
             VersionNumber = versionNumber,
             CreatedAt = DateTimeOffset.UtcNow
         };
     }
 
+    /// <summary>Stamps the stage with this version's current `Id` — same save-before-add
+    /// requirement as PipelineDefinition.AddVersion, for the same reason (`Stages` is
+    /// EF-`Ignore()`d, no navigation-based fixup).</summary>
     public PipelineStage AddStage(string name, int sortOrder)
     {
         if (_stages.Any(s => s.SortOrder == sortOrder))
             throw new InvalidOperationException($"Sort order {sortOrder} is already used on this version.");
 
-        var stage = PipelineStage.Create(TenantId, name, sortOrder);
+        var stage = PipelineStage.Create(TenantId, Id, name, sortOrder);
         _stages.Add(stage);
         return stage;
     }
