@@ -110,4 +110,106 @@ public sealed class OpportunityStateMachineTests
         Assert.Throws<InvalidOperationException>(() =>
             opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 10m));
     }
+
+    // CRM_Phase1_Test_Coverage_Verification_Report.pdf F-09: full Draft/Open/Won/Lost x
+    // command transition matrix. Legal paths and the guards already exercised above; the
+    // remaining terminal-state and re-entrancy rejections that had no test:
+
+    [Fact]
+    public void AddLine_is_rejected_after_won()
+    {
+        var opportunity = WonOpportunity();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 10m));
+    }
+
+    [Fact]
+    public void AddLine_is_rejected_after_lost()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.Lose("müşteri vazgeçti");
+
+        Assert.Throws<InvalidOperationException>(() =>
+            opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 10m));
+    }
+
+    [Fact]
+    public void Open_is_rejected_when_already_open()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7)));
+    }
+
+    [Fact]
+    public void Open_is_rejected_when_won()
+    {
+        var opportunity = WonOpportunity();
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7)));
+    }
+
+    [Fact]
+    public void Open_is_rejected_when_lost()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.Lose("müşteri vazgeçti");
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7)));
+    }
+
+    [Fact]
+    public void Win_is_rejected_when_already_won()
+    {
+        var opportunity = WonOpportunity();
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.Win());
+    }
+
+    [Fact]
+    public void Win_is_rejected_when_lost()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.Lose("müşteri vazgeçti");
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.Win());
+    }
+
+    [Fact]
+    public void Lose_is_rejected_when_already_won()
+    {
+        var opportunity = WonOpportunity();
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.Lose("çok geç"));
+    }
+
+    [Fact]
+    public void Lose_is_rejected_when_already_lost()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.Lose("müşteri vazgeçti");
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.Lose("ikinci kez"));
+    }
+
+    [Fact]
+    public void CancelLine_after_lost_is_rejected()
+    {
+        var opportunity = NewDraftOpportunity();
+        var line = opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m);
+        opportunity.Lose("müşteri vazgeçti");
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.CancelLine(line, "geç kaldı"));
+    }
+
+    private static Opportunity WonOpportunity()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Win();
+        return opportunity;
+    }
 }

@@ -232,8 +232,8 @@ started — this table is the roadmap, not the script.
 |---|---|---|---|
 | 0 — Inspect / Delta Plan | This document + `docs/plans/2026-09-16-masterdata-party-foundation.md` | — | ✅ Done |
 | **0.5 — MasterData / Party foundation** *(new, 2026-09-16)* | `Party` (+`party_type`), `PartyRelationship`, `PartyExternalIdentity` in a new, previously-placeholder `MasterData` module; `PartyRef`/`IPartyDirectory`/`IPartyIdentityResolver` in `Contracts`; own RLS, own outbox, own idempotency, `tests/MasterData.Tests`. Built and tested **fully isolated from CRM** — `crm.parties` untouched. Design: `docs/plans/2026-09-16-masterdata-party-foundation.md`. Execution plan: `docs/plans/2026-09-16-masterdata-phase0.5-execution-plan.md` (11 tasks, all committed). | Nothing — this is now the foundation everything else sits on | ✅ Done — `tests/MasterData.Tests` 30/30, `tests/CRM.Tests` 41/41 (no regression) |
-| 1 — Lifecycle/Pipeline foundation | `OpportunityStatus` → `Draft/Open/Won/Lost`; new `pipeline_definitions`/`pipeline_definition_versions`/`pipeline_stages` tables + entities in `CRM.Domain`; `Opportunity` is built **directly** against `PartyRef` (no interim `long PartyId`+FK step — that would just be reworked at the old Phase 5); `OpportunityLine` left structurally untouched per §5.B (no destructive rewrite — it's flagged as a legacy/pilot artifact, not restructured); compatibility mapping so existing tests are updated, not silently broken | Phase 0.5 (done — so `Opportunity.PartyRef` is built once, correctly, not twice) | ✅ Done — `tests/CRM.Tests` 46/46, `tests/MasterData.Tests` 30/30 (no regression) |
-| **1.5 — Access enforcement baseline** *(new, 2026-09-16, per §5.D)* | Bring `Access` to the same enforcement-scope baseline CRM/MasterData already met: Host registration, tenant isolation/RLS where applicable, an authorization contract/policy, `tests/Access.Tests` (integration + architecture). No always-allow stub. | Independent of Phase 1's domain-model work — runs in **parallel** with Phase 1, not after it | ⚪ Not started — own execution plan not yet written |
+| 1 — Lifecycle/Pipeline foundation | `OpportunityStatus` → `Draft/Open/Won/Lost`; new `pipeline_definitions`/`pipeline_definition_versions`/`pipeline_stages` tables + entities in `CRM.Domain`; `Opportunity` is built **directly** against `PartyRef` (no interim `long PartyId`+FK step — that would just be reworked at the old Phase 5); `OpportunityLine` left structurally untouched per §5.B (no destructive rewrite — it's flagged as a legacy/pilot artifact, not restructured); compatibility mapping so existing tests are updated, not silently broken | Phase 0.5 (done — so `Opportunity.PartyRef` is built once, correctly, not twice) | ✅ Done — `tests/CRM.Tests` 79/79 (grown from 46 by the 2026-09-17 test-coverage review, which also found and fixed a missing-RLS and an un-set-parent-FK defect), `tests/MasterData.Tests` 30/30 (no regression) |
+| **1.5 — Access enforcement baseline** *(new, 2026-09-16, per §5.D)* | Bring `Access` to the same enforcement-scope baseline CRM/MasterData already met: Host registration, tenant isolation/RLS where applicable, an authorization contract/policy, `tests/Access.Tests` (integration + architecture). No always-allow stub. | Independent of Phase 1's domain-model work — runs in **parallel** with Phase 1, not after it | ✅ Done — `tests/Access.Tests` 58/58. Execution plan: `docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-execution-plan.md` |
 | 2 — Opportunity commands/API | `CreateOpportunity`, `OpenOpportunity`, `ChangePipelineStage`, `Add/Confirm/RejectOpportunityNeed`, `WinOpportunity`, `LoseOpportunity`, `ReopenOpportunity` (if enabled) as real `CRM.Application` commands + first HTTP endpoints; each gets idempotency, evidence (for risk-catalogued ones), outbox, RLS test coverage matching `CompleteOpportunityHandlerTests`'s pattern; `WinOpportunity` gets a real authorization gate per §5.A (no mandatory approval workflow, but no always-allow either) | Phase 1 **and** Phase 1.5 (Access baseline) both complete — §5.D's explicit prerequisite | ⚪ Not started |
 | 3 — Customer Need capability | `OpportunityNeed`/`CustomerNeed` gain `Source`/`Confidence`/`ConfirmationStatus`/`EvidenceRef`/`EstimatedValueSnapshot`; `estimated_amount` derivation from confirmed needs (closes an already-tracked gap) | Phase 2 (needs a real command surface to attach to) | ⚪ Not started |
 | 4 — Activity timeline | New `activities` table/entity in CRM, event ingestion scaffolding (no real producers yet besides CRM's own pipeline-stage-changed event) | Phase 1–3 | ⚪ Not started |
@@ -389,21 +389,37 @@ detail, not a reversal of the decision. `OpportunityStatus` renamed to
 `Draft/Open/Won/Lost`; `pipeline_definitions`/`pipeline_definition_versions`/
 `pipeline_stages` added, additive and unenforced. Execution plan:
 `docs/plans/crm-phase1/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md`, all four
-tasks done.
+tasks done, merged to `main`.
 
-**Next step:** Phase 1's execution plan is written —
-`docs/plans/crm-phase1/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md` — not yet run.
-Phase 1.5 (Access baseline) needs its own execution plan before Phase 2 can start; not
-yet written.
+**F-08 decision record (2026-09-17, per `CRM_Phase1_Test_Coverage_Verification_Report.pdf`):**
+the implemented `PipelineStage` is deliberately narrower than the target model's binding
+spec — it has `Id`/`TenantId`/`PipelineDefinitionVersionId`/`Name`/`SortOrder`/`CreatedAt`
+only. No stable key/code independent of `Name` (so behavior must not depend on a
+stage-name string, per the target spec), no `active`/enabled flag, and no
+capability/policy references (the target spec's `quote.create`/`quote.send`/
+`discount.request`/`approval.request` examples). This was already implicit in "additive
+and unenforced" above; recorded explicitly now because nothing assigns a stage to an
+Opportunity yet in Phase 1 (see `OpportunityPipelineFieldsTests` in `tests/CRM.Tests`,
+a regression lock proving there is currently no public write path), and Phase 2's
+`ChangePipelineStage` — the first command that will actually read a stage to gate
+behavior — is the natural point to widen the shape, not before. Not a schema change
+here.
+
+**Phase 1.5 complete (2026-09-17):** the Enterprise Access Foundation
+(`docs/plans/enterprise-access-foundation/`) is merged to `main` — `Access` module
+rebuilt into the control-plane foundation (default-deny `AccessAuthorizer`,
+`AccessScopeResolver`, `Bootstrap`/`Grant`/`Revoke` handlers, RLS), wired into `Host`.
+Phase 2 (Opportunity commands/API) can now start — its prerequisite (§5.D, Phase 1
+**and** Phase 1.5 both complete) is satisfied; no execution plan written for it yet.
 
 ## 12. Revised dependency graph (2026-09-16, after §5.A/B/D/E)
 
 ```mermaid
 graph TD
     P0["Phase 0 — Delta Plan ✅"] --> P05["Phase 0.5 — MasterData/Party ✅"]
-    P05 --> P1["Phase 1 — Lifecycle/Pipeline 🟡 plan written"]
+    P05 --> P1["Phase 1 — Lifecycle/Pipeline ✅"]
     P1 --> P2["Phase 2 — Opportunity commands/API ⚪"]
-    P15["Phase 1.5 — Access baseline ⚪ (parallel with Phase 1, per §5.D)"] --> P2
+    P15["Phase 1.5 — Access baseline ✅ (parallel with Phase 1, per §5.D)"] --> P2
     P2 --> P3["Phase 3 — Customer Need capability ⚪"]
     P1 --> P4["Phase 4 — Activity timeline ⚪"]
     P2 --> P4

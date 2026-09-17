@@ -348,9 +348,9 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1789639085.3948514,
-    "seen": 1789641647.528013,
-    "ast_hash": "9c0530c489eb0660cdf50dc6441fc61f",
+    "mtime": 1789647678.4602816,
+    "seen": 1789647689.579597,
+    "ast_hash": "662cb6c02d97c1f9b98b723902d02b11",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -366,15 +366,15 @@
     "semantic_hash": ""
   },
   "docs/schema/crm-sales-schema.md": {
-    "mtime": 1789587882.991081,
-    "seen": 1789587953.309601,
-    "ast_hash": "0298f836cb99620e13084904137a98ba",
+    "mtime": 1789647678.4634306,
+    "seen": 1789647689.5798872,
+    "ast_hash": "d0e94fb335dd3735d66e5f1043ff30a1",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1789587882.9897916,
-    "seen": 1789587953.309587,
-    "ast_hash": "a23cc08a1491b1f000f5695da410f5e2",
+    "mtime": 1789647678.4607935,
+    "seen": 1789647689.579614,
+    "ast_hash": "943347daa0c841198ce8256e9ad30ca4",
     "semantic_hash": ""
   },
   "src/Contracts/IHasRowVersion.cs": {
@@ -534,9 +534,9 @@
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Domain/OpportunityStateMachineTests.cs": {
-    "mtime": 1789587883.014404,
-    "seen": 1789587953.3095329,
-    "ast_hash": "c55a0395445cc82ba8806400b63f178c",
+    "mtime": 1789647678.483381,
+    "seen": 1789647689.578882,
+    "ast_hash": "4b51e802dc57a66d0e95e3b2ef396f8c",
     "semantic_hash": ""
   },
   "tests/CRM.Tests/TestData.cs": {
@@ -626,7 +626,7 @@
   "scripts/create-runtime-role.sql": {
     "mtime": 1789635723.4608362,
     "seen": 1789637079.768631,
-    "ast_hash": "80ffe8ed80c8a481b6a6cf4283849f81",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/CompleteOpportunityCommand.cs": {
@@ -1026,21 +1026,21 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Domain/PipelineDefinition.cs": {
-    "mtime": 1789587883.0077224,
-    "seen": 1789587953.309387,
-    "ast_hash": "1470a405cde367d65d707c55d9b8ff61",
+    "mtime": 1789647678.4804273,
+    "seen": 1789647689.576427,
+    "ast_hash": "5d5e3833535ba2d188375e385f3e6a43",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Domain/PipelineDefinitionVersion.cs": {
-    "mtime": 1789587883.0078347,
-    "seen": 1789587953.309388,
-    "ast_hash": "e908b2255523e279e08de325f1cb7f6d",
+    "mtime": 1789647678.4806933,
+    "seen": 1789647689.576428,
+    "ast_hash": "95040a208648294b7971c088a67ca206",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Domain/PipelineStage.cs": {
-    "mtime": 1789587883.0079622,
-    "seen": 1789587953.30939,
-    "ast_hash": "29d6d8d772da5605e749540726145bfe",
+    "mtime": 1789647678.4814522,
+    "seen": 1789647689.5764291,
+    "ast_hash": "946d13c693f58b19d7cdedf532a970eb",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Persistence/Configurations/PipelineDefinitionConfiguration.cs": {
@@ -1512,15 +1512,15 @@
     "semantic_hash": ""
   },
   "docs/plans/crm-phase1/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md": {
-    "mtime": 1789636995.9003112,
-    "seen": 1789637079.7687948,
-    "ast_hash": "955db1fa94c19937acadf391b2ed3cd3",
+    "mtime": 1789647678.4615202,
+    "seen": 1789647689.579731,
+    "ast_hash": "2be26cbee3ab2808c2a730d843ff2b9f",
     "semantic_hash": ""
   },
   "docs/plans/crm-phase1/2026-09-16-crm-target-model-phase0-delta-plan.md": {
-    "mtime": 1789636995.8985436,
-    "seen": 1789637079.768796,
-    "ast_hash": "640ca8d1e99ff94a7ea69231a77e5e38",
+    "mtime": 1789647678.462203,
+    "seen": 1789647689.579732,
+    "ast_hash": "c4c31db78a363fdf4ad74e24297ad39a",
     "semantic_hash": ""
   },
   "docs/plans/enterprise-access-foundation/2026-09-17-enterprise-access-foundation-execution-plan.md": {
@@ -1590,15 +1590,63 @@
     "semantic_hash": ""
   },
   "docs/plans/crm-phase1/2026-09-17-crm-phase1-test-plan.md": {
-    "mtime": 1789643308.6288416,
-    "seen": 1789645001.6724029,
-    "ast_hash": "3e5acf98cf4b2787076ffa88e013c10a",
+    "mtime": 1789647678.46268,
+    "seen": 1789647689.579733,
+    "ast_hash": "5b9a9c3646f30d0a723e79b5e3abf3ea",
     "semantic_hash": ""
   },
   "docs/plans/crm-phase1/CRM_Phase1_Test_Coverage_Verification_Report.pdf": {
     "mtime": 1789644632.578007,
     "seen": 1789645001.672411,
     "ast_hash": "b35f9e1b7ce758a0d49eb1e3699558f4",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Persistence/Migrations/20260917113750_EnableRowLevelSecurityOnPipelineTables.Designer.cs": {
+    "mtime": 1789647678.4817786,
+    "seen": 1789647689.577353,
+    "ast_hash": "0d325da72d928297927f5960700ccdf9",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Persistence/Migrations/20260917113750_EnableRowLevelSecurityOnPipelineTables.cs": {
+    "mtime": 1789647678.4823973,
+    "seen": 1789647689.577354,
+    "ast_hash": "e8cf0f8928c96fb5d468f6f7cde99db9",
+    "semantic_hash": ""
+  },
+  "tests/CRM.Tests/Domain/OpportunityPipelineFieldsTests.cs": {
+    "mtime": 1789647678.482791,
+    "seen": 1789647689.57886,
+    "ast_hash": "672b674b68e53f6070a32c2dbc2d041a",
+    "semantic_hash": ""
+  },
+  "tests/CRM.Tests/Integration/LegacyDataMigrationTests.cs": {
+    "mtime": 1789647678.4836395,
+    "seen": 1789647689.578926,
+    "ast_hash": "8bec3d59b190b11d5da1f84cb7110949",
+    "semantic_hash": ""
+  },
+  "tests/CRM.Tests/Integration/LegacyMigrationFixture.cs": {
+    "mtime": 1789647678.4842186,
+    "seen": 1789647689.578927,
+    "ast_hash": "f3a1e4ad26aea53f33cc82530d7562b2",
+    "semantic_hash": ""
+  },
+  "tests/CRM.Tests/Integration/PipelineConstraintTests.cs": {
+    "mtime": 1789647678.4844913,
+    "seen": 1789647689.5789921,
+    "ast_hash": "cd037e24a24a2f294a47534ea0100081",
+    "semantic_hash": ""
+  },
+  "tests/CRM.Tests/Integration/PipelineDefinitionPersistenceTests.cs": {
+    "mtime": 1789647678.4847503,
+    "seen": 1789647689.5789921,
+    "ast_hash": "b26100eb9bd38ebbfbb94789e80bf1ff",
+    "semantic_hash": ""
+  },
+  "tests/CRM.Tests/Integration/PipelineRlsTests.cs": {
+    "mtime": 1789647678.4848819,
+    "seen": 1789647689.5789928,
+    "ast_hash": "4e6846d20b91068bfb70899516d5f28e",
     "semantic_hash": ""
   }
 }
