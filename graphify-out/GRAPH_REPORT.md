@@ -1,7 +1,7 @@
 # Graph Report - fynovio-platform  (2026-09-17)
 
 ## Corpus Check
-- 269 files · ~135,832 words
+- 269 files · ~135,921 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a314918b`
+- Built from commit: `1b722f8b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -175,15 +175,15 @@
 
 ## Surprising Connections (you probably didn't know these)
 - `TestData` --references--> `PrincipalRef`  [EXTRACTED]
-  tests/CRM.Tests/TestData.cs → src/Contracts/PrincipalRef.cs
-- `TestData` --references--> `PrincipalRef`  [EXTRACTED]
   tests/MasterData.Tests/TestData.cs → src/Contracts/PrincipalRef.cs
-- `PipelineDefinition` --references--> `PipelineDefinitionVersion`  [EXTRACTED]
-  src/Modules/CRM/Domain/PipelineDefinition.cs → src/Modules/CRM/Domain/PipelineDefinitionVersion.cs
-- `CrmDbContext` --references--> `PipelineDefinition`  [EXTRACTED]
-  src/Modules/CRM/Persistence/CrmDbContext.cs → src/Modules/CRM/Domain/PipelineDefinition.cs
-- `PipelineDefinitionVersionConfiguration` --references--> `PipelineDefinitionVersion`  [EXTRACTED]
-  src/Modules/CRM/Persistence/Configurations/PipelineDefinitionVersionConfiguration.cs → src/Modules/CRM/Domain/PipelineDefinitionVersion.cs
+- `TestData` --references--> `PrincipalRef`  [EXTRACTED]
+  tests/CRM.Tests/TestData.cs → src/Contracts/PrincipalRef.cs
+- `Opportunity` --implements--> `IHasRowVersion`  [EXTRACTED]
+  src/Modules/CRM/Domain/Opportunity.cs → src/Contracts/IHasRowVersion.cs
+- `Opportunity` --references--> `PrincipalRef`  [EXTRACTED]
+  src/Modules/CRM/Domain/Opportunity.cs → src/Contracts/PrincipalRef.cs
+- `Opportunity` --references--> `OpportunityLine`  [EXTRACTED]
+  src/Modules/CRM/Domain/Opportunity.cs → src/Modules/CRM/Domain/OpportunityLine.cs
 
 ## Import Cycles
 - None detected.
@@ -687,11 +687,11 @@ Nodes (3): CrmDbContextTenantExtensions, CancellationToken, Task
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Contracts` connect `Contracts` to `PrincipalRef`, `Access.Persistence`, `CustomerNeed`, `OpportunityLine`, `TenantFieldDefinition`, `Access.Domain.Identity`, `OutboxMessage`, `CompleteOpportunityHandler.cs`, `EvidenceRecord`, `.GetPartiesAsync`, `.SetTenantContextAsync`, `TenantMembership`, `IdempotencyRecord`, `.HandleAsync`, `MasterData.Application`, `OpportunityNeed`, `ActorContext`, `IdempotencyRecord`, `PartyRef`, `EntityRef`, `EvidenceRecord`, `GrantRoleAssignmentHandler.cs`, `PartyRelationship`, `OutboxMessage`, `MasterDataDbContext`, `PostgresFixture`, `AuthorizationDecision`, `.AuthorizeAsync`, `CRM.Domain`, `TenantAccessState`, `.GetPartiesAsync`, `.HandleAsync`, `CRM.Persistence.Configurations`, `OpportunityStatus`, `PipelineDefinition`, `TenantId`, `AccessDbContext`, `Access.Domain.Authorization`, `PartyExternalIdentity`?**
-  _High betweenness centrality (0.202) - this node is a cross-community bridge._
+  _High betweenness centrality (0.243) - this node is a cross-community bridge._
 - **Why does `AccessDbContext` connect `AccessDbContext` to `MasterDataDbContext`, `Access.Domain.Identity`, `TenantMembership`, `.HandleAsync`, `IEntityTypeConfiguration`, `OutboxMessage`, `IdempotencyRecord`, `.Create`, `EvidenceRecord`, `ExternalIdentity`, `.GivenGrantAsync`, `RoleAssignment`, `TenantAccessState`, `PermissionSet`?**
-  _High betweenness centrality (0.079) - this node is a cross-community bridge._
-- **Why does `PrincipalRef` connect `PrincipalRef` to `Opportunity`, `Contracts`, `.HandleAsync`, `IdempotencyRecord`, `.HandleAsync`, `PostgresFixture`, `OpportunityStateMachineTests`, `ActorContext`, `IdempotencyRecord`, `EvidenceRecord`, `AccessDbContext`, `IdempotencyRecord`, `EvidenceRecord`, `ExternalIdentity`, `.Owner_relation_grant_is_consistent_across_both_contracts`, `PartyExternalIdentity`, `EvidenceRecord`, `.GivenGrantAsync`?**
-  _High betweenness centrality (0.072) - this node is a cross-community bridge._
+  _High betweenness centrality (0.085) - this node is a cross-community bridge._
+- **Why does `CRM.Persistence` connect `CRM.Persistence` to `BackfillMasterDataParties`, `Access.Persistence`, `ModuleBoundaryTests`, `DropOpportunityPartyForeignKey`, `DropCrmParties`, `FixCancelExpiryCheck`, `CompleteOpportunityHandler.cs`, `CrmDbContext`, `CRM.Persistence.Migrations`, `RemoveCrmPartyEntity`, `AddPipelineTables`, `.SetTenantContextAsync`, `CRM.Domain`, `InitialMasterDataSchema`, `FixOpportunityAssignedPrincipalIndex`, `RenameOpportunityLifecycle`?**
+  _High betweenness centrality (0.081) - this node is a cross-community bridge._
 - **Are the 14 inferred relationships involving `PrincipalRef` (e.g. with `.HandleAsync()` and `.Additive_grants_across_two_roles_compose_without_replacement()`) actually correct?**
   _`PrincipalRef` has 14 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Stack`, `Code Conventions`, `Architecture Rules (binding — enforced by fitness functions, doc 12)` to the rest of the system?**
