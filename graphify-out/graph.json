@@ -23216,7 +23216,7 @@
       "node_kind": "heading",
       "norm_label": "definition of done",
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L2493"
+      "source_location": "L2526"
     },
     {
       "id": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_enterprise_access_foundation_phase_1_5_execution_plan",
@@ -23240,7 +23240,7 @@
       "node_kind": "heading",
       "norm_label": "task 0: pre-flight \u2014 confirm the five source documents",
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L55"
+      "source_location": "L78"
     },
     {
       "id": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_task_10_docs_and_ci_sync",
@@ -23252,7 +23252,7 @@
       "node_kind": "heading",
       "norm_label": "task 10: docs and ci sync",
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L2441"
+      "source_location": "L2473"
     },
     {
       "id": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_task_1_contracts_authorization_primitives",
@@ -23264,7 +23264,7 @@
       "node_kind": "heading",
       "norm_label": "task 1: contracts \u2014 authorization primitives",
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L75"
+      "source_location": "L98"
     },
     {
       "id": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_task_2_access_domain_model_rebuild",
@@ -23276,7 +23276,7 @@
       "node_kind": "heading",
       "norm_label": "task 2: access domain model rebuild",
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L339"
+      "source_location": "L363"
     },
     {
       "id": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_task_3_access_persistence_configurations_schema_migration",
@@ -23288,7 +23288,7 @@
       "node_kind": "heading",
       "norm_label": "task 3: access persistence configurations + schema migration",
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L802"
+      "source_location": "L827"
     },
     {
       "id": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_task_4_access_rls_runtime_role_grants",
@@ -23300,7 +23300,7 @@
       "node_kind": "heading",
       "norm_label": "task 4: access rls + runtime role grants",
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L1146"
+      "source_location": "L1172"
     },
     {
       "id": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_task_5_action_registry_manifest_idempotent_seeder",
@@ -23312,7 +23312,7 @@
       "node_kind": "heading",
       "norm_label": "task 5: action registry \u2014 manifest + idempotent seeder",
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L1267"
+      "source_location": "L1294"
     },
     {
       "id": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_task_6_pdp_iauthorizer_and_query_scope_resolver_iaccessscoperesolver",
@@ -23324,7 +23324,7 @@
       "node_kind": "heading",
       "norm_label": "task 6: pdp (`iauthorizer`) and query scope resolver (`iaccessscoperesolver`)",
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L1682"
+      "source_location": "L1710"
     },
     {
       "id": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_task_7_bootstrap_grant_revoke_commands",
@@ -23336,7 +23336,7 @@
       "node_kind": "heading",
       "norm_label": "task 7: bootstrap + grant/revoke commands",
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L1900"
+      "source_location": "L1929"
     },
     {
       "id": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_task_8_host_registration",
@@ -23348,7 +23348,7 @@
       "node_kind": "heading",
       "norm_label": "task 8: host registration",
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L2197"
+      "source_location": "L2227"
     },
     {
       "id": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_task_9_tests_access_tests_the_full_test_project",
@@ -23360,7 +23360,7 @@
       "node_kind": "heading",
       "norm_label": "task 9: `tests/access.tests` \u2014 the full test project",
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L2251"
+      "source_location": "L2282"
     },
     {
       "id": "docs_plans_2026_09_17_enterprise_access_foundation_review_11_versioning_audit_evidence",
@@ -59750,7 +59750,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L1146",
+      "source_location": "L1172",
       "weight": 1.0
     },
     {
@@ -59761,7 +59761,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L1267",
+      "source_location": "L1294",
       "weight": 1.0
     },
     {
@@ -59772,7 +59772,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L1682",
+      "source_location": "L1710",
       "weight": 1.0
     },
     {
@@ -59783,7 +59783,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L1900",
+      "source_location": "L1929",
       "weight": 1.0
     },
     {
@@ -59794,7 +59794,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L2197",
+      "source_location": "L2227",
       "weight": 1.0
     },
     {
@@ -59805,7 +59805,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L2251",
+      "source_location": "L2282",
       "weight": 1.0
     },
     {
@@ -59816,7 +59816,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L2441",
+      "source_location": "L2473",
       "weight": 1.0
     },
     {
@@ -59827,7 +59827,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L2493",
+      "source_location": "L2526",
       "weight": 1.0
     },
     {
@@ -59838,7 +59838,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L339",
+      "source_location": "L363",
       "weight": 1.0
     },
     {
@@ -59849,18 +59849,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L55",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_enterprise_access_foundation_phase_1_5_execution_plan",
-      "target": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_task_1_contracts_authorization_primitives",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L75",
+      "source_location": "L78",
       "weight": 1.0
     },
     {
@@ -59871,7 +59860,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
-      "source_location": "L802",
+      "source_location": "L827",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_enterprise_access_foundation_phase_1_5_execution_plan",
+      "target": "docs_plans_2026_09_17_enterprise_access_foundation_execution_plan_task_1_contracts_authorization_primitives",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md",
+      "source_location": "L98",
       "weight": 1.0
     },
     {
@@ -72427,5 +72427,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "77a3ea487f321f2cde7ad83cd4037cce4d07856f"
+  "built_at_commit": "8262b0ae3fcbbc633fdf9dfd08bec6a9aec79e05"
 }

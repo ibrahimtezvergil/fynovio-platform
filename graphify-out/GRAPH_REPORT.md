@@ -1,7 +1,7 @@
 # Graph Report - fynovio-platform  (2026-09-17)
 
 ## Corpus Check
-- 258 files · ~122,777 words
+- 258 files · ~123,339 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `77a3ea48`
+- Built from commit: `8262b0ae`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -161,23 +161,23 @@
 3. `AccessDbContext` - 46 edges
 4. `PrincipalRef` - 36 edges
 5. `CrmDbContext` - 32 edges
-6. `Access.Domain.Authorization` - 28 edges
-7. `MasterDataDbContext` - 28 edges
+6. `MasterDataDbContext` - 28 edges
+7. `Access.Domain.Authorization` - 28 edges
 8. `OpportunityLine` - 27 edges
-9. `CRM.Domain` - 24 edges
-10. `PartyRelationship` - 24 edges
+9. `PartyRelationship` - 24 edges
+10. `CRM.Domain` - 24 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `TestData` --references--> `PrincipalRef`  [EXTRACTED]
   tests/CRM.Tests/TestData.cs → src/Contracts/PrincipalRef.cs
 - `TestData` --references--> `PrincipalRef`  [EXTRACTED]
   tests/MasterData.Tests/TestData.cs → src/Contracts/PrincipalRef.cs
-- `AuthorizationRequest` --references--> `ActionKey`  [EXTRACTED]
-  src/Contracts/AuthorizationRequest.cs → src/Contracts/ActionKey.cs
-- `ActorContext` --references--> `PrincipalRef`  [EXTRACTED]
-  src/Contracts/ActorContext.cs → src/Contracts/PrincipalRef.cs
-- `AuthorizationRequest` --references--> `ActorContext`  [EXTRACTED]
-  src/Contracts/AuthorizationRequest.cs → src/Contracts/ActorContext.cs
+- `Opportunity` --implements--> `IHasRowVersion`  [EXTRACTED]
+  src/Modules/CRM/Domain/Opportunity.cs → src/Contracts/IHasRowVersion.cs
+- `Opportunity` --references--> `PrincipalRef`  [EXTRACTED]
+  src/Modules/CRM/Domain/Opportunity.cs → src/Contracts/PrincipalRef.cs
+- `Opportunity` --references--> `OpportunityLine`  [EXTRACTED]
+  src/Modules/CRM/Domain/Opportunity.cs → src/Modules/CRM/Domain/OpportunityLine.cs
 
 ## Import Cycles
 - None detected.
@@ -705,7 +705,7 @@ Cohesion: 0.50
 Nodes (3): DateTimeOffset, Guid, ModelBuilder
 
 ## Knowledge Gaps
-- **690 isolated node(s):** `Value`, `Principal`, `CorrelationId`, `Effect`, `ReasonCode` (+685 more)
+- **690 isolated node(s):** `Task 0: Pre-flight — confirm the five source documents`, `Task 1: Contracts — authorization primitives`, `Task 2: Access domain model rebuild`, `Task 3: Access persistence configurations + schema migration`, `Task 4: Access RLS + runtime role grants` (+685 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 980 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -713,14 +713,14 @@ Nodes (3): DateTimeOffset, Guid, ModelBuilder
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Contracts` connect `Contracts` to `PrincipalRef`, `Access.Domain.Authorization`, `CustomerNeed`, `TenantFieldDefinition`, `PipelineDefinitionVersion`, `.SetTenantContextAsync`, `RoleAssignment`, `TenantMembership`, `IdempotencyRecord`, `OpportunityNeed`, `.HandleAsync`, `.GetPartiesAsync`, `RolePermissionSet`, `MasterData.Domain`, `.HandleAsync`, `.Create`, `OutboxMessage`, `IdempotencyRecord`, `TestData`, `EvidenceRecord`, `CompleteOpportunityHandler.cs`, `AccessAuthorizer`, `.ResolveAsync`, `IEntityTypeConfiguration`, `TenantAccessState`, `CRM.Persistence`, `PermissionSet`, `EntityRef`, `OpportunityStatus`, `TenantId`, `PipelineDefinition`, `PermissionSetItem`, `Role`, `PipelineStage`, `.Grant_replay_revoke_then_denied_regrant_by_the_now_unauthorized_principal`, `.Create`, `TenantId`, `Access.Persistence.Configurations`, `.GivenGrantAsync`?**
-  _High betweenness centrality (0.276) - this node is a cross-community bridge._
-- **Why does `CRM.Persistence` connect `CRM.Persistence` to `BackfillMasterDataParties`, `.SetTenantContextAsync`, `ModuleBoundaryTests`, `DropOpportunityPartyForeignKey`, `Contracts`, `FixCancelExpiryCheck`, `DropCrmParties`, `CRM.Persistence.Migrations`, `EnableRowLevelSecurity`, `RemoveCrmPartyEntity`, `AddPipelineTables`, `CompleteOpportunityHandler.cs`, `CrmDbContextFactory`, `FixOpportunityAssignedPrincipalIndex`, `RenameOpportunityLifecycle`?**
-  _High betweenness centrality (0.088) - this node is a cross-community bridge._
+  _High betweenness centrality (0.236) - this node is a cross-community bridge._
 - **Why does `AccessDbContext` connect `AccessDbContext` to `Access.Domain.Authorization`, `ExternalIdentity`, `RoleAssignment`, `TenantMembership`, `Account`, `.HandleAsync`, `RolePermissionSet`, `PostgresFixture`, `MasterDataDbContext`, `.HandleAsync`, `OutboxMessage`, `IdempotencyRecord`, `EvidenceRecord`, `AccessAuthorizer`, `TenantAccessState`, `PermissionSet`, `PermissionSetItem`, `ActionRegistryEntry`, `Role`, `.Grant_replay_revoke_then_denied_regrant_by_the_now_unauthorized_principal`, `TenantId`, `AccessDbContextFactory`, `.GivenGrantAsync`?**
-  _High betweenness centrality (0.082) - this node is a cross-community bridge._
+  _High betweenness centrality (0.092) - this node is a cross-community bridge._
+- **Why does `PrincipalRef` connect `PrincipalRef` to `Opportunity`, `.HandleAsync`, `ExternalIdentity`, `IdempotencyRecord`, `.Create`, `.HandleAsync`, `IdempotencyRecord`, `EvidenceRecord`, `.Grant_replay_revoke_then_denied_regrant_by_the_now_unauthorized_principal`, `IdempotencyRecord`, `TestData`, `EvidenceRecord`, `.CreatePartyAsync`, `AccessAuthorizer`, `.ResolveAsync`, `EvidenceRecord`, `.GivenGrantAsync`, `.Create`?**
+  _High betweenness centrality (0.075) - this node is a cross-community bridge._
 - **Are the 8 inferred relationships involving `PrincipalRef` (e.g. with `.HandleAsync()` and `.Owner_relation_grant_denies_a_non_owned_resource()`) actually correct?**
   _`PrincipalRef` has 8 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `Value`, `Principal`, `CorrelationId` to the rest of the system?**
+- **What connects `Task 0: Pre-flight — confirm the five source documents`, `Task 1: Contracts — authorization primitives`, `Task 2: Access domain model rebuild` to the rest of the system?**
   _690 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Opportunity` be split into smaller, more focused modules?**
   _Cohesion score 0.0659536541889483 - nodes in this community are weakly interconnected._

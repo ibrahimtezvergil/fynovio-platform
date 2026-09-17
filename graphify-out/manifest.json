@@ -625,8 +625,8 @@
   },
   "scripts/create-runtime-role.sql": {
     "mtime": 1789634125.8326054,
-    "seen": 1789634180.013165,
-    "ast_hash": "",
+    "seen": 1789635443.518919,
+    "ast_hash": "80ffe8ed80c8a481b6a6cf4283849f81",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/CompleteOpportunityCommand.cs": {
@@ -1158,9 +1158,9 @@
     "semantic_hash": ""
   },
   "docs/plans/2026-09-17-enterprise-access-foundation-execution-plan.md": {
-    "mtime": 1789633513.9641123,
-    "seen": 1789633571.7483442,
-    "ast_hash": "845a8f10e69392c25246f904bd438f64",
+    "mtime": 1789635585.6041155,
+    "seen": 1789635605.475487,
+    "ast_hash": "bc85d066df253cd9531ce896676e26ab",
     "semantic_hash": ""
   },
   "docs/plans/2026-09-17-enterprise-access-foundation-gap-closure.md": {
