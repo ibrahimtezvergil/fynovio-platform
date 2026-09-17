@@ -22947,7 +22947,7 @@
       "node_kind": "heading",
       "norm_label": "commands",
       "source_file": "AGENTS.md",
-      "source_location": "L82"
+      "source_location": "L83"
     },
     {
       "id": "agents_cross_agent_multi_agent_policy",
@@ -22959,7 +22959,7 @@
       "node_kind": "heading",
       "norm_label": "cross-agent / multi-agent policy",
       "source_file": "AGENTS.md",
-      "source_location": "L76"
+      "source_location": "L77"
     },
     {
       "id": "agents_database_rules",
@@ -23055,7 +23055,7 @@
       "node_kind": "heading",
       "norm_label": "status",
       "source_file": "AGENTS.md",
-      "source_location": "L99"
+      "source_location": "L100"
     },
     {
       "id": "agents_testing_definition_of_done",
@@ -65681,6 +65681,17 @@
     },
     {
       "source": "agents_fynovio_platform_engineering_contract",
+      "target": "agents_status",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "AGENTS.md",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "agents_fynovio_platform_engineering_contract",
       "target": "agents_code_conventions",
       "relation": "contains",
       "_origin": "ast",
@@ -65786,7 +65797,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "AGENTS.md",
-      "source_location": "L76",
+      "source_location": "L77",
       "weight": 1.0
     },
     {
@@ -65797,18 +65808,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "AGENTS.md",
-      "source_location": "L82",
-      "weight": 1.0
-    },
-    {
-      "source": "agents_fynovio_platform_engineering_contract",
-      "target": "agents_status",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "AGENTS.md",
-      "source_location": "L99",
+      "source_location": "L83",
       "weight": 1.0
     },
     {
@@ -83351,5 +83351,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "1b722f8b5a7a8e0a825025253fdd9881185a3e19"
+  "built_at_commit": "18fefda913dbed55f0cb46a7fb3fc011e229103e"
 }
