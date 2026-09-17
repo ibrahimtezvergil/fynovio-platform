@@ -10,7 +10,10 @@
 > `main` (commit `7214867`). Tasks 1–4 done on branch `crm-phase1-lifecycle-pipeline`
 > (developed/reviewed on an isolated worktree/branch by a peer session), merged into
 > `main` via `6aa9b5a`. Post-merge verification on `main`: clean build (0 warnings, 0
-> errors), full suite green — 46 CRM + 30 MasterData tests. Read
+> errors), full suite green — 46 CRM + 30 MasterData tests (CRM grew to 79 on
+> 2026-09-17 per `CRM_Phase1_Test_Coverage_Verification_Report.pdf`, which also found
+> and fixed a missing-RLS defect and an un-set-parent-FK defect on the pipeline
+> tables — see `docs/plans/crm-phase1/2026-09-17-crm-phase1-test-plan.md`). Read
 > `docs/plans/crm-phase1/2026-09-16-crm-target-model-phase0-delta-plan.md` §5 (all five items now
 > RESOLVED), §11 (decision record) and §12 (dependency graph) before starting — this
 > plan implements Phase 1 of that roadmap. Do not re-litigate any decision recorded
@@ -242,7 +245,8 @@ Task 1's grep"; follow-up fix: `12d96ba` "Fix last leftover NewWaitingOpportunit
 site"; follow-up fix: `5ffe212` "Fix two stale Complete()/waiting doc-comment
 references"). Spec-compliance and code-quality subagent reviews both passed after the
 doc-comment fix. Branch: `crm-phase1-lifecycle-pipeline` (worktree
-`.worktrees/crm-phase1-lifecycle-pipeline`), not yet merged to `main`.
+`.worktrees/crm-phase1-lifecycle-pipeline`) — merged to `main` via `6aa9b5a` on
+2026-09-16, see banner above.
 
 ---
 
@@ -490,7 +494,8 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 (parent+child both configuring same relationship)"; follow-up fix: `342459b` "Document
 why Versions/Stages are Ignore()'d, not EF-loaded"). Spec-compliance review found and
 confirmed the FK-duplication fix; code-quality review approved with one documentation
-request, applied. Branch: `crm-phase1-lifecycle-pipeline`, not yet merged to `main`.
+request, applied. Branch: `crm-phase1-lifecycle-pipeline` — merged to `main` via
+`6aa9b5a` on 2026-09-16, see banner above.
 
 ---
 
@@ -725,8 +730,8 @@ after Docker recovered" — missing MasterData test-project reference, stale
 review: 14/14 independent checks passed. Code-quality review: 1 Critical finding
 (reversibility documentation gap) fixed and applied, 1 Important finding
 (`TenantFieldAggregateType.Party`) scoped out as pre-existing, unrelated tech debt — see
-Step 7's deviation note. Branch: `crm-phase1-lifecycle-pipeline`, not yet merged to
-`main`.
+Step 7's deviation note. Branch: `crm-phase1-lifecycle-pipeline` — merged to `main`
+via `6aa9b5a` on 2026-09-16, see banner above.
 
 ---
 
@@ -816,7 +821,10 @@ first-pass commit's own `Co-Authored-By` trailer says "Claude Haiku 4.5" rather 
 this session's "Claude Sonnet 5" (the dispatched subagent used its own default
 attribution instead of the one specified) — left as-is per this repo's "always create
 new commits, never amend" convention; flagged here rather than silently left
-unexplained. Branch: `crm-phase1-lifecycle-pipeline`, not yet merged to `main`.
+unexplained. Branch: `crm-phase1-lifecycle-pipeline` — merged to `main` via `6aa9b5a`
+on 2026-09-16, see banner above. This attribution slip was not retroactively fixed by
+the merge (per the "never amend, always a new commit" convention) and remains
+uncorrected in history.
 
 ---
 
@@ -835,10 +843,21 @@ unexplained. Branch: `crm-phase1-lifecycle-pipeline`, not yet merged to `main`.
 - **Untouched, as scoped:** `OpportunityLine`'s monetary shape (§5.B, Phase 5's job);
   no new commands/endpoints/authorization (Phase 2's job, gated on Phase 1.5 per §5.D).
 
-→ **All criteria met (2026-09-16) except the literal "CI green"** — this branch hasn't
-been pushed, so no CI run has actually executed against it yet; `dotnet format
---verify-no-changes` + full local `dotnet test` (46 CRM + 30 MasterData, both green)
-stand in as the local equivalent. Everything else confirmed directly: `OpportunityStatus`
-is `Draft/Open/Won/Lost` throughout, the three pipeline tables exist additive and
-unenforced, `crm.parties` is dropped with `masterdata.parties` holding the backfilled
-data, `OpportunityLine` and Phase 2's command surface are untouched.
+→ **Updated 2026-09-17 (F-10, `CRM_Phase1_Test_Coverage_Verification_Report.pdf`):**
+the branch merged to `main` via `6aa9b5a` on 2026-09-16 (see the banner at the top of
+this file); the note below is kept as the historical record of the 2026-09-16
+pre-merge local verification, since that is what "CI green" actually meant at the
+time it was written.
+
+**As originally recorded, 2026-09-16 (pre-merge):** all criteria met except the
+literal "CI green" — this branch hadn't been pushed yet, so no CI run had executed
+against it; `dotnet format --verify-no-changes` + full local `dotnet test` (46 CRM +
+30 MasterData, both green) stood in as the local equivalent. Everything else
+confirmed directly: `OpportunityStatus` is `Draft/Open/Won/Lost` throughout, the
+three pipeline tables exist additive and unenforced, `crm.parties` is dropped with
+`masterdata.parties` holding the backfilled data, `OpportunityLine` and Phase 2's
+command surface are untouched. (This session has no way to independently confirm
+whether CI actually ran and passed against `main` after the merge — GitHub API
+access is outside this sandbox's network allowlist. The repo's own
+`.github/workflows/ci.yml` runs on every push to `main`, so a run almost certainly
+fired; its pass/fail outcome is not asserted here without evidence.)
