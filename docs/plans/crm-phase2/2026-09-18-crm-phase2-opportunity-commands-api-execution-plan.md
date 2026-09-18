@@ -1860,7 +1860,7 @@ evidence/idempotency rows need the id Postgres only assigns after the insert."
 
 Implements this plan's own scope note above: resolve the tenant's (at most one, for Phase 2) `PipelineDefinition` → its highest-numbered version → that version's `IsEntry` stage, and pass them into `Opportunity.Open(...)` (Task 7). A tenant with no pipeline configured gets `null, null`, which `Open` already accepts.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```csharp
 using Contracts;
@@ -1941,7 +1941,7 @@ public sealed class OpenOpportunityHandlerTests
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~OpenOpportunityHandlerTests"
@@ -1949,7 +1949,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~OpenOp
 
 Expected: compile error.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/Modules/CRM/Application/OpenOpportunityCommand.cs`:
 
@@ -2111,7 +2111,7 @@ public sealed class OpenOpportunityHandler(CrmDbContext context, IAuthorizer aut
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~OpenOpportunityHandlerTests"
@@ -2119,7 +2119,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~OpenOp
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/OpenOpportunityCommand.cs src/Modules/CRM/Application/OpenOpportunityHandler.cs src/Modules/CRM/Application/OpenOpportunityResult.cs tests/CRM.Tests/Application/OpenOpportunityHandlerTests.cs
@@ -2129,6 +2129,9 @@ Per this plan's scope note: resolves the tenant's single PipelineDefinition
 (oldest by id), its highest version, that version's IsEntry stage. A tenant
 with no pipeline configured gets null/null, which Open() already accepts."
 ```
+
+→ Commit: `c766f77` "feat(crm): add OpenOpportunity command and handler, resolving the entry pipeline stage" — also added `OpenedPayload.cs` as its own file (not nested, per Task 6/8 precedent) and the concurrent-duplicate-idempotency catch block the plan's own draft omitted, matching Task 8's already-approved deviation for the same reason.
+→ Verified: pipeline order and entry-stage resolution logic (oldest definition → highest version → IsEntry stage, `(null, null)` short-circuit at any step) independently traced against spec. 92/92 CRM.Tests passing, independently re-run. Code-quality review confirmed template fidelity held across all three handlers (Win/Create/Open) with no drift.
 
 ---
 
