@@ -21,6 +21,10 @@ public sealed class ActorContextMiddleware(RequestDelegate next)
         var issuer = context.User.FindFirst("iss")?.Value;
         var subject = context.User.FindFirst("sub")?.Value;
         var tenantClaim = context.User.FindFirst("tid")?.Value;
+        // MapInboundClaims is false (Program.cs), so these claim names are preserved as-is
+        // from the token rather than remapped to long .NET/WS-Fed URIs; if that flag is ever
+        // flipped back to true, these lookups will silently stop matching and every
+        // authenticated request will 401 here.
 
         if (issuer is null || subject is null || tenantClaim is null || !long.TryParse(tenantClaim, out var tenantIdValue))
         {
@@ -46,12 +50,4 @@ public sealed class ActorContextMiddleware(RequestDelegate next)
 
         await next(context);
     }
-}
-
-public static class HttpContextActorContextExtensions
-{
-    public static ActorContext GetActorContext(this HttpContext context) =>
-        context.Items["ActorContext"] as ActorContext?
-            ?? throw new InvalidOperationException(
-                "No ActorContext resolved for this request. The endpoint must call RequireAuthorization() so ActorContextMiddleware runs first.");
 }

@@ -20,10 +20,8 @@ public sealed class PrincipalResolver(AccessDbContext context)
     /// never touches Access.Domain.Identity directly (AGENTS.md: "Domain and
     /// Infrastructure namespaces inside a module are never imported from outside it").</summary>
     public async Task<bool> IsActiveTenantMemberAsync(PrincipalRef principal, TenantId tenantId, CancellationToken cancellationToken = default) =>
-        await context.TenantMemberships
-            .Join(context.ExternalIdentities, m => m.AccountId, e => e.AccountId, (m, e) => new { m, e })
-            .AnyAsync(
-                x => x.m.TenantId == tenantId && x.e.Issuer == principal.Issuer && x.e.Subject == principal.Subject
-                    && x.m.Status == MembershipStatus.Active,
-                cancellationToken);
+        await context.ExternalIdentities
+            .Where(e => e.Issuer == principal.Issuer && e.Subject == principal.Subject)
+            .Join(context.TenantMemberships, e => e.AccountId, m => m.AccountId, (e, m) => m)
+            .AnyAsync(m => m.TenantId == tenantId && m.Status == MembershipStatus.Active, cancellationToken);
 }

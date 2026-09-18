@@ -1,7 +1,8 @@
 namespace Host.Authentication;
 
 /// <summary>Bound from the "Authentication:Jwt" configuration section. SigningKey must
-/// come from an environment variable or secret store in any non-development
+/// come from the `Authentication__Jwt__SigningKey` environment variable (ASP.NET Core's
+/// double-underscore section-path convention) or a secret store in any non-development
 /// environment — never commit a production key (AGENTS.md Safety rules).</summary>
 public sealed class JwtOptions
 {
