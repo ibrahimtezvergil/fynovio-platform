@@ -2593,7 +2593,7 @@ git commit -m "feat(crm): add CancelOpportunityLine command and handler"
 
 Free-text `LostReason` (architecture plan §2.5, resolved: keep free text for Phase 2). Same template as `WinOpportunityHandler`, wrapping `Opportunity.Lose(reason)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```csharp
 using Contracts;
@@ -2655,7 +2655,7 @@ public sealed class LoseOpportunityHandlerTests
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~LoseOpportunityHandlerTests"
@@ -2663,7 +2663,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~LoseOp
 
 Expected: compile error.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/Modules/CRM/Application/LoseOpportunityCommand.cs`:
 
@@ -2791,7 +2791,7 @@ public sealed class LoseOpportunityHandler(CrmDbContext context, IAuthorizer aut
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~LoseOpportunityHandlerTests"
@@ -2799,7 +2799,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~LoseOp
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/LoseOpportunityCommand.cs src/Modules/CRM/Application/LoseOpportunityHandler.cs src/Modules/CRM/Application/LoseOpportunityResult.cs tests/CRM.Tests/Application/LoseOpportunityHandlerTests.cs
@@ -2808,6 +2808,10 @@ git commit -m "feat(crm): add LoseOpportunity command and handler
 Free-text LostReason, per architecture plan OPEN DECISION 2.5 (taxonomy
 explicitly deferred, not built here)."
 ```
+
+→ Commit: `68808be` "feat(crm): add LoseOpportunity command and handler" — also added `LostPayload.cs` as its own file, the concurrent-duplicate-idempotency catch block (Tasks 8–12 pattern), and a coordinator-directed dedicated replay test (3rd fact beyond the plan's literal 2) since this handler's replay branches skip payload deserialization like Task 11's.
+→ Follow-up fix: `50abc3c` "fix(crm): assert EvidenceRecord counts in LoseOpportunityHandlerTests" — code-quality review found two facts (including the one literally named "...writes_evidence_and_outbox") only asserted on OutboxMessages, never EvidenceRecords, despite the handler writing both. Re-review confirmed the fix.
+→ Verified: pipeline order, event/action strings, and both replay branches (skip-deserialization) traced against spec. 99/99 CRM.Tests passing, independently re-run.
 
 ---
 
