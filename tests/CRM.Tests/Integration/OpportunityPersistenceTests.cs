@@ -42,7 +42,7 @@ public sealed class OpportunityPersistenceTests
         var partyRef = await TestData.CreatePartyAsync(masterDataContext, tenant, "Acme");
 
         var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
         crmContext.Opportunities.Add(opportunity);
         await crmContext.SaveChangesAsync();
 
@@ -65,7 +65,7 @@ public sealed class OpportunityPersistenceTests
 
         var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 0m);
         opportunity.AddLine(TestData.ProductRef(tenant), quantity: 3, unitPrice: 33.33m);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
         opportunity.Win();
         crmContext.Opportunities.Add(opportunity);
         await crmContext.SaveChangesAsync();

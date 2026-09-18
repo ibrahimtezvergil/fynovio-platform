@@ -135,7 +135,7 @@ public sealed class WinOpportunityHandlerTests
 
         var opportunity = Opportunity.Create(tenantId, partyRef, TestData.Seller, "TRY", 100m);
         opportunity.AddLine(TestData.ProductRef(tenantId), quantity: 1, unitPrice: 100m);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
         seedCrm.Opportunities.Add(opportunity);
         await seedCrm.SaveChangesAsync();
 
