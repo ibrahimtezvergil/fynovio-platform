@@ -658,7 +658,7 @@ references Contracts only; the architecture-boundary test proves it."
 
 Resolves architecture plan §2.1 (owner-approved: JWT bearer). **Scope note, not a further open decision:** these are **platform-issued** JWTs (HMAC-SHA256, symmetric key from configuration) — nothing in this repo has an external IdP integration to point at, and building one is a separate, larger effort than "Opportunity Commands & API." This task builds real, working JWT *validation* end-to-end; token *issuance* (mapping a verified external credential to a signed platform JWT — a login flow) is explicitly **not** built here and is called out as follow-on work for whichever module ends up owning Identity's public surface (round-3 ownership matrix: "Authentication → Identity"), not guessed at in this plan. Tests mint their own tokens directly with the same signing key (`JwtTestTokenFactory`, Task 22) — this is standard practice for testing a resource server independently of its IdP.
 
-- [ ] **Step 1: Add the JWT bearer package**
+- [x] **Step 1: Add the JWT bearer package**
 
 `src/Host/Host.csproj` — add inside the existing (currently empty) `<ItemGroup>` for packages, or a new one:
 
@@ -668,7 +668,7 @@ Resolves architecture plan §2.1 (owner-approved: JWT bearer). **Scope note, not
 </ItemGroup>
 ```
 
-- [ ] **Step 2: Write the failing test for tenant-membership validation**
+- [x] **Step 2: Write the failing test for tenant-membership validation**
 
 This is the one piece of genuinely new logic in this task (the JWT validation itself is a well-tested framework feature, not something this plan re-tests). Add `tests/Access.Tests/Application/PrincipalResolverTests.cs` if it doesn't exist yet, or extend it:
 
@@ -734,7 +734,7 @@ public sealed class PrincipalResolverTests
 
 (Confirm `TenantMembership.Create`'s exact signature and `TestData`'s exact members in `tests/Access.Tests/` by reading them first — `Access.Tests` has its own `TestData` class, separate from `CRM.Tests.TestData`; match whatever it actually exposes rather than assuming CRM's shape.)
 
-- [ ] **Step 3: Run it to verify it fails**
+- [x] **Step 3: Run it to verify it fails**
 
 ```bash
 dotnet test tests/Access.Tests/Access.Tests.csproj --filter "FullyQualifiedName~PrincipalResolverTests"
@@ -742,7 +742,7 @@ dotnet test tests/Access.Tests/Access.Tests.csproj --filter "FullyQualifiedName~
 
 Expected: compile error — `IsActiveTenantMemberAsync` doesn't exist yet.
 
-- [ ] **Step 4: Implement `IsActiveTenantMemberAsync`**
+- [x] **Step 4: Implement `IsActiveTenantMemberAsync`**
 
 `src/Modules/Access/Application/PrincipalResolver.cs`:
 
@@ -778,7 +778,7 @@ public sealed class PrincipalResolver(AccessDbContext context)
 }
 ```
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 ```bash
 dotnet test tests/Access.Tests/Access.Tests.csproj --filter "FullyQualifiedName~PrincipalResolverTests"
@@ -786,7 +786,7 @@ dotnet test tests/Access.Tests/Access.Tests.csproj --filter "FullyQualifiedName~
 
 Expected: PASS.
 
-- [ ] **Step 6: Add `JwtOptions`**
+- [x] **Step 6: Add `JwtOptions`**
 
 ```csharp
 namespace Host.Authentication;
@@ -802,7 +802,7 @@ public sealed class JwtOptions
 }
 ```
 
-- [ ] **Step 7: Add `ActorContextMiddleware` and its `HttpContext` extension**
+- [x] **Step 7: Add `ActorContextMiddleware` and its `HttpContext` extension**
 
 ```csharp
 using Access.Application;
@@ -864,7 +864,7 @@ public static class HttpContextActorContextExtensions
 }
 ```
 
-- [ ] **Step 8: Wire authentication into `Program.cs`**
+- [x] **Step 8: Wire authentication into `Program.cs`**
 
 Add to the `using` block:
 
@@ -909,7 +909,7 @@ app.UseAuthorization();
 app.UseMiddleware<ActorContextMiddleware>();
 ```
 
-- [ ] **Step 9: Add the development-only signing configuration**
+- [x] **Step 9: Add the development-only signing configuration**
 
 `src/Host/appsettings.Development.json` — add alongside the `ConnectionStrings` block from Task 1:
 
@@ -938,7 +938,7 @@ app.UseMiddleware<ActorContextMiddleware>();
 
 Production `appsettings.json` gets no `Authentication` section at all — `Authentication__Jwt__SigningKey` (and `Issuer`/`Audience`) must be supplied as environment variables or from a secret store in every non-development environment; the `?? throw` in Step 8 makes a missing configuration a startup failure, not a silent insecure default.
 
-- [ ] **Step 10: Build**
+- [x] **Step 10: Build**
 
 ```bash
 dotnet build
@@ -946,7 +946,7 @@ dotnet build
 
 Expected: succeeds. The Host now fails to start without `Authentication:Jwt` configured — this is intentional; confirm the failure message is the one from Step 8, not a generic binding error, by running `dotnet run --project src/Host/Host.csproj` once with `appsettings.Development.json`'s block temporarily removed, then restoring it.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add src/Host/Host.csproj src/Host/Authentication src/Modules/Access/Application/PrincipalResolver.cs src/Host/Program.cs src/Host/appsettings.Development.json tests/Access.Tests/Application/PrincipalResolverTests.cs
@@ -959,6 +959,10 @@ an active TenantMembership via Access.Application.PrincipalResolver — Host
 never imports Access.Domain.Identity directly. Token issuance (login) is
 explicitly out of scope; tests mint tokens directly with the same signing key."
 ```
+
+→ Commit: `2180f86` "feat(host,access): add JWT bearer authentication and ActorContext resolution"
+→ Follow-up fix: `f53b7c4` "fix(host,access): split HttpContextActorContextExtensions into its own file" — code-quality review found a real AGENTS.md violation (one-public-type-per-file) plus a misleading exception message and a LINQ style inconsistency; all confirmed fixed on re-review, 60/60 tests still pass.
+→ Verified (controller): security-critical 401/403 short-circuit behavior in `ActorContextMiddleware` independently confirmed (no `next(context)` call on either error path); `dotnet run` fail-fast on missing `Authentication:Jwt` config reproduced directly — throws `InvalidOperationException: Authentication:Jwt configuration section is required.` as expected, then (with config restored) fails later only on a pre-existing local-Postgres migration gap (`access.actions` table missing), unrelated to this task. Created the `fynovio_app` runtime role on the local dev Postgres (was missing entirely) so this and future manual verification can actually run.
 
 ---
 
