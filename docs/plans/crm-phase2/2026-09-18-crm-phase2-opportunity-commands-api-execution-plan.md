@@ -3222,7 +3222,7 @@ aggregate cannot query PipelineStage's table."
 
 Resolves architecture plan §2.4 (retired stages rejected) and §2.3-adjacent §9 OD#4 (unrestricted within the *same* pipeline version's active stages — no transition matrix, since nothing in any binding document asks for one).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```csharp
 using Contracts;
@@ -3332,7 +3332,7 @@ public sealed class ChangePipelineStageHandlerTests
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~ChangePipelineStageHandlerTests"
@@ -3340,7 +3340,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Change
 
 Expected: compile error.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/Modules/CRM/Application/ChangePipelineStageCommand.cs`:
 
@@ -3484,7 +3484,7 @@ public sealed class ChangePipelineStageHandler(CrmDbContext context, IAuthorizer
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~ChangePipelineStageHandlerTests"
@@ -3492,7 +3492,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Change
 
 Expected: PASS.
 
-- [ ] **Step 5: Run the full CRM suite**
+- [x] **Step 5: Run the full CRM suite**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj
@@ -3500,7 +3500,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj
 
 Expected: PASS, no regression. All eight Opportunity commands (Create, AddLine, CancelLine, Open, ChangeStage, Win, Lose, Reassign) now exist end-to-end.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/ChangePipelineStageCommand.cs src/Modules/CRM/Application/ChangePipelineStageHandler.cs src/Modules/CRM/Application/ChangePipelineStageResult.cs tests/CRM.Tests/Application/ChangePipelineStageHandlerTests.cs
@@ -3511,6 +3511,10 @@ checks before calling Opportunity.ChangeStage(). Resolves architecture plan
 OPEN DECISIONs 2.4 and 9-OD#4 (no transition matrix — unrestricted within
 the current version's active stages)."
 ```
+
+→ Commit: `ebb7425` "feat(crm): add ChangePipelineStage command and handler" — also added `StageChangedPayload.cs` as its own file and the concurrent-duplicate-idempotency catch block (Tasks 8–14 pattern), with both replay branches consistently deserializing the payload (this handler follows Win/Create/Open's pattern here, not Cancel/Lose/Reassign's skip-deserialization pattern).
+→ Verified: all three cross-aggregate checks (existence → same-version → active) in correct order with distinct reason strings; `fromStageId` confirmed captured before `ChangeStage()` mutates state. 110/110 CRM.Tests passing, independently re-run. Code-quality review: approved, no systemic drift found across all eight command handlers.
+→ **This closes out all 8 Opportunity command handlers** (Create, Open, AddLine, CancelLine, Win, Lose, Reassign, ChangeStage) — Tasks 8–16 complete.
 
 ---
 
