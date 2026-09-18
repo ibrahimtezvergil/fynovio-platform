@@ -2143,7 +2143,7 @@ with no pipeline configured gets null/null, which Open() already accepts."
 
 Closes the reachability gap the architecture plan's §1 flagged: without this command, `Win()`'s "≥1 billable line" precondition is unreachable via any command. Lower risk than Win/Lose/Reassign (architecture plan §8's Evidence-trigger table still recommends Evidence for it since it feeds the money total `Win()` derives from) — Evidence included, no dedicated outbox event (line-level mutations have no identified consumer yet, per architecture plan §8's "recommend omitting outbox for line commands").
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```csharp
 using Contracts;
@@ -2212,7 +2212,7 @@ public sealed class AddOpportunityLineHandlerTests
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~AddOpportunityLineHandlerTests"
@@ -2220,7 +2220,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~AddOpp
 
 Expected: compile error.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/Modules/CRM/Application/AddOpportunityLineCommand.cs`:
 
@@ -2352,7 +2352,7 @@ public sealed class AddOpportunityLineHandler(CrmDbContext context, IAuthorizer 
 
 `AddLine` throwing `InvalidOperationException` when `Status != Draft` (already the case in the existing domain method — unchanged) means the second test above passes without any additional handler-level guard; the domain aggregate is the single source of truth for that invariant, exactly as AGENTS.md's Database Rules section prescribes ("invariants spanning multiple rows... enforced in the aggregate").
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~AddOpportunityLineHandlerTests"
@@ -2360,7 +2360,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~AddOpp
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/AddOpportunityLineCommand.cs src/Modules/CRM/Application/AddOpportunityLineHandler.cs src/Modules/CRM/Application/AddOpportunityLineResult.cs tests/CRM.Tests/Application/AddOpportunityLineHandlerTests.cs
@@ -2371,6 +2371,9 @@ command, Win()'s at-least-one-billable-line precondition was unreachable via
 any application-layer entry point. Evidence written, no outbox event (no
 identified line-level consumer yet)."
 ```
+
+→ Commit: `ce22541` "feat(crm): add AddOpportunityLine command and handler" — also added `AddedLinePayload.cs` as its own file and the concurrent-duplicate-idempotency catch block (same pattern established in Tasks 8/9). Test construction switched from the plan's lowercase named arguments (which don't compile against the record's PascalCase parameter names) to positional arguments — a mechanical fix, not a behavior change.
+→ Verified: no `OutboxMessage` present anywhere (intentional per architecture plan), pipeline order matches spec exactly. 94/94 CRM.Tests passing, independently re-run. Code-quality review: zero drift from the established template by this fourth handler.
 
 ---
 
