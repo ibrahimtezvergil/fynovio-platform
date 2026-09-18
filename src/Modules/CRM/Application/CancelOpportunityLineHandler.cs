@@ -59,6 +59,9 @@ public sealed class CancelOpportunityLineHandler(CrmDbContext context, IAuthoriz
             ?? throw new InvalidOperationException($"Line {command.LineId} does not belong to opportunity {command.OpportunityId}.");
         opportunity.CancelLine(line, command.CancelReason);
 
+        // Written for audit only — both replay branches below rebuild the result from
+        // command fields instead of deserializing this back, since (unlike e.g. AddLine's
+        // DB-assigned line.Id) nothing in CancelOpportunityLineResult is server-computed.
         var payload = new CanceledLinePayload(opportunity.Id, line.Id, command.CancelReason);
         var payloadJson = JsonSerializer.Serialize(payload);
 
