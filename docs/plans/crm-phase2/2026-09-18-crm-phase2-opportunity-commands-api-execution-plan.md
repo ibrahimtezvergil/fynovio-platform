@@ -2823,7 +2823,7 @@ explicitly deferred, not built here)."
 
 Resolves architecture plan §2.2, option (a): reuse `AssignedPrincipal`/`AssignedPrincipalIssuer`/`AssignedPrincipalSubject` as the mutable "current owner" field — no new column.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to `tests/CRM.Tests/Domain/OpportunityStateMachineTests.cs`:
 
@@ -2863,7 +2863,7 @@ public void Reassign_is_rejected_once_lost()
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~OpportunityStateMachineTests"
@@ -2871,7 +2871,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Opport
 
 Expected: compile error — `Reassign` doesn't exist.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Add to `src/Modules/CRM/Domain/Opportunity.cs`, after `CancelLine`:
 
@@ -2892,7 +2892,7 @@ Add to `src/Modules/CRM/Domain/Opportunity.cs`, after `CancelLine`:
     }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~OpportunityStateMachineTests"
@@ -2900,7 +2900,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Opport
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Domain/Opportunity.cs tests/CRM.Tests/Domain/OpportunityStateMachineTests.cs
@@ -2910,6 +2910,9 @@ Architecture plan OPEN DECISION 2.2, option (a): AssignedPrincipal becomes
 the mutable current-owner field, no new column. Blocked once Won/Lost, same
 terminal-state reasoning as CancelLine/Lose."
 ```
+
+→ Commit: `5eee80d` "feat(crm): add Opportunity.Reassign(), resolving the owner-field mapping decision"
+→ Verified: no new column/migration added (only `Opportunity.cs` + test file touched); guard clause, exception format, and `Touch()` placement consistent with `Win()`/`Lose()`/`CancelLine()`. 102/102 CRM.Tests passing, independently re-run. Code-quality review: no issues.
 
 ---
 
