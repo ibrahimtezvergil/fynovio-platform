@@ -159,6 +159,21 @@ public sealed class Opportunity : IHasRowVersion
         Touch();
     }
 
+    /// <summary>Owner = "the principal currently responsible for this record" (round-3
+    /// closure matrix "CRM Owner semantics"), reusing AssignedPrincipal as the single
+    /// mutable owner field (architecture plan §2.2, option (a) — no new column). Blocked
+    /// once terminal, same reasoning as CancelLine: a closed opportunity's history
+    /// should not keep changing who "owns" it.</summary>
+    public void Reassign(PrincipalRef newAssignedPrincipal)
+    {
+        if (Status is OpportunityStatus.Won or OpportunityStatus.Lost)
+            throw new InvalidOperationException($"Cannot reassign an opportunity in status {Status}.");
+
+        AssignedPrincipalIssuer = newAssignedPrincipal.Issuer;
+        AssignedPrincipalSubject = newAssignedPrincipal.Subject;
+        Touch();
+    }
+
     /// <summary>Tek versiyon artış noktası. Interceptor yerine burada artırılıyor: outbox ve
     /// evidence kayıtları aynı transaction içinde `RowVersion`'ı okuyor, interceptor
     /// SaveChanges sırasında artırdığı için bir eski değer yazılıyordu.</summary>

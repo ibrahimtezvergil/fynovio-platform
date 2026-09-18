@@ -204,6 +204,40 @@ public sealed class OpportunityStateMachineTests
         Assert.Throws<InvalidOperationException>(() => opportunity.CancelLine(line, "geç kaldı"));
     }
 
+    [Fact]
+    public void Reassign_changes_the_assigned_principal()
+    {
+        var opportunity = NewDraftOpportunity();
+        var newOwner = new PrincipalRef("https://idp.local", "seller-2");
+
+        opportunity.Reassign(newOwner);
+
+        Assert.Equal(newOwner, opportunity.AssignedPrincipal);
+    }
+
+    [Fact]
+    public void Reassign_is_rejected_once_won()
+    {
+        var tenant = TestData.NextTenant();
+        var opportunity = Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", 1000m);
+        opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
+        opportunity.Win();
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.Reassign(new PrincipalRef("https://idp.local", "seller-2")));
+    }
+
+    [Fact]
+    public void Reassign_is_rejected_once_lost()
+    {
+        var tenant = TestData.NextTenant();
+        var opportunity = Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", 1000m);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
+        opportunity.Lose("reason");
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.Reassign(new PrincipalRef("https://idp.local", "seller-2")));
+    }
+
     private static Opportunity WonOpportunity()
     {
         var opportunity = NewDraftOpportunity();
