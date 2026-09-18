@@ -2924,7 +2924,7 @@ terminal-state reasoning as CancelLine/Lose."
 
 This is the command that makes `OwnedBy` scope meaningful going forward — every other command's `ResourceDescriptor.OwnerPrincipal` now reflects a value this command can actually change.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```csharp
 using Contracts;
@@ -2968,7 +2968,7 @@ public sealed class ReassignOpportunityHandlerTests
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~ReassignOpportunityHandlerTests"
@@ -2976,7 +2976,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Reassi
 
 Expected: compile error.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/Modules/CRM/Application/ReassignOpportunityCommand.cs`:
 
@@ -3105,7 +3105,7 @@ public sealed class ReassignOpportunityHandler(CrmDbContext context, IAuthorizer
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~ReassignOpportunityHandlerTests"
@@ -3113,12 +3113,15 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Reassi
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/ReassignOpportunityCommand.cs src/Modules/CRM/Application/ReassignOpportunityHandler.cs src/Modules/CRM/Application/ReassignOpportunityResult.cs tests/CRM.Tests/Application/ReassignOpportunityHandlerTests.cs
 git commit -m "feat(crm): add ReassignOpportunity command and handler"
 ```
+
+→ Commit: `bb4f8d9` "feat(crm): add ReassignOpportunity command and handler" — also added `ReassignedPayload.cs` as its own file, the concurrent-duplicate-idempotency catch block, and 2 coordinator-directed additional facts (authorization-denial, dedicated replay test) beyond the plan's literal 1.
+→ Verified (security-critical): authorization evaluates against `previousOwner` (captured before `Reassign()` mutates state), not the new assignee — confirmed directly in source, not just from the commit message. `HashRequest` includes `NewAssignedPrincipal`, preventing idempotency-key reuse across different reassignment targets. 105/105 CRM.Tests passing, independently re-run. Code-quality review: approved, one non-blocking Minor note on payload string representation.
 
 ---
 
