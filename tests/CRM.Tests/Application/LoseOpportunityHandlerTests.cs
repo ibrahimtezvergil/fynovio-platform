@@ -29,6 +29,7 @@ public sealed class LoseOpportunityHandlerTests
         Assert.Equal(OpportunityStatus.Lost, reloaded.Status);
         Assert.Equal("Fiyat rekabetçi değildi", reloaded.LostReason);
         Assert.Single(await context.OutboxMessages.AsNoTracking().Where(m => m.AggregateId == opportunityId).ToListAsync());
+        Assert.Single(await context.EvidenceRecords.AsNoTracking().Where(e => e.AggregateId == opportunityId).ToListAsync());
     }
 
     [Fact]
@@ -62,6 +63,7 @@ public sealed class LoseOpportunityHandlerTests
 
         await using var verification = _fixture.CreateAdminContext();
         Assert.Single(await verification.OutboxMessages.AsNoTracking().Where(m => m.AggregateId == opportunityId).ToListAsync());
+        Assert.Single(await verification.EvidenceRecords.AsNoTracking().Where(e => e.AggregateId == opportunityId).ToListAsync());
     }
 
     private async Task<(TenantId TenantId, long OpportunityId, long RowVersion)> SeedOpenOpportunityAsync()
