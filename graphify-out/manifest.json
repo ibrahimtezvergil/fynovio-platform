@@ -1648,5 +1648,35 @@
     "seen": 1789647689.5789928,
     "ast_hash": "4e6846d20b91068bfb70899516d5f28e",
     "semantic_hash": ""
+  },
+  "docs/architecture-analysis/CLAUDE_PHASE_2_EXECUTION_PROMPT.md": {
+    "mtime": 1789651622.0,
+    "seen": 1789681836.054869,
+    "ast_hash": "fc677a220872add3d797127466d73577",
+    "semantic_hash": ""
+  },
+  "docs/architecture-analysis/PHASE_2_OPPORTUNITY_COMMANDS_API_BINDING_SPEC.md": {
+    "mtime": 1789651622.0,
+    "seen": 1789681836.054871,
+    "ast_hash": "5ec8806b5efc283da0aa5295abf6f5b8",
+    "semantic_hash": ""
+  },
+  "docs/architecture-analysis/PHASE_2_OPPORTUNITY_COMMANDS_API_PLAN.md": {
+    "mtime": 1789678931.2797065,
+    "seen": 1789681836.054871,
+    "ast_hash": "13030fd43d6a1b1263427e2a98a44046",
+    "semantic_hash": ""
+  },
+  "docs/plans/crm-phase2/2026-09-18-crm-phase2-opportunity-commands-api-execution-plan.md": {
+    "mtime": 1789681467.2394254,
+    "seen": 1789681836.0548759,
+    "ast_hash": "60ed8013ea8494b2be8ad94dd303238b",
+    "semantic_hash": ""
+  },
+  "docs/architecture-analysis/PHASE_2_OPPORTUNITY_COMMANDS_API_BINDING_SPEC.pdf": {
+    "mtime": 1789651622.0,
+    "seen": 1789681836.0548851,
+    "ast_hash": "4ec98330a83a8171f31244f8edd279c7",
+    "semantic_hash": ""
   }
 }
