@@ -3133,7 +3133,7 @@ git commit -m "feat(crm): add ReassignOpportunity command and handler"
 
 Per architecture plan §7/§9: the aggregate enforces only its own lifecycle-state precondition (`Status == Open`); cross-aggregate validation (does the target stage belong to this opportunity's current pipeline version, is it active) is the handler's job in Task 16, since the aggregate cannot query another aggregate's table. This mirrors how `PartyRef`'s tenant-match is validated inline (a value comparison) while cross-table facts are always handler-side in this codebase.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```csharp
 [Fact]
@@ -3159,7 +3159,7 @@ public void ChangeStage_sets_the_new_stage_while_open()
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~OpportunityStateMachineTests"
@@ -3167,7 +3167,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Opport
 
 Expected: compile error — `ChangeStage` doesn't exist.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Add to `src/Modules/CRM/Domain/Opportunity.cs`, after `Reassign`:
 
@@ -3189,7 +3189,7 @@ Add to `src/Modules/CRM/Domain/Opportunity.cs`, after `Reassign`:
     }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~OpportunityStateMachineTests"
@@ -3197,7 +3197,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Opport
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Domain/Opportunity.cs tests/CRM.Tests/Domain/OpportunityStateMachineTests.cs
@@ -3207,6 +3207,10 @@ Cross-aggregate validation (target stage belongs to the current pipeline
 version, is active) is ChangePipelineStageHandler's job (Task 16) — the
 aggregate cannot query PipelineStage's table."
 ```
+
+→ Commit: `9ba017c` "feat(crm): add Opportunity.ChangeStage(), enforcing only the Open-lifecycle precondition"
+→ Verified: no cross-aggregate validation added (confirmed directly in source — a real risk given this task's explicit architectural boundary). 107/107 CRM.Tests passing, independently re-run.
+→ Code-quality review suggested adding Won/Lost rejection tests for parity with `Reassign`'s tests — not applied: `ChangeStage`'s guard is a single negation (`Status != Open`), already fully proven by the existing Draft-rejection fact, unlike `Reassign`'s enumerated `Status is Won or Lost`, where each named branch independently needs its own test. Additional Won/Lost facts would exercise the identical code path with no new verification value.
 
 ---
 
