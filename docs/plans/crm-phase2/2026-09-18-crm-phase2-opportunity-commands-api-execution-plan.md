@@ -972,7 +972,7 @@ explicitly out of scope; tests mint tokens directly with the same signing key."
 - Create: `src/Modules/CRM/Application/OpportunityAuthorizationDeniedException.cs`, `src/Modules/CRM/Application/OpportunityConcurrencyConflictException.cs`, `src/Modules/CRM/Application/InvalidPipelineTransitionException.cs`
 - Test: none dedicated — these are exercised by every handler test from Task 6 onward; a bare "can be constructed and carries its message" test would be testing the framework, not this code, so it's skipped per the same judgment already applied to `OpportunityNotFoundException`/`IdempotencyKeyReusedException`, neither of which has one either.
 
-- [ ] **Step 1: Add the three exception types**
+- [x] **Step 1: Add the three exception types**
 
 ```csharp
 namespace CRM.Application;
@@ -1020,7 +1020,7 @@ public sealed class InvalidPipelineTransitionException : InvalidOperationExcepti
 }
 ```
 
-- [ ] **Step 2: Build**
+- [x] **Step 2: Build**
 
 ```bash
 dotnet build
@@ -1028,7 +1028,7 @@ dotnet build
 
 Expected: succeeds.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/OpportunityAuthorizationDeniedException.cs src/Modules/CRM/Application/OpportunityConcurrencyConflictException.cs src/Modules/CRM/Application/InvalidPipelineTransitionException.cs
@@ -1038,6 +1038,9 @@ Groundwork for every Phase 2 command handler — each needs a way to signal
 these three outcomes distinctly from OpportunityNotFoundException and
 IdempotencyKeyReusedException, which already exist."
 ```
+
+→ Commit: `f7d2ce6` "feat(crm): add authorization-denied, concurrency-conflict and invalid-pipeline-transition exceptions"
+→ Verified: all 3 files match spec exactly (spec-compliance review ✅); code-quality review approved with no issues (AGENTS.md conventions, sibling-exception consistency all confirmed).
 
 ---
 
