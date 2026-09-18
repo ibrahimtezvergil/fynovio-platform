@@ -1053,7 +1053,7 @@ IdempotencyKeyReusedException, which already exist."
 
 This is the template every later command handler in this plan copies exactly: tenant-safe load → authorize (using the loaded resource's owner) → idempotency lookup/replay → `expectedVersion` check → domain mutation → Evidence+Outbox+IdempotencyRecord in one `SaveChangesAsync()` → commit, with a concurrent-duplicate-idempotency fallback. It replaces `CompleteOpportunityHandler`, which round-3's closure matrix already named as needing exactly this rewrite (architecture plan §3.6).
 
-- [ ] **Step 1: Write the failing tests — rename the existing test file and add three new tests for authorization, concurrency, and concurrent duplicates**
+- [x] **Step 1: Write the failing tests — rename the existing test file and add three new tests for authorization, concurrency, and concurrent duplicates**
 
 Rename `tests/CRM.Tests/Integration/CompleteOpportunityHandlerTests.cs` to `WinOpportunityHandlerTests.cs`, update its namespace references (`CompleteOpportunityHandler` → `WinOpportunityHandler`, `CompleteOpportunityCommand` → `WinOpportunityCommand`, `CompleteOpportunityResult` → `WinOpportunityResult`, `"enterprise.crmsales.opportunity.completed.v1"` → `"enterprise.crmsales.opportunity.won.v1"`, `"Opportunity.Win"` stays the same since it already said `Win`, not `Complete`), and give every existing test's `NewCommand` an `ExpectedVersion` argument plus authorize the seller by granting a tenant-wide `crm.opportunity.win` permission set in `SeedOpenOpportunityAsync` (every existing test needs this or it now fails with `OpportunityAuthorizationDeniedException`, since authorization didn't exist before this task):
 
@@ -1227,7 +1227,7 @@ public sealed class StubAuthorizer(AuthorizationEffect effect) : IAuthorizer
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~WinOpportunityHandlerTests"
@@ -1235,7 +1235,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~WinOpp
 
 Expected: compile errors — `WinOpportunityHandler`/`WinOpportunityCommand`/`WinOpportunityResult`/`StubAuthorizer` don't exist yet.
 
-- [ ] **Step 3: Delete the old `CompleteOpportunity*` files and write the new ones**
+- [x] **Step 3: Delete the old `CompleteOpportunity*` files and write the new ones**
 
 `src/Modules/CRM/Application/WinOpportunityCommand.cs`:
 
@@ -1410,7 +1410,7 @@ internal sealed record WonPayload(long OpportunityId, decimal TotalAmount, strin
 
 Delete `CompleteOpportunityCommand.cs`, `CompleteOpportunityHandler.cs`, `CompleteOpportunityResult.cs` (and `CompletedPayload.cs` if it is its own file — confirm during Step 1's read).
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~WinOpportunityHandlerTests"
@@ -1418,7 +1418,9 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~WinOpp
 
 Expected: PASS, all 7 facts (5 carried over + 2 new: authorization-denied, concurrency-conflict; the concurrent-duplicate test reuses the existing composite-primary-key mechanism, simulated sequentially rather than with real threads, which is sufficient to prove the replay path — a true multi-threaded race is an integration-environment concern, not something a unit-style xUnit fact should attempt).
 
-- [ ] **Step 5: Run the full CRM suite and the solution build**
+→ Note: the actual test file has 6 facts, not 7 — the plan's own draft test code (reproduced above) only ever specified 6 `[Fact]` methods; "7" in this step's expectation text was an internal inconsistency in the plan, not a shortfall in implementation. All 6 pass.
+
+- [x] **Step 5: Run the full CRM suite and the solution build**
 
 ```bash
 dotnet build
@@ -1427,7 +1429,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj
 
 Expected: 0 warnings, all green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/WinOpportunityCommand.cs src/Modules/CRM/Application/WinOpportunityHandler.cs src/Modules/CRM/Application/WinOpportunityResult.cs tests/CRM.Tests/Integration/WinOpportunityHandlerTests.cs tests/CRM.Tests/StubAuthorizer.cs
@@ -1439,6 +1441,11 @@ and instead of — authorization). Adds the expectedVersion concurrency
 contract and the concurrent-duplicate-idempotency replay fix. This handler
 is the template every later Phase 2 command reuses exactly."
 ```
+
+→ Commit: `b54480c` "feat(crm): rewrite CompleteOpportunity as WinOpportunity with authorization and expectedVersion" (also deleted `CompletedPayload.cs`, not listed in the plan's original `git rm` line but confirmed to be its own file requiring deletion)
+→ Follow-up fix: `deb5501` "fix(crm): move WonPayload into its own file for template consistency" — code-quality review flagged the internal `WonPayload` record being inlined at the bottom of the handler file instead of its own file, breaking the established one-file-per-payload-record convention this template needed to set correctly for 10+ future handlers.
+→ Follow-up fix: `1d8e1cf` "fix(crm): rename WonOpportunityPayload.cs to WonPayload.cs" — re-review caught that the first fix's new file name didn't match its type name (AGENTS.md Code Conventions), a fresh instance of the same rule the split was meant to satisfy.
+→ Verified: pipeline order independently traced against the spec (tenant-safe load → authorize → idempotency lookup/replay → expectedVersion check → domain mutation → single SaveChangesAsync → commit, with concurrent-duplicate replay fallback) — matches exactly, including the authorize-before-idempotency correction over the old handler. 85/85 CRM.Tests passing after both follow-up fixes (independently re-run, not just trusted from subagent reports).
 
 ---
 
