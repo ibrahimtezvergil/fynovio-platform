@@ -1619,7 +1619,7 @@ passes both as null, which stays valid. Every existing call site updated."
 
 `CreateOpportunity` is the one command whose `ResourceDescriptor.Id` is `null` (CREATE-action shape, round-3 §11) — its authorization check evaluates only the type-level `crm.opportunity.create` capability, never an `OwnedBy` fact, since there is no owner yet.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```csharp
 using Contracts;
@@ -1694,7 +1694,7 @@ public sealed class CreateOpportunityHandlerTests
 }
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~CreateOpportunityHandlerTests"
@@ -1702,7 +1702,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Create
 
 Expected: compile error.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/Modules/CRM/Application/CreateOpportunityCommand.cs`:
 
@@ -1827,7 +1827,7 @@ public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer a
 
 Note the two-`SaveChangesAsync` shape here (unlike `WinOpportunityHandler`'s one): the outbox/evidence/idempotency rows need `opportunity.Id`, which Postgres only assigns after the first `INSERT` — this exactly mirrors `GrantRoleAssignmentHandler`'s own two-`SaveChangesAsync` shape (`// assigns assignment.Id` comment, same reason), not a new pattern.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~CreateOpportunityHandlerTests"
@@ -1835,7 +1835,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Create
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/CreateOpportunityCommand.cs src/Modules/CRM/Application/CreateOpportunityHandler.cs src/Modules/CRM/Application/CreateOpportunityResult.cs tests/CRM.Tests/Application/CreateOpportunityHandlerTests.cs
@@ -1845,6 +1845,10 @@ CREATE-shaped authorization (ResourceDescriptor.Id=null, no owner fact yet).
 Two SaveChanges calls, same reason as GrantRoleAssignmentHandler: the outbox/
 evidence/idempotency rows need the id Postgres only assigns after the insert."
 ```
+
+→ Commit: `f1f2d6c` "feat(crm): add CreateOpportunity command and handler" — also added `CreatedPayload.cs` as its own file (deviating from the plan's literal nested-private-record snippet) for consistency with Task 6's `WonPayload` file-per-payload-record pattern; also added a concurrent-duplicate-idempotency `catch (DbUpdateException) when (unique violation)` block that the plan's own draft snippet omitted — a faithful copy of Task 6's already-approved race-handling pattern, closing the same correctness gap Task 6 fixed, not scope creep.
+→ Verified: pipeline order matches spec (authorize → idempotency lookup/replay → two-phase SaveChanges for id-then-outbox/evidence/idempotency → commit). 90/90 CRM.Tests passing, independently re-run.
+→ Code-quality review raised two minor observations (test file living in a new `Application/` directory rather than `Integration/`; the denied-authorization test reusing its handler's context instead of a fresh one for the post-assertion) — both are exactly what this task's own approved plan text specified verbatim, not implementer deviations, so left as-is rather than "fixed" against the approved spec.
 
 ---
 
