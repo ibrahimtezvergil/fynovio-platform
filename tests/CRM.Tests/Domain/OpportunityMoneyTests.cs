@@ -48,7 +48,7 @@ public sealed class OpportunityMoneyTests
         var opportunity = DraftOpportunity();
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 2, unitPrice: 50m);
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 25.50m);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
 
         opportunity.Win();
 
@@ -61,7 +61,7 @@ public sealed class OpportunityMoneyTests
         var opportunity = DraftOpportunity();
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m);
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 40m, isOptional: true);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
 
         opportunity.Win();
 
@@ -75,7 +75,7 @@ public sealed class OpportunityMoneyTests
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m);
         var canceled = opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 40m);
         opportunity.CancelLine(canceled, "stokta yok");
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
 
         opportunity.Win();
 

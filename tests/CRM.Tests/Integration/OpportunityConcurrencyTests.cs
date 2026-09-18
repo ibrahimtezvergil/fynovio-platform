@@ -28,7 +28,7 @@ public sealed class OpportunityConcurrencyTests
 
             var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
             opportunity.AddLine(TestData.ProductRef(tenant), quantity: 1, unitPrice: 100m);
-            opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+            opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
             seedCrm.Opportunities.Add(opportunity);
             await seedCrm.SaveChangesAsync();
             opportunityId = opportunity.Id;

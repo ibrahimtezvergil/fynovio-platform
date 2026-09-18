@@ -36,7 +36,7 @@ public sealed class OpportunityStateMachineTests
         var opportunity = NewDraftOpportunity();
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            opportunity.Open(DateTimeOffset.UtcNow.AddDays(-1)));
+            opportunity.Open(DateTimeOffset.UtcNow.AddDays(-1), null, null));
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public sealed class OpportunityStateMachineTests
     {
         var opportunity = NewDraftOpportunity();
 
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
 
         Assert.Equal(OpportunityStatus.Open, opportunity.Status);
         Assert.NotNull(opportunity.OpenedDate);
@@ -64,7 +64,7 @@ public sealed class OpportunityStateMachineTests
     {
         var opportunity = NewDraftOpportunity();
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m, isOptional: true);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
 
         Assert.Throws<InvalidOperationException>(() => opportunity.Win());
     }
@@ -74,7 +74,7 @@ public sealed class OpportunityStateMachineTests
     {
         var opportunity = NewDraftOpportunity();
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 2, unitPrice: 50m);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
 
         opportunity.Win();
 
@@ -105,7 +105,7 @@ public sealed class OpportunityStateMachineTests
     public void AddLine_is_rejected_after_open()
     {
         var opportunity = NewDraftOpportunity();
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
 
         Assert.Throws<InvalidOperationException>(() =>
             opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 10m));
@@ -138,9 +138,9 @@ public sealed class OpportunityStateMachineTests
     public void Open_is_rejected_when_already_open()
     {
         var opportunity = NewDraftOpportunity();
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
 
-        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7)));
+        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null));
     }
 
     [Fact]
@@ -148,7 +148,7 @@ public sealed class OpportunityStateMachineTests
     {
         var opportunity = WonOpportunity();
 
-        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7)));
+        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null));
     }
 
     [Fact]
@@ -157,7 +157,7 @@ public sealed class OpportunityStateMachineTests
         var opportunity = NewDraftOpportunity();
         opportunity.Lose("müşteri vazgeçti");
 
-        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7)));
+        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null));
     }
 
     [Fact]
@@ -208,7 +208,7 @@ public sealed class OpportunityStateMachineTests
     {
         var opportunity = NewDraftOpportunity();
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
         opportunity.Win();
         return opportunity;
     }

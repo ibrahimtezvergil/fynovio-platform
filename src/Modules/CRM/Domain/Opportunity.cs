@@ -89,17 +89,25 @@ public sealed class Opportunity : IHasRowVersion
     }
 
     /// <summary>draft → open is a DB-enforced gate (17 §2): expiry_date becomes
-    /// mandatory from this point on, diverging from legacy's skip-behavior on purpose.</summary>
-    public void Open(DateTimeOffset expiryDate)
+    /// mandatory from this point on, diverging from legacy's skip-behavior on purpose.
+    /// Assigns the entry pipeline stage if the caller resolved one (architecture plan
+    /// §2.3) — the domain layer doesn't query the database, so OpenOpportunityHandler
+    /// resolves which version/stage applies and passes them in; a tenant with no
+    /// pipeline configured yet passes both as null and Open proceeds normally.</summary>
+    public void Open(DateTimeOffset expiryDate, long? pipelineDefinitionVersionId, long? pipelineStageId)
     {
         if (Status != OpportunityStatus.Draft)
             throw new InvalidOperationException($"Cannot open an opportunity in status {Status}.");
         if (expiryDate <= DateTimeOffset.UtcNow)
             throw new ArgumentOutOfRangeException(nameof(expiryDate), "Expiry date must be in the future.");
+        if (pipelineStageId is not null && pipelineDefinitionVersionId is null)
+            throw new ArgumentException("A pipeline stage requires its pipeline definition version.", nameof(pipelineStageId));
 
         Status = OpportunityStatus.Open;
         ExpiryDate = expiryDate;
         OpenedDate = DateTimeOffset.UtcNow;
+        PipelineDefinitionVersionId = pipelineDefinitionVersionId;
+        PipelineStageId = pipelineStageId;
         Touch();
     }
 

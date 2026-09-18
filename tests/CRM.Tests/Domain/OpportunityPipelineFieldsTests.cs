@@ -1,38 +1,61 @@
-using System.Reflection;
+using Contracts;
 using CRM.Domain;
 using Xunit;
 
 namespace CRM.Tests.Domain;
 
-/// <summary>CRM_Phase1_Test_Coverage_Verification_Report.pdf F-04: a Stage-belongs-to-Version
-/// consistency check would guard against `PipelineStageId` and `PipelineDefinitionVersionId`
-/// disagreeing on which pipeline they point to. There is nothing to write today — both
-/// properties are `private set` and no public command assigns them (docs/schema/crm-sales-schema.md
-/// item 19: "reserved for a later phase's ChangePipelineStage"), so the mismatch this would
-/// guard against cannot currently be constructed. This regression-lock test fails the moment
-/// that stops being true, which is the trigger for adding the real consistency check — see
-/// the Phase 2 prerequisite note in docs/plans/crm-phase1/2026-09-16-crm-target-model-phase0-delta-plan.md.</summary>
 public sealed class OpportunityPipelineFieldsTests
 {
-    [Fact]
-    public void PipelineDefinitionVersionId_and_PipelineStageId_have_no_public_setter()
+    private static Opportunity NewDraftOpportunity()
     {
-        var versionIdProperty = typeof(Opportunity).GetProperty(nameof(Opportunity.PipelineDefinitionVersionId))!;
-        var stageIdProperty = typeof(Opportunity).GetProperty(nameof(Opportunity.PipelineStageId))!;
-
-        Assert.False(versionIdProperty.SetMethod?.IsPublic ?? false);
-        Assert.False(stageIdProperty.SetMethod?.IsPublic ?? false);
+        var tenant = TestData.NextTenant();
+        return Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", estimatedAmount: 1000m);
     }
 
     [Fact]
-    public void No_public_command_assigns_a_pipeline_stage_or_version()
+    public void Open_assigns_the_supplied_pipeline_version_and_stage()
     {
-        var publicMethods = typeof(Opportunity)
-            .GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-            .Where(m => !m.IsSpecialName); // exclude property get_/set_ accessors
+        var opportunity = NewDraftOpportunity();
 
-        Assert.DoesNotContain(publicMethods, m =>
-            m.Name.Contains("Stage", StringComparison.OrdinalIgnoreCase) ||
-            m.Name.Contains("Pipeline", StringComparison.OrdinalIgnoreCase));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: 10, pipelineStageId: 20);
+
+        Assert.Equal(10, opportunity.PipelineDefinitionVersionId);
+        Assert.Equal(20, opportunity.PipelineStageId);
+    }
+
+    [Fact]
+    public void Open_with_no_pipeline_configured_leaves_both_fields_null()
+    {
+        var opportunity = NewDraftOpportunity();
+
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
+
+        Assert.Null(opportunity.PipelineDefinitionVersionId);
+        Assert.Null(opportunity.PipelineStageId);
+    }
+
+    [Fact]
+    public void Open_rejects_a_stage_supplied_without_its_version()
+    {
+        var opportunity = NewDraftOpportunity();
+
+        Assert.Throws<ArgumentException>(() =>
+            opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: 20));
+    }
+
+    [Fact]
+    public void No_command_other_than_Open_assigns_a_pipeline_stage_or_version()
+    {
+        // Narrowed from the Phase 1 version of this test (architecture plan §2.3): Open()
+        // is now the one, explicit exception. Every other command must still never touch
+        // these fields.
+        var tenant = TestData.NextTenant();
+        var opportunity = Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", 1000m);
+        opportunity.AddLine(TestData.ProductRef(tenant), quantity: 1, unitPrice: 10m);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
+        opportunity.Win();
+
+        Assert.Null(opportunity.PipelineDefinitionVersionId);
+        Assert.Null(opportunity.PipelineStageId);
     }
 }
