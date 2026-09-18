@@ -138,5 +138,3 @@ public sealed class WinOpportunityHandler(CrmDbContext context, IAuthorizer auth
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
     }
 }
-
-internal sealed record WonPayload(long OpportunityId, decimal TotalAmount, string Currency);
