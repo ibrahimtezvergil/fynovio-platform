@@ -2385,7 +2385,7 @@ identified line-level consumer yet)."
 
 Same shape as Task 10, wrapping `Opportunity.CancelLine`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```csharp
 using Contracts;
@@ -2430,7 +2430,7 @@ public sealed class CancelOpportunityLineHandlerTests
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~CancelOpportunityLineHandlerTests"
@@ -2438,7 +2438,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Cancel
 
 Expected: compile error.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/Modules/CRM/Application/CancelOpportunityLineCommand.cs`:
 
@@ -2564,7 +2564,7 @@ public sealed class CancelOpportunityLineHandler(CrmDbContext context, IAuthoriz
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~CancelOpportunityLineHandlerTests"
@@ -2572,12 +2572,16 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Cancel
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/CancelOpportunityLineCommand.cs src/Modules/CRM/Application/CancelOpportunityLineHandler.cs src/Modules/CRM/Application/CancelOpportunityLineResult.cs tests/CRM.Tests/Application/CancelOpportunityLineHandlerTests.cs
 git commit -m "feat(crm): add CancelOpportunityLine command and handler"
 ```
+
+→ Commit: `33cba72` "feat(crm): add CancelOpportunityLine command and handler" — also added `CanceledLinePayload.cs` as its own file and the concurrent-duplicate-idempotency catch block (Tasks 8–10 pattern), with both replay branches deliberately skipping payload deserialization since `CancelOpportunityLineResult` carries nothing server-computed beyond what the command already has.
+→ Follow-up fix: `0099877` "fix(crm): clarify write-only payload and add replay coverage for CancelOpportunityLine" — code-quality review found the write-only-payload asymmetry undocumented and completely untested (the only handler in this plan with non-standard replay logic); added an explanatory comment and a dedicated replay test. Re-review confirmed both.
+→ Verified: no `OutboxMessage` present, line-ownership guard and both replay branches traced against spec. 96/96 CRM.Tests passing, independently re-run.
 
 ---
 
