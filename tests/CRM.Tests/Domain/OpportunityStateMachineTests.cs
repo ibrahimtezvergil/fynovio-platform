@@ -238,6 +238,28 @@ public sealed class OpportunityStateMachineTests
         Assert.Throws<InvalidOperationException>(() => opportunity.Reassign(new PrincipalRef("https://idp.local", "seller-2")));
     }
 
+    [Fact]
+    public void ChangeStage_only_while_open()
+    {
+        var opportunity = NewDraftOpportunity();
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.ChangeStage(pipelineStageId: 99));
+    }
+
+    [Fact]
+    public void ChangeStage_sets_the_new_stage_while_open()
+    {
+        var tenant = TestData.NextTenant();
+        var opportunity = Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", 1000m);
+        opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: 10, pipelineStageId: 20);
+
+        opportunity.ChangeStage(pipelineStageId: 30);
+
+        Assert.Equal(30, opportunity.PipelineStageId);
+        Assert.Equal(10, opportunity.PipelineDefinitionVersionId); // unchanged — same version, different stage
+    }
+
     private static Opportunity WonOpportunity()
     {
         var opportunity = NewDraftOpportunity();

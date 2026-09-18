@@ -174,6 +174,22 @@ public sealed class Opportunity : IHasRowVersion
         Touch();
     }
 
+    /// <summary>Only the Status==Open precondition is enforced here — whether
+    /// pipelineStageId actually belongs to this opportunity's current
+    /// PipelineDefinitionVersionId, and whether it's active, are cross-aggregate facts
+    /// ChangePipelineStageHandler validates before calling this (architecture plan §7/
+    /// §9: the domain layer doesn't query another aggregate's table). Pipeline stage
+    /// changes never imply a canonical lifecycle transition (binding spec §9) — Won/Lost
+    /// remain Win()/Lose()'s job alone.</summary>
+    public void ChangeStage(long pipelineStageId)
+    {
+        if (Status != OpportunityStatus.Open)
+            throw new InvalidOperationException($"Cannot change pipeline stage on an opportunity in status {Status}. It must be open.");
+
+        PipelineStageId = pipelineStageId;
+        Touch();
+    }
+
     /// <summary>Tek versiyon artış noktası. Interceptor yerine burada artırılıyor: outbox ve
     /// evidence kayıtları aynı transaction içinde `RowVersion`'ı okuyor, interceptor
     /// SaveChanges sırasında artırdığı için bir eski değer yazılıyordu.</summary>
