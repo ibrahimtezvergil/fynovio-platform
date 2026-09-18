@@ -1458,7 +1458,7 @@ is the template every later Phase 2 command reuses exactly."
 
 Resolves architecture plan §2.3's "when": `Open()` is the one place `PipelineDefinitionVersionId`/`PipelineStageId` may be set; the resolution of *which* version/stage (Task 9's tenant lookup) happens in the application layer, since the domain layer does not query the database.
 
-- [ ] **Step 1: Write the failing domain tests**
+- [x] **Step 1: Write the failing domain tests**
 
 Replace the two existing regression-lock facts in `tests/CRM.Tests/Domain/OpportunityPipelineFieldsTests.cs` (read the file first to get its exact current fact names) with:
 
@@ -1513,7 +1513,7 @@ public void No_command_other_than_Open_assigns_a_pipeline_stage_or_version()
 
 `(`NewDraftOpportunity()` is the private helper already defined in `OpportunityStateMachineTests.cs` and reused across the `CRM.Tests.Domain` files that need it — confirm it's accessible the same way `OpportunityPipelineFieldsTests.cs` currently reuses it before assuming the exact name/visibility.)
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~OpportunityPipelineFieldsTests"
@@ -1521,7 +1521,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Opport
 
 Expected: compile error — `Open` still takes one argument.
 
-- [ ] **Step 3: Change `Open`'s signature**
+- [x] **Step 3: Change `Open`'s signature**
 
 In `src/Modules/CRM/Domain/Opportunity.cs`, replace:
 
@@ -1569,7 +1569,7 @@ with:
     }
 ```
 
-- [ ] **Step 4: Run the new tests to verify they pass**
+- [x] **Step 4: Run the new tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~OpportunityPipelineFieldsTests"
@@ -1577,7 +1577,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~Opport
 
 Expected: PASS.
 
-- [ ] **Step 5: Fix every other call site — this signature change breaks every existing caller of `Open`**
+- [x] **Step 5: Fix every other call site — this signature change breaks every existing caller of `Open`**
 
 ```bash
 grep -rln "\.Open(" tests/CRM.Tests/ src/Modules/CRM/
@@ -1585,7 +1585,7 @@ grep -rln "\.Open(" tests/CRM.Tests/ src/Modules/CRM/
 
 For every match outside `OpportunityPipelineFieldsTests.cs` (expected: `OpportunityStateMachineTests.cs`, `OpportunityMoneyTests.cs`, `OpportunityRowVersionTests.cs`, `WinOpportunityHandlerTests.cs` from Task 6, `OpportunityConcurrencyTests.cs`, `OpportunityPersistenceTests.cs`, `LegacyDataMigrationTests.cs`, `PipelineConstraintTests.cs` if it seeds an opened opportunity), change `.Open(someDate)` to `.Open(someDate, null, null)` — every one of these tests is exercising lifecycle/money/concurrency/legacy-migration behavior unrelated to pipeline-stage assignment, so `null, null` (no pipeline configured) is the correct, minimal fix in every case. Do not change any test's assertions beyond this signature fix.
 
-- [ ] **Step 6: Run the full CRM suite**
+- [x] **Step 6: Run the full CRM suite**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj
@@ -1593,7 +1593,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj
 
 Expected: PASS, no regression, 0 unexpected failures from the call-site fix.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/Modules/CRM/Domain/Opportunity.cs tests/CRM.Tests
@@ -1604,6 +1604,10 @@ The domain layer doesn't query the database — OpenOpportunityHandler (Task 9)
 resolves which version/stage applies. A tenant with no pipeline configured
 passes both as null, which stays valid. Every existing call site updated."
 ```
+
+→ Commit: `a2852b4` "feat(crm): Opportunity.Open() assigns the entry pipeline stage" — touched 8 files (`Opportunity.cs` + 7 test files across `OpportunityPipelineFieldsTests.cs`, `OpportunityMoneyTests.cs`, `OpportunityRowVersionTests.cs`, `OpportunityStateMachineTests.cs`, `OpportunityConcurrencyTests.cs`, `OpportunityPersistenceTests.cs`, `WinOpportunityHandlerTests.cs`); `LegacyDataMigrationTests.cs`/`PipelineConstraintTests.cs` did not call `.Open(` and needed no change.
+→ Follow-up fix: `656e7f0` "style(crm): use named arguments for Open()'s pipeline null params" — code-quality review flagged the 19 mechanically-updated call sites using bare positional `null, null` for two adjacent same-typed nullable parameters (transposition risk), inconsistent with the new test facts which already used named arguments; standardized on named arguments everywhere, re-review confirmed.
+→ Note: the plan's own test-file draft only ever specifies 4 `[Fact]` methods for `OpportunityPipelineFieldsTests.cs`, but this task's net test-count delta is correctly +2 (2 old facts removed, 4 new added) — 87/87 CRM.Tests passing, independently re-run after both the implementation and the follow-up fix.
 
 ---
 
