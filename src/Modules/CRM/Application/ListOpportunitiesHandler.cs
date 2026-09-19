@@ -17,10 +17,11 @@ public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeR
         var actor = new ActorContext(query.TenantId, query.Principal, query.CorrelationId);
         var scope = await scopeResolver.ResolveAsync(actor, new ActionKey(ActionKeyValue), nameof(Opportunity), cancellationToken);
 
+        var tenantScoped = context.Opportunities.Where(o => o.TenantId == query.TenantId);
         IQueryable<Opportunity> filtered = scope switch
         {
-            AccessScope.All => context.Opportunities.Where(o => o.TenantId == query.TenantId),
-            AccessScope.AnyOf anyOf => ApplyAnyOf(context.Opportunities.Where(o => o.TenantId == query.TenantId), anyOf),
+            AccessScope.All => tenantScoped,
+            AccessScope.AnyOf anyOf => ApplyAnyOf(tenantScoped, anyOf),
             _ => context.Opportunities.Where(_ => false) // AccessScope.None, and fail-closed on any future unrecognized case
         };
 
@@ -29,6 +30,7 @@ public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeR
 
         var results = await filtered
             .OrderByDescending(o => o.CreatedAt)
+            .ThenByDescending(o => o.Id)
             .Skip(query.Skip)
             .Take(query.Take)
             .Select(o => new OpportunitySummaryDto(
