@@ -110,6 +110,8 @@ public static class OpportunityEndpoints
             [AsParameters] ListOpportunitiesRequest request, ListOpportunitiesHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
         {
             var actor = httpContext.GetActorContext();
+            if (request.Skip < 0 || request.Take <= 0 || request.Take > 1000)
+                throw new ArgumentException("Skip must be >= 0, Take must be between 1 and 1000.");
             var query = new ListOpportunitiesQuery(actor.TenantId, actor.Principal, actor.CorrelationId, request.Status, request.Skip, request.Take);
             return Results.Ok(await handler.HandleAsync(query, cancellationToken));
         });
