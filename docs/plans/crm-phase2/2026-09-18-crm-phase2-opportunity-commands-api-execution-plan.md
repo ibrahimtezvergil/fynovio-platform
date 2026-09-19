@@ -3739,7 +3739,7 @@ handlers, which throw OpportunityAuthorizationDeniedException."
 
 Scope-filtered via `IAccessScopeResolver`, translated into a SQL `WHERE` — never fetch-then-post-filter, per `AccessScope`'s own doc comment and the round-3 "Final Query Authorization Invariant" the architecture plan's §9 cites.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```csharp
 using Contracts;
@@ -3826,7 +3826,7 @@ public sealed class StubScopeResolver(AccessScope scope) : IAccessScopeResolver
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~ListOpportunitiesHandlerTests"
@@ -3834,7 +3834,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~ListOp
 
 Expected: compile error.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/Modules/CRM/Application/ListOpportunitiesQuery.cs`:
 
@@ -3929,7 +3929,7 @@ public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeR
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~ListOpportunitiesHandlerTests"
@@ -3937,7 +3937,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~ListOp
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/ListOpportunitiesQuery.cs src/Modules/CRM/Application/ListOpportunitiesHandler.cs src/Modules/CRM/Application/OpportunitySummaryDto.cs tests/CRM.Tests/Application/ListOpportunitiesHandlerTests.cs tests/CRM.Tests/StubAuthorizer.cs
@@ -3946,6 +3946,11 @@ git commit -m "feat(crm): add ListOpportunities query and handler
 Scope-filtered via IAccessScopeResolver translated into a SQL WHERE — never
 fetch-then-post-filter, matching the round-3 query authorization invariant."
 ```
+
+→ Commit: `363cc53` "feat(crm): add ListOpportunities query and handler"
+→ Deviation from reference code (accepted as a necessary correctness fix, not scope creep): added an explicit `Where(o => o.TenantId == query.TenantId)` predicate the plan's sample code omits. `CreateAdminContext()` (used by all 3 tests) connects as a Postgres superuser, which bypasses RLS entirely — `SetTenantContextAsync` alone doesn't scope an unfiltered `AccessScope.All`/`AnyOf` list query under that connection, unlike Task 17's `GetOpportunityHandler`, which loads by a single globally-unique `Id` and never needed one. Spec-compliance and code-quality review both independently confirmed this is required, not optional; also functions as defense-in-depth for the production RLS path.
+→ Follow-up fix: `ebe0dc9` "fix(crm): add deterministic pagination tie-break to ListOpportunities" — code-quality review found `OrderByDescending(CreatedAt)` alone is not a total order (rows from the same `SaveChangesAsync` batch can share a timestamp), which could silently drop/duplicate rows across `Skip`/`Take` pages; fixed with `ThenByDescending(o => o.Id)`. Same commit also de-duplicated the repeated tenant-filter predicate into one `tenantScoped` variable. A second reviewer finding (Skip/Take bounds validation) was deliberately not applied — that's a system-boundary concern belonging to Task 21's HTTP surface, not this internal application-layer handler.
+→ Verified: 3/3 tests pass after the fix (`MSBUILDDISABLENODEREUSE=1 dotnet test ... -m:1 -nodeReuse:false`, 224ms). SQL-level filtering (no in-memory fetch-then-filter) confirmed by code-quality review reading the query construction directly.
 
 ---
 
