@@ -19,11 +19,11 @@ public sealed class AccessAuthorizer(
         var revision = await GetRevisionAsync(request.Actor.TenantId, cancellationToken);
 
         if (!await actionCatalog.IsActiveAsync(request.Action, cancellationToken))
-            return Deny("action_not_registered", decisionId, revision);
+            return Deny("action_not_registered", decisionId, revision, AuthorizationDenialStage.Coarse);
 
         var accountId = await principalResolver.ResolveAccountIdAsync(request.Actor.Principal, cancellationToken);
         if (accountId is null)
-            return Deny("principal_not_recognized", decisionId, revision);
+            return Deny("principal_not_recognized", decisionId, revision, AuthorizationDenialStage.Coarse);
 
         var now = DateTimeOffset.UtcNow;
         var items = await context.RoleAssignments
@@ -42,7 +42,13 @@ public sealed class AccessAuthorizer(
             && owner == request.Actor.Principal)
             return Allow("owner_relation_grant", decisionId, revision);
 
-        return Deny("no_matching_grant", decisionId, revision);
+        // items.Count == 0: the actor has no grant for this action at all — coarse, no
+        // resource-specific fact was ever consulted. items.Count > 0: at least one grant
+        // exists (e.g. an owner-relation grant) but none of them covered this resource —
+        // a PEP may collapse this into the same external shape as "not found" (tenant
+        // non-leak rule), which a Coarse denial must never be.
+        var denialStage = items.Count == 0 ? AuthorizationDenialStage.Coarse : AuthorizationDenialStage.Record;
+        return Deny("no_matching_grant", decisionId, revision, denialStage);
     }
 
     private async Task<long> GetRevisionAsync(TenantId tenantId, CancellationToken cancellationToken) =>
@@ -54,6 +60,6 @@ public sealed class AccessAuthorizer(
     private static AuthorizationDecision Allow(string reason, Guid decisionId, long revision) =>
         new(AuthorizationEffect.Allow, reason, decisionId, revision);
 
-    private static AuthorizationDecision Deny(string reason, Guid decisionId, long revision) =>
-        new(AuthorizationEffect.Deny, reason, decisionId, revision);
+    private static AuthorizationDecision Deny(string reason, Guid decisionId, long revision, AuthorizationDenialStage denialStage) =>
+        new(AuthorizationEffect.Deny, reason, decisionId, revision, denialStage);
 }
