@@ -7,7 +7,6 @@ using CRM.Persistence;
 using MasterData.Persistence;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
 using Xunit;
@@ -29,11 +28,13 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
         await _container.StartAsync();
 
         var connectionString = _container.GetConnectionString();
-        // Set both the module-specific variables (for fallback in *ConnectionString.cs)
-        // and the appsettings-style variables (for config override in WebApplicationFactory)
-        Environment.SetEnvironmentVariable("FYNOVIO_CRM_CONNECTION_STRING", connectionString);
-        Environment.SetEnvironmentVariable("FYNOVIO_ACCESS_CONNECTION_STRING", connectionString);
-        Environment.SetEnvironmentVariable("FYNOVIO_MASTERDATA_CONNECTION_STRING", connectionString);
+        // Set ConnectionStrings__* env vars (ASP.NET nested config naming) — these override
+        // the hardcoded localhost values in appsettings.Development.json via the framework's
+        // default configuration precedence (environment variables > JSON files).
+        // NOTE: mutates process-global environment variables. If a second Host.Tests test class
+        // is ever added, extract this setup into a shared IAsyncLifetime fixture with
+        // ICollectionFixture serialization to avoid cross-class env-var races under xUnit's
+        // default parallel test-class execution.
         Environment.SetEnvironmentVariable("ConnectionStrings__Crm", connectionString);
         Environment.SetEnvironmentVariable("ConnectionStrings__Access", connectionString);
         Environment.SetEnvironmentVariable("ConnectionStrings__MasterData", connectionString);
@@ -51,17 +52,7 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
         await using (var access = CreateAccessContext(connectionString))
             await access.Database.MigrateAsync();
 
-        _factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureAppConfiguration((context, config) =>
-                {
-                    // Add environment variables to configuration
-                    // The ConnectionStrings__* env vars (with double underscores) override
-                    // the ConnectionStrings from appsettings.Development.json
-                    config.AddEnvironmentVariables();
-                });
-            });
+        _factory = new WebApplicationFactory<Program>();
     }
 
     public async Task DisposeAsync()
