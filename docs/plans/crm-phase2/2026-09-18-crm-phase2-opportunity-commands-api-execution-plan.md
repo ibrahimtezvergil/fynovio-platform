@@ -3962,7 +3962,7 @@ fetch-then-post-filter, matching the round-3 query authorization invariant."
 
 Read-only, tenant-scoped, no FLS applicable (no sensitive fields on `PipelineStage` — architecture plan §9). Powers `ChangePipelineStage` clients.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```csharp
 using Contracts;
@@ -4008,7 +4008,7 @@ public sealed class GetPipelineStagesHandlerTests
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~GetPipelineStagesHandlerTests"
@@ -4016,7 +4016,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~GetPip
 
 Expected: compile error.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/Modules/CRM/Application/GetPipelineStagesQuery.cs`:
 
@@ -4065,7 +4065,7 @@ public sealed class GetPipelineStagesHandler(CrmDbContext context)
 
 No `IAuthorizer` dependency here — reading pipeline configuration is gated by the same coarse `crm.opportunity.read`-or-equivalent capability the endpoint layer (Task 21) checks before calling this handler, consistent with architecture plan §9A's routing note ("pipeline config is read through the CRM lens here, not a separate capability"); this handler itself only needs the tenant-safe RLS boundary, which `SetTenantContextAsync` already provides.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~GetPipelineStagesHandlerTests"
@@ -4073,12 +4073,17 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~GetPip
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/GetPipelineStagesQuery.cs src/Modules/CRM/Application/GetPipelineStagesHandler.cs src/Modules/CRM/Application/PipelineStageDto.cs tests/CRM.Tests/Application/GetPipelineStagesHandlerTests.cs
 git commit -m "feat(crm): add GetPipelineStages query and handler"
 ```
+
+→ Commit: `174d29e` "feat(crm): add GetPipelineStages query and handler"
+→ Deviation from reference code (accepted as a necessary fix, verified against the real domain model, not scope creep): the plan's sample test called `AddStage("Teklif Verildi", 1)` before `AddStage("Bekliyor", 0)`, but `PipelineDefinitionVersion.AddStage` makes the *first-added* stage the entry stage — as literally written, the reference test's `Assert.True(results[0].IsEntry)` would have failed. Implementer swapped the two `AddStage` calls (Bekliyor first) so the entry-stage assertion is actually correct; spec-compliance review independently confirmed this against `PipelineDefinitionVersion.cs`.
+→ No explicit `TenantId` predicate needed (unlike Task 18): `PipelineDefinitionVersion.Id` is a simple globally-unique primary key (`PipelineDefinitionVersionConfiguration.cs`: `builder.HasKey(v => v.Id)`, no tenant composite), so filtering by `PipelineDefinitionVersionId` alone already scopes to one tenant — confirmed independently by both implementer and spec-compliance review.
+→ Verified: implementer and spec-compliance reviewer independently ran the test — PASS (202ms, 192ms). Code-quality review approved with no Critical/Important issues (couldn't re-run the test itself due to a sandbox MSBuild issue, but didn't need to given the two prior independent runs). Ready to merge: Yes.
 
 ---
 
