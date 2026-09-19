@@ -55,6 +55,20 @@ public sealed class CrmProblemDetailsExceptionHandlerTests
         Assert.Equal("forbidden", response.Type);
     }
 
+    /// <summary>PipelineConfigurationInvalidException subclasses InvalidOperationException,
+    /// same as the generic lifecycle-conflict exceptions the switch's catch-all maps to
+    /// 409 "illegal_lifecycle_transition" — without its own case ordered before that
+    /// catch-all, it would still get 409 (same status, silently wrong `type` string).
+    /// Pins the ordering so a future reshuffle of the switch can't regress it silently.</summary>
+    [Fact]
+    public async Task Invalid_pipeline_configuration_maps_to_its_own_conflict_type()
+    {
+        var response = await HandleAsync(new PipelineConfigurationInvalidException(7, "no active stage is flagged as the entry stage"));
+
+        Assert.Equal(StatusCodes.Status409Conflict, response.Status);
+        Assert.Equal("invalid_pipeline_configuration", response.Type);
+    }
+
     private async Task<(int Status, string? Type, string? Title)> HandleAsync(Exception exception)
     {
         var context = new DefaultHttpContext { Response = { Body = new MemoryStream() } };

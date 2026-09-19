@@ -75,6 +75,101 @@ public sealed class OpenOpportunityHandlerTests
         Assert.Null(result.PipelineStageId);
     }
 
+    /// <summary>Test-gap audit §9 (2026-09-19): ResolveEntryStageAsync's documented
+    /// choice ("this plan's own scope note") when a tenant has more than one
+    /// PipelineDefinition — always the oldest (lowest Id). Regression-lock, not new
+    /// behavior.</summary>
+    [Fact]
+    public async Task Opening_uses_the_oldest_pipeline_definition_when_a_tenant_has_more_than_one()
+    {
+        var tenant = TestData.NextTenant();
+        await using var seed = _fixture.CreateAdminContext();
+        await using var seedMasterData = _fixture.CreateMasterDataContext();
+        var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
+
+        var older = PipelineDefinition.Create(tenant, "Sales (older)");
+        seed.PipelineDefinitions.Add(older);
+        await seed.SaveChangesAsync();
+        var olderVersion = older.AddVersion(1);
+        seed.PipelineDefinitionVersions.Add(olderVersion);
+        await seed.SaveChangesAsync();
+        var olderEntryStage = olderVersion.AddStage("Bekliyor", 0);
+        seed.PipelineStages.Add(olderEntryStage);
+        await seed.SaveChangesAsync();
+
+        var newer = PipelineDefinition.Create(tenant, "Sales (newer)");
+        seed.PipelineDefinitions.Add(newer);
+        await seed.SaveChangesAsync();
+        var newerVersion = newer.AddVersion(1);
+        seed.PipelineDefinitionVersions.Add(newerVersion);
+        await seed.SaveChangesAsync();
+        var newerEntryStage = newerVersion.AddStage("Yeni Bekliyor", 0);
+        seed.PipelineStages.Add(newerEntryStage);
+        await seed.SaveChangesAsync();
+
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
+        opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
+        seed.Opportunities.Add(opportunity);
+        await seed.SaveChangesAsync();
+
+        var command = new OpenOpportunityCommand(
+            tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion,
+            DateTimeOffset.UtcNow.AddDays(7), "key-multi-pipeline", Guid.NewGuid());
+
+        await using var context = _fixture.CreateAdminContext();
+        var result = await new OpenOpportunityHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command);
+
+        Assert.Equal(olderEntryStage.Id, result.PipelineStageId);
+    }
+
+    /// <summary>Test-gap audit §9: version pinning is true by construction (no handler
+    /// re-resolves an open Opportunity's pipeline fields after Open()), but was not
+    /// explicitly regression-locked by a test that creates a second version afterward.</summary>
+    [Fact]
+    public async Task Opened_opportunity_keeps_its_original_version_after_a_newer_version_is_published()
+    {
+        var tenant = TestData.NextTenant();
+        await using var seed = _fixture.CreateAdminContext();
+        await using var seedMasterData = _fixture.CreateMasterDataContext();
+        var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
+
+        var definition = PipelineDefinition.Create(tenant, "Sales");
+        seed.PipelineDefinitions.Add(definition);
+        await seed.SaveChangesAsync();
+        var v1 = definition.AddVersion(1);
+        seed.PipelineDefinitionVersions.Add(v1);
+        await seed.SaveChangesAsync();
+        var v1EntryStage = v1.AddStage("Bekliyor", 0);
+        seed.PipelineStages.Add(v1EntryStage);
+        await seed.SaveChangesAsync();
+
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
+        opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
+        seed.Opportunities.Add(opportunity);
+        await seed.SaveChangesAsync();
+
+        var command = new OpenOpportunityCommand(
+            tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion,
+            DateTimeOffset.UtcNow.AddDays(7), "key-version-pinning", Guid.NewGuid());
+        await using (var openContext = _fixture.CreateAdminContext())
+            await new OpenOpportunityHandler(openContext, StubAuthorizer.AlwaysAllow).HandleAsync(command);
+
+        // A newer version is published for the same PipelineDefinition after opening.
+        await using var seedV2 = _fixture.CreateAdminContext();
+        var trackedDefinition = await seedV2.PipelineDefinitions.SingleAsync(d => d.Id == definition.Id);
+        var v2 = trackedDefinition.AddVersion(2);
+        seedV2.PipelineDefinitionVersions.Add(v2);
+        await seedV2.SaveChangesAsync();
+        var v2EntryStage = v2.AddStage("Yeni Bekliyor", 0);
+        seedV2.PipelineStages.Add(v2EntryStage);
+        await seedV2.SaveChangesAsync();
+
+        await using var verify = _fixture.CreateAdminContext();
+        var reloaded = await verify.Opportunities.AsNoTracking().SingleAsync(o => o.Id == opportunity.Id);
+        Assert.Equal(v1.Id, reloaded.PipelineDefinitionVersionId);
+        Assert.Equal(v1EntryStage.Id, reloaded.PipelineStageId);
+    }
+
     /// <summary>Invariant table row 3 (2026-09-19 entry-stage resolution): a version
     /// exists but has zero stages flagged IsEntry — here, zero stages at all, the
     /// simplest way to construct that state. Must be a hard error, never a silent

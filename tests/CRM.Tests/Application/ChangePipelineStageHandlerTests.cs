@@ -44,6 +44,31 @@ public sealed class ChangePipelineStageHandlerTests
             new ChangePipelineStageHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command));
     }
 
+    /// <summary>Test-gap audit §9 (2026-09-19): the resolved "no transition matrix"
+    /// model has no guard against `ChangeStage(currentStageId)` — presumably a legal
+    /// no-op, but nothing proved it doesn't corrupt RowVersion/evidence/outbox. This
+    /// regression-locks today's actual behavior: the write still happens exactly once
+    /// (RowVersion advances by 1, not 0 or 2), the stage is unchanged, and the call
+    /// succeeds rather than throwing.</summary>
+    [Fact]
+    public async Task Changing_to_the_current_stage_is_a_legal_single_write_no_op()
+    {
+        var (tenant, opportunityId, _, entryStageId, _, _) = await SeedAsync();
+        var opportunity = await LoadAsync(tenant, opportunityId);
+        var startingVersion = opportunity.RowVersion;
+        var command = new ChangePipelineStageCommand(
+            tenant, opportunityId, TestData.Seller, opportunity.RowVersion, entryStageId, "key-same-stage", Guid.NewGuid());
+
+        await using var context = _fixture.CreateAdminContext();
+        var result = await new ChangePipelineStageHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command);
+
+        Assert.False(result.Replayed);
+        Assert.Equal(entryStageId, result.PipelineStageId);
+        var reloaded = await context.Opportunities.AsNoTracking().SingleAsync(o => o.Id == opportunityId);
+        Assert.Equal(entryStageId, reloaded.PipelineStageId);
+        Assert.Equal(startingVersion + 1, reloaded.RowVersion);
+    }
+
     [Fact]
     public async Task Changing_to_a_stage_from_a_different_version_is_rejected()
     {
