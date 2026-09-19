@@ -4583,7 +4583,7 @@ the request body (round-3 §4)."
 
 No API-layer test precedent exists in this repo (architecture plan §3.10/§16) — this task creates the pattern, exercised against a real Testcontainers PostgreSQL, not mocks (AGENTS.md binding testing rule).
 
-- [ ] **Step 1: Add the test project**
+- [x] **Step 1: Add the test project**
 
 `tests/Host.Tests/Host.Tests.csproj`:
 
@@ -4620,7 +4620,7 @@ Add this project to `FynovioPlatform.sln` (`dotnet sln add tests/Host.Tests/Host
 public partial class Program { }
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 `tests/Host.Tests/JwtTestTokenFactory.cs`:
 
@@ -4742,7 +4742,7 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
 }
 ```
 
-- [ ] **Step 3: Run to verify the two tests fail for the right reason first, then pass**
+- [x] **Step 3: Run to verify the two tests fail for the right reason first, then pass**
 
 ```bash
 dotnet test tests/Host.Tests/Host.Tests.csproj
@@ -4750,11 +4750,11 @@ dotnet test tests/Host.Tests/Host.Tests.csproj
 
 Expected initially: compile error (project doesn't build yet — no `Program` partial class). After Step 1's marker is added and the project references resolve: both tests PASS without any further application code changes, since Tasks 4/21 already built the authentication/authorization gate this test exercises.
 
-- [ ] **Step 4: Add the project to CI**
+- [x] **Step 4: Add the project to CI**
 
 Confirm `.github/workflows/ci.yml` runs `dotnet test` at the solution level (not a per-project list) — if it already does, `tests/Host.Tests` is picked up automatically once added to the `.sln`; if CI lists projects explicitly, add this one.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/Host.Tests src/Host/Program.cs FynovioPlatform.sln
@@ -4765,6 +4765,14 @@ over real HTTP against a real Testcontainers Postgres. A full authorized-
 happy-path test is flagged as the next addition, needing the same Access/
 MasterData seed fixtures the Application-layer handler tests already use."
 ```
+
+→ Commit: `7a588e0` "test(host): add tests/Host.Tests — the first API-level integration test project" (solution file is `fynovio-platform.slnx`, not `FynovioPlatform.sln` — added via that file instead, functionally equivalent)
+→ Deviation from reference code (two real bugs found and fixed, not present in the plan's sample): the coordinator independently re-ran the tests with the sandbox disabled (Docker is reachable in this environment when disabled, contrary to the implementer's first "environment blocked" conclusion) and found both tests genuinely FAILING with `relation "access.actions" does not exist`.
+  1. **Migration-ordering bug:** `WebApplicationFactory.Services`'s first access triggers `Program.cs`'s `Main` synchronously (including eager action-catalog seeding) before the reference code's own `MigrateAsync()` calls ever ran. Fixed in `8ec8fa6` by migrating MasterData → CRM → Access via standalone `DbContext` instances against the container's connection string, matching `PostgresFixture.cs`'s established pattern, before `WebApplicationFactory` is created at all.
+  2. **Connection-string precedence bug:** `appsettings.Development.json`'s literal `ConnectionStrings:*` values short-circuit the `FYNOVIO_*_CONNECTION_STRING` env vars via `??`, so the app was routing to `localhost` instead of the Testcontainers instance. Fixed in the same commit via `ConnectionStrings__*` env vars (ASP.NET's standard override convention).
+→ Follow-up fix: `b7ee223` "refactor(host-tests): remove dead connection-string workaround code" — code-quality review verified (by actually deleting each block and re-running) that the `FYNOVIO_*` env vars and a `ConfigureAppConfiguration`/`AddEnvironmentVariables()` customization added alongside the real fix were both dead code (redundant with `ConnectionStrings__*` and the framework's default env-var config precedence). Removed both plus an unused import; added a comment flagging a future test-parallelization consideration instead of building a `HostTestFixture`/`ICollectionFixture` now — declined as premature abstraction for a hazard that doesn't exist yet with only one test class.
+→ Verified: both tests independently re-run and confirmed passing (2/2) by the coordinator directly, by spec-compliance review, and by the implementer after each fix — against a real Testcontainers Postgres over real HTTP, not mocked.
+→ Ready to merge: Yes.
 
 ---
 
