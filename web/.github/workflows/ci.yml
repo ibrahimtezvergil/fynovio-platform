@@ -1,0 +1,91 @@
+name: CI
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: lint · typecheck · test · build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  secrets:
+    name: gitleaks (history range + final tree)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # gitleaks/gitleaks-action@v3 was evaluated and rejected: for pull_request
+      # events it resolves the PR's head commit via an unpaginated call to
+      # GET /repos/{owner}/{repo}/pulls/{pull_number}/commits (src/gitleaks.js,
+      # `headRef = commits.data[commits.data.length - 1].sha`) — the REST API
+      # defaults to 30 items per page with no `per_page`/pagination handling here,
+      # so on a PR with more than 30 commits `headRef` silently resolves to the
+      # 30th commit, not the true tip, truncating the scan. For push events it
+      # takes base/head from `eventJSON.commits[0]`/`commits[length-1]` (src/index.js)
+      # — GitHub's own docs put that array's cap at 2048, not the 20 once assumed
+      # here, but indexing into it is still a fragile proxy for the purpose-built,
+      # uncapped `before`/`after` fields GitHub provides for exactly this. This job
+      # uses those trusted fields directly and calls the official gitleaks CLI via
+      # its pinned, digest-referenced image, using the deprecated-since-8.19.0
+      # `detect` command's modern replacements (`git`, `dir`) instead.
+      - name: Verify range-resolution logic against fixtures
+        run: .github/scripts/test-gitleaks-range.sh
+
+      - name: Resolve exact scan range
+        id: range
+        run: .github/scripts/gitleaks-range.sh
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          PUSH_AFTER_SHA: ${{ github.sha }}
+
+      # Two scans cover two distinct risks: a secret added in one commit and
+      # removed in a later one within this same push/PR (only the history scan
+      # sees it) and a secret already resident in the final tree regardless of
+      # which commit introduced it, including one predating this push/PR (only
+      # the tree scan sees it — `git log -p` only ever shows line-level diffs).
+      #
+      # The history scan uses no --first-parent/--no-merges: dropping either
+      # silently excludes real content (a side-branch-only commit reachable
+      # solely through a merge's second parent; a merge commit's own diff,
+      # which default `git log -p` suppresses without `-m`) — proved concretely
+      # by .github/scripts/test-gitleaks-range.sh's merge-commit and
+      # branch-merged-into-PR fixtures, run above before this range is trusted.
+      - name: gitleaks history scan (git log range)
+        run: |
+          BASE="${{ steps.range.outputs.base }}"
+          HEAD="${{ steps.range.outputs.head }}"
+          LOG_OPTS="$(.github/scripts/gitleaks-log-opts.sh "$BASE" "$HEAD")"
+          docker run --rm -v "${PWD}:/repo" -w /repo \
+            ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f `# v8.30.1` \
+            git --redact=100 --no-color -v --log-opts="$LOG_OPTS" .
+
+      - name: gitleaks final-tree scan
+        run: |
+          docker run --rm -v "${PWD}:/repo" -w /repo \
+            ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f `# v8.30.1` \
+            dir --redact=100 --no-color -v .
