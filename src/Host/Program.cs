@@ -102,3 +102,5 @@ app.MapGet("/health/db", async (CrmDbContext db, CancellationToken ct) =>
     await db.Database.CanConnectAsync(ct) ? Results.Ok("crm db reachable") : Results.StatusCode(503));
 
 app.Run();
+
+public partial class Program { }
