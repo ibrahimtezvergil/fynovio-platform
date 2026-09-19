@@ -43,7 +43,7 @@ public sealed class WinOpportunityHandler(CrmDbContext context, IAuthorizer auth
         var decision = await authorizer.AuthorizeAsync(
             new AuthorizationRequest(actor, new ActionKey(ActionKeyValue), resource), cancellationToken);
         if (!decision.IsAllowed)
-            throw new OpportunityAuthorizationDeniedException(ActionKeyValue, decision.ReasonCode);
+            throw new OpportunityAuthorizationDeniedException(ActionKeyValue, decision.ReasonCode, decision.DenialStage, opportunity.Id);
 
         var requestHash = HashRequest(command);
         var existing = await context.IdempotencyRecords

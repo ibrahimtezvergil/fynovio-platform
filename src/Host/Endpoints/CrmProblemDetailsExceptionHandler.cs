@@ -1,3 +1,4 @@
+using Contracts;
 using CRM.Application;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -11,16 +12,25 @@ public sealed class CrmProblemDetailsExceptionHandler : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
-        var (status, type) = exception switch
+        var (status, type, title) = exception switch
         {
-            OpportunityNotFoundException => (StatusCodes.Status404NotFound, "not_found"),
-            OpportunityAuthorizationDeniedException => (StatusCodes.Status403Forbidden, "forbidden"),
-            OpportunityConcurrencyConflictException => (StatusCodes.Status409Conflict, "concurrency_conflict"),
-            InvalidPipelineTransitionException => (StatusCodes.Status409Conflict, "invalid_pipeline_transition"),
-            IdempotencyKeyReusedException => (StatusCodes.Status409Conflict, "idempotency_key_reused"),
-            ArgumentException => (StatusCodes.Status400BadRequest, "validation_error"),
-            InvalidOperationException => (StatusCodes.Status409Conflict, "illegal_lifecycle_transition"),
-            _ => (0, (string?)null)
+            // Record-level denial must be externally indistinguishable from a genuinely
+            // missing resource (tenant non-leak rule) — same status, same type, and the
+            // SAME title OpportunityNotFoundException would produce, never the raw
+            // exception.Message (which would leak "was denied" instead of "was not
+            // found"). DenialStage.Record only ever occurs once a resource was already
+            // loaded, so OpportunityId is always set here. See
+            // docs/architecture-analysis/2026-09-19-crm-phase2-authorization-delta-and-entry-stage-resolution.md.
+            OpportunityAuthorizationDeniedException { DenialStage: AuthorizationDenialStage.Record } ex =>
+                (StatusCodes.Status404NotFound, "not_found", $"Opportunity {ex.OpportunityId} was not found."),
+            OpportunityNotFoundException => (StatusCodes.Status404NotFound, "not_found", exception.Message),
+            OpportunityAuthorizationDeniedException => (StatusCodes.Status403Forbidden, "forbidden", exception.Message),
+            OpportunityConcurrencyConflictException => (StatusCodes.Status409Conflict, "concurrency_conflict", exception.Message),
+            InvalidPipelineTransitionException => (StatusCodes.Status409Conflict, "invalid_pipeline_transition", exception.Message),
+            IdempotencyKeyReusedException => (StatusCodes.Status409Conflict, "idempotency_key_reused", exception.Message),
+            ArgumentException => (StatusCodes.Status400BadRequest, "validation_error", exception.Message),
+            InvalidOperationException => (StatusCodes.Status409Conflict, "illegal_lifecycle_transition", exception.Message),
+            _ => (0, (string?)null, (string?)null)
         };
 
         if (status == 0)
@@ -28,7 +38,7 @@ public sealed class CrmProblemDetailsExceptionHandler : IExceptionHandler
 
         httpContext.Response.StatusCode = status;
         await httpContext.Response.WriteAsJsonAsync(
-            new ProblemDetails { Status = status, Type = type, Title = exception.Message },
+            new ProblemDetails { Status = status, Type = type, Title = title },
             cancellationToken);
         return true;
     }

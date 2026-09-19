@@ -1,3 +1,4 @@
+using Access.Persistence;
 using CRM.Persistence;
 using MasterData.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -61,11 +62,15 @@ public sealed class PostgresFixture : IAsyncLifetime
     {
         await _container.StartAsync();
         // MasterData first: CRM's BackfillMasterDataParties migration inserts into
-        // masterdata.parties, which must already exist.
+        // masterdata.parties, which must already exist. Access has no cross-schema FK
+        // dependency on either, but is migrated in the same order Host.Tests uses for
+        // consistency.
         await using var masterDataContext = CreateMasterDataContext();
         await masterDataContext.Database.MigrateAsync();
         await using var crmContext = CreateAdminContext();
         await crmContext.Database.MigrateAsync();
+        await using var accessContext = CreateAccessContext();
+        await accessContext.Database.MigrateAsync();
     }
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
@@ -73,6 +78,21 @@ public sealed class PostgresFixture : IAsyncLifetime
     public CrmDbContext CreateAdminContext() => CreateContext(AdminConnectionString);
 
     public MasterDataDbContext CreateMasterDataContext() => CreateMasterDataContext(AdminConnectionString);
+
+    /// <summary>Real Access-module data (Account/RoleAssignment/PermissionSet) for
+    /// integration tests that need the actual AccessAuthorizer/AccessScopeResolver PDP,
+    /// not StubAuthorizer — see OpportunityAuthorizationTests.</summary>
+    public AccessDbContext CreateAccessContext()
+    {
+        var options = new DbContextOptionsBuilder<AccessDbContext>()
+            .UseNpgsql(
+                AdminConnectionString,
+                npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", AccessDbContext.AccessSchema))
+            .UseSnakeCaseNamingConvention()
+            .AddInterceptors(new RowVersionInterceptor())
+            .Options;
+        return new AccessDbContext(options);
+    }
 
     public static CrmDbContext CreateContext(string connectionString)
     {
