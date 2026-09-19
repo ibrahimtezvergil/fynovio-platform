@@ -1,0 +1,86 @@
+/* ============================================================================
+   FullCalendar v7 — Fynovio palette
+
+   FullCalendar v7 ships hashed, non-semantic class names, so its stylesheet is
+   NOT something you override selector-by-selector. Its supported styling seam
+   is exactly two things: this variable palette, and the per-element `*Class`
+   render hooks (which take Tailwind classes — see CalendarBoard.tsx).
+
+   So we import the vendor `skeleton.css` + `themes/classic/theme.css` and
+   deliberately DO NOT import `themes/classic/palette.css`; this file replaces
+   it. Every value below resolves to a shadcn semantic variable, which already
+   flips with `.dark` — which is why there is no dark block here at all.
+
+   Upgrading FullCalendar means re-checking this one file, nothing else.
+   ========================================================================= */
+
+:root {
+  /* --- buttons: only the more-link popover close button survives, since the
+     toolbar is ours (headerToolbar={false}) ------------------------------- */
+  --fc-classic-button: var(--secondary);
+  --fc-classic-button-border: var(--border);
+  --fc-classic-button-strong: var(--accent);
+  --fc-classic-button-strong-border: var(--border);
+  --fc-classic-button-outline: var(--ring);
+  --fc-classic-button-foreground: var(--foreground);
+
+  /* --- accent ----------------------------------------------------------- */
+  --fc-classic-primary: var(--primary);
+  --fc-classic-primary-foreground: var(--primary-foreground);
+
+  /* Per-event colour comes from the event's own `color` / `contrastColor`
+     (see TONE_COLOR in the feature); these are only the fallbacks. */
+  --fc-classic-event: var(--primary);
+  --fc-classic-event-contrast: var(--background);
+  --fc-classic-background-event: var(--muted-foreground);
+  --fc-classic-background-event-opacity: 12%;
+  --fc-classic-background-event-foreground-opacity: 55%;
+
+  /* drag/select highlight, today's column, the current-time line */
+  --fc-classic-highlight: var(--accent);
+  --fc-classic-today: color-mix(in oklab, var(--primary) 7%, transparent);
+  --fc-classic-now: var(--destructive);
+
+  --fc-classic-small-dot-width: 7px;
+  --fc-classic-large-dot-width: 9px;
+
+  /* --- neutral grounds ---------------------------------------------------
+     This one has to be OPAQUE: the theme composites the sticky day-header, the
+     agenda's sticky date rows and the "+N more" popover as a translucent
+     overlay *on top of* it (`linear-gradient(muted, muted) background`). Leave
+     it transparent and scrolled rows show straight through them, so the grid
+     gets the card's own opaque surface and reads as an inset data panel. */
+  --fc-classic-background: var(--card);
+  --fc-classic-faint: color-mix(in oklab, var(--foreground) 3%, transparent);
+  --fc-classic-muted: color-mix(in oklab, var(--foreground) 6%, transparent);
+  --fc-classic-strong: color-mix(in oklab, var(--foreground) 11%, transparent);
+
+  /* --- neutral foregrounds ---------------------------------------------- */
+  --fc-classic-foreground: var(--foreground);
+  --fc-classic-muted-foreground: var(--muted-foreground);
+  --fc-classic-faint-foreground: color-mix(in oklab, var(--muted-foreground) 72%, transparent);
+
+  /* --- neutral borders --------------------------------------------------- */
+  --fc-classic-border: var(--border);
+  --fc-classic-strong-border: color-mix(in oklab, var(--foreground) 18%, transparent);
+
+  /* the more-link popover has to clear the topbar, not the modal layer */
+  --fc-popover-z: 30;
+  --fc-sticky-header-footer-z: 2;
+}
+
+/* The theme sets 16px/1.5 on the calendar root. This class is handed to the
+   root through the `className` option, so it lands on the same element at the
+   same specificity — being unlayered (the vendor sheets are imported into
+   `layer(components)`) is what makes it win. */
+.fc-fynovio {
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: -0.008em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  /* `clip`, not `hidden`: hidden would make this a scroll container and break
+     the sticky day headers inside. */
+  border-radius: var(--radius-md);
+  overflow: clip;
+}

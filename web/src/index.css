@@ -1,0 +1,762 @@
+/* source(none) disables auto-detection: with no git root to bound it, Tailwind
+   walks the whole parent tree (node_modules, dist, sibling projects). Scan only
+   the app source. */
+@import "tailwindcss" source(none);
+@import "tw-animate-css";
+@import "./styles/tokens.css";
+
+/* FullCalendar's own sheets go into the components layer so Tailwind utilities
+   handed to its *Class render hooks outrank them. Its palette is ours — the
+   vendor `themes/classic/palette.css` is intentionally never imported. */
+@import "@fullcalendar/react/skeleton.css" layer(components);
+@import "@fullcalendar/react/themes/classic/theme.css" layer(components);
+@import "./styles/fullcalendar.css";
+
+@source "./**/*.{ts,tsx}";
+@source "../index.html";
+
+@custom-variant dark (&:is(.dark *));
+
+/* shadcn's semantic surface, mapped onto the material token layer.
+   Components never read --nx-* directly; they read these. */
+@theme inline {
+  --font-sans: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+  --font-heading: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* pipeline stages — the status-pill foregrounds, so the board, the badges
+     and the charts stay the same five hues in both themes */
+  --color-stage-new: var(--nx-st-blue-fg);
+  --color-stage-contacted: var(--nx-st-teal-fg);
+  --color-stage-quoted: var(--nx-st-amber-fg);
+  --color-stage-meeting: var(--nx-st-purple-fg);
+  --color-stage-ready: var(--nx-st-green-fg);
+
+  --color-success: var(--nx-pos);
+  --color-warning: var(--nx-st-amber-fg);
+
+  /* the .nx-pill ladder, addressable as plain colours. Third-party surfaces
+     (FullCalendar) take a colour value, not a class — this is how they get the
+     same seven hues the pills use, in both themes, without reading --nx-*. */
+  --color-tone-gray: var(--nx-st-gray-fg);
+  --color-tone-blue: var(--nx-st-blue-fg);
+  --color-tone-teal: var(--nx-st-teal-fg);
+  --color-tone-green: var(--nx-st-green-fg);
+  --color-tone-amber: var(--nx-st-amber-fg);
+  --color-tone-red: var(--nx-st-red-fg);
+  --color-tone-purple: var(--nx-st-purple-fg);
+  /* the accent as a graphic fill: bars, sparklines, selected-row fill */
+  --color-brand-graphic: var(--nx-accent);
+
+  --color-chart-1: var(--nx-accent);
+  --color-chart-2: var(--nx-st-amber-fg);
+  --color-chart-3: var(--nx-st-purple-fg);
+  --color-chart-4: var(--nx-st-green-fg);
+  --color-chart-5: var(--nx-st-teal-fg);
+
+  /* soft, continuous corners — every step is an artboard radius */
+  --radius-tile: var(--nx-r-tile);
+  --radius-sm: var(--nx-r-ctl-sm);
+  --radius-md: var(--nx-r-ctl);
+  --radius-nav: var(--nx-r-nav);
+  --radius-lg: var(--nx-r-ctl-lg);
+  --radius-xl: var(--nx-r-card);
+  --radius-2xl: var(--nx-r-panel);
+
+  --shadow-sm: var(--nx-elev);
+  --shadow-md: var(--nx-elev-lift);
+  --shadow-lg: var(--nx-elev-over);
+
+  --ease-fluid: var(--nx-ease);
+
+  --spacing-sidebar: var(--nx-sidebar-width);
+  --spacing-sidebar-collapsed: var(--nx-sidebar-width-collapsed);
+  --spacing-topbar: var(--nx-topbar-height);
+  --spacing-nav-item: var(--nx-nav-item-height);
+  --spacing-control: var(--nx-control-height);
+  --spacing-row: var(--nx-row-height);
+}
+
+:root {
+  --radius: var(--nx-r-card);
+
+  --background: var(--nx-canvas);
+  --foreground: var(--nx-label);
+  --card: var(--nx-surface);
+  --card-foreground: var(--nx-label);
+  --popover: var(--nx-surface);
+  --popover-foreground: var(--nx-label);
+
+  /* primary is the accent — the only filled action on a screen */
+  --primary: var(--nx-accent);
+  --primary-foreground: var(--nx-on-accent);
+
+  --secondary: var(--nx-fill);
+  --secondary-foreground: var(--nx-label);
+  --muted: var(--nx-fill);
+  --muted-foreground: var(--nx-label-2);
+  --accent: var(--nx-tint-fill);
+  --accent-foreground: var(--nx-tint);
+  --destructive: var(--nx-neg);
+
+  --border: var(--nx-hairline);
+  --input: var(--nx-hairline);
+  --ring: var(--nx-tint);
+
+  --sidebar: var(--nx-glass);
+  --sidebar-foreground: var(--nx-label);
+  --sidebar-primary: var(--nx-tint-fill);
+  --sidebar-primary-foreground: var(--nx-tint);
+  --sidebar-accent: var(--nx-fill-hover);
+  --sidebar-accent-foreground: var(--nx-label);
+  --sidebar-border: var(--nx-hairline);
+  --sidebar-ring: var(--nx-tint);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+    transition:
+      background-color 0.4s var(--nx-ease),
+      color var(--nx-dur) var(--nx-ease);
+  }
+  h1, h2, h3, h4 {
+    @apply font-heading;
+    letter-spacing: -0.026em;
+    line-height: 1.15;
+  }
+  /* tables, metric cards and financial figures always align on the digit */
+  :where(table) {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+  :focus-visible {
+    outline: 2px solid var(--nx-tint);
+    outline-offset: 2px;
+    border-radius: var(--nx-r-ctl);
+  }
+  ::selection {
+    background: var(--nx-tint-fill);
+  }
+  /* The scrollbar keeps its own tone, not a hairline one: at 4px on a dark
+     ground a border token reads as a stray divider line rather than a thumb.
+     A 3px transparent border inside a 12px gutter leaves a 6px thumb — wide
+     enough to read as something you can grab, and clear of the content edge. */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--nx-scroll-thumb);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--nx-scroll-thumb-hover);
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background: var(--nx-scroll-thumb-active);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  /* Firefox has no ::-webkit-scrollbar; scoping the standard properties to
+     browsers that lack it keeps Chrome on the rules above — setting
+     scrollbar-color unconditionally would make Chrome drop them. */
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--nx-scroll-thumb) transparent;
+    }
+  }
+}
+
+/* ==========================================================================
+   Material primitives. Glassmorphism, edge lighting and the spring are
+   verbose enough in utilities that they earn a class; layout stays Tailwind.
+   ========================================================================== */
+@layer components {
+  /* Chrome material: blur + hairline + specular inset, and NO cast. The
+     sidebar, topbar and inline controls sit in the plane; only things that
+     float above it (.nx-card, .nx-overlay) throw a shadow. */
+  .nx-material {
+    background: var(--nx-glass);
+    -webkit-backdrop-filter: var(--nx-blur);
+    backdrop-filter: var(--nx-blur);
+    border: 1px solid var(--nx-hairline);
+    box-shadow: inset 0 1px 0 var(--nx-specular);
+  }
+
+  /* Floating material: the same glass, lifted on a deep, soft, wide cast —
+     in BOTH themes. Dark uses a near-black shadow, light a blue-grey one.
+
+     No backdrop filter here, unlike .nx-material, and that is deliberate: a
+     card only ever floats over .nx-ambient, and blurring a smooth radial wash
+     by 24px returns the same wash — the filter bought nothing but a composited
+     render surface. Chrome snaps that surface to whole device pixels while the
+     card's own paint keeps its sub-pixel position (the KPI grid divides its
+     row into 273.5px columns, so two of the four land on a half pixel), and
+     the sliver between the two shows the saturated wash uncovered: a bright
+     1px seam down the card edge that flickers whenever an unrelated layer
+     repaints. --nx-card-ground carries the saturate() the filter contributed. */
+  .nx-card {
+    border-radius: var(--nx-r-card);
+    background: var(--nx-card-ground);
+    border: 1px solid var(--nx-hairline);
+    box-shadow:
+      inset 0 1px 0 var(--nx-specular),
+      var(--nx-elev);
+    transition:
+      transform var(--nx-dur) var(--nx-ease),
+      border-color var(--nx-dur) var(--nx-ease),
+      box-shadow var(--nx-dur) var(--nx-ease);
+  }
+
+  .nx-lift:hover {
+    transform: translateY(-2px);
+    border-color: var(--nx-hairline-strong);
+    box-shadow:
+      inset 0 1px 0 var(--nx-specular),
+      var(--nx-elev-lift);
+  }
+
+  /* Overlays step up one material level: heavier blur, brighter edge. */
+  .nx-overlay {
+    background: var(--nx-glass-over);
+    -webkit-backdrop-filter: var(--nx-blur-deep);
+    backdrop-filter: var(--nx-blur-deep);
+    border: 1px solid var(--nx-hairline-strong);
+    box-shadow:
+      inset 0 1px 0 var(--nx-specular),
+      var(--nx-elev-over);
+  }
+
+  /* Spatial depth behind the chrome — two accent washes, no hard edges. */
+  .nx-ambient {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(900px 520px at 12% -8%, var(--nx-ambient-a), transparent 65%),
+      radial-gradient(760px 480px at 88% 8%, var(--nx-ambient-b), transparent 62%),
+      radial-gradient(700px 600px at 60% 110%, var(--nx-ambient-c), transparent 60%);
+    transition: background 0.4s var(--nx-ease);
+  }
+
+  /* ---- status pills: tone carries the fill, the label carries the meaning */
+  .nx-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 11px;
+    border-radius: var(--nx-r-pill);
+    font-size: 12px;
+    font-weight: 550;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+    background: var(--nx-st-gray-bg);
+    color: var(--nx-st-gray-fg);
+  }
+  .nx-pill[data-tone="purple"] { background: var(--nx-st-purple-bg); color: var(--nx-st-purple-fg); }
+  .nx-pill[data-tone="amber"]  { background: var(--nx-st-amber-bg);  color: var(--nx-st-amber-fg); }
+  .nx-pill[data-tone="blue"]   { background: var(--nx-st-blue-bg);   color: var(--nx-st-blue-fg); }
+  .nx-pill[data-tone="teal"]   { background: var(--nx-st-teal-bg);   color: var(--nx-st-teal-fg); }
+  .nx-pill[data-tone="green"]  { background: var(--nx-st-green-bg);  color: var(--nx-st-green-fg); }
+  .nx-pill[data-tone="red"]    { background: var(--nx-st-red-bg);    color: var(--nx-st-red-fg); }
+  .nx-pill[data-tone="outline"] {
+    background: transparent;
+    color: var(--nx-label-2);
+    box-shadow: inset 0 0 0 1px var(--nx-hairline-strong);
+  }
+  .nx-pill__dot {
+    flex: 0 0 5px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* ---- navigation ------------------------------------------------------- */
+  .nx-nav-heading {
+    padding: 0 12px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--nx-label-3);
+  }
+  .nx-nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    height: var(--nx-nav-item-height);
+    padding: 0 12px;
+    border-radius: var(--nx-r-nav);
+    border: 1px solid transparent;
+    color: var(--nx-label-2);
+    font-size: 13.5px;
+    font-weight: 450;
+    letter-spacing: -0.01em;
+    transition:
+      background var(--nx-dur) var(--nx-ease),
+      color var(--nx-dur) var(--nx-ease),
+      border-color var(--nx-dur) var(--nx-ease);
+  }
+  .nx-nav-item:hover {
+    background: var(--nx-fill-hover);
+    color: var(--nx-label);
+  }
+  .nx-nav-item[aria-current="page"],
+  .nx-nav-item[data-active="true"] {
+    background: var(--nx-tint-fill);
+    color: var(--nx-tint);
+    font-weight: 590;
+    border-color: var(--nx-hairline);
+    box-shadow: inset 0 1px 0 var(--nx-specular);
+  }
+
+  /* Rail: the same item as a square. Width comes off the token rather than the
+     text, so the icon lands on the same optical centre in both modes and the
+     width transition has nothing to reflow. */
+  .nx-nav-item--rail {
+    justify-content: center;
+    gap: 0;
+    width: var(--nx-hit-min);
+    height: var(--nx-hit-min);
+    padding: 0;
+  }
+  /* The rail has no label to carry the active state, so the tint gains a bar.
+     It sits inside the item because the rail's scroll container clips
+     horizontally — an outside marker would be cut off. */
+  .nx-nav-item--rail[aria-current="page"]::before,
+  .nx-nav-item--rail[data-active="true"]::before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    width: 3px;
+    height: 16px;
+    border-radius: var(--nx-r-pill);
+    background: var(--nx-tint);
+  }
+
+  /* The rail is 72px wide: a classic scrollbar would eat 8 of them and push
+     every icon off the optical centre. Scrolling still works, by wheel and by
+     keyboard — it is only the track that goes. */
+  .nx-rail-scroll {
+    scrollbar-width: none;
+  }
+  .nx-rail-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .nx-nav-item--sub {
+    height: 32px;
+    padding-left: 39px; /* icon column + gap, so labels line up under the parent */
+    font-size: 13px;
+  }
+
+  /* ---- sidebar flyout ---------------------------------------------------- */
+  .nx-flyout {
+    display: flex;
+    min-width: 208px;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px;
+    border-radius: var(--nx-r-ctl-lg);
+  }
+  .nx-flyout__title {
+    padding: 3px 12px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--nx-label-3);
+  }
+
+  /* ---- segmented control ------------------------------------------------ */
+  .nx-seg {
+    display: inline-flex;
+    gap: 3px;
+    padding: 3px;
+    border-radius: var(--nx-r-pill);
+    background: var(--nx-fill);
+    border: 1px solid var(--nx-hairline-soft);
+  }
+  .nx-seg__opt {
+    height: 30px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: var(--nx-r-pill);
+    background: transparent;
+    color: var(--nx-label-2);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background var(--nx-dur) var(--nx-ease),
+      color var(--nx-dur) var(--nx-ease);
+  }
+  .nx-seg__opt:hover { color: var(--nx-label); }
+  .nx-seg__opt[aria-selected="true"],
+  .nx-seg__opt[aria-checked="true"] {
+    background: var(--nx-glass-2);
+    color: var(--nx-label);
+    font-weight: 550;
+    box-shadow:
+      inset 0 0 0 1px var(--nx-hairline-strong),
+      inset 0 1px 0 var(--nx-specular);
+  }
+
+  /* ---- search field + ⌘K shortcut badge --------------------------------- */
+  .nx-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    height: var(--nx-control-height);
+    padding: 0 7px 0 13px;
+    border-radius: var(--nx-r-pill);
+    background: var(--nx-glass-2);
+    -webkit-backdrop-filter: var(--nx-blur);
+    backdrop-filter: var(--nx-blur);
+    border: 1px solid var(--nx-hairline);
+    box-shadow: inset 0 1px 0 var(--nx-specular);
+    transition:
+      border-color var(--nx-dur) var(--nx-ease),
+      box-shadow var(--nx-dur) var(--nx-ease);
+  }
+  .nx-search:hover { border-color: var(--nx-hairline-strong); }
+  .nx-search:focus-within {
+    border-color: var(--nx-tint);
+    box-shadow:
+      inset 0 1px 0 var(--nx-specular),
+      0 0 0 4px var(--nx-tint-fill);
+  }
+  .nx-search input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--nx-label);
+    font: inherit;
+    font-size: 13.5px;
+    outline: none;
+  }
+  .nx-search input::placeholder { color: var(--nx-label-3); }
+  .nx-kbd {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    height: 22px;
+    padding: 0 7px;
+    flex: none;
+    border-radius: var(--nx-r-tile);
+    background: var(--nx-fill);
+    border: 1px solid var(--nx-hairline-soft);
+    color: var(--nx-label-3);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  /* ---- small parts ------------------------------------------------------ */
+  .nx-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    border-radius: 50%;
+    background: var(--nx-tint-fill);
+    color: var(--nx-tint);
+    font-size: 11.5px;
+    font-weight: 650;
+    letter-spacing: 0.01em;
+  }
+  .nx-icon-tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex: none;
+    border-radius: var(--nx-r-ctl-sm);
+    box-shadow: inset 0 1px 0 var(--nx-specular);
+    background: var(--nx-tint-fill);
+    color: var(--nx-tint);
+  }
+  /* Tone mirrors .nx-pill, so an activity's tile and its stage read as one system. */
+  .nx-icon-tile[data-tone="purple"] { background: var(--nx-st-purple-bg); color: var(--nx-st-purple-fg); }
+  .nx-icon-tile[data-tone="amber"]  { background: var(--nx-st-amber-bg);  color: var(--nx-st-amber-fg); }
+  .nx-icon-tile[data-tone="blue"]   { background: var(--nx-st-blue-bg);   color: var(--nx-st-blue-fg); }
+  .nx-icon-tile[data-tone="teal"]   { background: var(--nx-st-teal-bg);   color: var(--nx-st-teal-fg); }
+  .nx-icon-tile[data-tone="green"]  { background: var(--nx-st-green-bg);  color: var(--nx-st-green-fg); }
+  .nx-icon-tile[data-tone="red"]    { background: var(--nx-st-red-bg);    color: var(--nx-st-red-fg); }
+  .nx-meter {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--nx-track);
+    overflow: hidden;
+  }
+  .nx-meter__bar {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--nx-accent-grad);
+    transition: width 0.6s var(--nx-ease);
+  }
+  .nx-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--nx-label-3);
+  }
+
+  /* Placeholder for content still in flight. The track is the same one the
+     meter runs on, so a skeleton and the bar that replaces it sit on the same
+     ground; the sweep is a specular highlight, not a colour, which keeps it
+     honest in both themes. A skeleton never animates its own opacity — that
+     reads as a disabled control rather than as pending content. */
+  .nx-skeleton {
+    position: relative;
+    overflow: hidden;
+    flex: none;
+    background: var(--nx-track);
+    border-radius: var(--nx-r-ctl-sm);
+  }
+  .nx-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    translate: -100% 0;
+    background: linear-gradient(90deg, transparent, var(--nx-fill-hover), transparent);
+    animation: nx-skeleton-sweep 1.5s var(--nx-ease) infinite;
+  }
+
+  /* ---- density region ---------------------------------------------------
+     The opt-in half of the density switch. `<html data-density>` says which
+     density is selected; this class says "and this subtree honours it".
+
+     Rebinding the two metric tokens is the whole trick: `h-control` (every
+     Input, Select and Button) and `.nx-row` / `.nx-grid` already resolve their
+     height through them, so a toolbar, a filter panel and a grid shrink with
+     no component change. The topbar, sidebar and KPI cards never carry the
+     class, which is exactly why they stay comfortable in both modes. */
+  .nx-dense {
+    --nx-control-height: var(--nx-d-control);
+    --nx-row-height: var(--nx-d-row);
+    --nx-row-height-relaxed: var(--nx-d-row-relaxed);
+  }
+
+  /* ---- data grid --------------------------------------------------------
+     Strings and entity names left. Every number, currency amount, percentage
+     and status pill right. 52px rows comfortable, 32px compact; dividers at
+     the lowest opacity that still reads. */
+  .nx-grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  .nx-grid thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 42px;
+    padding: 0 16px;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+    font-size: 10.5px;
+    font-weight: 650;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--nx-label-3);
+    background: var(--nx-glass);
+    -webkit-backdrop-filter: var(--nx-blur);
+    backdrop-filter: var(--nx-blur);
+    border-bottom: 1px solid var(--nx-hairline);
+  }
+  .nx-grid tbody tr {
+    transition: background var(--nx-dur) var(--nx-ease);
+  }
+  .nx-grid tbody tr:hover { background: var(--nx-fill-hover); }
+  .nx-grid tbody tr[data-selected] { background: var(--nx-tint-fill); }
+  .nx-grid tbody td {
+    height: var(--nx-row-h, var(--nx-row-height));
+    padding: 8px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--nx-hairline-soft);
+    color: var(--nx-label-2);
+  }
+  .nx-grid tbody tr:last-child td { border-bottom: 0; }
+  .nx-grid tfoot td {
+    height: var(--nx-row-height);
+    padding: 8px 16px;
+    vertical-align: middle;
+    border-top: 1px solid var(--nx-hairline);
+  }
+  .nx-grid th:first-child,
+  .nx-grid td:first-child { padding-left: 24px; }
+  .nx-grid th:last-child,
+  .nx-grid td:last-child { padding-right: 24px; }
+  .nx-grid .end { text-align: right; }
+  .nx-grid .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+  .nx-grid tbody .num {
+    color: var(--nx-label);
+    font-weight: 550;
+  }
+  .nx-grid tbody .name {
+    color: var(--nx-label);
+    font-weight: 550;
+    letter-spacing: -0.012em;
+  }
+
+  /* ---- list rows -------------------------------------------------------- */
+  .nx-row {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-height: var(--nx-row-height);
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--nx-hairline-soft);
+    transition: background var(--nx-dur) var(--nx-ease);
+  }
+  .nx-row:last-child { border-bottom: 0; }
+  .nx-row--tap { cursor: pointer; }
+  .nx-row--tap:hover { background: var(--nx-fill-hover); }
+
+  /* ---- density: what the tokens above cannot reach -----------------------
+     Height comes free (both primitives resolve --nx-row-height, which
+     `.nx-dense` rebinds). Padding, type scale and the compact stripe are
+     declarations, not metrics, so they are re-stated here. */
+  .nx-dense .nx-grid { font-size: var(--nx-d-text); }
+  .nx-dense .nx-grid thead th {
+    height: var(--nx-d-head);
+    padding: 0 var(--nx-d-cell-x);
+  }
+  .nx-dense .nx-grid tbody td,
+  .nx-dense .nx-grid tfoot td {
+    padding: var(--nx-d-cell-y) var(--nx-d-cell-x);
+    border-bottom-color: var(--nx-d-divider);
+  }
+  .nx-dense .nx-grid th:first-child,
+  .nx-dense .nx-grid td:first-child { padding-left: var(--nx-d-cell-x-edge); }
+  .nx-dense .nx-grid th:last-child,
+  .nx-dense .nx-grid td:last-child { padding-right: var(--nx-d-cell-x-edge); }
+
+  /* Zebra is transparent at comfortable, so this is one rule, not a branch.
+     Hover and selection are restated after it because the descendant
+     selector outranks the unscoped `.nx-grid tbody tr:hover` above — without
+     these two lines a striped row would stop responding to the pointer. */
+  .nx-dense .nx-grid tbody tr:nth-child(even) { background: var(--nx-d-zebra); }
+  .nx-dense .nx-grid tbody tr:hover { background: var(--nx-fill-hover); }
+  .nx-dense .nx-grid tbody tr[data-selected] { background: var(--nx-tint-fill); }
+
+  /* A compact row is one line by definition. Left to wrap, a two-line cell
+     turns a 32px row into 44px and the scan rhythm — the whole point of the
+     mode — is gone; the grid's wrapper already scrolls horizontally, which is
+     the cheaper trade. Comfortable rows have the height to wrap, so they do.
+
+     Carried as a custom property rather than an `[data-density]` ancestor
+     selector: properties resolve against the *nearest* declaring ancestor, so
+     a comfortable region nested inside a compact page wraps again. A selector
+     would match the outer attribute and quietly win. */
+  .nx-dense .nx-grid tbody td {
+    white-space: var(--nx-d-wrap);
+  }
+
+  .nx-dense .nx-row {
+    gap: var(--nx-d-gap-sm);
+    padding: var(--nx-d-list-y) var(--nx-d-cell-x);
+  }
+
+  /* The TanStack renderer's <table>. Everything else about it is Tailwind on
+     the elements; these three are here because their winner is decided by
+     source order at equal specificity, and Tailwind's variant sort is not a
+     contract worth betting a dead hover state on. */
+  .nx-datagrid tbody tr:nth-child(even) { background: var(--nx-d-zebra); }
+  .nx-datagrid tbody tr:hover { background: var(--nx-fill-hover); }
+  .nx-datagrid tbody tr[data-selected] { background: var(--nx-tint-fill); }
+}
+
+/* Digit-aligned figures anywhere outside a table. */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Widens a dense row's hit box to 44px without changing its height. */
+@utility hit-min {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: var(--nx-hit-min);
+    translate: 0 -50%;
+  }
+}
+
+@keyframes nx-skeleton-sweep {
+  to { translate: 100% 0; }
+}
+
+/* A sweeping highlight is decoration; the layout it holds open is the message. */
+@media (prefers-reduced-motion: reduce) {
+  .nx-skeleton::after { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

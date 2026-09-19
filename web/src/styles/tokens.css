@@ -1,0 +1,253 @@
+/* ============================================================================
+   Fynovio — blended material tokens
+
+   This file is the single source of truth for color, elevation, radii, blur
+   and motion. Typography and iconography follow the Nocturne port (SF Pro
+   Display / SF Pro Text, lucide-react); everything else — the blue-slate dark
+   ground, the soft translucent surfaces, the single accent, real drop shadows
+   in both themes, the 26/28px card corners and the 170% blur — was worked out
+   directly against this app, not transcribed from an external design file.
+
+   Values marked (artboard) trace back to an early design exploration that is
+   no longer kept in this repo; values marked (derived) were invented here for
+   surfaces that exploration never drew. Both annotations are historical only —
+   treat this file itself as canonical, not something to audit against a
+   source file elsewhere.
+
+   Light keys off `:root`, dark off `.dark` (Tailwind v4 / shadcn convention).
+   ========================================================================= */
+
+:root {
+  /* --- light: white glass over a cool grey ground ------------------------- */
+  --nx-canvas: #f4f5fa;              /* artboard --app-bg */
+  --nx-canvas-2: #eaecf5;            /* artboard --app-bg-2 */
+  --nx-surface: #ffffff;             /* derived: the one opaque card/popover ground */
+  --nx-surface-2: #f7f8fc;           /* derived */
+  --nx-surface-3: #eaecf5;           /* derived */
+
+  /* translucent material — the layer everything floats on */
+  --nx-glass: rgb(255 255 255 / 0.72);   /* artboard --surface */
+  --nx-glass-2: rgb(255 255 255 / 0.88); /* artboard --surface-2 */
+  /* derived: menus and sheets need a ground opaque enough to read over
+     arbitrary page content — the artboard never drew one. */
+  --nx-glass-over: rgb(255 255 255 / 0.96);
+
+  /* edge lighting */
+  --nx-hairline: rgb(16 19 32 / 0.08);        /* artboard --hairline */
+  --nx-hairline-strong: rgb(16 19 32 / 0.13); /* artboard --hairline-2 */
+  --nx-hairline-soft: rgb(16 19 32 / 0.045);  /* derived: grid dividers */
+  --nx-specular: rgb(255 255 255 / 0.85);     /* artboard --inner-light */
+
+  /* interactive fills */
+  --nx-fill: rgb(16 19 32 / 0.05);       /* derived: control ground */
+  --nx-fill-hover: rgb(255 255 255 / 0.9); /* artboard --surface-hover */
+  --nx-fill-active: rgb(255 255 255 / 1);  /* derived */
+
+  /* derived: the card ground, with the saturate() the backdrop filter used to
+     contribute folded in — see the .nx-card note in index.css. */
+  --nx-card-ground: rgb(255 255 255 / 0.74);
+
+  /* derived: the scrollbar is a control, not an edge — a hairline tone at
+     thumb width reads as a stray divider rather than something you can grab. */
+  --nx-scroll-thumb: rgb(16 19 32 / 0.22);
+  --nx-scroll-thumb-hover: rgb(16 19 32 / 0.34);
+  --nx-scroll-thumb-active: rgb(16 19 32 / 0.46);
+
+  /* label ramp */
+  --nx-label: #16192b;    /* artboard --text */
+  --nx-label-2: #585e77;  /* artboard --text-2 */
+  --nx-label-3: #8a90a6;  /* artboard --text-3 */
+
+  /* elevation — a real, soft drop shadow, in BOTH themes */
+  --nx-elev: 0 18px 40px -26px rgb(20 24 45 / 0.35);      /* artboard --shadow-card */
+  --nx-elev-lift: 0 26px 54px -26px rgb(20 24 45 / 0.42); /* derived: hover step */
+  --nx-elev-over: 0 34px 70px -24px rgb(20 24 45 / 0.5);  /* derived: overlays */
+  --nx-knob-shadow: 0 2px 6px rgb(20 24 45 / 0.28);       /* derived */
+
+  /* accent — one value carries text, icon and fill (artboard behaviour) */
+  --nx-accent: #6355c7;                                       /* artboard --accent */
+  --nx-accent-grad: linear-gradient(180deg, #8a7be8, #6e5dd6); /* artboard --accent-fill */
+  --nx-accent-glow: 0 10px 26px -10px rgb(122 107 224 / 0.6);  /* artboard --accent-glow */
+  --nx-tint: var(--nx-accent);
+  --nx-tint-strong: #4a3ea6;                    /* derived: pressed / heading tint */
+  --nx-tint-fill: rgb(99 85 199 / 0.11);        /* artboard --accent-tint */
+  --nx-tint-fill-hover: rgb(99 85 199 / 0.18);  /* derived */
+  --nx-on-accent: #ffffff;
+
+  /* status pills (artboard: purple · amber · blue · cyan · green) */
+  --nx-st-purple-bg: rgb(145 132 217 / 0.18); --nx-st-purple-fg: #5346b4;
+  --nx-st-amber-bg:  rgb(240 175 60 / 0.2);   --nx-st-amber-fg:  #8a5605;
+  --nx-st-blue-bg:   rgb(90 140 240 / 0.14);  --nx-st-blue-fg:   #26529f;
+  --nx-st-teal-bg:   rgb(60 180 205 / 0.16);  --nx-st-teal-fg:   #0c6577; /* artboard cyan */
+  --nx-st-green-bg:  rgb(40 180 120 / 0.16);  --nx-st-green-fg:  #0e6a46;
+  /* derived: the artboard drew a red pill only as the negative delta, and no
+     grey pill at all — both are mixed from its --neg and label ramp. */
+  --nx-st-red-bg:    rgb(192 36 58 / 0.12);   --nx-st-red-fg:    #c0243a;
+  --nx-st-gray-bg:   rgb(88 94 119 / 0.1);    --nx-st-gray-fg:   #585e77;
+
+  --nx-pos: #12855a;  /* artboard --pos */
+  --nx-neg: #c0243a;  /* artboard --neg */
+  --nx-track: rgb(16 19 32 / 0.08); /* derived */
+
+  color-scheme: light;
+}
+
+.dark {
+  /* --- dark: blue-slate ground, translucent white surfaces ---------------- */
+  --nx-canvas: #0e1120;   /* artboard --app-bg */
+  --nx-canvas-2: #161826; /* artboard --app-bg-2 */
+  --nx-surface: #161826;  /* derived: opaque card/popover ground */
+  --nx-surface-2: #1c1f30;
+  --nx-surface-3: #232637;
+
+  --nx-glass: rgb(255 255 255 / 0.045); /* artboard --surface */
+  --nx-glass-2: rgb(255 255 255 / 0.07); /* artboard --surface-2 */
+  --nx-glass-over: rgb(22 25 42 / 0.96); /* derived: see the light block */
+
+  --nx-hairline: rgb(255 255 255 / 0.07);        /* artboard --hairline */
+  --nx-hairline-strong: rgb(255 255 255 / 0.12); /* artboard --hairline-2 */
+  --nx-hairline-soft: rgb(255 255 255 / 0.04);   /* derived */
+  --nx-specular: rgb(255 255 255 / 0.09);        /* artboard --inner-light */
+
+  --nx-fill: rgb(255 255 255 / 0.055);       /* derived */
+  --nx-fill-hover: rgb(255 255 255 / 0.06);  /* artboard --surface-hover */
+  --nx-fill-active: rgb(255 255 255 / 0.1);  /* derived */
+
+  --nx-card-ground: rgb(214 208 255 / 0.055); /* derived: see the light block */
+
+  --nx-scroll-thumb: rgb(255 255 255 / 0.22);        /* derived */
+  --nx-scroll-thumb-hover: rgb(255 255 255 / 0.34);  /* derived */
+  --nx-scroll-thumb-active: rgb(255 255 255 / 0.46); /* derived */
+
+  --nx-label: #e9e9ed;    /* artboard --text */
+  --nx-label-2: #9ca0b4;  /* artboard --text-2 */
+  --nx-label-3: #8a8fa6;  /* artboard --text-3 */
+
+  /* Dark carries real shadows again — the deep, wide, low-alpha cast the
+     artboard used. This deliberately reverses the earlier "edge light only"
+     rule; see CLAUDE.md. */
+  --nx-elev: 0 24px 48px -28px rgb(0 0 0 / 0.75);      /* artboard --shadow-card */
+  --nx-elev-lift: 0 32px 64px -28px rgb(0 0 0 / 0.82); /* derived: hover step */
+  --nx-elev-over: 0 40px 80px -24px rgb(0 0 0 / 0.9);  /* derived: overlays */
+  --nx-knob-shadow: 0 2px 6px rgb(0 0 0 / 0.55);       /* derived */
+
+  --nx-accent: #a99ef0;                                        /* artboard --accent */
+  --nx-accent-grad: linear-gradient(180deg, #8a7be8, #6e5dd6);  /* artboard --accent-fill */
+  --nx-accent-glow: 0 10px 26px -10px rgb(122 107 224 / 0.75);  /* artboard --accent-glow */
+  --nx-tint: var(--nx-accent);
+  --nx-tint-strong: #c9c1f8;
+  --nx-tint-fill: rgb(145 132 217 / 0.16);       /* artboard --accent-tint */
+  --nx-tint-fill-hover: rgb(145 132 217 / 0.26); /* derived */
+
+  --nx-st-purple-bg: rgb(145 132 217 / 0.18); --nx-st-purple-fg: #bdb3f8;
+  --nx-st-amber-bg:  rgb(240 180 90 / 0.15);  --nx-st-amber-fg:  #f3c982;
+  --nx-st-blue-bg:   rgb(120 160 245 / 0.16); --nx-st-blue-fg:   #96bcf7;
+  --nx-st-teal-bg:   rgb(110 210 230 / 0.14); --nx-st-teal-fg:   #84daea; /* artboard cyan */
+  --nx-st-green-bg:  rgb(90 220 150 / 0.14);  --nx-st-green-fg:  #84e3ae;
+  --nx-st-red-bg:    rgb(255 120 130 / 0.14); --nx-st-red-fg:    #ff8a94; /* artboard delta pill */
+  --nx-st-gray-bg:   rgb(156 160 180 / 0.14); --nx-st-gray-fg:   #b6bacb;
+
+  --nx-pos: #6fe3a6;  /* artboard --pos */
+  --nx-neg: #ff8a94;  /* artboard --neg */
+  --nx-track: rgb(255 255 255 / 0.09);
+
+  color-scheme: dark;
+}
+
+/* ---- geometry, motion and metrics: theme-independent --------------------- */
+:root {
+  /* Soft, highly rounded corners — every step is an artboard radius.
+     9px tiles · 11px brand mark · 14px buttons · 15px nav · 16px tenant row
+     · 18px user row · 26px card · 28px panel · 99px pill. */
+  --nx-r-tile: 9px;
+  --nx-r-ctl-sm: 11px;
+  --nx-r-ctl: 14px;
+  --nx-r-nav: 15px;
+  --nx-r-ctl-lg: 18px;
+  --nx-r-card: 26px;
+  --nx-r-panel: 28px;
+  --nx-r-pill: 9999px;
+
+  /* artboard --glass-blur, at its 170% saturation */
+  --nx-blur: blur(24px) saturate(170%);
+  --nx-blur-deep: blur(40px) saturate(170%);
+
+  /* fluid physics — one spring for every state change (kept from the port) */
+  --nx-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --nx-dur: 0.25s;
+  --nx-dur-fast: 0.12s;
+
+  /* ambient depth wash — the artboard's three radial stops, identical in both
+     themes (it never overrode them per theme) */
+  --nx-ambient-a: rgb(122 107 224 / 0.22);
+  --nx-ambient-b: rgb(80 120 220 / 0.16);
+  --nx-ambient-c: rgb(145 132 217 / 0.12);
+
+  /* pattern metrics */
+  --nx-sidebar-width: 266px; /* artboard aside flex-basis */
+  /* rail: 14px gutter each side around a 44px square, so the icon target
+     clears --nx-hit-min without the rail growing past a thumb's width */
+  --nx-sidebar-width-collapsed: 72px;
+  --nx-topbar-height: 64px;
+  --nx-nav-item-height: 38px;
+  --nx-control-height: 38px;
+  --nx-row-height: 52px;
+  --nx-row-height-relaxed: 62px;
+  --nx-hit-min: 44px;
+}
+
+/* ---- density: the second axis, after theme -------------------------------
+   One boolean (`isCompact` in useAppStore) writes `data-density` on <html>,
+   and these two blocks are everything it changes. Nothing reads --nx-d-*
+   directly: `.nx-dense` in index.css rebinds --nx-control-height and
+   --nx-row-height from them, which is what lets a region opt in and the
+   topbar, sidebar and KPI cards — which never carry the class — stay put.
+
+   Compact is a working density, not a smaller copy: the row loses 20px, so it
+   also gains a zebra stripe and a full-strength divider to keep the scan line
+   readable at 32px. A 32px row is below the 44px pointer target, so anything
+   clickable inside one carries `hit-min`.
+
+   `:root` seeds comfortable for the first paint, before the store has written
+   the attribute; the explicit `[data-density="comfortable"]` next to it is
+   what lets a nested region opt back out of a compact page. */
+:root,
+[data-density="comfortable"] {
+  --nx-d-row: 52px;
+  --nx-d-row-relaxed: 62px;
+  --nx-d-head: 42px;      /* grid header row */
+  --nx-d-cell-y: 8px;
+  --nx-d-cell-x: 16px;
+  --nx-d-cell-x-edge: 24px; /* first/last column gutter */
+  --nx-d-list-y: 9px;     /* .nx-row vertical padding */
+  --nx-d-text: 13.5px;
+  --nx-d-text-sm: 12.5px;
+  --nx-d-control: 38px;    /* inputs, selects, buttons inside a dense region */
+  --nx-d-control-sm: 30px; /* the filter-pill step below it */
+  --nx-d-gap: 12px;
+  --nx-d-gap-sm: 9px;
+  --nx-d-zebra: transparent;
+  --nx-d-divider: var(--nx-hairline-soft);
+  --nx-d-wrap: normal;    /* grid cells may run to two lines at this height */
+}
+
+[data-density="compact"] {
+  --nx-d-row: 32px;
+  /* 38, not 32: a relaxed row is the one that carries an avatar or a 26px
+     status pill, and those need 6px of air to stop reading as clipped. */
+  --nx-d-row-relaxed: 38px;
+  --nx-d-head: 30px;
+  --nx-d-cell-y: 3px;
+  --nx-d-cell-x: 11px;
+  --nx-d-cell-x-edge: 16px;
+  --nx-d-list-y: 4px;
+  --nx-d-text: 12px;
+  --nx-d-text-sm: 11.5px;
+  --nx-d-control: 32px;
+  --nx-d-control-sm: 28px;
+  --nx-d-gap: 7px;
+  --nx-d-gap-sm: 5px;
+  --nx-d-zebra: var(--nx-fill);
+  --nx-d-divider: var(--nx-hairline);
+  --nx-d-wrap: nowrap;
+}

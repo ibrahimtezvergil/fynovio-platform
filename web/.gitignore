@@ -1,0 +1,35 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+!.env.example
+.worktrees/
+worktrees/
+
+# graphify: generated, machine-local knowledge graph. Rebuilt on demand and
+# by the post-commit/post-checkout git hooks (graphify hook install) — not
+# something to hand-maintain or commit. A merge driver is pre-registered in
+# .gitattributes if this is ever tracked instead.
+graphify-out/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

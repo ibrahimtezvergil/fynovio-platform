@@ -1,0 +1,26 @@
+{
+  "version": "2.0",
+  "generatedAt": "2026-09-07T13:54:37Z",
+  "claudeCodeVersion": "2.1.263",
+  "artifacts": [
+    { "path": "CLAUDE.md", "mode": "managed-block", "sha256": "efccaa0c1de768b41893b3119f8fa914d272a4b7c036735497d5b9fcd99590b2" },
+    { "path": ".claude/settings.json", "mode": "owned", "sha256": "2282708eeff4658ba851a69aa047bcd12840bdcf48b7b891021dc53691313232" },
+    { "path": "docs/claude/BOOTSTRAP-REPORT.md", "mode": "owned", "sha256": "e8c4f19ae33e668abcd020ec0b40954f648c82bbc73e978ea5735bb0df6ae9d0" },
+    { "path": ".claude/agents/test-verifier.md", "mode": "generated-by frontmatter", "sha256": "88ebda8c9730eed5f4349c56e549a5cfc990e2b340bc48269fd005d01e34bf71" }
+  ],
+  "recommendations": [
+    "Add an explicit `.env` entry to .gitignore (currently only *.local is covered) — a real .env could be committed by accident.",
+    "No CI is configured; consider a GitHub Actions workflow running `npm ci && npm run lint && npm run build && npm test` on PRs, once local verification needs a CI-equivalent.",
+    "Test coverage is currently narrow (2 files: data-table URL state, filter query logic); widen it opportunistically as features stabilize, not as a dedicated sweep."
+  ],
+  "omitted": [
+    { "mechanism": ".claude/rules/", "reason": "still a single-package repo, no polyglot or subtree-specific commands; the few invariants that exist fit root CLAUDE.md without bloating it" },
+    { "mechanism": "skills (bugfix/feature/migration/verify/review)", "reason": "duplicate existing global skills already available to this repo: systematic-debugging, verification-before-completion, requesting-code-review/receiving-code-review, writing-plans" },
+    { "mechanism": "researcher agent", "reason": "built-in Explore agent already covers read-heavy investigation" },
+    { "mechanism": "project-level code-reviewer agent", "reason": "the existing global ~/.claude/agents/code-reviewer.md already matches this repo's needs" },
+    { "mechanism": "hooks", "reason": "no destructive-command risk or credential path found that needs deterministic enforcement beyond default safety behavior" },
+    { "mechanism": "MCP servers", "reason": "no repo-local service, database, or paid integration to wire up" },
+    { "mechanism": "permissions.deny", "reason": "no real .env, credentials, or private key files exist in the repository to protect" },
+    { "mechanism": "effortLevel setting", "reason": "Sonnet 5 already defaults to high effort; setting it explicitly would be a no-op" }
+  ]
+}

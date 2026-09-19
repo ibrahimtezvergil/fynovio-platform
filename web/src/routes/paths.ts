@@ -1,0 +1,28 @@
+/** Every route string lives here so links and guards can never drift apart. */
+export const paths = {
+  login: '/login',
+  dashboard: '/dashboard',
+  /** Legacy URLs, kept only as redirect targets into `/crm/*` — see `routes/index.tsx`. */
+  pipeline: '/pipeline',
+  pipelineDashboard: '/pipeline/dashboard',
+  crm: '/crm',
+  crmDashboard: '/crm/dashboard',
+  crmPipeline: '/crm/pipeline',
+  calendar: '/calendar',
+  reports: '/reports',
+  files: '/files',
+  feedback: '/feedback',
+  settings: '/settings',
+  members: '/members',
+  demoTables: '/demo/tables',
+  demoForms: '/demo/forms',
+  demoCharts: '/demo/charts',
+  demoOverlays: '/demo/overlays',
+  demoNotifications: '/demo/notifications',
+  demoStates: '/demo/states',
+  demoDrawers: '/demo/drawers',
+  demoKanban: '/demo/kanban',
+  demoTimeline: '/demo/timeline',
+  demoBadges: '/demo/badges',
+  demoFilters: '/demo/filters',
+} as const

@@ -1,0 +1,821 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "react",
+    "typescript",
+    "oxc",
+    "jsx-a11y"
+  ],
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": [
+      "warn",
+      {
+        "allowConstantExport": true
+      }
+    ],
+    "jsx-a11y/alt-text": "error",
+    "jsx-a11y/anchor-has-content": "error",
+    "jsx-a11y/aria-role": "error",
+    "jsx-a11y/control-has-associated-label": "warn",
+    "jsx-a11y/no-access-key": "error",
+    "jsx-a11y/no-autofocus": "error",
+    "jsx-a11y/no-redundant-roles": "error",
+    "jsx-a11y/scope": "error",
+    "jsx-a11y/tabindex-no-positive": "error"
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/features/auth/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/calendar/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/dashboard/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/demo-badges/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/demo-charts/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/demo-drawers/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/demo-filters/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/demo-forms/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/demo-kanban/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/demo-notifications/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/demo-overlays/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/demo-states/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/demo-tables/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/demo-timeline/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/notifications/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/pipeline/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/placeholder/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/placeholder/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/settings/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/settings/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/auth/**",
+                  "@/features/calendar/**",
+                  "@/features/dashboard/**",
+                  "@/features/demo-badges/**",
+                  "@/features/demo-charts/**",
+                  "@/features/demo-drawers/**",
+                  "@/features/demo-filters/**",
+                  "@/features/demo-forms/**",
+                  "@/features/demo-kanban/**",
+                  "@/features/demo-notifications/**",
+                  "@/features/demo-overlays/**",
+                  "@/features/demo-states/**",
+                  "@/features/demo-tables/**",
+                  "@/features/demo-timeline/**",
+                  "@/features/notifications/**",
+                  "@/features/pipeline/**",
+                  "@/features/placeholder/**"
+                ],
+                "message": "Features never import from each other — shared code moves to components/common, store/, or types/."
+              },
+              {
+                "group": [
+                  "@/routes/router",
+                  "@/routes/ProtectedRoute",
+                  "@/routes/PublicOnlyRoute"
+                ],
+                "message": "Features may be imported by routes, never the reverse — only @/routes/paths (shared path constants) is allowed."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
