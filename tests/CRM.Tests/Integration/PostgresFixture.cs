@@ -45,6 +45,13 @@ public sealed class PostgresFixture : IAsyncLifetime
                 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA masterdata TO fynovio_app;
                 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA masterdata TO fynovio_app;
                 REVOKE UPDATE, DELETE ON masterdata.evidence_records FROM fynovio_app;
+                GRANT USAGE ON SCHEMA identity TO fynovio_app;
+                GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA identity TO fynovio_app;
+                GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA identity TO fynovio_app;
+                GRANT USAGE ON SCHEMA access TO fynovio_app;
+                GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA access TO fynovio_app;
+                GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA access TO fynovio_app;
+                REVOKE UPDATE, DELETE ON access.evidence_records FROM fynovio_app;
                 """);
         }
 
@@ -81,12 +88,17 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     /// <summary>Real Access-module data (Account/RoleAssignment/PermissionSet) for
     /// integration tests that need the actual AccessAuthorizer/AccessScopeResolver PDP,
-    /// not StubAuthorizer — see OpportunityAuthorizationTests.</summary>
-    public AccessDbContext CreateAccessContext()
+    /// not StubAuthorizer — see OpportunityAuthorizationTests. Admin connection: use only for
+    /// seeding/migrations, never for evaluating the PDP itself — RLS is inert on this
+    /// connection, so a PDP class run against it never actually exercises tenant-context
+    /// enforcement (2026-09-20 PHASE_1_5_RUNTIME_RLS_PDP_DELTA).</summary>
+    public AccessDbContext CreateAccessContext() => CreateAccessContext(AdminConnectionString);
+
+    public static AccessDbContext CreateAccessContext(string connectionString)
     {
         var options = new DbContextOptionsBuilder<AccessDbContext>()
             .UseNpgsql(
-                AdminConnectionString,
+                connectionString,
                 npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", AccessDbContext.AccessSchema))
             .UseSnakeCaseNamingConvention()
             .AddInterceptors(new RowVersionInterceptor())

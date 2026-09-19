@@ -118,7 +118,11 @@ public sealed class PdpRuntimeRoleTests : IClassFixture<PostgresFixture>
     /// <summary>Pooled-connection non-leak: the same `AccessDbContext` instance (one
     /// physical connection under test) evaluates Tenant A then Tenant B sequentially —
     /// each call must open and commit its own transaction-local `app.tenant_id`, never
-    /// carrying Tenant A's visibility into Tenant B's evaluation.</summary>
+    /// carrying Tenant A's visibility into Tenant B's evaluation. Both tenants are granted
+    /// deliberately: if A's context leaked into B's query, the RLS-visible tenant (A) and the
+    /// C# predicate's requested tenant (B) could never both match the same row, so B would
+    /// wrongly Deny — a test that grants only A cannot distinguish "correctly scoped to B" from
+    /// "leaked A" (both produce the same Deny), which is why that shape was replaced.</summary>
     [Fact]
     public async Task Sequential_authorization_calls_on_the_same_connection_do_not_leak_tenant_context()
     {
@@ -135,8 +139,8 @@ public sealed class PdpRuntimeRoleTests : IClassFixture<PostgresFixture>
             admin.ExternalIdentities.Add(ExternalIdentity.Link(account.Id, principal));
             admin.TenantAccessStates.Add(TenantAccessState.Initialize(tenantA));
             admin.TenantAccessStates.Add(TenantAccessState.Initialize(tenantB));
-            // Grant only in Tenant A — Tenant B has zero grants for this principal/action.
             await GrantAsync(admin, tenantA, account.Id, relation: null);
+            await GrantAsync(admin, tenantB, account.Id, relation: null);
             await admin.SaveChangesAsync();
         }
 
@@ -149,8 +153,47 @@ public sealed class PdpRuntimeRoleTests : IClassFixture<PostgresFixture>
             new ActorContext(tenantB, principal, Guid.NewGuid()), new ActionKey(ActionKey), new ResourceDescriptor("Test", null, null)));
 
         Assert.Equal(AuthorizationEffect.Allow, first.Effect);
-        Assert.Equal(AuthorizationEffect.Deny, second.Effect);
-        Assert.Equal(AuthorizationDenialStage.Coarse, second.DenialStage);
+        Assert.Equal(AuthorizationEffect.Allow, second.Effect);
+    }
+
+    /// <summary>Companion to the AccessAuthorizer tests above for AccessScopeResolver —
+    /// the class doc's claim to cover all three PDP entry points is only true once this
+    /// exists (a prior version of this file covered only PrincipalResolver and
+    /// AccessAuthorizer, leaving ResolveAsync's new transaction wrapper unexecuted under
+    /// RLS).</summary>
+    [Fact]
+    public async Task Scope_resolves_to_owned_records_under_its_own_tenant_and_to_none_under_another_tenant()
+    {
+        var tenantA = TestData.NextTenant();
+        var tenantB = TestData.NextTenant();
+        var principal = FreshPrincipal();
+
+        await using (var admin = _fixture.CreateAdminContext())
+        {
+            await SeedRegisteredActionAsync(admin);
+            var account = Account.Create($"{principal.Subject}@test.local", principal.Subject);
+            admin.Accounts.Add(account);
+            await admin.SaveChangesAsync();
+            admin.ExternalIdentities.Add(ExternalIdentity.Link(account.Id, principal));
+            admin.TenantAccessStates.Add(TenantAccessState.Initialize(tenantA));
+            admin.TenantAccessStates.Add(TenantAccessState.Initialize(tenantB));
+            // Owner-relation grant only in Tenant A — Tenant B has no grant at all.
+            await GrantAsync(admin, tenantA, account.Id, relation: PermissionSetItem.OwnerRelation);
+            await admin.SaveChangesAsync();
+        }
+
+        var runtimeContext = await CreateRuntimeContextAsync();
+        var scopeResolver = new AccessScopeResolver(runtimeContext, new PrincipalResolver(runtimeContext), new AccessActionCatalogService(runtimeContext));
+
+        var scopeInA = await scopeResolver.ResolveAsync(new ActorContext(tenantA, principal, Guid.NewGuid()), new ActionKey(ActionKey), "Test");
+        var scopeInB = await scopeResolver.ResolveAsync(new ActorContext(tenantB, principal, Guid.NewGuid()), new ActionKey(ActionKey), "Test");
+
+        var ownedByScope = Assert.IsType<AccessScope.AnyOf>(scopeInA);
+        var term = Assert.Single(ownedByScope.Terms);
+        var ownedBy = Assert.IsType<ScopeTerm.OwnedBy>(term);
+        Assert.Equal(principal, ownedBy.Principal);
+
+        Assert.IsType<AccessScope.None>(scopeInB);
     }
 
     private async Task<Access.Persistence.AccessDbContext> CreateRuntimeContextAsync() =>

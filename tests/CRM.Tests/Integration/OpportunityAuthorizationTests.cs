@@ -19,7 +19,11 @@ namespace CRM.Tests.Integration;
 /// architecture delta: a tenant-wide grant allows, an owner-relation grant allows only the
 /// caller's own record and denies with DenialStage.Record on someone else's (never
 /// Coarse), and zero grant denies with DenialStage.Coarse — see
-/// docs/architecture-analysis/2026-09-19-crm-phase2-authorization-delta-and-entry-stage-resolution.md.</summary>
+/// docs/architecture-analysis/2026-09-19-crm-phase2-authorization-delta-and-entry-stage-resolution.md.
+/// The authorizer itself runs against the unprivileged `fynovio_app` runtime role, not the
+/// migration superuser — RLS is inert on the superuser connection, so these results would be
+/// meaningless proof of the real PDP without it (2026-09-20 PHASE_1_5_RUNTIME_RLS_PDP_DELTA;
+/// seeding still uses the admin connection, only PDP evaluation uses the runtime role).</summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class OpportunityAuthorizationTests
 {
@@ -180,10 +184,11 @@ public sealed class OpportunityAuthorizationTests
         }
     }
 
-    private Task<AccessAuthorizer> CreateAuthorizerAsync()
+    private async Task<AccessAuthorizer> CreateAuthorizerAsync()
     {
-        var accessContext = _fixture.CreateAccessContext();
+        var runtimeConnectionString = await _fixture.RuntimeConnectionStringAsync();
+        var accessContext = PostgresFixture.CreateAccessContext(runtimeConnectionString);
         var actionCatalog = new AccessActionCatalogService(accessContext);
-        return Task.FromResult(new AccessAuthorizer(accessContext, new PrincipalResolver(accessContext), actionCatalog));
+        return new AccessAuthorizer(accessContext, new PrincipalResolver(accessContext), actionCatalog);
     }
 }

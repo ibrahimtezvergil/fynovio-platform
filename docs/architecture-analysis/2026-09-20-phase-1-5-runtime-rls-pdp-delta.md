@@ -111,21 +111,42 @@ rather than three different transaction strategies.
 ## Tests
 
 - `tests/Access.Tests/Integration/PdpRuntimeRoleTests.cs` (new, runs against
-  `PostgresFixture.RuntimeConnectionStringAsync()`, i.e. the real `fynovio_app` role):
+  `PostgresFixture.RuntimeConnectionStringAsync()`, i.e. the real `fynovio_app` role),
+  covering all three fixed PDP entry points:
   - `Membership_resolves_under_the_members_own_tenant_but_not_under_a_foreign_tenant`
+    (`PrincipalResolver`)
   - `Tenant_wide_grant_authorizes_under_its_own_tenant_and_is_invisible_under_another_tenant`
+    (`AccessAuthorizer`)
   - `Owner_relation_grant_authorizes_only_the_owned_resource_under_the_runtime_role`
+    (`AccessAuthorizer`)
   - `Sequential_authorization_calls_on_the_same_connection_do_not_leak_tenant_context`
+    (`AccessAuthorizer`) — both tenants are granted so a leak is actually distinguishable:
+    granting only one tenant makes "correctly scoped" and "leaked" produce the same Deny,
+    which cannot prove non-leakage (caught in review before this landed).
+  - `Scope_resolves_to_owned_records_under_its_own_tenant_and_to_none_under_another_tenant`
+    (`AccessScopeResolver` — initially missing from this file entirely, added in review).
 - `tests/Access.Tests/Integration/AccessRlsTests.cs` (pre-existing, unchanged) continues to
   prove the underlying RLS policies themselves are correct at the raw-SQL level.
+- `tests/CRM.Tests/Integration/OpportunityAuthorizationTests.cs` now runs its `AccessAuthorizer`
+  against `PostgresFixture.RuntimeConnectionStringAsync()` (CRM.Tests' fixture extended to grant
+  `identity`/`access` schemas too, mirroring `scripts/create-runtime-role.sql`), not the admin
+  connection it initially used — RLS is inert on admin, so the original version was not actually
+  proof of the real PDP (caught in review before this landed).
 - `tests/Host.Tests/OpportunityEndpointsTests.cs`'s 3 new HTTP tests (Phase 2 Step 2) now
   pass under the real runtime role without reverting to the superuser connection —
   end-to-end proof through `ActorContextMiddleware` -> `AccessAuthorizer` -> CRM command.
 
+**Test-infrastructure audit (§9, category A vs. B) — partial.** The three suites above were
+checked and corrected. A full pass over every integration test in `Access.Tests`, `CRM.Tests`,
+`MasterData.Tests`, `Host.Tests` classifying admin-connection use as legitimate (migration/
+schema setup, deliberate constraint tests) vs. a gap (asserting RLS/authorization/application
+behavior on a connection where RLS is inert) was not exhaustively done and remains open —
+flagged here rather than silently assumed complete.
+
 ## Results
 
-- Access.Tests: 64/64 (60 pre-existing unchanged + 4 new runtime-role PDP tests).
-- CRM.Tests: 125/125.
+- Access.Tests: 65/65 (60 pre-existing unchanged + 5 new runtime-role PDP tests).
+- CRM.Tests: 125/125 (including `OpportunityAuthorizationTests` now on the runtime role).
 - MasterData.Tests: 30/30.
 - Host.Tests: 8/8, including the 3 tests that exposed this defect.
 
@@ -134,6 +155,8 @@ rather than three different transaction strategies.
 None identified that blocks Phase 2. The fix is scoped to the three PDP entry points that
 had the gap; no other Access.Application class queries RLS-protected tables without already
 following this pattern (verified: `BootstrapTenantAccessHandler`, `GrantRoleAssignmentHandler`,
-`RevokeRoleAssignmentHandler` already did).
+`RevokeRoleAssignmentHandler` already did). The one open item is the full §9 category A/B
+test-infrastructure audit noted above — not a known defect, an unfinished verification pass
+across suites this delta didn't need to touch to fix the bug itself.
 
 **Ready to resume Phase 2: YES.**
