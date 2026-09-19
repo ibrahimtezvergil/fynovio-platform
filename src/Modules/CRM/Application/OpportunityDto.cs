@@ -1,0 +1,44 @@
+using CRM.Domain;
+
+namespace CRM.Application;
+
+public sealed record OpportunityLineDto(long Id, int Quantity, decimal UnitPrice, decimal? LineTotal, bool IsOptional, bool IsCanceled);
+
+public sealed record OpportunityDto(
+    long Id,
+    OpportunityStatus Status,
+    long PartyId,
+    string AssignedPrincipalIssuer,
+    string AssignedPrincipalSubject,
+    string Currency,
+    decimal EstimatedAmount,
+    decimal? TotalAmount,
+    long? PipelineDefinitionVersionId,
+    long? PipelineStageId,
+    string? LostReason,
+    DateTimeOffset? ExpiryDate,
+    DateTimeOffset? OpenedDate,
+    DateTimeOffset? WonDate,
+    DateTimeOffset? LostDate,
+    long RowVersion,
+    IReadOnlyList<OpportunityLineDto> Lines)
+{
+    public static OpportunityDto From(Opportunity opportunity) => new(
+        opportunity.Id,
+        opportunity.Status,
+        opportunity.PartyRefPartyId,
+        opportunity.AssignedPrincipalIssuer,
+        opportunity.AssignedPrincipalSubject,
+        opportunity.Currency,
+        opportunity.EstimatedAmount,
+        opportunity.TotalAmount,
+        opportunity.PipelineDefinitionVersionId,
+        opportunity.PipelineStageId,
+        opportunity.LostReason,
+        opportunity.ExpiryDate,
+        opportunity.OpenedDate,
+        opportunity.WonDate,
+        opportunity.LostDate,
+        opportunity.RowVersion,
+        opportunity.Lines.Select(l => new OpportunityLineDto(l.Id, l.Quantity, l.UnitPrice, l.LineTotal, l.IsOptional, l.IsCanceled)).ToList());
+}
