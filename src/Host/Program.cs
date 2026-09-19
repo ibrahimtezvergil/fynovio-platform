@@ -5,6 +5,7 @@ using Contracts;
 using CRM.Application;
 using CRM.Persistence;
 using Host.Authentication;
+using Host.Endpoints;
 using MasterData.Application;
 using MasterData.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -62,6 +63,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+builder.Services.AddScoped<CreateOpportunityHandler>();
+builder.Services.AddScoped<AddOpportunityLineHandler>();
+builder.Services.AddScoped<CancelOpportunityLineHandler>();
+builder.Services.AddScoped<OpenOpportunityHandler>();
+builder.Services.AddScoped<ChangePipelineStageHandler>();
+builder.Services.AddScoped<WinOpportunityHandler>();
+builder.Services.AddScoped<LoseOpportunityHandler>();
+builder.Services.AddScoped<ReassignOpportunityHandler>();
+builder.Services.AddScoped<GetOpportunityHandler>();
+builder.Services.AddScoped<ListOpportunitiesHandler>();
+builder.Services.AddScoped<GetPipelineStagesHandler>();
+builder.Services.AddScoped<GetOpportunityAvailableActionsHandler>();
+
+builder.Services.AddExceptionHandler<CrmProblemDetailsExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -75,6 +92,9 @@ using (var scope = app.Services.CreateScope())
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ActorContextMiddleware>();
+
+app.UseExceptionHandler();
+app.MapOpportunityEndpoints();
 
 app.MapGet("/", () => "Hello World!");
 
