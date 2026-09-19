@@ -4,8 +4,10 @@ using System.Net.Http.Json;
 using Access.Domain.Identity;
 using Access.Persistence;
 using CRM.Persistence;
+using MasterData.Persistence;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
 using Xunit;
@@ -26,15 +28,40 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
     {
         await _container.StartAsync();
 
-        Environment.SetEnvironmentVariable("FYNOVIO_CRM_CONNECTION_STRING", _container.GetConnectionString());
-        Environment.SetEnvironmentVariable("FYNOVIO_ACCESS_CONNECTION_STRING", _container.GetConnectionString());
-        Environment.SetEnvironmentVariable("FYNOVIO_MASTERDATA_CONNECTION_STRING", _container.GetConnectionString());
+        var connectionString = _container.GetConnectionString();
+        // Set both the module-specific variables (for fallback in *ConnectionString.cs)
+        // and the appsettings-style variables (for config override in WebApplicationFactory)
+        Environment.SetEnvironmentVariable("FYNOVIO_CRM_CONNECTION_STRING", connectionString);
+        Environment.SetEnvironmentVariable("FYNOVIO_ACCESS_CONNECTION_STRING", connectionString);
+        Environment.SetEnvironmentVariable("FYNOVIO_MASTERDATA_CONNECTION_STRING", connectionString);
+        Environment.SetEnvironmentVariable("ConnectionStrings__Crm", connectionString);
+        Environment.SetEnvironmentVariable("ConnectionStrings__Access", connectionString);
+        Environment.SetEnvironmentVariable("ConnectionStrings__MasterData", connectionString);
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
 
-        _factory = new WebApplicationFactory<Program>();
+        // Migrate directly against the container BEFORE the WebApplicationFactory's deferred
+        // host ever starts — Program.cs's own startup path (action-catalog seeding) queries
+        // access.actions eagerly, and WebApplicationFactory.Services triggers that startup
+        // the first time anything touches it. MasterData first: CRM's BackfillMasterDataParties
+        // migration inserts into masterdata.parties, which must already exist.
+        await using (var masterData = CreateMasterDataContext(connectionString))
+            await masterData.Database.MigrateAsync();
+        await using (var crm = CreateCrmContext(connectionString))
+            await crm.Database.MigrateAsync();
+        await using (var access = CreateAccessContext(connectionString))
+            await access.Database.MigrateAsync();
 
-        using var scope = _factory.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<CrmDbContext>().Database.MigrateAsync();
-        await scope.ServiceProvider.GetRequiredService<AccessDbContext>().Database.MigrateAsync();
+        _factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureAppConfiguration((context, config) =>
+                {
+                    // Add environment variables to configuration
+                    // The ConnectionStrings__* env vars (with double underscores) override
+                    // the ConnectionStrings from appsettings.Development.json
+                    config.AddEnvironmentVariables();
+                });
+            });
     }
 
     public async Task DisposeAsync()
@@ -76,4 +103,41 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
     // Left as the next test to add in this file once Tasks 6-20's fixtures are available
     // to import; the two tests above already prove the authentication/tenant-membership
     // gate itself works end-to-end over real HTTP, which is this task's core claim.
+
+    private static MasterDataDbContext CreateMasterDataContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<MasterDataDbContext>()
+            .UseNpgsql(
+                connectionString,
+                npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", MasterDataDbContext.Schema))
+            .UseSnakeCaseNamingConvention()
+            .Options;
+
+        return new MasterDataDbContext(options);
+    }
+
+    private static CrmDbContext CreateCrmContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<CrmDbContext>()
+            .UseNpgsql(
+                connectionString,
+                npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", CrmDbContext.Schema))
+            .UseSnakeCaseNamingConvention()
+            .Options;
+
+        return new CrmDbContext(options);
+    }
+
+    private static AccessDbContext CreateAccessContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<AccessDbContext>()
+            .UseNpgsql(
+                connectionString,
+                npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", AccessDbContext.AccessSchema))
+            .UseSnakeCaseNamingConvention()
+            .AddInterceptors(new RowVersionInterceptor())
+            .Options;
+
+        return new AccessDbContext(options);
+    }
 }
