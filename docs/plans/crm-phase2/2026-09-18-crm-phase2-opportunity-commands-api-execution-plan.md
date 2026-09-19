@@ -4095,7 +4095,7 @@ git commit -m "feat(crm): add GetPipelineStages query and handler"
 
 Plain booleans (architecture plan §9A's exact shape: `canOpen, canChangeStage, allowedTargetStageIds, canWin, canLose, canReassign`) — a UX aid only; every command re-evaluates its own authorization and invariants independently regardless of what this query said (binding spec §13A).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```csharp
 using Contracts;
@@ -4175,7 +4175,7 @@ public sealed class GetOpportunityAvailableActionsHandlerTests
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~GetOpportunityAvailableActionsHandlerTests"
@@ -4183,7 +4183,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~GetOpp
 
 Expected: compile error.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/Modules/CRM/Application/GetOpportunityAvailableActionsQuery.cs`:
 
@@ -4274,7 +4274,7 @@ public sealed class GetOpportunityAvailableActionsHandler(CrmDbContext context, 
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~GetOpportunityAvailableActionsHandlerTests"
@@ -4282,7 +4282,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~GetOpp
 
 Expected: PASS.
 
-- [ ] **Step 5: Run the full CRM suite**
+- [x] **Step 5: Run the full CRM suite**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj
@@ -4290,7 +4290,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj
 
 Expected: PASS, no regression. All required commands and queries from architecture plan §7/§9 now exist.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/GetOpportunityAvailableActionsQuery.cs src/Modules/CRM/Application/GetOpportunityAvailableActionsHandler.cs src/Modules/CRM/Application/OpportunityAvailableActionsDto.cs tests/CRM.Tests/Application/GetOpportunityAvailableActionsHandlerTests.cs
@@ -4300,6 +4300,11 @@ Plain-boolean projection, per architecture plan §9A/§31 — Phase 1.5 has no
 richer obligation/approval outcome to collapse. UX aid only; every command
 still re-evaluates authorization and invariants independently."
 ```
+
+→ Commit: `251561d` "feat(crm): add GetOpportunityAvailableActions query and handler" (co-author trailer says "Claude Haiku 4.5" instead of "Claude Sonnet 5" — same cosmetic subagent slip as Tasks 1/17/18, not corrected, same precedent)
+→ Verified: filtered tests + full `CRM.Tests` suite (119/119, no regression) both independently confirmed by implementer and spec-compliance review. No explicit `TenantId` predicate needed on the `PipelineStages` sub-query — same reasoning as Task 19 (`PipelineDefinitionVersionId` is a globally-unique primary key).
+→ Follow-up fix: `d49c1a8` "test(crm): cover authorization-denial path for GetOpportunityAvailableActions" — code-quality review found both original tests used `StubAuthorizer.AlwaysAllow`, so nothing proved the authorization half of each `(domain guard AND authorized)` check actually mattered; added a third test with a domain-guard-passes-but-one-action-denied case via a test-local `DenyingAuthorizer`. A second reviewer suggestion (remove an apparently-unused `using CRM.Tests.Integration;`) was correctly declined by the implementer — that import is actually required for `PostgresCollection`/`PostgresFixture`. Full suite after fix: 120/120.
+→ Ready to merge: Yes. This completes all query-side tasks (17-20) — every required command and query from architecture plan §7/§9 now exists.
 
 ---
 
