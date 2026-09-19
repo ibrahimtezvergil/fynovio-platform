@@ -30,12 +30,34 @@ public sealed class GetPipelineStagesHandlerTests
         await seed.SaveChangesAsync();
 
         await using var context = _fixture.CreateAdminContext();
-        var results = await new GetPipelineStagesHandler(context)
-            .HandleAsync(new GetPipelineStagesQuery(tenant, version.Id, Guid.NewGuid()));
+        var results = await new GetPipelineStagesHandler(context, StubAuthorizer.AlwaysAllow)
+            .HandleAsync(new GetPipelineStagesQuery(tenant, version.Id, TestData.Seller, Guid.NewGuid()));
 
         Assert.Equal(2, results.Count);
         Assert.Equal("Bekliyor", results[0].Name);
         Assert.True(results[0].IsEntry);
         Assert.Equal("Teklif Verildi", results[1].Name);
+    }
+
+    /// <summary>Test-gap audit §7 (2026-09-19): GetPipelineStagesHandler previously had
+    /// no authorization call at all — RLS alone kept results tenant-scoped, but any
+    /// authenticated caller in the tenant could read pipeline configuration regardless
+    /// of whether they held `crm.opportunity.read`.</summary>
+    [Fact]
+    public async Task Denies_when_the_caller_has_no_read_grant()
+    {
+        var tenant = TestData.NextTenant();
+        await using var seed = _fixture.CreateAdminContext();
+        var definition = PipelineDefinition.Create(tenant, "Sales");
+        seed.PipelineDefinitions.Add(definition);
+        await seed.SaveChangesAsync();
+        var version = definition.AddVersion(1);
+        seed.PipelineDefinitionVersions.Add(version);
+        await seed.SaveChangesAsync();
+
+        await using var context = _fixture.CreateAdminContext();
+        await Assert.ThrowsAsync<OpportunityAuthorizationDeniedException>(() =>
+            new GetPipelineStagesHandler(context, StubAuthorizer.AlwaysDeny)
+                .HandleAsync(new GetPipelineStagesQuery(tenant, version.Id, TestData.Seller, Guid.NewGuid())));
     }
 }

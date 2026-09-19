@@ -128,7 +128,7 @@ public static class OpportunityEndpoints
             long versionId, GetPipelineStagesHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
         {
             var actor = httpContext.GetActorContext();
-            return Results.Ok(await handler.HandleAsync(new GetPipelineStagesQuery(actor.TenantId, versionId, actor.CorrelationId), cancellationToken));
+            return Results.Ok(await handler.HandleAsync(new GetPipelineStagesQuery(actor.TenantId, versionId, actor.Principal, actor.CorrelationId), cancellationToken));
         });
     }
 }
