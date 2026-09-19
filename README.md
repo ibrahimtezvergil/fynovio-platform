@@ -56,7 +56,7 @@ tests/
   CRM.Tests/               Domain, architecture (NetArchTest) and PostgreSQL
                             integration tests (Testcontainers)
   MasterData.Tests/        Same shape as CRM.Tests, for the MasterData module
-web/                     Frontend (not started)
+web/                     Frontend SPA (React 19 + Vite + TypeScript; see web/README.md)
 graphify-out/            Committed code-graph artifacts (graph.json, GRAPH_REPORT.md,
                           manifest.json) used by AI coding agents for navigation
 ```
