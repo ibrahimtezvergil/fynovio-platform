@@ -14,3 +14,9 @@ public sealed class StubAuthorizer(AuthorizationEffect effect) : IAuthorizer
     public Task<AuthorizationDecision> AuthorizeAsync(AuthorizationRequest request, CancellationToken cancellationToken = default) =>
         Task.FromResult(new AuthorizationDecision(effect, effect == AuthorizationEffect.Allow ? "stub_allow" : "stub_deny", Guid.NewGuid(), 0));
 }
+
+public sealed class StubScopeResolver(AccessScope scope) : IAccessScopeResolver
+{
+    public Task<AccessScope> ResolveAsync(ActorContext actor, ActionKey action, string resourceType, CancellationToken cancellationToken = default) =>
+        Task.FromResult(scope);
+}
