@@ -3526,7 +3526,7 @@ the current version's active stages)."
 
 **Deliberate asymmetry with the mutation handlers, stated explicitly so it isn't lost:** a query never throws `OpportunityAuthorizationDeniedException`. Per architecture plan §15's error model ("do not leak tenant data through differences in error responses" — a record that exists but is outside the caller's scope returns the same 404 as one that doesn't exist), an authorization denial here returns `null`, exactly like a genuine not-found. Only mutation handlers throw the 403-mapped exception.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```csharp
 using Contracts;
@@ -3595,7 +3595,7 @@ public sealed class GetOpportunityHandlerTests
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~GetOpportunityHandlerTests"
@@ -3603,7 +3603,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~GetOpp
 
 Expected: compile error.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/Modules/CRM/Application/GetOpportunityQuery.cs`:
 
@@ -3707,7 +3707,7 @@ public sealed class GetOpportunityHandler(CrmDbContext context, IAuthorizer auth
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~GetOpportunityHandlerTests"
@@ -3715,7 +3715,7 @@ dotnet test tests/CRM.Tests/CRM.Tests.csproj --filter "FullyQualifiedName~GetOpp
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/GetOpportunityQuery.cs src/Modules/CRM/Application/GetOpportunityHandler.cs src/Modules/CRM/Application/OpportunityDto.cs tests/CRM.Tests/Application/GetOpportunityHandlerTests.cs
@@ -3725,6 +3725,9 @@ Denial and not-found both return null, deliberately indistinguishable to the
 caller (architecture plan §15's tenant-non-leak rule) — unlike mutation
 handlers, which throw OpportunityAuthorizationDeniedException."
 ```
+
+→ Commit: `ce6791d` "feat(crm): add GetOpportunity query and handler" (co-author trailer says "Claude Haiku 4.5" instead of "Claude Sonnet 5" — same cosmetic subagent slip as Task 1, not corrected, same precedent)
+→ Verified: implementer and spec-compliance reviewer independently ran `GetOpportunityHandlerTests` — 3/3 pass. Spec-compliance review confirmed all 4 files match spec exactly (test file's `using CRM.Tests.Integration;` vs. spec's `using CRM.Tests;` judged a non-functional namespace deviation — `PostgresFixture` lives in `CRM.Tests.Integration`, `TestData`/`StubAuthorizer` remain accessible). Code-quality review: no Critical/Important blocking issues, tenant-isolation (SetTenantContextAsync before query, transaction committed on both not-found and found/denied paths) and the query/mutation authorization asymmetry both confirmed correct by direct code reading. Ready to merge: Yes.
 
 ---
 
