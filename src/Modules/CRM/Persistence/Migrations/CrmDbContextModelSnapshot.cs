@@ -443,6 +443,18 @@ namespace CRM.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsEntry")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_entry");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
@@ -465,6 +477,11 @@ namespace CRM.Persistence.Migrations
 
                     b.HasAlternateKey("TenantId", "Id")
                         .HasName("ak_pipeline_stages_tenant_id_id");
+
+                    b.HasIndex("TenantId", "PipelineDefinitionVersionId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_pipeline_stages_one_entry_per_version")
+                        .HasFilter("is_entry = true");
 
                     b.HasIndex("TenantId", "PipelineDefinitionVersionId", "Name")
                         .IsUnique()

@@ -23,6 +23,7 @@ public sealed class AccessAuthorizerTests : IClassFixture<AccessTestFixture>
 
         Assert.False(decision.IsAllowed);
         Assert.Equal("action_not_registered", decision.ReasonCode);
+        Assert.Equal(AuthorizationDenialStage.Coarse, decision.DenialStage);
     }
 
     [Fact]
@@ -37,8 +38,14 @@ public sealed class AccessAuthorizerTests : IClassFixture<AccessTestFixture>
 
         Assert.False(decision.IsAllowed);
         Assert.Equal("principal_not_recognized", decision.ReasonCode);
+        Assert.Equal(AuthorizationDenialStage.Coarse, decision.DenialStage);
     }
 
+    /// <summary>The `AuthorizationDenialStage.Record` case: the actor holds a real grant
+    /// for this action (an owner-relation one), it just doesn't cover this resource — a
+    /// PEP may externally collapse this into the same shape as "not found," never `403`
+    /// (2026-09-19 authorization-delta doc). Distinguishes this from a `Coarse` denial
+    /// (no grant at all), where that collapse must never happen.</summary>
     [Fact]
     public async Task Owner_relation_grant_denies_a_non_owned_resource()
     {
@@ -49,6 +56,7 @@ public sealed class AccessAuthorizerTests : IClassFixture<AccessTestFixture>
 
         Assert.False(decision.IsAllowed);
         Assert.Equal("no_matching_grant", decision.ReasonCode);
+        Assert.Equal(AuthorizationDenialStage.Record, decision.DenialStage);
     }
 
     [Fact]
@@ -64,6 +72,7 @@ public sealed class AccessAuthorizerTests : IClassFixture<AccessTestFixture>
 
         Assert.True(decision.IsAllowed);
         Assert.Equal("tenant_scope_grant", decision.ReasonCode);
+        Assert.Equal(AuthorizationDenialStage.None, decision.DenialStage);
     }
 
     /// <summary>C1: a recognized principal, a registered action, but zero effective
@@ -113,6 +122,10 @@ public sealed class AccessAuthorizerTests : IClassFixture<AccessTestFixture>
 
         Assert.False(decision.IsAllowed);
         Assert.Equal("no_matching_grant", decision.ReasonCode);
+        // The grant lives in a different tenant, so AccessAuthorizer's tenant filter
+        // (`a.TenantId == request.Actor.TenantId`) makes the `items` query return zero
+        // rows here — correctly Coarse, not Record; the resource was never reached.
+        Assert.Equal(AuthorizationDenialStage.Coarse, decision.DenialStage);
     }
 
     /// <summary>C6a: a RoleAssignment whose ValidFrom is in the future must not
@@ -132,6 +145,7 @@ public sealed class AccessAuthorizerTests : IClassFixture<AccessTestFixture>
 
         Assert.False(decision.IsAllowed);
         Assert.Equal("no_matching_grant", decision.ReasonCode);
+        Assert.Equal(AuthorizationDenialStage.Coarse, decision.DenialStage);
     }
 
     /// <summary>C6b: an already-revoked (expired) RoleAssignment must not authorize.</summary>
@@ -150,6 +164,7 @@ public sealed class AccessAuthorizerTests : IClassFixture<AccessTestFixture>
 
         Assert.False(decision.IsAllowed);
         Assert.Equal("no_matching_grant", decision.ReasonCode);
+        Assert.Equal(AuthorizationDenialStage.Coarse, decision.DenialStage);
     }
 
     /// <summary>H3: distinguishes "recognized principal, registered action, zero
@@ -165,6 +180,7 @@ public sealed class AccessAuthorizerTests : IClassFixture<AccessTestFixture>
 
         Assert.False(decision.IsAllowed);
         Assert.Equal("no_matching_grant", decision.ReasonCode);
+        Assert.Equal(AuthorizationDenialStage.Coarse, decision.DenialStage);
     }
 
     /// <summary>H4: an actor holding two roles — one granting the action with an
@@ -182,6 +198,7 @@ public sealed class AccessAuthorizerTests : IClassFixture<AccessTestFixture>
 
         Assert.True(decision.IsAllowed);
         Assert.Equal("tenant_scope_grant", decision.ReasonCode);
+        Assert.Equal(AuthorizationDenialStage.None, decision.DenialStage);
     }
 
     /// <summary>H7: a CREATE-style request has no resource id yet — the contract must
@@ -200,5 +217,6 @@ public sealed class AccessAuthorizerTests : IClassFixture<AccessTestFixture>
 
         Assert.True(decision.IsAllowed);
         Assert.Equal("tenant_scope_grant", decision.ReasonCode);
+        Assert.Equal(AuthorizationDenialStage.None, decision.DenialStage);
     }
 }

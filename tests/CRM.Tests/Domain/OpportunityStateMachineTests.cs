@@ -36,7 +36,7 @@ public sealed class OpportunityStateMachineTests
         var opportunity = NewDraftOpportunity();
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            opportunity.Open(DateTimeOffset.UtcNow.AddDays(-1)));
+            opportunity.Open(DateTimeOffset.UtcNow.AddDays(-1), pipelineDefinitionVersionId: null, pipelineStageId: null));
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public sealed class OpportunityStateMachineTests
     {
         var opportunity = NewDraftOpportunity();
 
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
 
         Assert.Equal(OpportunityStatus.Open, opportunity.Status);
         Assert.NotNull(opportunity.OpenedDate);
@@ -64,7 +64,7 @@ public sealed class OpportunityStateMachineTests
     {
         var opportunity = NewDraftOpportunity();
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m, isOptional: true);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
 
         Assert.Throws<InvalidOperationException>(() => opportunity.Win());
     }
@@ -74,7 +74,7 @@ public sealed class OpportunityStateMachineTests
     {
         var opportunity = NewDraftOpportunity();
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 2, unitPrice: 50m);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
 
         opportunity.Win();
 
@@ -105,7 +105,7 @@ public sealed class OpportunityStateMachineTests
     public void AddLine_is_rejected_after_open()
     {
         var opportunity = NewDraftOpportunity();
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
 
         Assert.Throws<InvalidOperationException>(() =>
             opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 10m));
@@ -138,9 +138,9 @@ public sealed class OpportunityStateMachineTests
     public void Open_is_rejected_when_already_open()
     {
         var opportunity = NewDraftOpportunity();
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
 
-        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7)));
+        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null));
     }
 
     [Fact]
@@ -148,7 +148,7 @@ public sealed class OpportunityStateMachineTests
     {
         var opportunity = WonOpportunity();
 
-        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7)));
+        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null));
     }
 
     [Fact]
@@ -157,7 +157,7 @@ public sealed class OpportunityStateMachineTests
         var opportunity = NewDraftOpportunity();
         opportunity.Lose("müşteri vazgeçti");
 
-        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7)));
+        Assert.Throws<InvalidOperationException>(() => opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null));
     }
 
     [Fact]
@@ -204,11 +204,67 @@ public sealed class OpportunityStateMachineTests
         Assert.Throws<InvalidOperationException>(() => opportunity.CancelLine(line, "geç kaldı"));
     }
 
+    [Fact]
+    public void Reassign_changes_the_assigned_principal()
+    {
+        var opportunity = NewDraftOpportunity();
+        var newOwner = new PrincipalRef("https://idp.local", "seller-2");
+
+        opportunity.Reassign(newOwner);
+
+        Assert.Equal(newOwner, opportunity.AssignedPrincipal);
+    }
+
+    [Fact]
+    public void Reassign_is_rejected_once_won()
+    {
+        var tenant = TestData.NextTenant();
+        var opportunity = Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", 1000m);
+        opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
+        opportunity.Win();
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.Reassign(new PrincipalRef("https://idp.local", "seller-2")));
+    }
+
+    [Fact]
+    public void Reassign_is_rejected_once_lost()
+    {
+        var tenant = TestData.NextTenant();
+        var opportunity = Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", 1000m);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
+        opportunity.Lose("reason");
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.Reassign(new PrincipalRef("https://idp.local", "seller-2")));
+    }
+
+    [Fact]
+    public void ChangeStage_only_while_open()
+    {
+        var opportunity = NewDraftOpportunity();
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.ChangeStage(pipelineStageId: 99));
+    }
+
+    [Fact]
+    public void ChangeStage_sets_the_new_stage_while_open()
+    {
+        var tenant = TestData.NextTenant();
+        var opportunity = Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", 1000m);
+        opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: 10, pipelineStageId: 20);
+
+        opportunity.ChangeStage(pipelineStageId: 30);
+
+        Assert.Equal(30, opportunity.PipelineStageId);
+        Assert.Equal(10, opportunity.PipelineDefinitionVersionId); // unchanged — same version, different stage
+    }
+
     private static Opportunity WonOpportunity()
     {
         var opportunity = NewDraftOpportunity();
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
         opportunity.Win();
         return opportunity;
     }

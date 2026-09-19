@@ -21,8 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Worker\Worker.csproj" />
     <ProjectReference Include="..\..\src\Modules\CRM\CRM.csproj" />
     <ProjectReference Include="..\..\src\Modules\MasterData\MasterData.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Access\Access.csproj" />
   </ItemGroup>
 
 </Project>

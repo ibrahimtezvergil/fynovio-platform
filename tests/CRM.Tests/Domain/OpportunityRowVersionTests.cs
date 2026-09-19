@@ -28,7 +28,7 @@ public sealed class OpportunityRowVersionTests
         opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m);
         Assert.Equal(2, opportunity.RowVersion);
 
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
         Assert.Equal(3, opportunity.RowVersion);
 
         opportunity.Win();
@@ -63,7 +63,7 @@ public sealed class OpportunityRowVersionTests
     {
         var opportunity = NewDraftOpportunity();
         var line = opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7));
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
         opportunity.Win();
 
         Assert.Throws<InvalidOperationException>(() => opportunity.CancelLine(line, "geç kaldı"));

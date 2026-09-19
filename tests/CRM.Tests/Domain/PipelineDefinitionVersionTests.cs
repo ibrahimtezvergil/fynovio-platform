@@ -62,4 +62,63 @@ public sealed class PipelineDefinitionVersionTests
         Assert.Equal(2, v1.Stages.Count);
         Assert.Equal(2, v2.Stages.Count);
     }
+
+    [Fact]
+    public void AddStage_the_first_stage_added_becomes_entry_by_default()
+    {
+        var tenant = TestData.NextTenant();
+        var definition = PipelineDefinition.Create(tenant, "Sales Pipeline");
+        var version = definition.AddVersion(versionNumber: 1);
+
+        var stage = version.AddStage("Bekliyor", sortOrder: 0);
+
+        Assert.True(stage.IsEntry);
+        Assert.True(stage.IsActive);
+    }
+
+    [Fact]
+    public void AddStage_a_second_stage_is_not_entry_by_default()
+    {
+        var tenant = TestData.NextTenant();
+        var definition = PipelineDefinition.Create(tenant, "Sales Pipeline");
+        var version = definition.AddVersion(versionNumber: 1);
+        version.AddStage("Bekliyor", sortOrder: 0);
+
+        var second = version.AddStage("Teklif Verildi", sortOrder: 1);
+
+        Assert.False(second.IsEntry);
+    }
+
+    /// <summary>The discriminating test the 2026-09-19 entry-stage resolution names
+    /// directly: SortOrder is presentation ordering only and must never be read as an
+    /// entry-stage signal. Entry is decided once, at first-add, and never revisited by
+    /// a later AddStage call regardless of that stage's SortOrder being lower.</summary>
+    [Fact]
+    public void AddStage_a_later_stage_with_a_lower_sort_order_does_not_become_entry()
+    {
+        var tenant = TestData.NextTenant();
+        var definition = PipelineDefinition.Create(tenant, "Sales Pipeline");
+        var version = definition.AddVersion(versionNumber: 1);
+        var first = version.AddStage("Bekliyor", sortOrder: 5);
+
+        var earlier = version.AddStage("Ön Görüşme", sortOrder: 0);
+
+        Assert.True(first.IsEntry);
+        Assert.False(earlier.IsEntry);
+    }
+
+    [Fact]
+    public void MarkEntry_moves_the_entry_flag_to_the_target_stage_only()
+    {
+        var tenant = TestData.NextTenant();
+        var definition = PipelineDefinition.Create(tenant, "Sales Pipeline");
+        var version = definition.AddVersion(versionNumber: 1);
+        var first = version.AddStage("Bekliyor", sortOrder: 0);
+        var second = version.AddStage("Teklif Verildi", sortOrder: 1);
+
+        version.MarkEntry(second);
+
+        Assert.False(first.IsEntry);
+        Assert.True(second.IsEntry);
+    }
 }

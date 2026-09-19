@@ -1,3 +1,4 @@
+using Access.Persistence;
 using CRM.Persistence;
 using MasterData.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +45,13 @@ public sealed class PostgresFixture : IAsyncLifetime
                 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA masterdata TO fynovio_app;
                 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA masterdata TO fynovio_app;
                 REVOKE UPDATE, DELETE ON masterdata.evidence_records FROM fynovio_app;
+                GRANT USAGE ON SCHEMA identity TO fynovio_app;
+                GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA identity TO fynovio_app;
+                GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA identity TO fynovio_app;
+                GRANT USAGE ON SCHEMA access TO fynovio_app;
+                GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA access TO fynovio_app;
+                GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA access TO fynovio_app;
+                REVOKE UPDATE, DELETE ON access.evidence_records FROM fynovio_app;
                 """);
         }
 
@@ -61,11 +69,15 @@ public sealed class PostgresFixture : IAsyncLifetime
     {
         await _container.StartAsync();
         // MasterData first: CRM's BackfillMasterDataParties migration inserts into
-        // masterdata.parties, which must already exist.
+        // masterdata.parties, which must already exist. Access has no cross-schema FK
+        // dependency on either, but is migrated in the same order Host.Tests uses for
+        // consistency.
         await using var masterDataContext = CreateMasterDataContext();
         await masterDataContext.Database.MigrateAsync();
         await using var crmContext = CreateAdminContext();
         await crmContext.Database.MigrateAsync();
+        await using var accessContext = CreateAccessContext();
+        await accessContext.Database.MigrateAsync();
     }
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
@@ -73,6 +85,26 @@ public sealed class PostgresFixture : IAsyncLifetime
     public CrmDbContext CreateAdminContext() => CreateContext(AdminConnectionString);
 
     public MasterDataDbContext CreateMasterDataContext() => CreateMasterDataContext(AdminConnectionString);
+
+    /// <summary>Real Access-module data (Account/RoleAssignment/PermissionSet) for
+    /// integration tests that need the actual AccessAuthorizer/AccessScopeResolver PDP,
+    /// not StubAuthorizer — see OpportunityAuthorizationTests. Admin connection: use only for
+    /// seeding/migrations, never for evaluating the PDP itself — RLS is inert on this
+    /// connection, so a PDP class run against it never actually exercises tenant-context
+    /// enforcement (2026-09-20 PHASE_1_5_RUNTIME_RLS_PDP_DELTA).</summary>
+    public AccessDbContext CreateAccessContext() => CreateAccessContext(AdminConnectionString);
+
+    public static AccessDbContext CreateAccessContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<AccessDbContext>()
+            .UseNpgsql(
+                connectionString,
+                npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", AccessDbContext.AccessSchema))
+            .UseSnakeCaseNamingConvention()
+            .AddInterceptors(new RowVersionInterceptor())
+            .Options;
+        return new AccessDbContext(options);
+    }
 
     public static CrmDbContext CreateContext(string connectionString)
     {
