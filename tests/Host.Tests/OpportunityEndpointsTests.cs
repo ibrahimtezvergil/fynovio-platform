@@ -178,6 +178,71 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    /// <summary>PLAN.md §16's "validation errors" HTTP row: Opportunity.Create's own
+    /// domain guard (a non-3-letter currency code) throws ArgumentException, mapped to
+    /// 400 "validation_error" by CrmProblemDetailsExceptionHandler.</summary>
+    [Fact]
+    public async Task Creating_an_opportunity_with_an_invalid_currency_is_a_validation_error()
+    {
+        var tenantId = 5005;
+        var (subject, _) = await SeedGrantAsync(tenantId, "crm.opportunity.create", relation: null);
+        var partyId = await SeedPartyAsync(tenantId, "Acme");
+
+        using var client = AuthorizedClient(subject, tenantId);
+        var response = await client.PostAsJsonAsync("/opportunities",
+            new { PartyId = partyId, Currency = "X", EstimatedAmount = 100m });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("validation_error", body.GetProperty("type").GetString());
+    }
+
+    /// <summary>PLAN.md §16's "concurrency conflict" HTTP row: a stale ExpectedVersion
+    /// on a real, visible-to-the-caller opportunity maps to 409 "concurrency_conflict"
+    /// (distinct from the record-level-denial 404 case above — this caller genuinely
+    /// can see and is authorized for this opportunity).</summary>
+    [Fact]
+    public async Task Winning_an_opportunity_with_a_stale_expected_version_is_a_concurrency_conflict()
+    {
+        var tenantId = 5006;
+        var owner = new PrincipalRef(JwtTestTokenFactory.Issuer, $"owner-{Guid.NewGuid():N}");
+        var opportunityId = await SeedOpenOpportunityAsync(tenantId, owner);
+        var (callerSubject, _) = await SeedGrantAsync(tenantId, "crm.opportunity.win", relation: null);
+
+        using var client = AuthorizedClient(callerSubject, tenantId);
+        var response = await client.PostAsJsonAsync($"/opportunities/{opportunityId}/win", new { ExpectedVersion = 999_999 });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("concurrency_conflict", body.GetProperty("type").GetString());
+    }
+
+    /// <summary>PLAN.md §16's "idempotent retry" HTTP row: AuthorizedClient fixes one
+    /// Idempotency-Key header for the client's lifetime, so two identical requests on
+    /// the same client are a same-key replay — the second must return the first's
+    /// stored result (Replayed: true, same OpportunityId) rather than re-executing or
+    /// erroring on an already-Won opportunity.</summary>
+    [Fact]
+    public async Task Retrying_a_win_with_the_same_idempotency_key_replays_the_first_result()
+    {
+        var tenantId = 5007;
+        var owner = new PrincipalRef(JwtTestTokenFactory.Issuer, $"owner-{Guid.NewGuid():N}");
+        var opportunityId = await SeedOpenOpportunityAsync(tenantId, owner);
+        var (callerSubject, _) = await SeedGrantAsync(tenantId, "crm.opportunity.win", relation: null);
+
+        using var client = AuthorizedClient(callerSubject, tenantId);
+        var first = await client.PostAsJsonAsync($"/opportunities/{opportunityId}/win", new { ExpectedVersion = 3 });
+        var second = await client.PostAsJsonAsync($"/opportunities/{opportunityId}/win", new { ExpectedVersion = 3 });
+
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        var firstBody = await first.Content.ReadFromJsonAsync<JsonElement>();
+        var secondBody = await second.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(firstBody.GetProperty("replayed").GetBoolean());
+        Assert.True(secondBody.GetProperty("replayed").GetBoolean());
+        Assert.Equal(firstBody.GetProperty("opportunityId").GetInt64(), secondBody.GetProperty("opportunityId").GetInt64());
+    }
+
     /// <summary>Creates the unprivileged application role and grants it exactly what
     /// scripts/create-runtime-role.sql grants in production (crm + masterdata + identity +
     /// access schemas, evidence_records append-only) — run once, as the admin connection,

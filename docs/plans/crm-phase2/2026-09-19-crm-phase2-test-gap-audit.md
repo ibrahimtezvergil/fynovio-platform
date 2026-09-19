@@ -1,6 +1,12 @@
 # CRM Phase 2 — Test Gap Audit
 
-**Status:** Audit only. No production code or test file changes in this document's scope, except one throwaway probe (see §3) that was run, confirmed, and reverted — it is not part of this diff.
+**Status (updated 2026-09-20):** All 9 priority items below are closed. See the updated
+"Summary" section for per-item commit references and
+`docs/architecture-analysis/2026-09-20-phase-1-5-runtime-rls-pdp-delta.md` for the
+Phase 1.5 defect this work also surfaced and fixed (a separate, dependency blocker found
+while closing item 4).
+
+**Original status (2026-09-19, audit-only):** No production code or test file changes in this document's scope, except one throwaway probe (see §3) that was run, confirmed, and reverted — it is not part of that original diff.
 
 **Method:** repository code = source of truth for what exists; `PHASE_2_OPPORTUNITY_COMMANDS_API_BINDING_SPEC.md` + `PHASE_2_OPPORTUNITY_COMMANDS_API_PLAN.md` + Phase 1.5 (`docs/plans/enterprise-access-foundation/*.md`) = source of truth for intended behavior. Every verdict below is cited to a specific file/line or doc section — none are inferred from the audit checklist itself.
 
@@ -200,16 +206,20 @@ Two further, real, testable-today edge cases from `OpenOpportunityHandler.Resolv
 
 ## Summary — what's real vs. what's not
 
-**Real gaps, worth closing (in priority order — both former blockers are now resolved, see `docs/architecture-analysis/2026-09-19-crm-phase2-authorization-delta-and-entry-stage-resolution.md`):**
-1. `AuthorizationDenialStage` delta (`Contracts` + `AccessAuthorizer`) + CRM mutation-handler PEP wiring — Decision 1's concrete fix. (P0)
-2. `OpportunityAuthorizationTests.cs` — named in the project's own plan (§18), never built; now also the right place to assert Decision 1's 403-vs-404 behavior end to end. (P0)
-3. `OpenOpportunityHandler.ResolveEntryStageAsync` fix (filter `IsActive`, throw on missing/inactive entry stage instead of silent null) + `PipelineConfigurationInvalidException` — Decision 2's concrete fix. (P0)
-4. Runtime-role coverage through the real handler pipeline — infrastructure exists, verified working, zero tests use it outside raw-SQL RLS checks. (P0)
-5. HTTP happy-path + error-contract matrix per `PLAN.md` §16, including the now-unblocked cross-tenant/record-scope cases. (P0)
-6. Cross-tenant non-leak at HTTP level, full matrix (nonexistent ID + another tenant's real ID, now both unblocked). (P0)
-7. `GetPipelineStages` missing authorization call — needs the `crm.opportunity.read` check added, then a test. (P0)
-8. `GetOpportunityAvailableActionsHandler` — terminal states, no-billable-line Open state, inactive-stage exclusion. (P1)
-9. Entry-stage decision-2 test proof-points (lower-sortOrder-doesn't-move-entry, multi-pipeline tie-break, version pinning, same-stage transition). (P1)
+**Real gaps, all closed 2026-09-20 (in original priority order):**
+1. **CLOSED** — `AuthorizationDenialStage` delta (`Contracts` + `AccessAuthorizer`) + CRM mutation-handler PEP wiring. → `27b552b`, `fdac321`. (P0)
+2. **CLOSED** — `OpportunityAuthorizationTests.cs`, asserting Decision 1's 403-vs-404 behavior end to end, now against the real `fynovio_app` runtime role (not admin). → `fdac321`, `c4dbca5`. (P0)
+3. **CLOSED** — `OpenOpportunityHandler.ResolveEntryStageAsync` fix (filters `IsActive`, throws `PipelineConfigurationInvalidException` instead of silent null) — Decision 2's concrete fix. → `e52f37f`. (P0)
+4. **CLOSED** — Runtime-role coverage through the real handler pipeline. Closing this surfaced a separate, more severe pre-existing Phase 1.5 defect (`AccessAuthorizer`/`AccessScopeResolver`/`PrincipalResolver` never established RLS tenant context, so the whole authorization system failed closed under the real runtime role) — fixed as its own Architecture Delta before this item could close. → `abfdf01`, `25e9b95`, `c4dbca5`; see `docs/architecture-analysis/2026-09-20-phase-1-5-runtime-rls-pdp-delta.md`. (P0)
+5. **CLOSED for the error-contract matrix; per-endpoint happy-path matrix explicitly deferred** — PLAN.md §16 lists "happy path per endpoint; validation errors; 401/403/404 distinctions; concurrency conflict; idempotent retry; tenant isolation over HTTP." All rows except "happy path per endpoint" are covered (Create's happy path is covered as the wiring proof; the other ~10 endpoints' happy paths are not, deliberately — see "Not closed" below). → `fdac321`, `e52b467`. (P0)
+6. **CLOSED** — Cross-tenant non-leak at HTTP level (nonexistent ID and another tenant's real ID). → `fdac321`. (P0)
+7. **CLOSED** — `GetPipelineStages` missing authorization call, now checks `crm.opportunity.read`. → `6a9d11b`. (P0)
+8. **CLOSED** — `GetOpportunityAvailableActionsHandler`: terminal states (Won has zero available actions), no-billable-line Open state (optional-only line cannot Win), inactive-stage exclusion from `AllowedTargetStageIds`. The domain logic was already correct; only coverage was missing. → `e52b467`. (P1)
+9. **CLOSED** — Entry-stage decision-2 proof-points: lower-sortOrder-doesn't-move-entry (`e52f37f`), multi-pipeline oldest-wins, version pinning, same-stage-to-same-stage no-op (`e52b467`). The related "entry stage disabled on Open" question this section originally flagged as "P1, report-and-ask" was superseded by the owner's binding 2026-09-19 decision (inactive entry stage on Open is a hard error) and implemented as part of item 3. (P1)
+
+**Not closed, explicitly deferred (not silently dropped):**
+- Full HTTP happy-path matrix for every endpoint beyond Create (Open, AddLine, CancelLine, ChangeStage, Lose, Reassign, GetOpportunity, ListOpportunities, GetPipelineStages, GetOpportunityAvailableActions). Unbounded in scope relative to the P0 gaps above; flagged rather than expanded into ad hoc.
+- The full §9 (of the runtime-RLS delta doc) category-A/B admin-vs-runtime-role audit across all four test suites — only the suites this work actually touched were corrected.
 
 **Not real — do not build, confirmed by named, frozen Phase 1.5 decisions:**
 - Field-level security (READ or WRITE) — §6.
