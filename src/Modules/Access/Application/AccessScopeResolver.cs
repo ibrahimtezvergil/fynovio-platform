@@ -13,7 +13,27 @@ public sealed class AccessScopeResolver(
     PrincipalResolver principalResolver,
     IActionCatalog actionCatalog) : IAccessScopeResolver
 {
+    /// <summary>2026-09-20 PHASE_1_5_RUNTIME_RLS_PDP_DELTA: same RLS-protected tables as
+    /// <see cref="AccessAuthorizer"/> — the claimed actor tenant establishes DB visibility
+    /// only, every branch still independently re-checks `TenantId`/`AccountId`/`ActionKey`.</summary>
     public async Task<AccessScope> ResolveAsync(ActorContext actor, ActionKey action, string resourceType, CancellationToken cancellationToken = default)
+    {
+        // Reentrant — see AccessAuthorizer.AuthorizeAsync's comment: a caller that already
+        // holds an open transaction on this AccessDbContext with tenant context set for
+        // `actor.TenantId` must not have a second transaction opened underneath it.
+        if (context.Database.CurrentTransaction is not null)
+            return await EvaluateAsync(actor, action, cancellationToken);
+
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        await context.SetTenantContextAsync(actor.TenantId, cancellationToken);
+
+        var scope = await EvaluateAsync(actor, action, cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+        return scope;
+    }
+
+    private async Task<AccessScope> EvaluateAsync(ActorContext actor, ActionKey action, CancellationToken cancellationToken)
     {
         if (!await actionCatalog.IsActiveAsync(action, cancellationToken))
             return new AccessScope.None();

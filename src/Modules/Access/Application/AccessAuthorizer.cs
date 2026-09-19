@@ -13,7 +13,33 @@ public sealed class AccessAuthorizer(
     PrincipalResolver principalResolver,
     IActionCatalog actionCatalog) : IAuthorizer
 {
+    /// <summary>2026-09-20 PHASE_1_5_RUNTIME_RLS_PDP_DELTA: `access.role_assignments`,
+    /// `access.role_permission_sets`, `access.permission_set_items`, and
+    /// `access.tenant_access_state` are all RLS-protected. The claimed actor tenant
+    /// establishes DB visibility for this evaluation; it is not itself an authorization
+    /// outcome — every branch below still independently re-checks `TenantId`/`AccountId`/
+    /// `ActionKey` before granting.</summary>
     public async Task<AuthorizationDecision> AuthorizeAsync(AuthorizationRequest request, CancellationToken cancellationToken = default)
+    {
+        // Reentrant: Access's own command handlers (Grant/RevokeRoleAssignmentHandler) already
+        // open a transaction and set tenant context for `request.Actor.TenantId` before calling
+        // this authorizer on the same AccessDbContext instance — opening a second transaction on
+        // an already-transacted connection throws. When no ambient transaction exists (the normal
+        // case: CRM/MasterData callers hold their own DbContext, or ActorContextMiddleware calling
+        // through PrincipalResolver), this method owns its own transaction end-to-end.
+        if (context.Database.CurrentTransaction is not null)
+            return await EvaluateAsync(request, cancellationToken);
+
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        await context.SetTenantContextAsync(request.Actor.TenantId, cancellationToken);
+
+        var decision = await EvaluateAsync(request, cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+        return decision;
+    }
+
+    private async Task<AuthorizationDecision> EvaluateAsync(AuthorizationRequest request, CancellationToken cancellationToken)
     {
         var decisionId = Guid.NewGuid();
         var revision = await GetRevisionAsync(request.Actor.TenantId, cancellationToken);
