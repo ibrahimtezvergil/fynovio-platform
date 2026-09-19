@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4f70d1fb`
+- Built from commit: `68428bf1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -155,7 +155,7 @@
 - CRM.Persistence
 - EnableAccessRowLevelSecurity
 - .SeedOpenOpportunityAsync
-- CancelOpportunityLineCommand
+- MembershipStatus
 - ActionRegistryEntry
 - ActorContext
 - PipelineDefinitionVersion
@@ -174,18 +174,18 @@
 - .HandleAsync
 - .BuildModel
 - AuthorizationDecision
-- OpportunityDto
+- .Create
 - CRM.csproj
-- MembershipStatus
+- CreateOpportunityHandler
 - ICollectionFixture
 - OpportunityNeed
 - CrmActionCatalog.cs
-- .Create
-- CreateOpportunityHandler
+- OpportunityDto
+- .ApplyAnyOf
 - RolePermissionSet
 - .Configure
 - .Owner_relation_grant_is_consistent_across_both_contracts
-- .ApplyAnyOf
+- CancelOpportunityLineCommand
 - AuthorizationEffect
 - IHasRowVersion
 - ActorContextMiddleware.cs
@@ -753,6 +753,10 @@ Nodes (7): Schema, MigrationBuilder, EnableAccessRowLevelSecurity, DateTimeOffse
 Cohesion: 0.20
 Nodes (11): RowVersion, LoseOpportunityCommand, Guid, LoseOpportunityHandler, DbUpdateException, TimeSpan, LoseOpportunityHandlerTests, Fact (+3 more)
 
+### Community 141 - "MembershipStatus"
+Cohesion: 0.27
+Nodes (6): MembershipStatus, Active, Disabled, Invited, TenantMembershipConfiguration, EntityTypeBuilder
+
 ### Community 142 - "ActionRegistryEntry"
 Cohesion: 0.17
 Nodes (8): ActionRegistryEntry, ActionKey, IsDeprecated, OwnerModule, ResourceType, RiskClass, ActionRegistryEntryConfiguration, EntityTypeBuilder
@@ -825,17 +829,17 @@ Nodes (13): ModelSnapshot, AccessDbContextModelSnapshot, DateTimeOffset, Guid, M
 Cohesion: 0.22
 Nodes (8): AuthorizationDecision, DecisionId, DenialStage, Effect, IsAllowed, ReasonCode, Revision, Guid
 
-### Community 160 - "OpportunityDto"
-Cohesion: 0.47
-Nodes (4): OpportunityDto, OpportunityLineDto, DateTimeOffset, IReadOnlyList
+### Community 160 - ".Create"
+Cohesion: 0.33
+Nodes (4): PermissionSetTests, ArgumentException, Fact, InvalidOperationException
 
 ### Community 161 - "CRM.csproj"
 Cohesion: 0.20
 Nodes (8): Microsoft.Extensions.Hosting (10.0.12), Microsoft.NET.Sdk.Worker, net10.0, EFCore.NamingConventions (10.0.1), Microsoft.EntityFrameworkCore.Design (10.0.4), Npgsql.EntityFrameworkCore.PostgreSQL (10.0.3), Microsoft.NET.Sdk, net10.0
 
-### Community 162 - "MembershipStatus"
-Cohesion: 0.27
-Nodes (6): MembershipStatus, Active, Disabled, Invited, TenantMembershipConfiguration, EntityTypeBuilder
+### Community 162 - "CreateOpportunityHandler"
+Cohesion: 0.46
+Nodes (5): CreateOpportunityHandler, TimeSpan, CreateOpportunityHandlerTests, Fact, Task
 
 ### Community 163 - "ICollectionFixture"
 Cohesion: 0.29
@@ -849,13 +853,13 @@ Nodes (7): OpportunityNeed, CustomerNeedId, OpportunityId, TenantId, TenantId, O
 Cohesion: 0.67
 Nodes (3): CrmActionCatalog, CrmActionDescriptor, IReadOnlyList
 
-### Community 166 - ".Create"
-Cohesion: 0.33
-Nodes (4): PermissionSetTests, ArgumentException, Fact, InvalidOperationException
+### Community 166 - "OpportunityDto"
+Cohesion: 0.47
+Nodes (4): OpportunityDto, OpportunityLineDto, DateTimeOffset, IReadOnlyList
 
-### Community 167 - "CreateOpportunityHandler"
-Cohesion: 0.46
-Nodes (5): CreateOpportunityHandler, TimeSpan, CreateOpportunityHandlerTests, Fact, Task
+### Community 167 - ".ApplyAnyOf"
+Cohesion: 0.50
+Nodes (3): IQueryable, AnyOf, OwnedBy
 
 ### Community 168 - "RolePermissionSet"
 Cohesion: 0.33
@@ -869,10 +873,6 @@ Nodes (3): PrincipalType, User, EntityTypeBuilder
 Cohesion: 0.40
 Nodes (4): InlineData, OwnedBy, Task, Theory
 
-### Community 171 - ".ApplyAnyOf"
-Cohesion: 0.50
-Nodes (3): IQueryable, AnyOf, OwnedBy
-
 ### Community 172 - "AuthorizationEffect"
 Cohesion: 0.50
 Nodes (3): AuthorizationEffect, Allow, Deny
@@ -885,11 +885,11 @@ Nodes (3): AuthorizationEffect, Allow, Deny
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Contracts` connect `Contracts` to `Access.Domain.Authorization`, `CustomerNeed`, `OpportunityLine`, `TenantFieldDefinition`, `.OwnedBy_scope_returns_only_that_principals_opportunities`, `PipelineStage`, `CRM.Persistence`, `.SeedOpenOpportunityAsync`, `CancelOpportunityLineCommand`, `EvidenceRecord`, `ActorContext`, `PipelineDefinitionVersion`, `PartyRef`, `RoleAssignment`, `.SeedAsync`, `RowVersionInterceptor`, `AuthorizationDenialStage`, `AuthorizationDecision`, `MembershipStatus`, `OpportunityNeed`, `.Create`, `RolePermissionSet`, `.HandleAsync`, `CRM.Application`, `AuthorizationEffect`, `.EvaluateAsync`, `IHasRowVersion`, `ActorContextMiddleware.cs`, `IdempotencyRecord`, `.ResolveExternalIdentityAsync`, `EntityRef`, `OutboxMessage`, `OutboxMessage`, `.Create`, `IdempotencyRecord`, `TenantId`, `EvidenceRecord`, `ActionKey`, `CRM.Domain`, `TenantAccessState`, `MasterData.Application`, `PermissionSet`, `PipelineDefinition`, `OpportunityStatus`, `LegacyMigrationFixture`, `OpportunityEndpoints.cs`, `.CreateAdminContext`, `.MapOpportunityEndpoints`, `ExternalIdentity`, `.HandleAsync`, `IEntityTypeConfiguration`, `IAuthorizer`, `Access.Tests.Domain`?**
+- **Why does `Contracts` connect `Contracts` to `Access.Domain.Authorization`, `CustomerNeed`, `OpportunityLine`, `TenantFieldDefinition`, `.OwnedBy_scope_returns_only_that_principals_opportunities`, `PipelineStage`, `CRM.Persistence`, `.SeedOpenOpportunityAsync`, `MembershipStatus`, `EvidenceRecord`, `ActorContext`, `PipelineDefinitionVersion`, `PartyRef`, `RoleAssignment`, `.SeedAsync`, `RowVersionInterceptor`, `AuthorizationDenialStage`, `AuthorizationDecision`, `.Create`, `OpportunityNeed`, `RolePermissionSet`, `.HandleAsync`, `CRM.Application`, `CancelOpportunityLineCommand`, `AuthorizationEffect`, `.EvaluateAsync`, `IHasRowVersion`, `ActorContextMiddleware.cs`, `IdempotencyRecord`, `.ResolveExternalIdentityAsync`, `EntityRef`, `OutboxMessage`, `OutboxMessage`, `.Create`, `IdempotencyRecord`, `TenantId`, `EvidenceRecord`, `ActionKey`, `CRM.Domain`, `TenantAccessState`, `MasterData.Application`, `PermissionSet`, `PipelineDefinition`, `OpportunityStatus`, `LegacyMigrationFixture`, `OpportunityEndpoints.cs`, `.CreateAdminContext`, `.MapOpportunityEndpoints`, `ExternalIdentity`, `.HandleAsync`, `IEntityTypeConfiguration`, `IAuthorizer`, `Access.Tests.Domain`?**
   _High betweenness centrality (0.183) - this node is a cross-community bridge._
 - **Why does `CRM.Persistence` connect `CRM.Persistence` to `Access.Domain.Authorization`, `EnableRowLevelSecurityOnPipelineTables`, `CrmDbContext`, `CRM.Persistence.Migrations`, `.SeedAsync`, `AddPipelineStageActiveAndEntryFlags`, `.BuildModel`, `CrmConnectionString.cs`, `AddPipelineTables`, `FixOpportunityAssignedPrincipalIndex`, `RenameOpportunityLifecycle`, `BackfillMasterDataParties`, `Contracts`, `ModuleBoundaryTests`, `DropOpportunityPartyForeignKey`, `DropCrmParties`, `.Create`, `TenantId`, `Migration`, `RemoveCrmPartyEntity`, `LegacyMigrationFixture`, `OpportunityEndpoints.cs`?**
   _High betweenness centrality (0.091) - this node is a cross-community bridge._
-- **Why does `CrmDbContext` connect `CrmDbContext` to `OpportunityLine`, `CustomerNeed`, `TenantFieldDefinition`, `.OwnedBy_scope_returns_only_that_principals_opportunities`, `WinOpportunityHandler`, `PipelineStage`, `CRM.Persistence`, `.SeedOpenOpportunityAsync`, `EvidenceRecord`, `PipelineDefinitionVersion`, `.SeedAsync`, `.A_single_dispatch_pass_marks_every_pending_message_processed`, `OpportunityNeed`, `CreateOpportunityHandler`, `IdempotencyRecord`, `OutboxMessage`, `MasterDataDbContext`, `OpportunityEndpointsTests`, `.Create`, `TenantId`, `.CreatePartyAsync`, `PipelineDefinition`, `LegacyMigrationFixture`, `.Create`, `.CreateAdminContext`, `.SeedAsync`, `IAuthorizer`?**
+- **Why does `CrmDbContext` connect `CrmDbContext` to `OpportunityLine`, `CustomerNeed`, `TenantFieldDefinition`, `.OwnedBy_scope_returns_only_that_principals_opportunities`, `WinOpportunityHandler`, `PipelineStage`, `CRM.Persistence`, `.SeedOpenOpportunityAsync`, `EvidenceRecord`, `PipelineDefinitionVersion`, `.SeedAsync`, `.A_single_dispatch_pass_marks_every_pending_message_processed`, `CreateOpportunityHandler`, `OpportunityNeed`, `IdempotencyRecord`, `OutboxMessage`, `MasterDataDbContext`, `OpportunityEndpointsTests`, `.Create`, `TenantId`, `.CreatePartyAsync`, `PipelineDefinition`, `LegacyMigrationFixture`, `.Create`, `.CreateAdminContext`, `.SeedAsync`, `IAuthorizer`?**
   _High betweenness centrality (0.061) - this node is a cross-community bridge._
 - **Are the 25 inferred relationships involving `PrincipalRef` (e.g. with `.InvokeAsync()` and `.MapOpportunityEndpoints()`) actually correct?**
   _`PrincipalRef` has 25 INFERRED edges - model-reasoned connections that need verification._

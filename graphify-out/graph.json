@@ -2062,23 +2062,42 @@
       "source_location": "L11"
     },
     {
-      "id": "src_modules_crm_application_cancelopportunitylinecommand_crm_application_cancelopportunitylinecommand",
-      "label": "CancelOpportunityLineCommand",
+      "id": "src_modules_access_domain_identity_tenantmembership_access_domain_identity_membershipstatus",
+      "label": "MembershipStatus",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 141,
-      "community_name": "CancelOpportunityLineCommand",
+      "community_name": "MembershipStatus",
       "file_type": "code",
       "metadata": {
-        "namespace": "CRM.Application",
+        "namespace": "Access.Domain.Identity",
         "scope_chain": [
           "s18"
         ]
       },
-      "norm_label": "cancelopportunitylinecommand",
-      "source_file": "src/Modules/CRM/Application/CancelOpportunityLineCommand.cs",
+      "norm_label": "membershipstatus",
+      "source_file": "src/Modules/Access/Domain/Identity/TenantMembership.cs",
       "source_location": "L5"
+    },
+    {
+      "id": "src_modules_access_persistence_configurations_tenantmembershipconfiguration_access_persistence_configurations_tenantmembershipconfiguration",
+      "label": "TenantMembershipConfiguration",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 141,
+      "community_name": "MembershipStatus",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Access.Persistence.Configurations",
+        "scope_chain": [
+          "s140"
+        ]
+      },
+      "norm_label": "tenantmembershipconfiguration",
+      "source_file": "src/Modules/Access/Persistence/Configurations/TenantMembershipConfiguration.cs",
+      "source_location": "L8"
     },
     {
       "id": "src_modules_access_domain_authorization_actionregistryentry_access_domain_authorization_actionregistryentry",
@@ -2560,80 +2579,61 @@
       "source_location": "L10"
     },
     {
-      "id": "src_modules_crm_application_opportunitydto_crm_application_opportunitydto",
-      "label": "OpportunityDto",
+      "id": "tests_access_tests_domain_permissionsettests_access_tests_domain_permissionsettests",
+      "label": "PermissionSetTests",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 160,
-      "community_name": "OpportunityDto",
+      "community_name": ".Create",
       "file_type": "code",
       "metadata": {
-        "namespace": "CRM.Application",
+        "namespace": "Access.Tests.Domain",
         "scope_chain": [
-          "s19"
+          "s53"
         ]
       },
-      "norm_label": "opportunitydto",
-      "source_file": "src/Modules/CRM/Application/OpportunityDto.cs",
-      "source_location": "L7"
+      "norm_label": "permissionsettests",
+      "source_file": "tests/Access.Tests/Domain/PermissionSetTests.cs",
+      "source_location": "L6"
     },
     {
-      "id": "src_modules_crm_application_opportunitydto_crm_application_opportunitylinedto",
-      "label": "OpportunityLineDto",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 160,
-      "community_name": "OpportunityDto",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "CRM.Application",
-        "scope_chain": [
-          "s19"
-        ]
-      },
-      "norm_label": "opportunitylinedto",
-      "source_file": "src/Modules/CRM/Application/OpportunityDto.cs",
-      "source_location": "L5"
-    },
-    {
-      "id": "src_modules_access_domain_identity_tenantmembership_access_domain_identity_membershipstatus",
-      "label": "MembershipStatus",
+      "id": "src_modules_crm_application_createopportunityhandler_crm_application_createopportunityhandler",
+      "label": "CreateOpportunityHandler",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 162,
-      "community_name": "MembershipStatus",
+      "community_name": "CreateOpportunityHandler",
       "file_type": "code",
       "metadata": {
-        "namespace": "Access.Domain.Identity",
+        "namespace": "CRM.Application",
         "scope_chain": [
-          "s18"
+          "s278"
         ]
       },
-      "norm_label": "membershipstatus",
-      "source_file": "src/Modules/Access/Domain/Identity/TenantMembership.cs",
-      "source_location": "L5"
+      "norm_label": "createopportunityhandler",
+      "source_file": "src/Modules/CRM/Application/CreateOpportunityHandler.cs",
+      "source_location": "L16"
     },
     {
-      "id": "src_modules_access_persistence_configurations_tenantmembershipconfiguration_access_persistence_configurations_tenantmembershipconfiguration",
-      "label": "TenantMembershipConfiguration",
+      "id": "tests_crm_tests_application_createopportunityhandlertests_crm_tests_application_createopportunityhandlertests",
+      "label": "CreateOpportunityHandlerTests",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 162,
-      "community_name": "MembershipStatus",
+      "community_name": "CreateOpportunityHandler",
       "file_type": "code",
       "metadata": {
-        "namespace": "Access.Persistence.Configurations",
+        "namespace": "CRM.Tests.Application",
         "scope_chain": [
-          "s140"
+          "s155"
         ]
       },
-      "norm_label": "tenantmembershipconfiguration",
-      "source_file": "src/Modules/Access/Persistence/Configurations/TenantMembershipConfiguration.cs",
-      "source_location": "L8"
+      "norm_label": "createopportunityhandlertests",
+      "source_file": "tests/CRM.Tests/Application/CreateOpportunityHandlerTests.cs",
+      "source_location": "L11"
     },
     {
       "id": "tests_access_tests_integration_postgrescollection_access_tests_integration_postgrescollection",
@@ -2769,61 +2769,42 @@
       "source_location": "L9"
     },
     {
-      "id": "tests_access_tests_domain_permissionsettests_access_tests_domain_permissionsettests",
-      "label": "PermissionSetTests",
+      "id": "src_modules_crm_application_opportunitydto_crm_application_opportunitydto",
+      "label": "OpportunityDto",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 166,
-      "community_name": ".Create",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "Access.Tests.Domain",
-        "scope_chain": [
-          "s53"
-        ]
-      },
-      "norm_label": "permissionsettests",
-      "source_file": "tests/Access.Tests/Domain/PermissionSetTests.cs",
-      "source_location": "L6"
-    },
-    {
-      "id": "src_modules_crm_application_createopportunityhandler_crm_application_createopportunityhandler",
-      "label": "CreateOpportunityHandler",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 167,
-      "community_name": "CreateOpportunityHandler",
+      "community_name": "OpportunityDto",
       "file_type": "code",
       "metadata": {
         "namespace": "CRM.Application",
         "scope_chain": [
-          "s278"
+          "s19"
         ]
       },
-      "norm_label": "createopportunityhandler",
-      "source_file": "src/Modules/CRM/Application/CreateOpportunityHandler.cs",
-      "source_location": "L16"
+      "norm_label": "opportunitydto",
+      "source_file": "src/Modules/CRM/Application/OpportunityDto.cs",
+      "source_location": "L7"
     },
     {
-      "id": "tests_crm_tests_application_createopportunityhandlertests_crm_tests_application_createopportunityhandlertests",
-      "label": "CreateOpportunityHandlerTests",
+      "id": "src_modules_crm_application_opportunitydto_crm_application_opportunitylinedto",
+      "label": "OpportunityLineDto",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 167,
-      "community_name": "CreateOpportunityHandler",
+      "community": 166,
+      "community_name": "OpportunityDto",
       "file_type": "code",
       "metadata": {
-        "namespace": "CRM.Tests.Application",
+        "namespace": "CRM.Application",
         "scope_chain": [
-          "s155"
+          "s19"
         ]
       },
-      "norm_label": "createopportunityhandlertests",
-      "source_file": "tests/CRM.Tests/Application/CreateOpportunityHandlerTests.cs",
-      "source_location": "L11"
+      "norm_label": "opportunitylinedto",
+      "source_file": "src/Modules/CRM/Application/OpportunityDto.cs",
+      "source_location": "L5"
     },
     {
       "id": "src_modules_access_domain_authorization_rolepermissionset_access_domain_authorization_rolepermissionset",
@@ -2881,6 +2862,25 @@
       "norm_label": "class1",
       "source_file": "src/Modules/Organization/Class1.cs",
       "source_location": "L3"
+    },
+    {
+      "id": "src_modules_crm_application_cancelopportunitylinecommand_crm_application_cancelopportunitylinecommand",
+      "label": "CancelOpportunityLineCommand",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 171,
+      "community_name": "CancelOpportunityLineCommand",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "CRM.Application",
+        "scope_chain": [
+          "s18"
+        ]
+      },
+      "norm_label": "cancelopportunitylinecommand",
+      "source_file": "src/Modules/CRM/Application/CancelOpportunityLineCommand.cs",
+      "source_location": "L5"
     },
     {
       "id": "src_contracts_authorizationeffect_contracts_authorizationeffect",
@@ -12316,36 +12316,90 @@
       "source_location": "L69"
     },
     {
-      "id": "src_modules_crm_application_cancelopportunitylinehandler_crm_application_cancelopportunitylinehandler_hashrequest",
-      "label": ".HashRequest()",
+      "id": "src_modules_access_persistence_configurations_tenantmembershipconfiguration_access_persistence_configurations_tenantmembershipconfiguration_configure",
+      "label": ".Configure()",
       "_callable": true,
       "_origin": "ast",
       "community": 141,
-      "community_name": "CancelOpportunityLineCommand",
+      "community_name": "MembershipStatus",
       "file_type": "code",
       "metadata": {
-        "namespace": "CRM.Application",
+        "namespace": "Access.Persistence.Configurations",
         "scope_chain": [
-          "s260"
+          "s140"
         ],
         "unresolved_calls": [
           {
-            "callee": "ToHexString",
-            "receiver_type": "Convert",
+            "callee": "ToTable",
+            "receiver_type": "EntityTypeBuilder",
             "lang": "csharp",
-            "line": "L118"
+            "line": "L12"
           },
           {
-            "callee": "HashData",
-            "receiver_type": "SHA256",
+            "callee": "HasKey",
+            "receiver_type": "EntityTypeBuilder",
             "lang": "csharp",
-            "line": "L118"
+            "line": "L14"
+          },
+          {
+            "callee": "Property",
+            "receiver_type": "EntityTypeBuilder",
+            "lang": "csharp",
+            "line": "L18"
+          },
+          {
+            "callee": "HasIndex",
+            "receiver_type": "EntityTypeBuilder",
+            "lang": "csharp",
+            "line": "L29"
+          },
+          {
+            "callee": "HasOne<Account>",
+            "receiver_type": "EntityTypeBuilder",
+            "lang": "csharp",
+            "line": "L32"
           }
         ]
       },
-      "norm_label": ".hashrequest()",
-      "source_file": "src/Modules/CRM/Application/CancelOpportunityLineHandler.cs",
-      "source_location": "L113"
+      "norm_label": ".configure()",
+      "source_file": "src/Modules/Access/Persistence/Configurations/TenantMembershipConfiguration.cs",
+      "source_location": "L10"
+    },
+    {
+      "id": "src_modules_access_persistence_configurations_tenantmembershipconfiguration_access_persistence_configurations_tenantmembershipconfiguration_fromdb",
+      "label": ".FromDb()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 141,
+      "community_name": "MembershipStatus",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Access.Persistence.Configurations",
+        "scope_chain": [
+          "s140"
+        ]
+      },
+      "norm_label": ".fromdb()",
+      "source_file": "src/Modules/Access/Persistence/Configurations/TenantMembershipConfiguration.cs",
+      "source_location": "L51"
+    },
+    {
+      "id": "src_modules_access_persistence_configurations_tenantmembershipconfiguration_access_persistence_configurations_tenantmembershipconfiguration_todb",
+      "label": ".ToDb()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 141,
+      "community_name": "MembershipStatus",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Access.Persistence.Configurations",
+        "scope_chain": [
+          "s140"
+        ]
+      },
+      "norm_label": ".todb()",
+      "source_file": "src/Modules/Access/Persistence/Configurations/TenantMembershipConfiguration.cs",
+      "source_location": "L43"
     },
     {
       "id": "src_modules_access_domain_authorization_actionregistryentry_access_domain_authorization_actionregistryentry_deprecate",
@@ -13640,108 +13694,232 @@
       "source_location": "L16"
     },
     {
-      "id": "src_modules_crm_application_opportunitydto_crm_application_opportunitydto_from",
-      "label": ".From()",
+      "id": "src_modules_access_domain_authorization_permissionset_access_domain_authorization_permissionset_create",
+      "label": ".Create()",
       "_callable": true,
       "_origin": "ast",
       "community": 160,
-      "community_name": "OpportunityDto",
+      "community_name": ".Create",
       "file_type": "code",
       "metadata": {
-        "namespace": "CRM.Application",
+        "namespace": "Access.Domain.Authorization",
         "scope_chain": [
-          "s19"
+          "s18"
         ]
       },
-      "norm_label": ".from()",
-      "source_file": "src/Modules/CRM/Application/OpportunityDto.cs",
+      "norm_label": ".create()",
+      "source_file": "src/Modules/Access/Domain/Authorization/PermissionSet.cs",
       "source_location": "L26"
     },
     {
-      "id": "src_modules_access_persistence_configurations_tenantmembershipconfiguration_access_persistence_configurations_tenantmembershipconfiguration_configure",
-      "label": ".Configure()",
+      "id": "tests_access_tests_domain_permissionsettests_access_tests_domain_permissionsettests_grant_rejects_duplicate_action_key",
+      "label": ".Grant_rejects_duplicate_action_key()",
       "_callable": true,
       "_origin": "ast",
-      "community": 162,
-      "community_name": "MembershipStatus",
+      "community": 160,
+      "community_name": ".Create",
       "file_type": "code",
       "metadata": {
-        "namespace": "Access.Persistence.Configurations",
+        "namespace": "Access.Tests.Domain",
         "scope_chain": [
-          "s140"
+          "s53"
         ],
         "unresolved_calls": [
           {
-            "callee": "ToTable",
-            "receiver_type": "EntityTypeBuilder",
-            "lang": "csharp",
-            "line": "L12"
-          },
-          {
-            "callee": "HasKey",
-            "receiver_type": "EntityTypeBuilder",
+            "callee": "Throws<InvalidOperationException>",
+            "receiver_type": "Assert",
             "lang": "csharp",
             "line": "L14"
-          },
-          {
-            "callee": "Property",
-            "receiver_type": "EntityTypeBuilder",
-            "lang": "csharp",
-            "line": "L18"
-          },
-          {
-            "callee": "HasIndex",
-            "receiver_type": "EntityTypeBuilder",
-            "lang": "csharp",
-            "line": "L29"
-          },
-          {
-            "callee": "HasOne<Account>",
-            "receiver_type": "EntityTypeBuilder",
-            "lang": "csharp",
-            "line": "L32"
           }
         ]
       },
-      "norm_label": ".configure()",
-      "source_file": "src/Modules/Access/Persistence/Configurations/TenantMembershipConfiguration.cs",
-      "source_location": "L10"
+      "norm_label": ".grant_rejects_duplicate_action_key()",
+      "source_file": "tests/Access.Tests/Domain/PermissionSetTests.cs",
+      "source_location": "L8"
     },
     {
-      "id": "src_modules_access_persistence_configurations_tenantmembershipconfiguration_access_persistence_configurations_tenantmembershipconfiguration_fromdb",
-      "label": ".FromDb()",
+      "id": "tests_access_tests_domain_permissionsettests_access_tests_domain_permissionsettests_grant_rejects_unsupported_relation",
+      "label": ".Grant_rejects_unsupported_relation()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 160,
+      "community_name": ".Create",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Access.Tests.Domain",
+        "scope_chain": [
+          "s53"
+        ],
+        "unresolved_calls": [
+          {
+            "callee": "Throws<ArgumentException>",
+            "receiver_type": "Assert",
+            "lang": "csharp",
+            "line": "L21"
+          }
+        ]
+      },
+      "norm_label": ".grant_rejects_unsupported_relation()",
+      "source_file": "tests/Access.Tests/Domain/PermissionSetTests.cs",
+      "source_location": "L17"
+    },
+    {
+      "id": "tests_access_tests_domain_permissionsettests_access_tests_domain_permissionsettests_grant_with_null_relation_is_allowed",
+      "label": ".Grant_with_null_relation_is_allowed()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 160,
+      "community_name": ".Create",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Access.Tests.Domain",
+        "scope_chain": [
+          "s53"
+        ],
+        "unresolved_calls": [
+          {
+            "callee": "Null",
+            "receiver_type": "Assert",
+            "lang": "csharp",
+            "line": "L30"
+          },
+          {
+            "callee": "Single",
+            "receiver_type": "Assert",
+            "lang": "csharp",
+            "line": "L31"
+          }
+        ]
+      },
+      "norm_label": ".grant_with_null_relation_is_allowed()",
+      "source_file": "tests/Access.Tests/Domain/PermissionSetTests.cs",
+      "source_location": "L24"
+    },
+    {
+      "id": "tests_crm_tests_application_createopportunityhandlertests_crm_tests_application_createopportunityhandlertests_creating_is_denied_without_a_grant_for_the_action",
+      "label": ".Creating_is_denied_without_a_grant_for_the_action()",
       "_callable": true,
       "_origin": "ast",
       "community": 162,
-      "community_name": "MembershipStatus",
+      "community_name": "CreateOpportunityHandler",
       "file_type": "code",
       "metadata": {
-        "namespace": "Access.Persistence.Configurations",
+        "namespace": "CRM.Tests.Application",
         "scope_chain": [
-          "s140"
+          "s155"
+        ],
+        "unresolved_calls": [
+          {
+            "callee": "NewGuid",
+            "receiver_type": "Guid",
+            "lang": "csharp",
+            "line": "L45"
+          },
+          {
+            "callee": "ThrowsAsync<OpportunityAuthorizationDeniedException>",
+            "receiver_type": "Assert",
+            "lang": "csharp",
+            "line": "L48"
+          },
+          {
+            "callee": "Empty",
+            "receiver_type": "Assert",
+            "lang": "csharp",
+            "line": "L51"
+          }
         ]
       },
-      "norm_label": ".fromdb()",
-      "source_file": "src/Modules/Access/Persistence/Configurations/TenantMembershipConfiguration.cs",
-      "source_location": "L51"
+      "norm_label": ".creating_is_denied_without_a_grant_for_the_action()",
+      "source_file": "tests/CRM.Tests/Application/CreateOpportunityHandlerTests.cs",
+      "source_location": "L39"
     },
     {
-      "id": "src_modules_access_persistence_configurations_tenantmembershipconfiguration_access_persistence_configurations_tenantmembershipconfiguration_todb",
-      "label": ".ToDb()",
+      "id": "tests_crm_tests_application_createopportunityhandlertests_crm_tests_application_createopportunityhandlertests_creating_persists_a_draft_opportunity_with_evidence_and_outbox",
+      "label": ".Creating_persists_a_draft_opportunity_with_evidence_and_outbox()",
       "_callable": true,
       "_origin": "ast",
       "community": 162,
-      "community_name": "MembershipStatus",
+      "community_name": "CreateOpportunityHandler",
       "file_type": "code",
       "metadata": {
-        "namespace": "Access.Persistence.Configurations",
+        "namespace": "CRM.Tests.Application",
         "scope_chain": [
-          "s140"
+          "s155"
+        ],
+        "unresolved_calls": [
+          {
+            "callee": "NewGuid",
+            "receiver_type": "Guid",
+            "lang": "csharp",
+            "line": "L25"
+          },
+          {
+            "callee": "False",
+            "receiver_type": "Assert",
+            "lang": "csharp",
+            "line": "L30"
+          },
+          {
+            "callee": "True",
+            "receiver_type": "Assert",
+            "lang": "csharp",
+            "line": "L31"
+          },
+          {
+            "callee": "Equal",
+            "receiver_type": "Assert",
+            "lang": "csharp",
+            "line": "L34"
+          },
+          {
+            "callee": "Single",
+            "receiver_type": "Assert",
+            "lang": "csharp",
+            "line": "L35"
+          }
         ]
       },
-      "norm_label": ".todb()",
-      "source_file": "src/Modules/Access/Persistence/Configurations/TenantMembershipConfiguration.cs",
-      "source_location": "L43"
+      "norm_label": ".creating_persists_a_draft_opportunity_with_evidence_and_outbox()",
+      "source_file": "tests/CRM.Tests/Application/CreateOpportunityHandlerTests.cs",
+      "source_location": "L18"
+    },
+    {
+      "id": "tests_crm_tests_application_createopportunityhandlertests_crm_tests_application_createopportunityhandlertests_retrying_with_the_same_key_replays_the_same_opportunity_id",
+      "label": ".Retrying_with_the_same_key_replays_the_same_opportunity_id()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 162,
+      "community_name": "CreateOpportunityHandler",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "CRM.Tests.Application",
+        "scope_chain": [
+          "s155"
+        ],
+        "unresolved_calls": [
+          {
+            "callee": "NewGuid",
+            "receiver_type": "Guid",
+            "lang": "csharp",
+            "line": "L60"
+          },
+          {
+            "callee": "True",
+            "receiver_type": "Assert",
+            "lang": "csharp",
+            "line": "L68"
+          },
+          {
+            "callee": "Equal",
+            "receiver_type": "Assert",
+            "lang": "csharp",
+            "line": "L69"
+          }
+        ]
+      },
+      "norm_label": ".retrying_with_the_same_key_replays_the_same_opportunity_id()",
+      "source_file": "tests/CRM.Tests/Application/CreateOpportunityHandlerTests.cs",
+      "source_location": "L54"
     },
     {
       "id": "src_modules_crm_domain_opportunityneed_crm_domain_opportunityneed_create",
@@ -13812,232 +13990,48 @@
       "source_location": "L10"
     },
     {
-      "id": "src_modules_access_domain_authorization_permissionset_access_domain_authorization_permissionset_create",
-      "label": ".Create()",
+      "id": "src_modules_crm_application_opportunitydto_crm_application_opportunitydto_from",
+      "label": ".From()",
       "_callable": true,
       "_origin": "ast",
       "community": 166,
-      "community_name": ".Create",
+      "community_name": "OpportunityDto",
       "file_type": "code",
       "metadata": {
-        "namespace": "Access.Domain.Authorization",
+        "namespace": "CRM.Application",
         "scope_chain": [
-          "s18"
+          "s19"
         ]
       },
-      "norm_label": ".create()",
-      "source_file": "src/Modules/Access/Domain/Authorization/PermissionSet.cs",
+      "norm_label": ".from()",
+      "source_file": "src/Modules/CRM/Application/OpportunityDto.cs",
       "source_location": "L26"
     },
     {
-      "id": "tests_access_tests_domain_permissionsettests_access_tests_domain_permissionsettests_grant_rejects_duplicate_action_key",
-      "label": ".Grant_rejects_duplicate_action_key()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 166,
-      "community_name": ".Create",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "Access.Tests.Domain",
-        "scope_chain": [
-          "s53"
-        ],
-        "unresolved_calls": [
-          {
-            "callee": "Throws<InvalidOperationException>",
-            "receiver_type": "Assert",
-            "lang": "csharp",
-            "line": "L14"
-          }
-        ]
-      },
-      "norm_label": ".grant_rejects_duplicate_action_key()",
-      "source_file": "tests/Access.Tests/Domain/PermissionSetTests.cs",
-      "source_location": "L8"
-    },
-    {
-      "id": "tests_access_tests_domain_permissionsettests_access_tests_domain_permissionsettests_grant_rejects_unsupported_relation",
-      "label": ".Grant_rejects_unsupported_relation()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 166,
-      "community_name": ".Create",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "Access.Tests.Domain",
-        "scope_chain": [
-          "s53"
-        ],
-        "unresolved_calls": [
-          {
-            "callee": "Throws<ArgumentException>",
-            "receiver_type": "Assert",
-            "lang": "csharp",
-            "line": "L21"
-          }
-        ]
-      },
-      "norm_label": ".grant_rejects_unsupported_relation()",
-      "source_file": "tests/Access.Tests/Domain/PermissionSetTests.cs",
-      "source_location": "L17"
-    },
-    {
-      "id": "tests_access_tests_domain_permissionsettests_access_tests_domain_permissionsettests_grant_with_null_relation_is_allowed",
-      "label": ".Grant_with_null_relation_is_allowed()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 166,
-      "community_name": ".Create",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "Access.Tests.Domain",
-        "scope_chain": [
-          "s53"
-        ],
-        "unresolved_calls": [
-          {
-            "callee": "Null",
-            "receiver_type": "Assert",
-            "lang": "csharp",
-            "line": "L30"
-          },
-          {
-            "callee": "Single",
-            "receiver_type": "Assert",
-            "lang": "csharp",
-            "line": "L31"
-          }
-        ]
-      },
-      "norm_label": ".grant_with_null_relation_is_allowed()",
-      "source_file": "tests/Access.Tests/Domain/PermissionSetTests.cs",
-      "source_location": "L24"
-    },
-    {
-      "id": "tests_crm_tests_application_createopportunityhandlertests_crm_tests_application_createopportunityhandlertests_creating_is_denied_without_a_grant_for_the_action",
-      "label": ".Creating_is_denied_without_a_grant_for_the_action()",
+      "id": "src_modules_crm_application_listopportunitieshandler_crm_application_listopportunitieshandler_applyanyof",
+      "label": ".ApplyAnyOf()",
       "_callable": true,
       "_origin": "ast",
       "community": 167,
-      "community_name": "CreateOpportunityHandler",
+      "community_name": ".ApplyAnyOf",
       "file_type": "code",
       "metadata": {
-        "namespace": "CRM.Tests.Application",
+        "namespace": "CRM.Application",
         "scope_chain": [
-          "s155"
+          "s96"
         ],
         "unresolved_calls": [
           {
-            "callee": "NewGuid",
-            "receiver_type": "Guid",
+            "callee": "Where",
+            "receiver_type": "IQueryable",
             "lang": "csharp",
-            "line": "L45"
-          },
-          {
-            "callee": "ThrowsAsync<OpportunityAuthorizationDeniedException>",
-            "receiver_type": "Assert",
-            "lang": "csharp",
-            "line": "L48"
-          },
-          {
-            "callee": "Empty",
-            "receiver_type": "Assert",
-            "lang": "csharp",
-            "line": "L51"
+            "line": "L52"
           }
         ]
       },
-      "norm_label": ".creating_is_denied_without_a_grant_for_the_action()",
-      "source_file": "tests/CRM.Tests/Application/CreateOpportunityHandlerTests.cs",
-      "source_location": "L39"
-    },
-    {
-      "id": "tests_crm_tests_application_createopportunityhandlertests_crm_tests_application_createopportunityhandlertests_creating_persists_a_draft_opportunity_with_evidence_and_outbox",
-      "label": ".Creating_persists_a_draft_opportunity_with_evidence_and_outbox()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 167,
-      "community_name": "CreateOpportunityHandler",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "CRM.Tests.Application",
-        "scope_chain": [
-          "s155"
-        ],
-        "unresolved_calls": [
-          {
-            "callee": "NewGuid",
-            "receiver_type": "Guid",
-            "lang": "csharp",
-            "line": "L25"
-          },
-          {
-            "callee": "False",
-            "receiver_type": "Assert",
-            "lang": "csharp",
-            "line": "L30"
-          },
-          {
-            "callee": "True",
-            "receiver_type": "Assert",
-            "lang": "csharp",
-            "line": "L31"
-          },
-          {
-            "callee": "Equal",
-            "receiver_type": "Assert",
-            "lang": "csharp",
-            "line": "L34"
-          },
-          {
-            "callee": "Single",
-            "receiver_type": "Assert",
-            "lang": "csharp",
-            "line": "L35"
-          }
-        ]
-      },
-      "norm_label": ".creating_persists_a_draft_opportunity_with_evidence_and_outbox()",
-      "source_file": "tests/CRM.Tests/Application/CreateOpportunityHandlerTests.cs",
-      "source_location": "L18"
-    },
-    {
-      "id": "tests_crm_tests_application_createopportunityhandlertests_crm_tests_application_createopportunityhandlertests_retrying_with_the_same_key_replays_the_same_opportunity_id",
-      "label": ".Retrying_with_the_same_key_replays_the_same_opportunity_id()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 167,
-      "community_name": "CreateOpportunityHandler",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "CRM.Tests.Application",
-        "scope_chain": [
-          "s155"
-        ],
-        "unresolved_calls": [
-          {
-            "callee": "NewGuid",
-            "receiver_type": "Guid",
-            "lang": "csharp",
-            "line": "L60"
-          },
-          {
-            "callee": "True",
-            "receiver_type": "Assert",
-            "lang": "csharp",
-            "line": "L68"
-          },
-          {
-            "callee": "Equal",
-            "receiver_type": "Assert",
-            "lang": "csharp",
-            "line": "L69"
-          }
-        ]
-      },
-      "norm_label": ".retrying_with_the_same_key_replays_the_same_opportunity_id()",
-      "source_file": "tests/CRM.Tests/Application/CreateOpportunityHandlerTests.cs",
-      "source_location": "L54"
+      "norm_label": ".applyanyof()",
+      "source_file": "src/Modules/CRM/Application/ListOpportunitiesHandler.cs",
+      "source_location": "L48"
     },
     {
       "id": "src_modules_access_domain_authorization_rolepermissionset_access_domain_authorization_rolepermissionset_create",
@@ -14140,30 +14134,36 @@
       "source_location": "L15"
     },
     {
-      "id": "src_modules_crm_application_listopportunitieshandler_crm_application_listopportunitieshandler_applyanyof",
-      "label": ".ApplyAnyOf()",
+      "id": "src_modules_crm_application_cancelopportunitylinehandler_crm_application_cancelopportunitylinehandler_hashrequest",
+      "label": ".HashRequest()",
       "_callable": true,
       "_origin": "ast",
       "community": 171,
-      "community_name": ".ApplyAnyOf",
+      "community_name": "CancelOpportunityLineCommand",
       "file_type": "code",
       "metadata": {
         "namespace": "CRM.Application",
         "scope_chain": [
-          "s96"
+          "s260"
         ],
         "unresolved_calls": [
           {
-            "callee": "Where",
-            "receiver_type": "IQueryable",
+            "callee": "ToHexString",
+            "receiver_type": "Convert",
             "lang": "csharp",
-            "line": "L52"
+            "line": "L118"
+          },
+          {
+            "callee": "HashData",
+            "receiver_type": "SHA256",
+            "lang": "csharp",
+            "line": "L118"
           }
         ]
       },
-      "norm_label": ".applyanyof()",
-      "source_file": "src/Modules/CRM/Application/ListOpportunitiesHandler.cs",
-      "source_location": "L48"
+      "norm_label": ".hashrequest()",
+      "source_file": "src/Modules/CRM/Application/CancelOpportunityLineHandler.cs",
+      "source_location": "L113"
     },
     {
       "id": "src_contracts_ihasrowversion_contracts_ihasrowversion_incrementrowversion",
@@ -29462,24 +29462,75 @@
       "source_location": ""
     },
     {
-      "id": "src_modules_crm_application_cancelopportunitylinecommand",
-      "label": "CancelOpportunityLineCommand.cs",
+      "id": "src_modules_access_domain_identity_tenantmembership",
+      "label": "TenantMembership.cs",
       "_origin": "ast",
       "community": 141,
-      "community_name": "CancelOpportunityLineCommand",
+      "community_name": "MembershipStatus",
       "file_type": "code",
-      "norm_label": "cancelopportunitylinecommand.cs",
-      "source_file": "src/Modules/CRM/Application/CancelOpportunityLineCommand.cs",
+      "norm_label": "tenantmembership.cs",
+      "source_file": "src/Modules/Access/Domain/Identity/TenantMembership.cs",
       "source_location": "L1"
     },
     {
-      "id": "src_modules_crm_application_cancelopportunitylinecommand_cs_guid",
-      "label": "Guid",
+      "id": "src_modules_access_domain_identity_tenantmembership_access_domain_identity_membershipstatus_active",
+      "label": "Active",
       "_origin": "ast",
       "community": 141,
-      "community_name": "CancelOpportunityLineCommand",
+      "community_name": "MembershipStatus",
       "file_type": "code",
-      "norm_label": "guid",
+      "metadata": {
+        "namespace": "Access.Domain.Identity",
+        "scope_chain": [
+          "s18"
+        ]
+      },
+      "norm_label": "active",
+      "source_file": "src/Modules/Access/Domain/Identity/TenantMembership.cs",
+      "source_location": "L8"
+    },
+    {
+      "id": "src_modules_access_domain_identity_tenantmembership_access_domain_identity_membershipstatus_disabled",
+      "label": "Disabled",
+      "_origin": "ast",
+      "community": 141,
+      "community_name": "MembershipStatus",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Access.Domain.Identity",
+        "scope_chain": [
+          "s18"
+        ]
+      },
+      "norm_label": "disabled",
+      "source_file": "src/Modules/Access/Domain/Identity/TenantMembership.cs",
+      "source_location": "L9"
+    },
+    {
+      "id": "src_modules_access_domain_identity_tenantmembership_access_domain_identity_membershipstatus_invited",
+      "label": "Invited",
+      "_origin": "ast",
+      "community": 141,
+      "community_name": "MembershipStatus",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Access.Domain.Identity",
+        "scope_chain": [
+          "s18"
+        ]
+      },
+      "norm_label": "invited",
+      "source_file": "src/Modules/Access/Domain/Identity/TenantMembership.cs",
+      "source_location": "L7"
+    },
+    {
+      "id": "src_modules_access_persistence_configurations_tenantmembershipconfiguration_cs_entitytypebuilder",
+      "label": "EntityTypeBuilder",
+      "_origin": "ast",
+      "community": 141,
+      "community_name": "MembershipStatus",
+      "file_type": "code",
+      "norm_label": "entitytypebuilder",
       "source_file": "",
       "source_location": ""
     },
@@ -31628,35 +31679,46 @@
       "source_location": "L1"
     },
     {
-      "id": "src_modules_crm_application_opportunitydto",
-      "label": "OpportunityDto.cs",
+      "id": "tests_access_tests_domain_permissionsettests",
+      "label": "PermissionSetTests.cs",
       "_origin": "ast",
       "community": 160,
-      "community_name": "OpportunityDto",
+      "community_name": ".Create",
       "file_type": "code",
-      "norm_label": "opportunitydto.cs",
-      "source_file": "src/Modules/CRM/Application/OpportunityDto.cs",
+      "norm_label": "permissionsettests.cs",
+      "source_file": "tests/Access.Tests/Domain/PermissionSetTests.cs",
       "source_location": "L1"
     },
     {
-      "id": "src_modules_crm_application_opportunitydto_cs_datetimeoffset",
-      "label": "DateTimeOffset",
+      "id": "tests_access_tests_domain_permissionsettests_cs_argumentexception",
+      "label": "ArgumentException",
       "_origin": "ast",
       "community": 160,
-      "community_name": "OpportunityDto",
+      "community_name": ".Create",
       "file_type": "code",
-      "norm_label": "datetimeoffset",
+      "norm_label": "argumentexception",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "src_modules_crm_application_opportunitydto_cs_ireadonlylist",
-      "label": "IReadOnlyList",
+      "id": "tests_access_tests_domain_permissionsettests_cs_fact",
+      "label": "Fact",
       "_origin": "ast",
       "community": 160,
-      "community_name": "OpportunityDto",
+      "community_name": ".Create",
       "file_type": "code",
-      "norm_label": "ireadonlylist",
+      "norm_label": "fact",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "tests_access_tests_domain_permissionsettests_cs_invalidoperationexception",
+      "label": "InvalidOperationException",
+      "_origin": "ast",
+      "community": 160,
+      "community_name": ".Create",
+      "file_type": "code",
+      "norm_label": "invalidoperationexception",
       "source_file": "",
       "source_location": ""
     },
@@ -31771,75 +31833,35 @@
       "source_location": null
     },
     {
-      "id": "src_modules_access_domain_identity_tenantmembership",
-      "label": "TenantMembership.cs",
+      "id": "src_modules_crm_application_createopportunityhandler_cs_timespan",
+      "label": "TimeSpan",
       "_origin": "ast",
       "community": 162,
-      "community_name": "MembershipStatus",
+      "community_name": "CreateOpportunityHandler",
       "file_type": "code",
-      "norm_label": "tenantmembership.cs",
-      "source_file": "src/Modules/Access/Domain/Identity/TenantMembership.cs",
-      "source_location": "L1"
+      "norm_label": "timespan",
+      "source_file": "",
+      "source_location": ""
     },
     {
-      "id": "src_modules_access_domain_identity_tenantmembership_access_domain_identity_membershipstatus_active",
-      "label": "Active",
+      "id": "tests_crm_tests_application_createopportunityhandlertests_cs_fact",
+      "label": "Fact",
       "_origin": "ast",
       "community": 162,
-      "community_name": "MembershipStatus",
+      "community_name": "CreateOpportunityHandler",
       "file_type": "code",
-      "metadata": {
-        "namespace": "Access.Domain.Identity",
-        "scope_chain": [
-          "s18"
-        ]
-      },
-      "norm_label": "active",
-      "source_file": "src/Modules/Access/Domain/Identity/TenantMembership.cs",
-      "source_location": "L8"
+      "norm_label": "fact",
+      "source_file": "",
+      "source_location": ""
     },
     {
-      "id": "src_modules_access_domain_identity_tenantmembership_access_domain_identity_membershipstatus_disabled",
-      "label": "Disabled",
+      "id": "tests_crm_tests_application_createopportunityhandlertests_cs_task",
+      "label": "Task",
       "_origin": "ast",
       "community": 162,
-      "community_name": "MembershipStatus",
+      "community_name": "CreateOpportunityHandler",
       "file_type": "code",
-      "metadata": {
-        "namespace": "Access.Domain.Identity",
-        "scope_chain": [
-          "s18"
-        ]
-      },
-      "norm_label": "disabled",
-      "source_file": "src/Modules/Access/Domain/Identity/TenantMembership.cs",
-      "source_location": "L9"
-    },
-    {
-      "id": "src_modules_access_domain_identity_tenantmembership_access_domain_identity_membershipstatus_invited",
-      "label": "Invited",
-      "_origin": "ast",
-      "community": 162,
-      "community_name": "MembershipStatus",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "Access.Domain.Identity",
-        "scope_chain": [
-          "s18"
-        ]
-      },
-      "norm_label": "invited",
-      "source_file": "src/Modules/Access/Domain/Identity/TenantMembership.cs",
-      "source_location": "L7"
-    },
-    {
-      "id": "src_modules_access_persistence_configurations_tenantmembershipconfiguration_cs_entitytypebuilder",
-      "label": "EntityTypeBuilder",
-      "_origin": "ast",
-      "community": 162,
-      "community_name": "MembershipStatus",
-      "file_type": "code",
-      "norm_label": "entitytypebuilder",
+      "norm_label": "task",
       "source_file": "",
       "source_location": ""
     },
@@ -31994,79 +32016,68 @@
       "source_location": ""
     },
     {
-      "id": "tests_access_tests_domain_permissionsettests",
-      "label": "PermissionSetTests.cs",
+      "id": "src_modules_crm_application_opportunitydto",
+      "label": "OpportunityDto.cs",
       "_origin": "ast",
       "community": 166,
-      "community_name": ".Create",
+      "community_name": "OpportunityDto",
       "file_type": "code",
-      "norm_label": "permissionsettests.cs",
-      "source_file": "tests/Access.Tests/Domain/PermissionSetTests.cs",
+      "norm_label": "opportunitydto.cs",
+      "source_file": "src/Modules/CRM/Application/OpportunityDto.cs",
       "source_location": "L1"
     },
     {
-      "id": "tests_access_tests_domain_permissionsettests_cs_argumentexception",
-      "label": "ArgumentException",
+      "id": "src_modules_crm_application_opportunitydto_cs_datetimeoffset",
+      "label": "DateTimeOffset",
       "_origin": "ast",
       "community": 166,
-      "community_name": ".Create",
+      "community_name": "OpportunityDto",
       "file_type": "code",
-      "norm_label": "argumentexception",
+      "norm_label": "datetimeoffset",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "tests_access_tests_domain_permissionsettests_cs_fact",
-      "label": "Fact",
+      "id": "src_modules_crm_application_opportunitydto_cs_ireadonlylist",
+      "label": "IReadOnlyList",
       "_origin": "ast",
       "community": 166,
-      "community_name": ".Create",
+      "community_name": "OpportunityDto",
       "file_type": "code",
-      "norm_label": "fact",
+      "norm_label": "ireadonlylist",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "tests_access_tests_domain_permissionsettests_cs_invalidoperationexception",
-      "label": "InvalidOperationException",
-      "_origin": "ast",
-      "community": 166,
-      "community_name": ".Create",
-      "file_type": "code",
-      "norm_label": "invalidoperationexception",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "src_modules_crm_application_createopportunityhandler_cs_timespan",
-      "label": "TimeSpan",
+      "id": "iqueryable",
+      "label": "IQueryable",
       "_origin": "ast",
       "community": 167,
-      "community_name": "CreateOpportunityHandler",
+      "community_name": ".ApplyAnyOf",
       "file_type": "code",
-      "norm_label": "timespan",
+      "norm_label": "iqueryable",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "tests_crm_tests_application_createopportunityhandlertests_cs_fact",
-      "label": "Fact",
+      "id": "src_modules_crm_application_listopportunitieshandler_cs_anyof",
+      "label": "AnyOf",
       "_origin": "ast",
       "community": 167,
-      "community_name": "CreateOpportunityHandler",
+      "community_name": ".ApplyAnyOf",
       "file_type": "code",
-      "norm_label": "fact",
+      "norm_label": "anyof",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "tests_crm_tests_application_createopportunityhandlertests_cs_task",
-      "label": "Task",
+      "id": "src_modules_crm_application_listopportunitieshandler_cs_ownedby",
+      "label": "OwnedBy",
       "_origin": "ast",
       "community": 167,
-      "community_name": "CreateOpportunityHandler",
+      "community_name": ".ApplyAnyOf",
       "file_type": "code",
-      "norm_label": "task",
+      "norm_label": "ownedby",
       "source_file": "",
       "source_location": ""
     },
@@ -32254,35 +32265,24 @@
       "source_location": ""
     },
     {
-      "id": "iqueryable",
-      "label": "IQueryable",
+      "id": "src_modules_crm_application_cancelopportunitylinecommand",
+      "label": "CancelOpportunityLineCommand.cs",
       "_origin": "ast",
       "community": 171,
-      "community_name": ".ApplyAnyOf",
+      "community_name": "CancelOpportunityLineCommand",
       "file_type": "code",
-      "norm_label": "iqueryable",
-      "source_file": "",
-      "source_location": ""
+      "norm_label": "cancelopportunitylinecommand.cs",
+      "source_file": "src/Modules/CRM/Application/CancelOpportunityLineCommand.cs",
+      "source_location": "L1"
     },
     {
-      "id": "src_modules_crm_application_listopportunitieshandler_cs_anyof",
-      "label": "AnyOf",
+      "id": "src_modules_crm_application_cancelopportunitylinecommand_cs_guid",
+      "label": "Guid",
       "_origin": "ast",
       "community": 171,
-      "community_name": ".ApplyAnyOf",
+      "community_name": "CancelOpportunityLineCommand",
       "file_type": "code",
-      "norm_label": "anyof",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "src_modules_crm_application_listopportunitieshandler_cs_ownedby",
-      "label": "OwnedBy",
-      "_origin": "ast",
-      "community": 171,
-      "community_name": ".ApplyAnyOf",
-      "file_type": "code",
-      "norm_label": "ownedby",
+      "norm_label": "guid",
       "source_file": "",
       "source_location": ""
     },
@@ -118925,5 +118925,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "4f70d1fbcd86aa33d5f517d7b9870e9e34eca74d"
+  "built_at_commit": "68428bf1dc24cfbba79c7fe14dd9778e1be3b269"
 }
