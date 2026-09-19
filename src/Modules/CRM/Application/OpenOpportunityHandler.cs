@@ -109,8 +109,12 @@ public sealed class OpenOpportunityHandler(CrmDbContext context, IAuthorizer aut
 
     /// <summary>Resolves the tenant's single Opportunity pipeline, per this plan's own
     /// scope note: oldest PipelineDefinition, its highest-numbered version, that
-    /// version's IsEntry stage. Returns (null, null) if the tenant has none configured
-    /// yet — Open() already treats that as valid.</summary>
+    /// version's IsEntry stage. Returns (null, null) if the tenant has no
+    /// PipelineDefinition/PipelineDefinitionVersion configured at all — Open() already
+    /// treats that as valid. Once a version is resolved, it must have exactly one usable
+    /// (IsEntry, IsActive) stage or opening is a hard error — a configured-but-invalid
+    /// pipeline is a different case from "nothing configured yet" and must never silently
+    /// open with a null stage (2026-09-19 entry-stage resolution's binding invariant).</summary>
     private async Task<(long? PipelineDefinitionVersionId, long? PipelineStageId)> ResolveEntryStageAsync(
         TenantId tenantId, CancellationToken cancellationToken)
     {
@@ -131,9 +135,11 @@ public sealed class OpenOpportunityHandler(CrmDbContext context, IAuthorizer aut
             return (null, null);
 
         var stageId = await context.PipelineStages
-            .Where(s => s.TenantId == tenantId && s.PipelineDefinitionVersionId == resolvedVersionId && s.IsEntry)
+            .Where(s => s.TenantId == tenantId && s.PipelineDefinitionVersionId == resolvedVersionId && s.IsEntry && s.IsActive)
             .Select(s => (long?)s.Id)
             .SingleOrDefaultAsync(cancellationToken);
+        if (stageId is null)
+            throw new PipelineConfigurationInvalidException(resolvedVersionId, "no active stage is flagged as the entry stage");
 
         return (resolvedVersionId, stageId);
     }

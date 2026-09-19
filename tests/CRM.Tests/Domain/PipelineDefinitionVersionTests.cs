@@ -89,6 +89,24 @@ public sealed class PipelineDefinitionVersionTests
         Assert.False(second.IsEntry);
     }
 
+    /// <summary>The discriminating test the 2026-09-19 entry-stage resolution names
+    /// directly: SortOrder is presentation ordering only and must never be read as an
+    /// entry-stage signal. Entry is decided once, at first-add, and never revisited by
+    /// a later AddStage call regardless of that stage's SortOrder being lower.</summary>
+    [Fact]
+    public void AddStage_a_later_stage_with_a_lower_sort_order_does_not_become_entry()
+    {
+        var tenant = TestData.NextTenant();
+        var definition = PipelineDefinition.Create(tenant, "Sales Pipeline");
+        var version = definition.AddVersion(versionNumber: 1);
+        var first = version.AddStage("Bekliyor", sortOrder: 5);
+
+        var earlier = version.AddStage("Ön Görüşme", sortOrder: 0);
+
+        Assert.True(first.IsEntry);
+        Assert.False(earlier.IsEntry);
+    }
+
     [Fact]
     public void MarkEntry_moves_the_entry_flag_to_the_target_stage_only()
     {

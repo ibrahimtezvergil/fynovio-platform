@@ -27,6 +27,7 @@ public sealed class CrmProblemDetailsExceptionHandler : IExceptionHandler
             OpportunityAuthorizationDeniedException => (StatusCodes.Status403Forbidden, "forbidden", exception.Message),
             OpportunityConcurrencyConflictException => (StatusCodes.Status409Conflict, "concurrency_conflict", exception.Message),
             InvalidPipelineTransitionException => (StatusCodes.Status409Conflict, "invalid_pipeline_transition", exception.Message),
+            PipelineConfigurationInvalidException => (StatusCodes.Status409Conflict, "invalid_pipeline_configuration", exception.Message),
             IdempotencyKeyReusedException => (StatusCodes.Status409Conflict, "idempotency_key_reused", exception.Message),
             ArgumentException => (StatusCodes.Status400BadRequest, "validation_error", exception.Message),
             InvalidOperationException => (StatusCodes.Status409Conflict, "illegal_lifecycle_transition", exception.Message),
