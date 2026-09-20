@@ -18,6 +18,7 @@ using Xunit;
 
 namespace Host.Tests;
 
+[Collection(Host.Tests.Fixtures.HostIntegrationCollection.Name)]
 public sealed class OpportunityEndpointsTests : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:17-alpine")

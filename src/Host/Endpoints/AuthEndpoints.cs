@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Access.Application;
 using Access.Application.Authentication;
 using Contracts;
@@ -5,13 +6,23 @@ using Host.Authentication;
 
 namespace Host.Endpoints;
 
-/// <summary>Authentication endpoints: login, refresh, logout, tenant selection, config, and me.
-/// All responses include Cache-Control: no-store. Cookie-authenticated endpoints require CSRF validation.</summary>
+/// <summary>Authentication endpoints: config, login, refresh, logout, tenant selection and me.
+/// Every response is `Cache-Control: no-store`. Endpoints that take the anonymous credential or
+/// the refresh cookie are CSRF-guarded (custom header + Origin allow-list + Fetch metadata).
+/// Errors are ProblemDetails with a short `type` code (<see cref="AuthProblems"/>).</summary>
 public static class AuthEndpoints
 {
+    private const int MaxEmailLength = 255;
+    private const int MaxPasswordLength = 1024;
+
     public static void MapAuthEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/auth").WithName("Auth");
+        var group = app.MapGroup("/auth");
+        group.AddEndpointFilter(async (invocation, next) =>
+        {
+            invocation.HttpContext.Response.SetNoStore();
+            return await next(invocation);
+        });
 
         group.MapGet("/config", GetConfig)
             .AllowAnonymous()
@@ -19,108 +30,89 @@ public static class AuthEndpoints
 
         group.MapPost("/login", LoginAsync)
             .AllowAnonymous()
-            .RequireRateLimiting("auth-login");
+            .RequireRateLimiting("auth-login")
+            .RequireCsrfProtection();
 
         group.MapPost("/refresh", RefreshAsync)
-            .RequireRateLimiting("auth-refresh");
+            .AllowAnonymous()
+            .RequireRateLimiting("auth-refresh")
+            .RequireCsrfProtection();
 
         group.MapPost("/logout", LogoutAsync)
-            .RequireRateLimiting("auth-refresh");
+            .AllowAnonymous()
+            .RequireRateLimiting("auth-refresh")
+            .RequireCsrfProtection();
 
         group.MapPost("/tenants/select", SelectTenantAsync)
-            .RequireRateLimiting("auth-refresh");
+            .AllowAnonymous()
+            .RequireRateLimiting("auth-refresh")
+            .RequireCsrfProtection();
 
         group.MapGet("/me", GetMeAsync)
             .RequireAuthorization();
     }
 
-    private static IResult GetConfig(AuthenticationHostOptions options)
-    {
-        var response = new
+    private static RouteHandlerBuilder RequireCsrfProtection(this RouteHandlerBuilder builder) =>
+        builder.AddEndpointFilter(async (invocation, next) =>
         {
-            selfRegistrationEnabled = false,
+            var options = invocation.HttpContext.RequestServices.GetRequiredService<AuthenticationHostOptions>();
+            return CsrfOriginGuard.ValidateRequest(invocation.HttpContext, options.AllowedOrigins)
+                ? await next(invocation)
+                : AuthProblems.CsrfRejected();
+        });
+
+    private static IResult GetConfig(AuthenticationHostOptions options, IConfiguration configuration) =>
+        Results.Ok(new
+        {
+            selfRegistrationEnabled = configuration.GetValue("Authentication:SelfRegistration:Enabled", false),
             passwordPolicy = new
             {
                 minLength = options.Password.MinLength,
                 maxLength = options.Password.MaxLength
             }
-        };
-        return Results.Ok(response);
-    }
+        });
 
     private static async Task<IResult> LoginAsync(
         HttpContext context,
         AuthenticateHandler handler,
         AccessTokenIssuer issuer,
         RefreshCookieWriter cookieWriter,
-        IdentifierRateLimiter rateLimiter,
+        IdentifierRateLimiter identifierLimiter,
+        ClientFingerprint fingerprint,
         AuthenticationHostOptions options,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
-        context.Response.SetNoStore();
-
-        if (!CsrfOriginGuard.ValidateRequest(context, options.AllowedOrigins))
-            return Results.StatusCode(StatusCodes.Status403Forbidden);
-
-        // Get request body
-        var body = await context.Request.ReadFromJsonAsync<LoginRequest>(cancellationToken);
-        if (body?.Email == null || body.Password == null)
-            return Results.BadRequest(new { type = "validation_error", errors = new { } });
-
-        var errors = ValidateLoginRequest(body);
+        var body = await TryReadJsonAsync<LoginRequest>(context, cancellationToken);
+        var errors = ValidateLogin(body);
         if (errors.Count > 0)
-            return Results.BadRequest(new { type = "validation_error", errors });
+            return AuthProblems.Validation(errors);
 
-        var normalizedEmail = EmailNormalizer.Normalize(body.Email);
-        if (!rateLimiter.TryAcquire("login", normalizedEmail))
-            return Results.StatusCode(StatusCodes.Status429TooManyRequests);
-
-        var command = new AuthenticateCommand(body.Email, body.Password);
-        var result = await handler.HandleAsync(command, cancellationToken);
-
-        if (result.Status == AuthenticationStatus.InvalidCredentials)
-            return Results.Unauthorized();
-
-        if (result.RefreshCookie is not null && result.SessionId.HasValue)
+        var email = body!.Email!;
+        if (!identifierLimiter.TryAcquire("login", EmailNormalizer.Normalize(email)))
         {
-            var sessionAbsoluteExpiry = DateTimeOffset.UtcNow.AddDays(options.Session.RefreshAbsoluteDays);
-            cookieWriter.WriteToken(context.Response, result.RefreshCookie, sessionAbsoluteExpiry);
+            context.Response.Headers.RetryAfter = "60";
+            return AuthProblems.RateLimited();
         }
 
-        var memberships = result.MembershipTenantIds?
-            .Select(t => new { tenantId = t })
-            .Cast<object>()
-            .ToList() ?? new List<object>();
+        var result = await handler.HandleAsync(
+            new AuthenticateCommand(
+                email,
+                body.Password!,
+                CorrelationId(context),
+                fingerprint.HashIp(context),
+                fingerprint.HashUserAgent(context)),
+            cancellationToken);
 
-        var responseBody = new
-        {
-            status = result.Status.ToString().ToLowerInvariant(),
-            accessToken = (string?)null,
-            expiresIn = (int?)null,
-            account = new { id = result.AccountId, email = body.Email, displayName = result.DisplayName, locale = "en-US" },
-            activeTenant = result.SelectedTenantId.HasValue ? (object)new { tenantId = result.SelectedTenantId } : null,
-            memberships
-        };
+        if (result.Status == AuthenticationStatus.InvalidCredentials || result.RefreshCookie is null)
+            return AuthProblems.InvalidCredentials();
 
-        if (result.Status == AuthenticationStatus.Authenticated && result.SelectedTenantId.HasValue && result.SessionId.HasValue && result.Principal.HasValue)
-        {
-            var (token, expiresInSeconds) = issuer.IssueToken(
-                result.Principal.Value.Subject,
-                result.SelectedTenantId.Value,
-                result.SessionId.Value);
+        cookieWriter.WriteToken(
+            context.Response,
+            result.RefreshCookie,
+            result.SessionExpiresAt ?? timeProvider.GetUtcNow().AddDays(options.Session.RefreshAbsoluteDays));
 
-            return Results.Ok(new
-            {
-                status = "authenticated",
-                accessToken = token,
-                expiresIn = expiresInSeconds,
-                account = new { id = result.AccountId, email = body.Email, displayName = result.DisplayName, locale = "en-US" },
-                activeTenant = (object)new { tenantId = result.SelectedTenantId },
-                memberships
-            });
-        }
-
-        return Results.Ok(responseBody);
+        return SessionResponse(issuer, result.Account, result.MembershipTenantIds, result.SelectedTenantId, result.Principal, result.SessionId);
     }
 
     private static async Task<IResult> RefreshAsync(
@@ -128,74 +120,46 @@ public static class AuthEndpoints
         RefreshSessionHandler handler,
         AccessTokenIssuer issuer,
         RefreshCookieWriter cookieWriter,
+        ClientFingerprint fingerprint,
         AuthenticationHostOptions options,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
-        context.Response.SetNoStore();
-
-        if (!CsrfOriginGuard.ValidateRequest(context, options.AllowedOrigins))
-            return Results.StatusCode(StatusCodes.Status403Forbidden);
-
         var cookieValue = cookieWriter.ReadToken(context.Request);
         if (string.IsNullOrEmpty(cookieValue))
-            return Results.Unauthorized();
+            return AuthProblems.SessionInvalid();
 
-        var command = new RefreshSessionCommand(cookieValue);
-        var result = await handler.HandleAsync(command, cancellationToken);
-
-        if (result.Status == RefreshResult.SessionInvalid)
-        {
-            cookieWriter.ClearToken(context.Response);
-            return Results.Unauthorized();
-        }
+        var result = await handler.HandleAsync(
+            new RefreshSessionCommand(cookieValue, CorrelationId(context), fingerprint.HashIp(context)),
+            cancellationToken);
 
         if (result.Status == RefreshResult.RefreshConflict)
-            return Results.StatusCode(StatusCodes.Status409Conflict);
+            return AuthProblems.RefreshConflict();
 
-        if (result.RefreshCookie is not null && result.SessionId.HasValue)
+        if (result.Status != RefreshResult.Success || result.RefreshCookie is null)
         {
-            var sessionAbsoluteExpiry = DateTimeOffset.UtcNow.AddDays(options.Session.RefreshAbsoluteDays);
-            cookieWriter.WriteToken(context.Response, result.RefreshCookie, sessionAbsoluteExpiry);
+            cookieWriter.ClearToken(context.Response);
+            return AuthProblems.SessionInvalid();
         }
 
-        var (token, expiresInSeconds) = issuer.IssueToken(
-            result.Principal!.Value.Subject,
-            result.SelectedTenantId!.Value,
-            result.SessionId!.Value);
+        cookieWriter.WriteToken(
+            context.Response,
+            result.RefreshCookie,
+            result.SessionExpiresAt ?? timeProvider.GetUtcNow().AddDays(options.Session.RefreshAbsoluteDays));
 
-        var memberships = result.MembershipTenantIds?
-            .Select(t => new { tenantId = t })
-            .Cast<object>()
-            .ToList() ?? new List<object>();
-
-        return Results.Ok(new
-        {
-            status = "authenticated",
-            accessToken = token,
-            expiresIn = expiresInSeconds,
-            account = new { id = result.AccountId, email = "unknown", displayName = result.DisplayName, locale = "en-US" },
-            activeTenant = (object)new { tenantId = result.SelectedTenantId },
-            memberships
-        });
+        return SessionResponse(issuer, result.Account, result.MembershipTenantIds, result.SelectedTenantId, result.Principal, result.SessionId);
     }
 
     private static async Task<IResult> LogoutAsync(
         HttpContext context,
         LogoutHandler handler,
         RefreshCookieWriter cookieWriter,
-        AuthenticationHostOptions options,
+        ClientFingerprint fingerprint,
         CancellationToken cancellationToken)
     {
-        context.Response.SetNoStore();
-
-        if (!CsrfOriginGuard.ValidateRequest(context, options.AllowedOrigins))
-            return Results.StatusCode(StatusCodes.Status403Forbidden);
-
         var cookieValue = cookieWriter.ReadToken(context.Request);
         if (!string.IsNullOrEmpty(cookieValue))
-        {
-            await handler.HandleAsync(cookieValue, null, cancellationToken);
-        }
+            await handler.HandleAsync(cookieValue, CorrelationId(context), cancellationToken, fingerprint.HashIp(context));
 
         cookieWriter.ClearToken(context.Response);
         return Results.NoContent();
@@ -206,45 +170,41 @@ public static class AuthEndpoints
         SelectTenantHandler handler,
         AccessTokenIssuer issuer,
         RefreshCookieWriter cookieWriter,
-        AuthenticationHostOptions options,
+        ClientFingerprint fingerprint,
         CancellationToken cancellationToken)
     {
-        context.Response.SetNoStore();
-
-        if (!CsrfOriginGuard.ValidateRequest(context, options.AllowedOrigins))
-            return Results.StatusCode(StatusCodes.Status403Forbidden);
-
         var cookieValue = cookieWriter.ReadToken(context.Request);
         if (string.IsNullOrEmpty(cookieValue))
-            return Results.Unauthorized();
+            return AuthProblems.SessionInvalid();
 
-        var body = await context.Request.ReadFromJsonAsync<SelectTenantRequest>(cancellationToken);
-        if (body?.TenantId == null)
-            return Results.BadRequest();
+        var body = await TryReadJsonAsync<SelectTenantRequest>(context, cancellationToken);
+        if (body?.TenantId is null or <= 0)
+            return AuthProblems.Validation(new Dictionary<string, string[]> { ["tenantId"] = ["A tenant id is required."] });
 
-        var command = new SelectTenantCommand(cookieValue, new TenantId(body.TenantId.Value));
-        var result = await handler.HandleAsync(command, cancellationToken);
+        var result = await handler.HandleAsync(
+            new SelectTenantCommand(cookieValue, new TenantId(body.TenantId.Value), CorrelationId(context), fingerprint.HashIp(context)),
+            cancellationToken);
 
-        if (result.Status == TenantSelectionStatus.SessionInvalid)
+        switch (result.Status)
         {
-            cookieWriter.ClearToken(context.Response);
-            return Results.Unauthorized();
+            case TenantSelectionStatus.TenantNotPermitted:
+                return AuthProblems.TenantNotPermitted();
+
+            case TenantSelectionStatus.Success when result.Principal is { } principal
+                                                   && result.SelectedTenantId is { } tenantId
+                                                   && result.SessionId is { } sessionId:
+                var (token, expiresIn) = issuer.IssueToken(principal.Subject, tenantId, sessionId);
+                return Results.Ok(new
+                {
+                    accessToken = token,
+                    expiresIn,
+                    activeTenant = new { tenantId }
+                });
+
+            default:
+                cookieWriter.ClearToken(context.Response);
+                return AuthProblems.SessionInvalid();
         }
-
-        if (result.Status == TenantSelectionStatus.TenantNotPermitted)
-            return Results.StatusCode(StatusCodes.Status403Forbidden);
-
-        var (token, expiresInSeconds) = issuer.IssueToken(
-            "unknown",
-            result.SelectedTenantId!.Value,
-            result.SessionId!.Value);
-
-        return Results.Ok(new
-        {
-            accessToken = token,
-            expiresIn = expiresInSeconds,
-            activeTenant = new { tenantId = result.SelectedTenantId }
-        });
     }
 
     private static async Task<IResult> GetMeAsync(
@@ -252,46 +212,104 @@ public static class AuthEndpoints
         GetSessionOverviewHandler handler,
         CancellationToken cancellationToken)
     {
-        context.Response.SetNoStore();
-
-        var sessionIdClaim = context.User.FindFirst("sid")?.Value;
-        if (string.IsNullOrEmpty(sessionIdClaim) || !Guid.TryParse(sessionIdClaim, out var sessionId))
-            return Results.Unauthorized();
+        var actor = context.GetActorContext();
+        if (!Guid.TryParse(context.User.FindFirst("sid")?.Value, out var sessionId))
+            return AuthProblems.SessionInvalid();
 
         var overview = await handler.HandleAsync(sessionId, cancellationToken);
-        if (overview is null)
-            return Results.Unauthorized();
-
-        var memberships = overview.MembershipTenantIds
-            .Select(t => new { tenantId = t })
-            .Cast<object>()
-            .ToList();
+        if (overview?.Account is null)
+            return AuthProblems.SessionInvalid();
 
         return Results.Ok(new
         {
-            account = new { id = overview.AccountId, email = "unknown", displayName = overview.DisplayName, locale = "en-US" },
-            activeTenant = overview.SelectedTenantId.HasValue ? (object)new { tenantId = overview.SelectedTenantId } : null,
-            memberships
+            account = AccountBody(overview.Account),
+            // The tenant the *token* is scoped to (validated by ActorContextMiddleware), not the session's latest selection.
+            activeTenant = new { tenantId = actor.TenantId.Value },
+            memberships = overview.MembershipTenantIds.Select(id => new { tenantId = id }).ToList()
         });
     }
 
-    private static Dictionary<string, string[]> ValidateLoginRequest(LoginRequest request)
+    /// <summary>The shared body of login and refresh: `authenticated` (with an access token for
+    /// the selected tenant), `tenant_selection_required` or `no_membership` (no token).</summary>
+    private static IResult SessionResponse(
+        AccessTokenIssuer issuer,
+        AccountSummary? account,
+        IReadOnlyList<long>? membershipTenantIds,
+        long? selectedTenantId,
+        PrincipalRef? principal,
+        Guid? sessionId)
+    {
+        if (account is null)
+            return AuthProblems.SessionInvalid();
+
+        var memberships = (membershipTenantIds ?? []).Select(id => new { tenantId = id }).ToList();
+        var body = new Dictionary<string, object?>
+        {
+            ["account"] = AccountBody(account),
+            ["memberships"] = memberships
+        };
+
+        if (selectedTenantId is { } tenantId && principal is { } subjectOwner && sessionId is { } session)
+        {
+            var (token, expiresIn) = issuer.IssueToken(subjectOwner.Subject, tenantId, session);
+            body["status"] = "authenticated";
+            body["accessToken"] = token;
+            body["expiresIn"] = expiresIn;
+            body["activeTenant"] = new { tenantId };
+        }
+        else
+        {
+            body["status"] = memberships.Count == 0 ? "no_membership" : "tenant_selection_required";
+            body["activeTenant"] = null;
+        }
+
+        return Results.Ok(body);
+    }
+
+    private static object AccountBody(AccountSummary account) =>
+        new { id = account.Id, email = account.Email, displayName = account.DisplayName, locale = account.Locale };
+
+    private static Dictionary<string, string[]> ValidateLogin(LoginRequest? request)
     {
         var errors = new Dictionary<string, string[]>();
 
-        if (string.IsNullOrWhiteSpace(request.Email))
-            errors["email"] = new[] { "Email is required" };
-        else if (request.Email.Length > 255)
-            errors["email"] = new[] { "Email is too long" };
+        if (request is null || string.IsNullOrWhiteSpace(request.Email))
+            errors["email"] = ["Email is required."];
+        else if (request.Email.Length > MaxEmailLength)
+            errors["email"] = ["Email is too long."];
 
-        if (string.IsNullOrWhiteSpace(request.Password))
-            errors["password"] = new[] { "Password is required" };
-        else if (request.Password.Length < 8 || request.Password.Length > 1024)
-            errors["password"] = new[] { "Password length is invalid" };
+        if (request is null || string.IsNullOrEmpty(request.Password))
+            errors["password"] = ["Password is required."];
+        else if (request.Password.Length > MaxPasswordLength)
+            errors["password"] = ["Password is too long."];
 
         return errors;
     }
 
-    private record LoginRequest(string? Email, string? Password);
-    private record SelectTenantRequest(long? TenantId);
+    private static async Task<T?> TryReadJsonAsync<T>(HttpContext context, CancellationToken cancellationToken)
+        where T : class
+    {
+        try
+        {
+            return await context.Request.ReadFromJsonAsync<T>(cancellationToken);
+        }
+        catch (Exception exception) when (exception is JsonException or InvalidOperationException or BadHttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Reuses a valid `X-Correlation-Id` or generates one, and echoes it back.</summary>
+    private static string CorrelationId(HttpContext context)
+    {
+        var correlationId = Guid.TryParse(context.Request.Headers["X-Correlation-Id"].ToString(), out var supplied)
+            ? supplied
+            : Guid.NewGuid();
+        context.Response.Headers["X-Correlation-Id"] = correlationId.ToString();
+        return correlationId.ToString();
+    }
+
+    private sealed record LoginRequest(string? Email, string? Password);
+
+    private sealed record SelectTenantRequest(long? TenantId);
 }

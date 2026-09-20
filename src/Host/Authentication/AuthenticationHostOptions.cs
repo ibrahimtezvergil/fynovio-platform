@@ -86,4 +86,11 @@ public sealed class RateLimitingOptions
 
     /// <summary>Public endpoints (config, registration when enabled) rate limit (default 120 per minute per IP).</summary>
     public int PublicPerMinute { get; init; } = 120;
+
+    /// <summary>Login attempts per normalised identifier (email) per minute, across all clients
+    /// (default 5). Complements the per-IP limit and the account lockout.</summary>
+    public int LoginPerIdentifierPerMinute { get; init; } = 5;
+
+    /// <summary>Forgot-password requests per normalised identifier per hour (default 3).</summary>
+    public int ForgotPerIdentifierPerHour { get; init; } = 3;
 }

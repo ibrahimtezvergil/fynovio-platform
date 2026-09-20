@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Access.Application;
 using Access.Application.Authentication;
 using Access.Persistence;
@@ -124,9 +125,11 @@ builder.Services.AddScoped<ProvisionPasswordAccountHandler>();
 builder.Services.AddScoped<AccessTokenIssuer>();
 builder.Services.AddScoped<RefreshCookieWriter>();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
-builder.Services.AddSingleton(new IdentifierRateLimiter(
-    loginPerMinute: authOptions.RateLimiting.LoginPerMinute,
-    forgotPerHour: authOptions.RateLimiting.ForgotPerHour));
+builder.Services.AddSingleton(serviceProvider => new IdentifierRateLimiter(
+    loginPerMinute: authOptions.RateLimiting.LoginPerIdentifierPerMinute,
+    forgotPerHour: authOptions.RateLimiting.ForgotPerIdentifierPerHour,
+    timeProvider: serviceProvider.GetRequiredService<TimeProvider>()));
+builder.Services.AddSingleton<ClientFingerprint>();
 
 // Register CRM handlers
 builder.Services.AddScoped<CreateOpportunityHandler>();
@@ -146,14 +149,30 @@ builder.Services.AddExceptionHandler<CrmProblemDetailsExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 // Configure CORS: explicit origins only, no wildcard
-if (authOptions.AllowedOrigins.Length > 0)
+// Blank entries are ignored (lets an environment variable empty out a list configured in a
+// JSON file); every remaining entry must be a bare origin (scheme://host[:port]) — the value
+// is compared verbatim with the browser's Origin header, so a path or trailing slash would
+// silently never match.
+var corsOrigins = authOptions.AllowedOrigins.Where(origin => !string.IsNullOrWhiteSpace(origin)).ToArray();
+foreach (var origin in corsOrigins)
+{
+    if (!Uri.TryCreate(origin, UriKind.Absolute, out var originUri)
+        || (originUri.Scheme != Uri.UriSchemeHttp && originUri.Scheme != Uri.UriSchemeHttps)
+        || origin != $"{originUri.Scheme}://{originUri.Authority}")
+    {
+        throw new InvalidOperationException(
+            $"Authentication:AllowedOrigins entries must be bare http(s) origins (scheme://host[:port]); got '{origin}'.");
+    }
+}
+
+if (corsOrigins.Length > 0)
 {
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowSpecificOrigins", policy =>
         {
             policy
-                .WithOrigins(authOptions.AllowedOrigins)
+                .WithOrigins(corsOrigins)
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials();
@@ -161,46 +180,40 @@ if (authOptions.AllowedOrigins.Length > 0)
     });
 }
 
-// Configure rate limiting
+// Configure rate limiting: every policy is partitioned per client IP (a shared, unpartitioned
+// limiter would let one client exhaust the budget for everybody).
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddFixedWindowLimiter("auth-login", config =>
-    {
-        config.PermitLimit = authOptions.RateLimiting.LoginPerMinute;
-        config.Window = TimeSpan.FromMinutes(1);
-    });
+    static string ClientKey(HttpContext httpContext) =>
+        httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-    options.AddFixedWindowLimiter("auth-refresh", config =>
-    {
-        config.PermitLimit = authOptions.RateLimiting.RefreshPerMinute;
-        config.Window = TimeSpan.FromMinutes(1);
-    });
+    void AddPerClientPolicy(string name, int permitLimit, TimeSpan window) =>
+        options.AddPolicy(name, httpContext => RateLimitPartition.GetFixedWindowLimiter(
+            $"{name}:{ClientKey(httpContext)}",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = permitLimit,
+                Window = window,
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
 
-    options.AddFixedWindowLimiter("auth-forgot", config =>
-    {
-        config.PermitLimit = authOptions.RateLimiting.ForgotPerHour;
-        config.Window = TimeSpan.FromHours(1);
-    });
-
-    options.AddFixedWindowLimiter("auth-token", config =>
-    {
-        config.PermitLimit = authOptions.RateLimiting.TokenPer15Minutes;
-        config.Window = TimeSpan.FromMinutes(15);
-    });
-
-    options.AddFixedWindowLimiter("auth-password", config =>
-    {
-        config.PermitLimit = authOptions.RateLimiting.PasswordPer15Minutes;
-        config.Window = TimeSpan.FromMinutes(15);
-    });
-
-    options.AddFixedWindowLimiter("auth-public", config =>
-    {
-        config.PermitLimit = authOptions.RateLimiting.PublicPerMinute;
-        config.Window = TimeSpan.FromMinutes(1);
-    });
+    AddPerClientPolicy("auth-login", authOptions.RateLimiting.LoginPerMinute, TimeSpan.FromMinutes(1));
+    AddPerClientPolicy("auth-refresh", authOptions.RateLimiting.RefreshPerMinute, TimeSpan.FromMinutes(1));
+    AddPerClientPolicy("auth-forgot", authOptions.RateLimiting.ForgotPerHour, TimeSpan.FromHours(1));
+    AddPerClientPolicy("auth-token", authOptions.RateLimiting.TokenPer15Minutes, TimeSpan.FromMinutes(15));
+    AddPerClientPolicy("auth-password", authOptions.RateLimiting.PasswordPer15Minutes, TimeSpan.FromMinutes(15));
+    AddPerClientPolicy("auth-public", authOptions.RateLimiting.PublicPerMinute, TimeSpan.FromMinutes(1));
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (rejected, cancellationToken) =>
+    {
+        var retryAfterSeconds = rejected.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)
+            ? (int)Math.Ceiling(retryAfter.TotalSeconds)
+            : 60;
+        rejected.HttpContext.Response.Headers.RetryAfter = retryAfterSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        await AuthProblems.RateLimited().ExecuteAsync(rejected.HttpContext);
+    };
 });
 
 var app = builder.Build();
@@ -234,7 +247,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 // CORS before rate limiting (so preflights aren't counted)
-if (authOptions.AllowedOrigins.Length > 0)
+if (corsOrigins.Length > 0)
     app.UseCors("AllowSpecificOrigins");
 
 app.UseRateLimiter();
