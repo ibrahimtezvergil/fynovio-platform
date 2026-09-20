@@ -212,10 +212,36 @@ Allows an authenticated account (via `SetAccountContextAsync` after credential/r
 - `auth_events` table: runtime role can only INSERT and SELECT (REVOKE UPDATE, DELETE) — append-only audit log enforcement
 - Both enforced at the grant level (simpler than triggers; matches `evidence_records` pattern)
 
+### Revision 9 (2026-09-20) — Phase 2.5A invitations and password lifecycle (`account_tokens`)
+
+`identity.account_tokens` holds the three single-use, single-purpose opaque tokens: `invite`, `password_reset`, `password_setup` (the last is the production bootstrap path — an account without a credential receives one).
+
+| Column | Notes |
+|---|---|
+| `id` (uuid, PK) | first half of the raw token `<id>.<secret>` |
+| `purpose` | `invite` \| `password_reset` \| `password_setup` (CHECK `ck_account_tokens_purpose`) |
+| `token_hash` (UNIQUE) | SHA-256 of the secret. **The secret itself is never stored, logged, evidenced or returned after issue.** |
+| `account_id` (FK accounts, nullable) | required for `password_reset`/`password_setup` (CHECK `ck_account_tokens_account_purposes_have_account`) |
+| `tenant_id`, `email_normalized`, `display_name`, `locale` | invitations only; `tenant_id` + `email_normalized` are required for `invite` (CHECK `ck_account_tokens_invite_shape`) |
+| `expires_at`, `consumed_at`, `revoked_at`, `created_at`, `created_by_account_id` | lifecycle; TTLs are configuration (`TokenOptions`: 7 d / 30 min / 24 h by default) |
+
+Indexes: unique `token_hash`; `account_id`; a partial index on `(email_normalized, tenant_id)` for outstanding invitations (re-inviting revokes the previous one).
+
+**Deliberate design points**
+- **Outside tenant RLS, like `accounts`/`external_identities`/the Revision 8 tables.** A token must be redeemable before any tenant is known, and there is no list/search endpoint; the row carries `tenant_id` only as data. Reads and writes of tenant-scoped rows that redemption triggers (the membership) happen afterwards inside the invitation's tenant context.
+- **Accounts are created when an invitation is ACCEPTED, not when it is issued.** `accounts.email` is intentionally not unique, so creating the account at invite time would mint duplicates for re-invites and make "does this address have an account" observable. The invitation therefore carries the invitee's address, and acceptance either creates the account + credential + platform identity or — when the address already has a credential — requires the existing password.
+- **Single use is an atomic compare-and-set** (`UPDATE … SET consumed_at = now WHERE id = @id AND consumed_at IS NULL AND revoked_at IS NULL AND expires_at > now`, affected rows must be 1), performed first in the redeeming transaction, so concurrent redemptions produce exactly one winner and the losers create nothing. A wrong password or a policy violation happens BEFORE consumption and leaves the token usable.
+- **Uniform failure:** unknown, malformed, wrong-secret, wrong-purpose, expired, consumed and revoked tokens all produce the same result (`InvalidOrExpiredToken`), and an unknown id still costs one constant-time hash comparison.
+- **Sessions:** a password reset revokes ALL sessions of the account; a password change revokes all OTHER sessions and keeps the caller's. Both also revoke the account's other outstanding reset tokens.
+- **Runtime role:** the existing schema-wide grant already gives `fynovio_app` SELECT/INSERT/UPDATE/DELETE on the table; the application only needs SELECT/INSERT/UPDATE (consuming and revoking are updates) and never deletes.
+- **Action registry:** `identity.membership.invite` (`Identity.TenantMembership`, risk class `high`) is added to `AccessActionCatalog`; `BootstrapTenantAccessHandler` grants the whole catalog, so tenant administrators created **after** this revision hold it automatically. Tenants bootstrapped earlier (development databases) do not — re-bootstrap or grant it.
+- **Evidence:** creating an invitation and activating the membership write tenant-scoped `evidence_records` + outbox (an aggregate id, an invitation id and a hash of the address — never the address or the token); every flow also writes an allow-listed `auth_events` row (`invite_created`, `invite_accepted`, `password_reset_requested`, `password_reset_completed`, `password_setup_completed`, `password_change`, `registration_created`, `bootstrap_completed`).
+- **Known limitation:** the bootstrap command creates the account/membership, then runs the (separately transactional) Phase 1.5 `BootstrapTenantAccessHandler`, then issues the setup token. A crash between the steps leaves a credential-less account behind (harmless: it cannot sign in) and a re-run creates a second one.
+
 ### Not yet designed here
 - `delegations` and `sod_rules` tables (decision file §2) — named but not column-designed yet; DESIGN/FREEZE per the Phase 1.5 execution plan's scope lock, deferred until a concrete delegation/SoD scenario is scoped.
 - Sharing, Field Security, Restriction/forbid policy tables — DESIGN/FREEZE; the evaluators are logical Access subdomains (round 3 ownership matrix) but no schema exists yet.
 - Organization-node/Territory scope columns on `RoleAssignment` — added additively once a real fact provider exists (see the Revision 4 note above).
 - `ServicePrincipal`/`AgentIdentity`/`Group` principal types, `ActingFor`/impersonation chain on `ActorContext` — DESIGN/FREEZE, no schema or Contracts fields yet.
 - A `crm.opportunity.*` action vocabulary in `access.actions` — not seeded by this revision; Phase 2 registers it when CRM adds real command-level enforcement.
-- Password reset/invite tokens (`account_tokens` table) and email delivery (`IEmailSender`) — Phase 2.5A S3
+- A production e-mail provider (the `IEmailSender` abstraction exists; the Host ships a development sink only) — deferred, see the Phase 2.5A plan §14 D5
