@@ -134,7 +134,7 @@ Requires the local PostgreSQL from above. Development only — none of this is a
 ```bash
 # 1. Migrations for every module, as the migration role (postgres)
 dotnet tool restore
-for module in CRM MasterData Access; do
+for module in MasterData CRM Access; do   # this order: CRM's migrations reference masterdata tables
   dotnet ef database update \
     --project src/Modules/$module/$module.csproj \
     --startup-project src/Modules/$module/$module.csproj
@@ -203,6 +203,15 @@ Bootstrap__Enabled=true dotnet Host.dll bootstrap-tenant-admin \
 ```
 
 It refuses unless `Bootstrap:Enabled=true`, refuses a tenant that is already bootstrapped, and prints a **single-use password-setup link** (valid `PasswordSetupHours`) once to stdout — never to the logs. The operator hands it to the administrator, who sets a password through `/reset-password`; every further member arrives by invitation. Exit codes: `0` ok, `2` not enabled, `3` already bootstrapped, `64` bad arguments.
+
+### End-to-end tests (real API + PostgreSQL + browser)
+
+```bash
+scripts/e2e.sh                   # or: cd web && npm run e2e
+scripts/e2e.sh e2e/login.e2e.ts  # arguments go to `playwright test`
+```
+
+The script starts a **throwaway PostgreSQL container** (removed on exit; nothing touches a local database), applies the migrations and the runtime role, builds and starts the real API (Development: dev seed and dev mailbox on, SMTP off, rate limits raised) and the Vite dev server, then drives your installed Google Chrome with Playwright (`E2E_BROWSER_CHANNEL=chromium` after `npx playwright install chromium` uses the bundled browser). It needs Docker, the .NET SDK and `cd web && npm ci`. Ports (all overridable, chosen not to collide with a normal dev setup): PostgreSQL `55432` (`E2E_PG_PORT`), API `5209` (`E2E_API_PORT`), Vite `5174` (`E2E_APP_PORT`). The suite covers sign-in/out and reload, deep-link return and open-redirect attempts, tenant selection and switching, invitation acceptance (new and existing accounts), forgot/reset/change password across two browser contexts, the registration-disabled screen, and token/tenant manipulation (edited claims, foreign tenants, missing CSRF header, foreign origin).
 
 ## Getting started
 

@@ -78,6 +78,7 @@ Run commands from the repository root. Canonical scripts are in `package.json`.
 | Unit tests | `npm test` (`vitest run`) |
 | Preview existing build | `npm run preview` |
 | Fast check (lint + typecheck + test) | `npm run check` |
+| End-to-end (real API + throwaway PostgreSQL + Chrome) | `npm run e2e` (runs `../scripts/e2e.sh`; needs Docker and the .NET SDK — see the root README) |
 
 - Small source edits: start with focused lint. Behavior/type changes: run
   `npm run check` and verify the affected flow. Cross-cutting edits also warrant
@@ -227,6 +228,13 @@ Run commands from the repository root. Canonical scripts are in `package.json`.
   logs out. The tenant is chosen server-side (`/auth/tenants/select` returns a token with that `tid`); the
   client never builds or edits a tenant claim, and clears the React Query cache on every login, tenant
   switch, expiry and sign-out. State-changing calls carry `X-Requested-With: fynovio` (the API's CSRF guard).
+- **E-mailed link pages** (`/accept-invite`, `/reset-password`, in `authLinkRoutes`) sit outside `PublicOnlyRoute`
+  on purpose: the single-use token in the link is the credential, and bouncing a signed-in browser away would
+  lose it. The token travels in the URL *fragment* (never sent to a server or in `Referer`); `useFragmentToken`
+  reads it once into memory and replaces the address, and it is never written to storage, logs or a query key
+  that outlives the page (`gcTime: 0`). Every bad link — missing, expired, used, revoked — ends on the same
+  `LinkInvalidNotice`; a reset ends the local session because the server revokes all of them; a wrong *current*
+  password on `/auth/password/change` is a 400 (`invalid_current_password`), never a 401.
 - Route guards (`ProtectedRoute`, `PublicOnlyRoute`, `SessionRoute`) and every `usePermission`/`<Can>`
   check are UX/navigation control, **not** authorization — the API authorises every request. Post-login
   destinations go through `sanitizeReturnUrl()` (same-origin relative paths only); never navigate to a

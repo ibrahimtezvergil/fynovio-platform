@@ -31,7 +31,7 @@ export default defineConfig({
     // checks both prefer it. `/api/x` reaches the .NET host as `/x`.
     proxy: {
       '/api': {
-        target: 'http://localhost:5208',
+        target: process.env.API_PROXY_TARGET ?? 'http://localhost:5208',
         changeOrigin: false,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
