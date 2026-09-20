@@ -20,6 +20,15 @@ public sealed class PasswordPolicyTests
         Assert.Empty(violations);
     }
 
+    [Theory]
+    [InlineData("long.enough.address@example.com")]
+    [InlineData("LONG.ENOUGH.ADDRESS@EXAMPLE.COM")]
+    public void Validate_FullEmailAddressAsPassword_IsRejected(string password)
+    {
+        var violations = _policy.Validate(password, "long.enough.address@example.com");
+        Assert.Contains("equals_email", violations);
+    }
+
     [Fact]
     public void Validate_TooShort_ReturnsTooShort()
     {

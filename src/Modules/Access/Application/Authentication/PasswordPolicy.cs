@@ -12,7 +12,7 @@ public sealed class PasswordPolicy
     }
 
     /// <summary>Validate a password against the policy. Returns a list of violation codes
-    /// (empty if valid). Codes: `too_short`, `too_long`, `equals_email_local_part`.</summary>
+    /// (empty if valid). Codes: `too_short`, `too_long`, `equals_email_local_part`, `equals_email`.</summary>
     public IReadOnlyList<string> Validate(string password, string email)
     {
         if (string.IsNullOrWhiteSpace(password))
@@ -29,6 +29,9 @@ public sealed class PasswordPolicy
         var emailLocalPart = email.Split('@')[0];
         if (password.Equals(emailLocalPart, StringComparison.OrdinalIgnoreCase))
             violations.Add("equals_email_local_part");
+
+        if (password.Equals(email.Trim(), StringComparison.OrdinalIgnoreCase))
+            violations.Add("equals_email");
 
         return violations;
     }

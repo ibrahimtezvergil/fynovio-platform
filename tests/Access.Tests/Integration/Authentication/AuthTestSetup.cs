@@ -81,6 +81,20 @@ internal static class AuthTestSetup
             new AuthEventWriter(context),
             time);
 
+    public static AcceptInvitationHandler Acceptor(AccessDbContext context, TimeProvider time, LockoutOptions? lockout = null) =>
+        new(context, new PasswordService(), new PasswordPolicy(new PasswordPolicyOptions()), lockout ?? new LockoutOptions(),
+            Session, Tokens(context), new AuthEventWriter(context), time);
+
+    /// <summary>An invitation created by the real handler; returns the raw token that was "mailed".</summary>
+    public static async Task<string> InviteAsync(
+        PostgresFixture fixture, TenantId tenant, PrincipalRef admin, string email, TimeProvider time, string? displayName = null)
+    {
+        var mail = new FakeEmailSender();
+        await using var context = await RuntimeContextAsync(fixture);
+        await Invitations(context, mail, time).HandleAsync(new CreateInvitationCommand(Actor(tenant, admin), email, displayName));
+        return mail.TokenFor(email);
+    }
+
     public static ActorContext Actor(TenantId tenant, PrincipalRef principal) => new(tenant, principal, Guid.NewGuid());
 
     /// <summary>Inserts a token straight into the table (as the superuser) and returns the raw `<id>.<secret>` value.</summary>
