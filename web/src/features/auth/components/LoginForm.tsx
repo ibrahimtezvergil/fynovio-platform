@@ -1,55 +1,76 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { useLocation, useNavigate } from 'react-router-dom'
 import { Field } from '@/components/common/Field'
+import { PasswordInput } from '@/components/common/inputs/PasswordInput'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useLogin } from '@/features/auth/api'
 import { loginSchema, type LoginValues } from '@/features/auth/schema'
-import { paths } from '@/routes/paths'
 import type { ApiError } from '@/types'
+import { useSingleFlight } from './useSingleFlight'
 
+/**
+ * Only updates the session. Where the person goes next (dashboard, tenant
+ * selection, no-access, the deep link they came from) is decided by
+ * `PublicOnlyRoute` reacting to the new session state.
+ */
 export function LoginForm() {
   const { t } = useTranslation('auth')
   const login = useLogin()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const singleFlight = useSingleFlight()
 
   const {
+    control,
     register,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    setValue,
+    formState: { errors },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: 'deniz@fynovio.com', password: 'fynovio123' },
+    // No defaults: a real sign-in never pre-fills credentials.
+    defaultValues: { email: '', password: '' },
   })
 
-  const onSubmit = async (values: LoginValues) => {
-    try {
-      await login.mutateAsync(values)
-    } catch (error) {
-      // The axios interceptor normalises every failure into `ApiError`, so the
-      // form can surface the server's own message instead of a generic one.
-      setError('root', { message: (error as ApiError).message ?? t('loginForm.genericError') })
-      return
+  const messageFor = (error: ApiError): string => {
+    if (error.status === 401) return t('loginForm.invalidCredentials') // never says which part was wrong
+    if (error.status === 429) {
+      return error.retryAfterSeconds
+        ? t('loginForm.rateLimited', { seconds: error.retryAfterSeconds })
+        : t('loginForm.rateLimitedNoWait')
     }
-    // Send people back where they were headed before the redirect.
-    const from = (location.state as { from?: string } | null)?.from ?? paths.dashboard
-    navigate(from, { replace: true })
+    return t('loginForm.genericError')
   }
+
+  const onSubmit = (values: LoginValues) =>
+    singleFlight(async () => {
+      try {
+        await login.mutateAsync(values)
+      } catch (error) {
+        setValue('password', '') // the email is kept; the password is never
+        setError('root', { message: messageFor(error as ApiError) })
+      }
+    })
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
       <Field label={t('loginForm.emailLabel')} error={errors.email?.message}>
-        {(props) => <Input {...props} type="email" autoComplete="email" {...register('email')} />}
+        {(props) => (
+          <Input {...props} type="email" autoComplete="username" autoCapitalize="none" spellCheck={false} {...register('email')} />
+        )}
       </Field>
 
       <Field label={t('loginForm.passwordLabel')} error={errors.password?.message}>
         {(props) => (
-          <Input {...props} type="password" autoComplete="current-password" {...register('password')} />
+          <Controller
+            control={control}
+            name="password"
+            render={({ field }) => (
+              <PasswordInput {...props} value={field.value} onValueChange={field.onChange} autoComplete="current-password" />
+            )}
+          />
         )}
       </Field>
 
@@ -59,9 +80,9 @@ export function LoginForm() {
         </p>
       )}
 
-      <Button type="submit" disabled={isSubmitting} size="lg" className="mt-1 w-full">
-        {isSubmitting && <Loader2 aria-hidden className="size-4 animate-spin" />}
-        {isSubmitting ? t('loginForm.submitting') : t('loginForm.submit')}
+      <Button type="submit" disabled={login.isPending} size="lg" className="mt-1 w-full">
+        {login.isPending && <Loader2 aria-hidden className="size-4 animate-spin" />}
+        {login.isPending ? t('loginForm.submitting') : t('loginForm.submit')}
       </Button>
     </form>
   )

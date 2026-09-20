@@ -5,7 +5,7 @@ import type {
   PaginationState,
   SortingState,
 } from '@tanstack/react-table'
-import { useAuthStore } from '@/features/auth/store/useAuthStore'
+import { useSessionStore } from '@/lib/auth'
 import type { Density } from '@/types'
 
 /**
@@ -76,5 +76,5 @@ export function writePersistedViewState<T>(key: string, value: T): void {
  * allowed to depend on it (`lib/permissions/usePermission.ts` does the same).
  */
 export function useViewStateUserId(): string | null {
-  return useAuthStore((state) => state.user?.id ?? null)
+  return useSessionStore((state) => state.user?.id ?? null)
 }

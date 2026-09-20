@@ -2,8 +2,11 @@
 export const endpoints = {
   auth: {
     login: '/auth/login',
+    refresh: '/auth/refresh',
     logout: '/auth/logout',
+    selectTenant: '/auth/tenants/select',
     me: '/auth/me',
+    config: '/auth/config',
   },
   deals: {
     list: '/deals',

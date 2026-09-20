@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import { useAuthStore } from '@/features/auth/store/useAuthStore'
+import { useSessionStore } from '@/lib/auth'
 import {
   readPersistedViewState,
   useViewStateUserId,
@@ -48,7 +48,7 @@ describe('readPersistedViewState / writePersistedViewState', () => {
 
 describe('useViewStateUserId', () => {
   afterEach(() => {
-    useAuthStore.setState({ isAuthenticated: false, user: null, token: null })
+    useSessionStore.getState().endSession('unauthenticated')
   })
 
   it('is null with no signed-in user', () => {
@@ -57,12 +57,15 @@ describe('useViewStateUserId', () => {
   })
 
   it('reflects the signed-in user id', () => {
-    useAuthStore.setState({
-      isAuthenticated: true,
-      token: 't',
-      user: { id: 'user-a', name: 'A', email: 'a@example.com', role: 'viewer', initials: 'A' },
+    useSessionStore.getState().applyAuthResult({
+      status: 'authenticated',
+      accessToken: 't',
+      expiresIn: 600,
+      account: { id: 42, email: 'a@example.com', displayName: 'A', locale: null },
+      activeTenant: { tenantId: 1 },
+      memberships: [{ tenantId: 1 }],
     })
     const { result } = renderHook(() => useViewStateUserId())
-    expect(result.current).toBe('user-a')
+    expect(result.current).toBe('42')
   })
 })

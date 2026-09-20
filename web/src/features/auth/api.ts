@@ -1,36 +1,24 @@
 import { useMutation } from '@tanstack/react-query'
-import { apiClient } from '@/api/client'
-import { endpoints } from '@/api/endpoints'
-import { parseApiResponse } from '@/api/response'
 import type { LoginValues } from '@/features/auth/schema'
-import { useAuthStore } from '@/features/auth/store/useAuthStore'
-import type { User } from '@/types'
-import { userSchema } from '@/types/schemas'
-import { z } from 'zod'
-
-const sessionSchema: z.ZodType<{ user: User; token: string }> = z.object({
-  user: userSchema,
-  token: z.string(),
-})
+import { login, selectTenant, type SessionStatus } from '@/lib/auth'
+import type { ApiError } from '@/types'
 
 /**
- * The login round-trip, served by the MSW handler at
- * `src/mocks/handlers/auth.ts` until `/auth/login` is real.
- *
- * Request state (pending, error) belongs to the mutation, not to the store: the
- * store holds who is signed in, which is the only part that outlives the form.
+ * Session mutations use the plain `useMutation` on purpose (not `useAppMutation`):
+ * they are not data writes — nothing to invalidate, no success toast, and their
+ * failures render inline (a toast would echo server wording for a sign-in
+ * attempt). The session store, not the mutation, holds who is signed in.
  */
 export function useLogin() {
-  const setSession = useAuthStore((s) => s.setSession)
+  return useMutation<SessionStatus, ApiError, LoginValues>({
+    mutationKey: ['auth', 'login'],
+    mutationFn: (values) => login(values),
+  })
+}
 
-  return useMutation({
-    mutationFn: async (values: LoginValues): Promise<{ user: User; token: string }> => {
-      const { data } = await apiClient.post<unknown>(
-        endpoints.auth.login,
-        values,
-      )
-      return parseApiResponse(data, sessionSchema)
-    },
-    onSuccess: ({ user, token }) => setSession(user, token),
+export function useSelectTenant() {
+  return useMutation<void, ApiError, number>({
+    mutationKey: ['auth', 'select-tenant'],
+    mutationFn: (tenantId) => selectTenant(tenantId),
   })
 }

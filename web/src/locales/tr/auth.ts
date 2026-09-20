@@ -1,17 +1,41 @@
 export default {
   loginPage: {
     title: 'Panele giriş',
-    description: 'Backend bağlanana kadar her e-posta ve 8+ karakterli şifre kabul edilir.',
+    description: 'Hesabınızla oturum açın.',
   },
   loginForm: {
     emailLabel: 'E-posta',
     passwordLabel: 'Şifre',
     submitting: 'Giriş yapılıyor',
     submit: 'Giriş yap',
-    genericError: 'Giriş yapılamadı.',
+    genericError: 'Giriş yapılamadı. Lütfen tekrar deneyin.',
+    invalidCredentials: 'E-posta veya şifre hatalı.',
+    rateLimited: 'Çok fazla deneme yapıldı. {{seconds}} saniye sonra tekrar deneyin.',
+    rateLimitedNoWait: 'Çok fazla deneme yapıldı. Biraz sonra tekrar deneyin.',
   },
   schema: {
     emailInvalid: 'Geçerli bir e-posta girin.',
-    passwordMin: 'Şifre en az 8 karakter olmalı.',
+    passwordRequired: 'Şifrenizi girin.',
+  },
+  session: {
+    restoring: 'Oturum geri yükleniyor',
+  },
+  tenantSelector: {
+    title: 'Kuruluş seçin',
+    description: 'Hesabınız birden fazla kuruluşa bağlı. Devam etmek için birini seçin.',
+    tenantLabel: 'Kuruluş {{id}}',
+    notPermitted: 'Bu kuruluşa erişiminiz yok.',
+    genericError: 'Kuruluş seçilemedi. Lütfen tekrar deneyin.',
+  },
+  tenantSwitcher: {
+    label: 'Kuruluş',
+    failed: 'Kuruluş değiştirilemedi.',
+  },
+  noAccess: {
+    title: 'Erişiminiz yok',
+    noMembershipDescription: 'Hesabınız henüz bir kuruluşa bağlı değil. Yöneticinizden davet isteyin.',
+    forbiddenDescription: 'Bu içeriği görüntülemek için yetkiniz yok.',
+    backToDashboard: 'Panele dön',
+    signOut: 'Çıkış yap',
   },
 }
