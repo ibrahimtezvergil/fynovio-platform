@@ -80,4 +80,4 @@ Repoda Product master yok; `AddOpportunityLine` `EntityRef(tenant, "masterdata",
 - Merge/push için onayınız bekleniyor (önceki merge/push yetkisi yalnızca Phase 2.5B içindi).
 
 ## 8. Commit'ler
-`dab42a1` plan · `e01c3b7` T1 · `f734c73` T2 · `d60abfc` T3 · `519b9be` T4 · `39a5531` T5 · `ecf6886` T6 (E2E) · docs/report commit · `chore(graphify)` refresh.
+`dab42a1` plan · `e01c3b7` T1 · `f734c73` T2 · `d60abfc` T3 · `519b9be` T4 · `39a5531` T5 · `ecf6886` T6 (E2E) · `5ff4e5c` docs + rapor · `b7aefca` `chore(graphify)` refresh.

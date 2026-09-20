@@ -40,4 +40,4 @@ Owner scope (2026-09-20): OD2 → OD1 → Party search (G2) → Product search (
   → Commit: `39a5531` "feat(web): customer picker and server-driven Reassign for Opportunities"
   Deviation: built on the existing `AsyncCombobox` (`common/inputs`) instead of a new combobox primitive; the planned `useAssignablePrincipals`/`usePartySearch` hooks became `useAssigneeSearcher`/`usePartySearcher` (searchers over the tenant-rooted query cache) because `AsyncCombobox` owns its debounce/abort.
 - [x] T6 Playwright E2E updates, docs (README, schema doc, AGENTS status), final report, graphify refresh
-  → Commits: `ecf6886` "test(e2e): Reassign, customer picker and reference-query scenarios against the real API"; docs/report commit and `chore(graphify)` refresh follow (see final report §8).
+  → Commits: `ecf6886` "test(e2e): Reassign, customer picker and reference-query scenarios against the real API"; `5ff4e5c` "docs: Phase 2.6 operator guide, schema revision 10, status and final report"; `b7aefca` "chore(graphify): refresh graph after Phase 2.6"
