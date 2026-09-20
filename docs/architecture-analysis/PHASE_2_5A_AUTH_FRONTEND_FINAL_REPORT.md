@@ -158,7 +158,7 @@ Bu değerler `dc23890` sonrasındaki son tam regresyondan gelir. Sonraki commit'
 2. **Hosting katmanında güvenlik başlıkları yok:** CSP, `frame-ancestors` ve `X-Content-Type-Options` ne API'de ne SPA kabuğunda ayarlı (kod ve `index.html` taraması boş döndü).
 3. **`/dev/mailbox` kimlik doğrulamasız.** Yalnızca Development'ta eşlenir (`The_dev_mailbox_does_not_exist_outside_development` ile doğrulanır), ama Development'ta içerik herkese açıktır.
 4. **Kayıt akışında küçük timing farkı.** Hash maliyeti eşit; fark yalnızca insert'in yapılıp yapılmamasından gelir. Login'de de dummy-hash için süre testi yok (§2.5).
-5. **Gerçek SMTP (Mailtrap) teslimatı DOĞRULANMADI.** Sandbox'ta ağ yok; SMTP yolu yalnızca testlerde kapalı/başarısız transport ile denendi. Kullanıcının kendi ortamında doğrulaması gerekir (bkz. README "Mailtrap").
+5. **Gerçek SMTP teslimatı doğrulandı (2026-09-20, Mailtrap sandbox).** Development'ta, user-secrets'taki kimlik bilgileriyle `POST /auth/password/forgot` (`admin@fynovio.local`) çağrıldı; `password_reset` maili Mailtrap inbox'ına ulaştı (kullanıcı teyit etti). Kalan açık nokta yalnızca üretim e-posta sağlayıcısı seçimi (madde 9).
 6. **Bootstrap iki adım arasında çökerse credential'sız hesap kalabilir** (schema Rev 9). Bu çökme senaryosu için otomatik test yok.
 7. **S3 öncesi bootstrap edilmiş dev DB'lerinde `identity.membership.invite` grant'i yok.** Bu tenant'larda davet oluşturulamaz; yeniden bootstrap veya elle grant gerekir.
 8. **Nested `web/.claude` pasif.** İçe aktarılan frontend'in kendi `.claude` yapılandırması etkin değildir.
