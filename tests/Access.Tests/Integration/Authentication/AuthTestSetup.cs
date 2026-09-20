@@ -115,6 +115,16 @@ internal static class AuthTestSetup
             .HandleAsync(new RefreshSessionCommand(cookie));
     }
 
+    public static ChangePasswordHandler ChangePassword(AccessDbContext context, TimeProvider time, LockoutOptions? lockout = null) =>
+        new(context, new PasswordService(), new PasswordPolicy(new PasswordPolicyOptions()), lockout ?? new LockoutOptions(),
+            Tokens(context), new AuthEventWriter(context), time);
+
+    public static RegisterAccountHandler Register(AccessDbContext context, TimeProvider time) =>
+        new(context, new PasswordService(), new PasswordPolicy(new PasswordPolicyOptions()), Session, new AuthEventWriter(context), time);
+
+    public static BootstrapTenantAdministratorHandler BootstrapAdmin(AccessDbContext context, TimeProvider time) =>
+        new(context, new BootstrapTenantAccessHandler(context), Session, Tokens(context), new AuthEventWriter(context), time);
+
     public static ActorContext Actor(TenantId tenant, PrincipalRef principal) => new(tenant, principal, Guid.NewGuid());
 
     /// <summary>Inserts a token straight into the table (as the superuser) and returns the raw `<id>.<secret>` value.</summary>
