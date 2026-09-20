@@ -238,6 +238,24 @@ Indexes: unique `token_hash`; `account_id`; a partial index on `(email_normalize
 - **Evidence:** creating an invitation and activating the membership write tenant-scoped `evidence_records` + outbox (an aggregate id, an invitation id and a hash of the address — never the address or the token); every flow also writes an allow-listed `auth_events` row (`invite_created`, `invite_accepted`, `password_reset_requested`, `password_reset_completed`, `password_setup_completed`, `password_change`, `registration_created`, `bootstrap_completed`).
 - **Known limitation:** the bootstrap command creates the account/membership, then runs the (separately transactional) Phase 1.5 `BootstrapTenantAccessHandler`, then issues the setup token. A crash between the steps leaves a credential-less account behind (harmless: it cannot sign in) and a re-run creates a second one.
 
+### Revision 10 (2026-09-20) — Phase 2.6 module capability templates (`tenant_module_enablements`, template provenance)
+
+The answer to "how does a tenant get a business module's roles" (Phase 2.5B OD2), built on the frozen Phase 1.5 rule: **template → tenant-local copy at an explicit, operator-invoked step; no reconciler, no silent propagation.** Nothing here adds a permission model — enablement writes ordinary `roles`/`permission_sets`/`permission_set_items`/`role_permission_sets`/`role_assignments` rows that the existing PDP already reads.
+
+| Change | Notes |
+|---|---|
+| `roles.origin_module_key` (varchar 64, null), `roles.origin_version` (int, null) | provenance of a template-derived row. CHECK `ck_roles_provenance`: both null or both set; set only with `origin = 'system_template'`; version ≥ 1. |
+| `permission_sets.origin_module_key` / `origin_version` | same shape and CHECK (`ck_permission_sets_provenance`). Tenant-authored rows keep both null. Access's own bootstrap now records provenance `("access", 1)`. |
+| `role_assignments.source` gains `module_enablement` | CHECK `ck_role_assignments_source` widened; the assignments an enablement makes (CRM: the administrators receive `crm_manager`) are distinguishable from manual and bootstrap grants. |
+| `tenant_module_enablements` (`id`, `tenant_id`, `module_key`, `template_version`, `enabled_at`) | one row per (tenant, module) — UNIQUE `(tenant_id, module_key)` is the idempotency key; CHECK `template_version >= 1`. **RLS enabled and forced** (hand-written migration `EnableModuleEnablementRowLevelSecurity`, same policy shape as the other tenant tables). |
+
+**Deliberate design points**
+- **Manifest lives in `Contracts`, composed by `Host`.** `ModuleCapabilityManifest`/`PermissionSetTemplate`/`RoleTemplate` (Contracts) are published by each module (`CrmModuleCapabilities`); `Host.Modules.PlatformModules` composes the union and hands it to Access — Access never references CRM (same pattern as `AccessActionCatalogSeeder`). The same union is the action registry seeded at start-up, so a module's action keys cannot be deprecated by another manifest's seeding.
+- **No wildcards, fail closed.** Template items are explicit action keys (`ModuleCapabilityManifest.Validate()` rejects `*`), and enablement refuses a manifest that references an action key that is not an active registry entry.
+- **Never modifies what it did not create.** A tenant already enabled at version N is `AlreadyEnabled` and untouched by a newer template. A colliding `roles.key`/`permission_sets.key` that is not template-derived from this module yields `TemplateKeyConflict` — a tenant-authored row is never adopted or overwritten.
+- **Administrators only at enablement time.** Roles flagged `GrantToTenantAdministrators` go to the tenant's *current* active administrators; members added later receive roles through normal grants. Every write bumps `TenantAccessRevision`; evidence + outbox are written in the same transaction; a unique-violation race between two operators resolves to `AlreadyEnabled`.
+- **Assignable principals are not stored anywhere.** `IAuthorizedPrincipalDirectory` (Contracts, implemented in `Access.Application`) restates the PDP's grant rule set-based over active members (platform-issuer identity, all required actions permitted as `owner`); `AuthorizedPrincipalDirectoryTests` proves it agrees with `AccessAuthorizer` member-for-member over a grant matrix. Team/org/territory/record-policy fact providers still do not exist (gap-closure §4), so the directory consumes exactly what the PDP evaluates today; it is the extension point when the PDP grows.
+
 ### Not yet designed here
 - `delegations` and `sod_rules` tables (decision file §2) — named but not column-designed yet; DESIGN/FREEZE per the Phase 1.5 execution plan's scope lock, deferred until a concrete delegation/SoD scenario is scoped.
 - Sharing, Field Security, Restriction/forbid policy tables — DESIGN/FREEZE; the evaluators are logical Access subdomains (round 3 ownership matrix) but no schema exists yet.
