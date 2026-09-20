@@ -7,6 +7,8 @@ test.describe('signing in and out', () => {
     await signIn(page, SINGLE, SEED_PASSWORD)
     await expect(page).toHaveURL(/\/dashboard$/)
     await expectNoTokenInStorage(page)
+    // Not "no-referrer": that would make same-origin POSTs carry `Origin: null` and trip the CSRF guard (sign-in just worked, so it is not).
+    await expect(page.locator('meta[name="referrer"]')).toHaveAttribute('content', 'same-origin')
 
     await page.reload() // the session is rebuilt from the HttpOnly refresh cookie
     await expect(page).toHaveURL(/\/dashboard$/)
