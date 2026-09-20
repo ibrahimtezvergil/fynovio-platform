@@ -141,6 +141,21 @@ public static class OpportunityEndpoints
             return Results.Ok(await handler.HandleAsync(query, cancellationToken));
         });
 
+        app.MapGroup("/crm/references").RequireAuthorization().MapPost("/parties", async (
+            CreatePartyReferenceRequest request, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
+            CreatePartyReferenceHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
+        {
+            if (!Enum.TryParse<PartyType>(request.PartyType, ignoreCase: true, out var partyType) || !Enum.IsDefined(partyType))
+                throw new ArgumentException("partyType must be 'Person' or 'Organization'.");
+
+            var actor = httpContext.GetActorContext();
+            var command = new CreatePartyReferenceCommand(
+                actor.TenantId, actor.Principal, partyType, request.Name ?? string.Empty, request.Surname, request.Phone, request.Email,
+                idempotencyKey, actor.CorrelationId);
+            var result = await handler.HandleAsync(command, cancellationToken);
+            return Results.Created($"/crm/references/parties?ids={result.Id}", result);
+        });
+
         app.MapGroup("/pipelines").RequireAuthorization().MapGet("/{versionId:long}/stages", async (
             long versionId, GetPipelineStagesHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
         {
@@ -169,6 +184,8 @@ public static class OpportunityEndpoints
 }
 
 public sealed record CreateOpportunityRequest(long PartyId, string Currency, decimal EstimatedAmount);
+
+public sealed record CreatePartyReferenceRequest(string? PartyType, string? Name, string? Surname, string? Phone, string? Email);
 public sealed record AddOpportunityLineRequest(long ExpectedVersion, long ProductId, int Quantity, decimal UnitPrice, bool IsOptional, int SortOrder);
 public sealed record CancelOpportunityLineRequest(long ExpectedVersion, string CancelReason);
 public sealed record OpenOpportunityRequest(long ExpectedVersion, DateTimeOffset ExpiryDate);

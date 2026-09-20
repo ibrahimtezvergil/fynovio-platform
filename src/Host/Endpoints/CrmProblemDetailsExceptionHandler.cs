@@ -28,6 +28,7 @@ public sealed class CrmProblemDetailsExceptionHandler : IExceptionHandler
             OpportunityConcurrencyConflictException => (StatusCodes.Status409Conflict, "concurrency_conflict", exception.Message),
             InvalidPipelineTransitionException => (StatusCodes.Status409Conflict, "invalid_pipeline_transition", exception.Message),
             PipelineConfigurationInvalidException => (StatusCodes.Status409Conflict, "invalid_pipeline_configuration", exception.Message),
+            MasterData.Application.IdempotencyKeyReusedException => (StatusCodes.Status409Conflict, "idempotency_key_reused", exception.Message),
             IdempotencyKeyReusedException => (StatusCodes.Status409Conflict, "idempotency_key_reused", exception.Message),
             PrincipalNotAssignableException => (StatusCodes.Status422UnprocessableEntity, "principal_not_assignable", exception.Message),
             PartyNotFoundException => (StatusCodes.Status422UnprocessableEntity, "party_not_found", exception.Message),

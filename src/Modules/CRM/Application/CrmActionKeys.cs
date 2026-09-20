@@ -16,4 +16,5 @@ public static class CrmActionKeys
     public const string OpportunityRead = "crm.opportunity.read";
     public const string OpportunityList = "crm.opportunity.list";
     public const string PartyReferenceSearch = "crm.reference.party.search";
+    public const string PartyReferenceCreate = "crm.reference.party.create";
 }

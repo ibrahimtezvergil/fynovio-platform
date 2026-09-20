@@ -43,12 +43,20 @@ public sealed class CrmModuleCapabilitiesTests
     }
 
     [Fact]
+    public void Only_roles_that_work_opportunities_may_register_a_customer()
+    {
+        Assert.DoesNotContain(CrmActionKeys.PartyReferenceCreate, ActionsOf(CrmModuleCapabilities.ViewerRoleKey));
+        Assert.Contains(CrmActionKeys.PartyReferenceCreate, ActionsOf(CrmModuleCapabilities.ManagerRoleKey));
+    }
+
+    [Fact]
     public void The_sales_representative_works_opportunities_but_cannot_reassign()
     {
         var actions = ActionsOf(CrmModuleCapabilities.SalesRepresentativeRoleKey);
 
         Assert.Contains(CrmActionKeys.OpportunityChangeStage, actions);
         Assert.Contains(CrmActionKeys.PartyReferenceSearch, actions);
+        Assert.Contains(CrmActionKeys.PartyReferenceCreate, actions);
         Assert.DoesNotContain(CrmActionKeys.OpportunityReassign, actions);
     }
 

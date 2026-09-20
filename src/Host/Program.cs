@@ -42,7 +42,8 @@ builder.Services.AddDbContext<AccessDbContext>(options => options
 
 builder.Services.AddScoped<IPartyDirectory, PartyDirectory>();
 builder.Services.AddScoped<IPartySearch, PartyDirectory>();
-builder.Services.AddScoped<CreatePartyHandler>(); // used by the Development seed only; no HTTP endpoint creates Parties yet
+builder.Services.AddScoped<CreatePartyHandler>();
+builder.Services.AddScoped<IPartyRegistration, PartyRegistration>();
 builder.Services.AddScoped<IPartyIdentityResolver, PartyIdentityResolver>();
 
 builder.Services.AddScoped<PrincipalResolver>();
@@ -197,6 +198,7 @@ builder.Services.AddScoped<ReassignOpportunityHandler>();
 builder.Services.AddScoped<ListAssignablePrincipalsHandler>();
 builder.Services.AddScoped<ProvisionPipelineHandler>(); // operator command `provision-crm-pipeline` and the Development seed
 builder.Services.AddScoped<SearchPartyReferencesHandler>();
+builder.Services.AddScoped<CreatePartyReferenceHandler>();
 builder.Services.AddScoped<GetOpportunityHandler>();
 builder.Services.AddScoped<ListOpportunitiesHandler>();
 builder.Services.AddScoped<GetPipelineStagesHandler>();

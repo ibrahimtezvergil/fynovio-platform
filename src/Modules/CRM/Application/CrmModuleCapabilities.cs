@@ -6,7 +6,10 @@ namespace CRM.Application;
 /// Explicit action keys only (no `crm.*` wildcard); the platform composes this manifest with every other
 /// module's and Access copies it into tenant-local rows. Changing this content later does NOT change tenants
 /// already enabled at an earlier version (Phase 1.5 Decision A) — bump <see cref="Version"/> so provenance
-/// records which content a tenant received.</summary>
+/// records which content a tenant received.
+/// EXCEPTION, recorded on purpose: `crm.reference.party.create` was added to the v1 write set IN PLACE, not as v2 —
+/// enablement is copy-once with no reconciler, so a v2 would leave every already-enabled tenant without it, and
+/// nothing is in production yet. From the first production tenant on, a content change MUST bump the version.</summary>
 public static class CrmModuleCapabilities
 {
     public const string ModuleKey = "crm";
@@ -40,7 +43,8 @@ public static class CrmModuleCapabilities
                 new(CrmActionKeys.OpportunityChangeStage),
                 new(CrmActionKeys.OpportunityWin),
                 new(CrmActionKeys.OpportunityLose),
-                new(CrmActionKeys.PartyReferenceSearch)
+                new(CrmActionKeys.PartyReferenceSearch),
+                new(CrmActionKeys.PartyReferenceCreate)
             ]),
             new PermissionSetTemplate(ReassignSetKey, "CRM — reassign opportunities",
             [

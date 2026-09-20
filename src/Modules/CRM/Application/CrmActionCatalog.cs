@@ -22,6 +22,7 @@ public static class CrmActionCatalog
         new(CrmActionKeys.OpportunityReassign, "Opportunity", RiskClass: "high"),
         new(CrmActionKeys.OpportunityRead, "Opportunity"),
         new(CrmActionKeys.OpportunityList, "Opportunity"),
-        new(CrmActionKeys.PartyReferenceSearch, "PartyReference")
+        new(CrmActionKeys.PartyReferenceSearch, "PartyReference"),
+        new(CrmActionKeys.PartyReferenceCreate, "PartyReference")
     ];
 }

@@ -57,6 +57,10 @@ public sealed class PartyReferencesEndpointTests : IClassFixture<AuthApiFixture>
         return await response.Content.ReadFromJsonAsync<JsonElement>();
     }
 
+    /// <summary>The fixture's database is shared by the tests of this class, which also register customers of their own;
+    /// assertions about the SEED look only at the seeded ones.</summary>
+    private static readonly HashSet<string> SeededTenantOne = ["Acme Corporation", "Globex Ltd", "Initech", "Ada Lovelace", "Grace Hopper", "Alan Turing"];
+
     private static string[] Names(JsonElement list) => list.EnumerateArray().Select(e => e.GetProperty("displayName").GetString()!).ToArray();
 
     [Fact]
@@ -83,7 +87,7 @@ public sealed class PartyReferencesEndpointTests : IClassFixture<AuthApiFixture>
         using var client = host.CreateClient();
         var admin = await TokenAsync(client, DevSeeder.AdminEmail, 1);
 
-        Assert.Equal(["Acme Corporation", "Ada Lovelace", "Alan Turing", "Globex Ltd", "Grace Hopper", "Initech"], Names(await OkAsync(client, admin, "")));
+        Assert.Equal(["Acme Corporation", "Ada Lovelace", "Alan Turing", "Globex Ltd", "Grace Hopper", "Initech"], Names(await OkAsync(client, admin, "?take=50")).Where(SeededTenantOne.Contains));
         Assert.Equal(["Acme Corporation", "Ada Lovelace"], Names(await OkAsync(client, admin, "?take=2")));
         Assert.Empty(Names(await OkAsync(client, admin, "?search=%25")));   // a literal percent, not "everything"
     }
@@ -161,6 +165,112 @@ public sealed class PartyReferencesEndpointTests : IClassFixture<AuthApiFixture>
         using var client = second.CreateClient();
         var admin = await TokenAsync(client, DevSeeder.AdminEmail, 1);
 
-        Assert.Equal(6, (await OkAsync(client, admin, "")).GetArrayLength());
+        Assert.Equal(6, Names(await OkAsync(client, admin, "?take=50")).Count(SeededTenantOne.Contains));
+    }
+
+    private static HttpRequestMessage Create(string token, object body, string? key = null)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/crm/references/parties") { Content = JsonContent.Create(body) };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        request.Headers.Add("Idempotency-Key", key ?? Guid.NewGuid().ToString());
+        return request;
+    }
+
+    [Fact]
+    public async Task A_sales_representative_registers_a_customer_who_is_then_found_and_usable_for_an_opportunity()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+        var rep = await TokenAsync(client, DevSeeder.SalesRepEmail);
+
+        var created = await client.SendAsync(Create(rep, new { partyType = "person", name = "Katherine", surname = "Johnson", email = "kj@nasa.test" }));
+
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var body = await created.Content.ReadFromJsonAsync<JsonElement>();
+        var id = body.GetProperty("id").GetInt64();
+        Assert.False(body.GetProperty("replayed").GetBoolean());
+        Assert.Equal(["Katherine Johnson"], Names(await OkAsync(client, rep, "?search=johnson")));
+        Assert.Equal(["Katherine Johnson"], Names(await OkAsync(client, rep, $"?ids={id}")));
+
+        var opportunity = new HttpRequestMessage(HttpMethod.Post, "/opportunities") { Content = JsonContent.Create(new { partyId = id, currency = "EUR", estimatedAmount = 5 }) };
+        opportunity.Headers.Authorization = new AuthenticationHeaderValue("Bearer", rep);
+        opportunity.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
+        Assert.Equal(HttpStatusCode.Created, (await client.SendAsync(opportunity)).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_retry_with_the_same_key_replays_and_the_same_key_with_another_body_is_a_conflict()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+        var rep = await TokenAsync(client, DevSeeder.SalesRepEmail);
+        var key = Guid.NewGuid().ToString();
+
+        var first = await (await client.SendAsync(Create(rep, new { partyType = "Organization", name = "Replay Co" }, key))).Content.ReadFromJsonAsync<JsonElement>();
+        var second = await client.SendAsync(Create(rep, new { partyType = "Organization", name = "Replay Co" }, key));
+        var different = await client.SendAsync(Create(rep, new { partyType = "Organization", name = "Another Co" }, key));
+
+        Assert.Equal(HttpStatusCode.Created, second.StatusCode);
+        var replay = await second.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(first.GetProperty("id").GetInt64(), replay.GetProperty("id").GetInt64());
+        Assert.True(replay.GetProperty("replayed").GetBoolean());
+        Assert.Equal(HttpStatusCode.Conflict, different.StatusCode);
+        Assert.Equal("idempotency_key_reused", (await different.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("type").GetString());
+        Assert.Single(Names(await OkAsync(client, rep, "?search=replay%20co")));
+    }
+
+    [Fact]
+    public async Task A_registered_customer_belongs_to_the_callers_tenant_only()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+        var one = await TokenAsync(client, DevSeeder.AdminEmail, 1);
+        var two = await TokenAsync(client, DevSeeder.AdminEmail, 2);
+
+        var created = await client.SendAsync(Create(one, new { partyType = "Organization", name = "Tenant One Only Ltd" }));
+        var id = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt64();
+
+        Assert.Equal(["Tenant One Only Ltd"], Names(await OkAsync(client, one, "?search=tenant%20one%20only")));
+        Assert.Empty(Names(await OkAsync(client, two, "?search=tenant%20one%20only")));
+        Assert.Empty(Names(await OkAsync(client, two, $"?ids={id}")));
+    }
+
+    [Fact]
+    public async Task Only_members_holding_the_create_action_may_register_a_customer()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+
+        foreach (var email in new[] { DevSeeder.ViewerEmail, DevSeeder.SingleTenantEmail })
+        {
+            var response = await client.SendAsync(Create(await TokenAsync(client, email), new { partyType = "Organization", name = "Should Not Exist" }));
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        var admin = await TokenAsync(client, DevSeeder.AdminEmail, 1);
+        Assert.Empty(Names(await OkAsync(client, admin, "?search=should%20not%20exist")));
+        var anonymous = new HttpRequestMessage(HttpMethod.Post, "/crm/references/parties") { Content = JsonContent.Create(new { partyType = "Organization", name = "X" }) };
+        anonymous.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.SendAsync(anonymous)).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("Organization", "", null)]
+    [InlineData("Organization", "  ", null)]
+    [InlineData("Company", "Acme", null)]
+    [InlineData("99", "Acme", null)]
+    [InlineData("Organization", "Acme", "Surname")]   // an organization has no surname
+    public async Task Invalid_input_is_a_validation_error_and_creates_nothing(string partyType, string name, string? surname)
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+        var rep = await TokenAsync(client, DevSeeder.SalesRepEmail);
+        var before = (await OkAsync(client, rep, "?take=50")).GetArrayLength();
+
+        var response = await client.SendAsync(Create(rep, new { partyType, name, surname }));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("validation_error", (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("type").GetString());
+        Assert.Equal(before, (await OkAsync(client, rep, "?take=50")).GetArrayLength());
     }
 }
