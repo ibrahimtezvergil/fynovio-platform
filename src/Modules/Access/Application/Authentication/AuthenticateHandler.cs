@@ -164,45 +164,13 @@ public sealed class AuthenticateHandler
         // Use transaction for session creation and membership lookup
         await using var tx = await _context.Database.BeginTransactionAsync(cancellationToken);
 
-        // Set account context for membership RLS policy
-        await _context.SetAccountContextAsync(account.Id, cancellationToken);
-
-        // Create session
-        var sessionCreatedAt = now;
-        var sessionAbsoluteExpiry = sessionCreatedAt.AddDays(_sessionOptions.RefreshAbsoluteDays);
-
-        var session = AuthSession.Create(account.Id, sessionCreatedAt, sessionAbsoluteExpiry, command.UserAgentHash);
-        _context.AuthSessions.Add(session);
-
-        // Create refresh token
-        var (tokenSecret, tokenHash) = TokenSecrets.GenerateAndHash();
-        var refreshToken = RefreshToken.Create(
-            session.Id,
-            tokenHash,
-            sessionCreatedAt,
-            sessionCreatedAt.AddDays(_sessionOptions.RefreshIdleDays));
-        _context.RefreshTokens.Add(refreshToken);
-
-        // Load active memberships (uses membership_self_view RLS policy via SetAccountContextAsync)
-        var memberships = await _context.TenantMemberships
-            .Where(m => m.AccountId == account.Id && m.Status == MembershipStatus.Active)
-            .Select(m => m.TenantId.Value)
-            .ToListAsync(cancellationToken);
-
-        // Determine response and update session if needed
-        long? selectedTenantId = null;
-        var status = AuthenticationStatus.NoMembership;
-
-        if (memberships.Count == 1)
-        {
-            selectedTenantId = memberships[0];
-            session.SelectTenant(new TenantId(selectedTenantId.Value));
-            status = AuthenticationStatus.Authenticated;
-        }
-        else if (memberships.Count > 1)
-        {
-            status = AuthenticationStatus.TenantSelectionRequired;
-        }
+        // Session + first refresh token + membership state (shared with invitation acceptance)
+        var issued = await new SessionIssuer(_sessionOptions)
+            .PrepareAsync(_context, account.Id, now, command.UserAgentHash, cancellationToken);
+        var session = issued.Session;
+        var memberships = issued.MembershipTenantIds;
+        var selectedTenantId = issued.SelectedTenantId;
+        var status = issued.Status;
 
         // Save all changes atomically — concurrency on credential allowed to be ignored (session creation doesn't depend on exact lockout state)
         try
@@ -231,7 +199,7 @@ public sealed class AuthenticateHandler
                 ipHash: command.IpHash,
             cancellationToken: cancellationToken);
 
-        var refreshCookieValue = $"{refreshToken.Id}.{tokenSecret}";
+        var refreshCookieValue = issued.RefreshCookie;
 
         return new AuthenticateResult(
             status,

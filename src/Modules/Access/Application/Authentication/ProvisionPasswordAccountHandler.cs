@@ -63,21 +63,16 @@ public sealed class ProvisionPasswordAccountHandler
         // Use transaction to ensure atomicity
         await using var tx = await _context.Database.BeginTransactionAsync(cancellationToken);
 
-        // Create new account
-        var account = Account.Create(command.Email, command.DisplayName, command.Locale);
-        _context.Accounts.Add(account);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        // Create credential
-        var passwordHash = _passwordService.HashPassword(command.Password);
-        var credential = AccountCredential.Create(account.Id, normalizedEmail, passwordHash);
-        _context.AccountCredentials.Add(credential);
-
-        // Create platform ExternalIdentity
-        var subject = GenerateRandomSubject();
-        var principal = new PrincipalRef(command.PlatformIssuer, subject);
-        var externalIdentity = ExternalIdentity.Link(account.Id, principal);
-        _context.ExternalIdentities.Add(externalIdentity);
+        // Create account + credential + platform ExternalIdentity
+        var (account, principal) = await AccountProvisioning.AddAsync(
+            _context,
+            command.Email,
+            command.DisplayName,
+            command.Locale,
+            command.PlatformIssuer,
+            _passwordService.HashPassword(command.Password),
+            normalizedEmail,
+            cancellationToken);
 
         // Optionally create active membership
         if (command.InitialTenantId.HasValue)
@@ -92,16 +87,5 @@ public sealed class ProvisionPasswordAccountHandler
         await tx.CommitAsync(cancellationToken);
 
         return new ProvisionPasswordAccountResult(account.Id, principal);
-    }
-
-    private static string GenerateRandomSubject()
-    {
-        // Generate 128-bit random ID as hex
-        using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
-        {
-            var bytes = new byte[16];
-            rng.GetBytes(bytes);
-            return Convert.ToHexString(bytes).ToLowerInvariant();
-        }
     }
 }
