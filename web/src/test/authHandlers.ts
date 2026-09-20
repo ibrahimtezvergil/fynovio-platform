@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { endpoints } from '@/api/endpoints'
+import type { AuthResult } from '@/lib/auth/types'
 import { API_BASE } from '@/mocks/apiBase'
 
 /** Per-test stand-ins for the real `/auth/*` endpoints (the browser worker deliberately mocks none of them). */
@@ -9,7 +10,7 @@ export const ACCESS_TOKEN = 'access-token-1'
 
 export const account = { id: 7, email: 'ada@example.com', displayName: 'Ada Lovelace', locale: 'tr' }
 
-export const authenticated = (overrides: Record<string, unknown> = {}) => ({
+export const authenticated = (overrides: Partial<AuthResult> = {}): AuthResult => ({
   status: 'authenticated',
   accessToken: ACCESS_TOKEN,
   expiresIn: 600,
@@ -19,14 +20,14 @@ export const authenticated = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 })
 
-export const selectionRequired = (memberships = [{ tenantId: 1 }, { tenantId: 2 }]) => ({
+export const selectionRequired = (memberships = [{ tenantId: 1 }, { tenantId: 2 }]): AuthResult => ({
   status: 'tenant_selection_required',
   account,
   activeTenant: null,
   memberships,
 })
 
-export const noMembership = () => ({ status: 'no_membership', account, activeTenant: null, memberships: [] })
+export const noMembership = (): AuthResult => ({ status: 'no_membership', account, activeTenant: null, memberships: [] })
 
 export const problem = (status: number, type: string, extra: Record<string, unknown> = {}, headers: Record<string, string> = {}) =>
   HttpResponse.json({ type, title: type, status, ...extra }, { status, headers })
