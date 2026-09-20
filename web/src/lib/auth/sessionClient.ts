@@ -25,6 +25,8 @@ function purgeLegacyStorage() {
 
 /** Server state changed under the user: drop everything cached for the previous session/tenant. */
 function resetClientState() {
+  // Cancel first: a request still in flight for the previous tenant must not land in the new tenant's cache.
+  void queryClient.cancelQueries()
   queryClient.clear()
 }
 

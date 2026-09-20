@@ -20,6 +20,7 @@ import demoTimelineEn from '@/locales/en/demo-timeline'
 import homeEn from '@/locales/en/home'
 import navEn from '@/locales/en/nav'
 import notificationsEn from '@/locales/en/notifications'
+import opportunitiesEn from '@/locales/en/opportunities'
 import pipelineEn from '@/locales/en/pipeline'
 import placeholderEn from '@/locales/en/placeholder'
 import routesEn from '@/locales/en/routes'
@@ -44,6 +45,7 @@ import demoTimelineTr from '@/locales/tr/demo-timeline'
 import homeTr from '@/locales/tr/home'
 import navTr from '@/locales/tr/nav'
 import notificationsTr from '@/locales/tr/notifications'
+import opportunitiesTr from '@/locales/tr/opportunities'
 import pipelineTr from '@/locales/tr/pipeline'
 import placeholderTr from '@/locales/tr/placeholder'
 import routesTr from '@/locales/tr/routes'
@@ -83,6 +85,7 @@ void i18n.use(initReactI18next).init({
       home: homeTr,
       nav: navTr,
       notifications: notificationsTr,
+      opportunities: opportunitiesTr,
       pipeline: pipelineTr,
       placeholder: placeholderTr,
       routes: routesTr,
@@ -108,6 +111,7 @@ void i18n.use(initReactI18next).init({
       home: homeEn,
       nav: navEn,
       notifications: notificationsEn,
+      opportunities: opportunitiesEn,
       pipeline: pipelineEn,
       placeholder: placeholderEn,
       routes: routesEn,

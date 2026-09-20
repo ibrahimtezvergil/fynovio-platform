@@ -26,8 +26,8 @@ export interface AppMutationConfig<TData, TVariables> {
   invalidateKeys?: (data: TData, variables: TVariables) => QueryKey[]
   /** Omit to stay silent — not every mutation should toast (see the calendar move). */
   successToast?: (data: TData, variables: TVariables) => AppMutationToast | null
-  /** Defaults to the normalized `ApiError.message`. */
-  errorToast?: (error: ApiError, variables: TVariables) => AppMutationToast
+  /** Defaults to the normalized `ApiError.message`. Return `null` when the caller renders the failure inline instead. */
+  errorToast?: (error: ApiError, variables: TVariables) => AppMutationToast | null
   undo?: AppMutationUndo<TData, TVariables>
 }
 
@@ -78,8 +78,8 @@ export function useAppMutation<TData, TVariables>(config: AppMutationConfig<TDat
       track(`mutation_${config.name}_success`)
     },
     onError: (error, variables) => {
-      const failure = config.errorToast?.(error, variables) ?? { title: error.message }
-      toast.error(failure.title, { description: failure.description })
+      const failure = config.errorToast ? config.errorToast(error, variables) : { title: error.message }
+      if (failure) toast.error(failure.title, { description: failure.description })
       // `mutation_error` telemetry is already emitted globally by the
       // MutationCache in `src/api/queryClient.ts`, keyed on `mutationKey`.
     },

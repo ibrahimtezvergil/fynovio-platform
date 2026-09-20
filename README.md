@@ -167,12 +167,13 @@ No `.env` is needed: the dev server proxies `/api/*` to the API on `:5208`, whic
 
 ### 4. Signing in
 
-On start the API seeds three sign-in identities (idempotent; Development only, and only via the `dotnet run` launch profiles — `DevSeed:Enabled` is `false` in `appsettings.Development.json` so test hosts are unaffected). All three share the password **`Dev-Only-Passw0rd-Change-Me`** (`DevSeed:Password` in `src/Host/appsettings.Development.json`; a development-only value that must never be reused anywhere else). An account is created only if it does not exist yet, so changing `DevSeed:Password` later does not touch existing accounts — set a new one with the *Forgot password* flow or the account-security page instead.
+On start the API seeds four sign-in identities plus the CRM data the Opportunity screens need (idempotent; Development only, and only via the `dotnet run` launch profiles — `DevSeed:Enabled` is `false` in `appsettings.Development.json` so test hosts are unaffected). All four share the password **`Dev-Only-Passw0rd-Change-Me`** (`DevSeed:Password` in `src/Host/appsettings.Development.json`; a development-only value that must never be reused anywhere else). An account is created only if it does not exist yet, so changing `DevSeed:Password` later does not touch existing accounts — set a new one with the *Forgot password* flow or the account-security page instead.
 
 | Account | State it exercises |
 |---|---|
-| `admin@fynovio.local` | tenant administrator of tenants 1 and 2 → tenant selection, then full CRM access |
+| `admin@fynovio.local` | tenant administrator of tenants 1 and 2 → tenant selection, then full CRM access (the seed grants the `crm_manager` role in both tenants) |
 | `single@fynovio.local` | member of tenant 1 only, no grants → signed in directly, CRM calls are `403` |
+| `viewer@fynovio.local` | member of tenant 1 only, read-only CRM (`crm_viewer`: `crm.opportunity.read`/`list`) → sees Opportunities, every mutation is denied and no action is offered |
 | `nomember@fynovio.local` | no membership → the `no_membership` state |
 
 Quick check without the frontend (note the required CSRF header; the refresh cookie is `HttpOnly`):
@@ -182,6 +183,8 @@ curl -i -X POST http://localhost:5208/auth/login \
   -H 'Content-Type: application/json' -H 'X-Requested-With: fynovio' \
   -d '{"email":"single@fynovio.local","password":"<DevSeed:Password>"}'
 ```
+
+The seed also creates one pipeline per dev tenant (`Sales pipeline` v1: Qualification → Proposal → Negotiation, plus one retired stage). It is the only place CRM grants and a pipeline come from today: the production tenant bootstrap grants only Access's own actions, so a production tenant administrator holds no `crm.*` grant until the template/bootstrap strategy is decided (Phase 2.5B plan, OD2). A database seeded before this change gets the CRM roles and pipeline on the next start (the seed is idempotent per piece).
 
 Production has no seed and no default credential (see *Bootstrapping a tenant administrator* below). Authentication settings live under `Authentication:*` in `appsettings*.json`; the signing key, allowed origins and public base URL must be supplied per environment.
 

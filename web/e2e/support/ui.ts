@@ -1,9 +1,10 @@
 import { expect, type Page } from '@playwright/test'
 import auth from '../../src/locales/tr/auth.ts'
 import nav from '../../src/locales/tr/nav.ts'
+import opportunities from '../../src/locales/tr/opportunities.ts'
 
 /** The UI's own Turkish copy (the default language), read from the same catalogs — no hard-coded strings to drift. */
-export const t = { auth, nav }
+export const t = { auth, nav, opportunities }
 
 export const emailField = (page: Page) => page.getByLabel(auth.loginForm.emailLabel, { exact: true })
 export const passwordField = (page: Page, label: string = auth.loginForm.passwordLabel) => page.getByLabel(label, { exact: true })
