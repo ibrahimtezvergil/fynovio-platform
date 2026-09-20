@@ -47,6 +47,7 @@ builder.Services.AddScoped<PrincipalResolver>();
 builder.Services.AddScoped<IActionCatalog, AccessActionCatalogService>();
 builder.Services.AddScoped<IAuthorizer, AccessAuthorizer>();
 builder.Services.AddScoped<IAccessScopeResolver, AccessScopeResolver>();
+builder.Services.AddScoped<IAuthorizedPrincipalDirectory, AuthorizedPrincipalDirectory>();
 
 // Load and validate JWT options (fail-fast at startup)
 var jwtOptions = builder.Configuration.GetSection("Authentication:Jwt").Get<JwtOptions>()
@@ -191,6 +192,7 @@ builder.Services.AddScoped<ChangePipelineStageHandler>();
 builder.Services.AddScoped<WinOpportunityHandler>();
 builder.Services.AddScoped<LoseOpportunityHandler>();
 builder.Services.AddScoped<ReassignOpportunityHandler>();
+builder.Services.AddScoped<ListAssignablePrincipalsHandler>();
 builder.Services.AddScoped<GetOpportunityHandler>();
 builder.Services.AddScoped<ListOpportunitiesHandler>();
 builder.Services.AddScoped<GetPipelineStagesHandler>();

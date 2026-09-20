@@ -29,6 +29,7 @@ public sealed class CrmProblemDetailsExceptionHandler : IExceptionHandler
             InvalidPipelineTransitionException => (StatusCodes.Status409Conflict, "invalid_pipeline_transition", exception.Message),
             PipelineConfigurationInvalidException => (StatusCodes.Status409Conflict, "invalid_pipeline_configuration", exception.Message),
             IdempotencyKeyReusedException => (StatusCodes.Status409Conflict, "idempotency_key_reused", exception.Message),
+            PrincipalNotAssignableException => (StatusCodes.Status422UnprocessableEntity, "principal_not_assignable", exception.Message),
             ArgumentException => (StatusCodes.Status400BadRequest, "validation_error", exception.Message),
             InvalidOperationException => (StatusCodes.Status409Conflict, "illegal_lifecycle_transition", exception.Message),
             _ => (0, (string?)null, (string?)null)

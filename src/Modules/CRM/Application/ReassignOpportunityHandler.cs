@@ -13,7 +13,7 @@ using Npgsql;
 
 namespace CRM.Application;
 
-public sealed class ReassignOpportunityHandler(CrmDbContext context, IAuthorizer authorizer)
+public sealed class ReassignOpportunityHandler(CrmDbContext context, IAuthorizer authorizer, IAuthorizedPrincipalDirectory directory)
 {
     private const string Operation = "ReassignOpportunity";
     private const string ActionKeyValue = "crm.opportunity.reassign";
@@ -54,6 +54,11 @@ public sealed class ReassignOpportunityHandler(CrmDbContext context, IAuthorizer
             await transaction.CommitAsync(cancellationToken);
             return new ReassignOpportunityResult(command.OpportunityId, Replayed: true);
         }
+
+        // Server-side authority over the target: the UI offers only permitted assignees, but a client can send anyone.
+        if (!await directory.IsPrincipalPermittedAsync(
+                command.TenantId, command.NewAssignedPrincipal, CrmAssignmentPolicy.RequiredAssigneeActions, cancellationToken))
+            throw new PrincipalNotAssignableException(command.NewAssignedPrincipal);
 
         if (opportunity.RowVersion != command.ExpectedVersion)
             throw new OpportunityConcurrencyConflictException(opportunity.Id, command.ExpectedVersion);

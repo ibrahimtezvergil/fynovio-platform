@@ -116,6 +116,14 @@ public static class OpportunityEndpoints
             return Results.Ok(await handler.HandleAsync(query, cancellationToken));
         });
 
+        group.MapGet("/{id:long}/assignable-principals", async (
+            long id, string? search, int? take, ListAssignablePrincipalsHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
+        {
+            var actor = httpContext.GetActorContext();
+            var query = new ListAssignablePrincipalsQuery(actor.TenantId, id, actor.Principal, search, take ?? ListAssignablePrincipalsHandler.DefaultTake, actor.CorrelationId);
+            return Results.Ok(await handler.HandleAsync(query, cancellationToken));
+        });
+
         group.MapGet("/{id:long}/actions", async (
             long id, GetOpportunityAvailableActionsHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
         {
