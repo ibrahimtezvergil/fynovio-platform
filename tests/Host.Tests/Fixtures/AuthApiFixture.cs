@@ -291,6 +291,12 @@ public sealed class AuthApiFixture : IAsyncLifetime
         return (session.IsRevoked, session.RevokedReason);
     }
 
+    public async Task<string?> SessionUserAgentHashAsync(Guid sessionId)
+    {
+        await using var access = CreateAdminAccessContext();
+        return (await access.AuthSessions.AsNoTracking().SingleAsync(s => s.Id == sessionId)).UserAgentHash;
+    }
+
     public async Task<int> UnrotatedTokenCountAsync(Guid sessionId)
     {
         await using var access = CreateAdminAccessContext();

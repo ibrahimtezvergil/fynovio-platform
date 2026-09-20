@@ -506,11 +506,14 @@ public sealed class AuthenticationBehaviourTests : IAsyncLifetime
 
         var handler = new GetSessionOverviewHandler(_context, _fixture.TimeProvider);
 
-        // GetSessionOverviewHandler calls SetAccountContextAsync which requires a transaction
-        await using var tx = await _context.Database.BeginTransactionAsync();
+        // The handler opens its own transaction for the account-scoped membership read; it must
+        // work when called with no ambient transaction (as the Host does).
         var overview = await handler.HandleAsync(session.Id);
-        await tx.CommitAsync();
         Assert.NotNull(overview);
+        Assert.NotNull(overview.Account);
+        Assert.Equal(accountId, overview.Account.Id);
+        Assert.Equal("Test User", overview.Account.DisplayName);
+        Assert.False(string.IsNullOrEmpty(overview.Account.Email));
         Assert.Equal(accountId, overview.AccountId);
         Assert.Equal("Test User", overview.DisplayName); // Default from ProvisionAccount
         Assert.Equal(tenantIdActive1.Value, overview.SelectedTenantId);
@@ -521,19 +524,15 @@ public sealed class AuthenticationBehaviourTests : IAsyncLifetime
         Assert.DoesNotContain(tenantIdDisabled.Value, overview.MembershipTenantIds);
 
         // Unknown session returns null
-        await using var tx2 = await _context.Database.BeginTransactionAsync();
         var unknownOverview = await handler.HandleAsync(Guid.NewGuid());
         Assert.Null(unknownOverview);
-        await tx2.CommitAsync();
 
         // Revoked session returns null
         sessionToUpdate.Revoke("test", _fixture.TimeProvider.GetUtcNow());
         await _context.SaveChangesAsync();
 
-        await using var tx3 = await _context.Database.BeginTransactionAsync();
         var revokedOverview = await handler.HandleAsync(session.Id);
         Assert.Null(revokedOverview);
-        await tx3.CommitAsync();
     }
 
     /// <summary>Test 11: ProvisionPasswordAccountHandler - creates exactly one Account, Credential,

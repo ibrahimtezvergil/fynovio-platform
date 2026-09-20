@@ -292,6 +292,31 @@ public sealed class AuthEndpointsTests : IClassFixture<AuthApiFixture>
         Assert.Equal(HttpStatusCode.BadRequest, (await client.SendAsync(wrongType)).StatusCode);
     }
 
+    [Fact]
+    public async Task Login_records_a_keyed_user_agent_fingerprint_on_the_session_never_the_raw_header()
+    {
+        var user = await _fixture.SeedUserAsync(tenantIds: AuthApiFixture.NewTenantId());
+        using var host = await _fixture.StartHostAsync();
+        using var client = host.CreateClient();
+        const string userAgent = "FynovioTestBrowser/9.9 (integration-test)";
+        var request = Request(HttpMethod.Post, "/auth/login", new { email = user.Email, password = AuthApiFixture.Password });
+        request.Headers.Add("User-Agent", userAgent);
+
+        var response = await client.SendAsync(request);
+
+        var sessionId = SessionId((await Json(response)).GetProperty("accessToken").GetString()!);
+        var stored = await _fixture.SessionUserAgentHashAsync(sessionId);
+        var expected = new Host.Authentication.ClientFingerprint(new Host.Authentication.JwtOptions
+        {
+            Issuer = JwtTestTokenFactory.Issuer,
+            Audience = JwtTestTokenFactory.Audience,
+            SigningKey = JwtTestTokenFactory.SigningKey
+        }).Hash(userAgent);
+        Assert.NotNull(stored);
+        Assert.Equal(expected, stored);
+        Assert.DoesNotContain("FynovioTestBrowser", stored);
+    }
+
     // ---- refresh ---------------------------------------------------------------------------
 
     [Fact]
