@@ -62,9 +62,16 @@ public sealed class AssignablePrincipalsEndpointTests : IClassFixture<AuthApiFix
         return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
     }
 
+    private static async Task<long> SeededPartyIdAsync(HttpClient client, string token)
+    {
+        var parties = await (await client.SendAsync(Authorized(HttpMethod.Get, "/crm/references/parties?take=1", token))).Content.ReadFromJsonAsync<JsonElement>();
+        return parties[0].GetProperty("id").GetInt64();
+    }
+
     private static async Task<(long Id, long Version)> CreateAsync(HttpClient client, string token)
     {
-        var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", token, new { partyId = 1, currency = "EUR", estimatedAmount = 10 }));
+        var partyId = await SeededPartyIdAsync(client, token);
+        var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", token, new { partyId, currency = "EUR", estimatedAmount = 10 }));
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         var id = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("opportunityId").GetInt64();
         var detail = await (await client.SendAsync(Authorized(HttpMethod.Get, $"/opportunities/{id}", token))).Content.ReadFromJsonAsync<JsonElement>();

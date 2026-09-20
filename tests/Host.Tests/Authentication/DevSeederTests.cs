@@ -154,6 +154,13 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
         return request;
     }
 
+    /// <summary>A real party of the caller's tenant: opportunities are created against existing customers only.</summary>
+    private static async Task<long> SeededPartyIdAsync(HttpClient client, string token)
+    {
+        var parties = await (await client.SendAsync(Authorized(HttpMethod.Get, "/crm/references/parties?take=1", token))).Content.ReadFromJsonAsync<JsonElement>();
+        return parties[0].GetProperty("id").GetInt64();
+    }
+
     private static async Task<string> AdminTokenAsync(HttpClient client, long tenantId)
     {
         var (_, cookie) = await LoginWithCookieAsync(client, DevSeeder.AdminEmail);
@@ -170,7 +177,8 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
         {
             var token = await AdminTokenAsync(client, tenantId);
 
-            var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", token, new { partyId = 1001, currency = "EUR", estimatedAmount = 250 }));
+            var partyId = await SeededPartyIdAsync(client, token);
+            var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", token, new { partyId, currency = "EUR", estimatedAmount = 250 }));
             Assert.Equal(HttpStatusCode.Created, created.StatusCode);
             var opportunityId = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("opportunityId").GetInt64();
 
@@ -198,7 +206,7 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
         using var client = host.CreateClient();
 
         var adminToken = await AdminTokenAsync(client, 1);
-        var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", adminToken, new { partyId = 1002, currency = "TRY", estimatedAmount = 10 }));
+        var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", adminToken, new { partyId = await SeededPartyIdAsync(client, adminToken), currency = "TRY", estimatedAmount = 10 }));
         var opportunityId = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("opportunityId").GetInt64();
 
         var viewer = await LoginAsync(client, DevSeeder.ViewerEmail);
@@ -223,7 +231,7 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
 
         var rep = await LoginAsync(client, DevSeeder.SalesRepEmail);
         var repToken = rep.GetProperty("accessToken").GetString()!;
-        var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", repToken, new { partyId = 1003, currency = "EUR", estimatedAmount = 5 }));
+        var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", repToken, new { partyId = await SeededPartyIdAsync(client, repToken), currency = "EUR", estimatedAmount = 5 }));
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         var opportunityId = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("opportunityId").GetInt64();
 

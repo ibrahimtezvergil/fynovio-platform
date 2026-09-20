@@ -68,13 +68,21 @@ export interface CreateOpportunityResponse {
   replayed: boolean
 }
 
-export async function createViaApi(
-  token: string,
-  params: { partyId: number; currency: string; estimatedAmount: number },
-): Promise<number> {
+/** A real customer of the token's tenant — an opportunity can only be created against an existing Party. */
+export async function seededPartyId(token: string): Promise<number> {
+  const api = await newApi()
+  const response = await api.get('/api/crm/references/parties?take=1', { headers: { Authorization: `Bearer ${token}` } })
+  expect(response.status()).toBe(200)
+  const parties = (await response.json()) as { id: number }[]
+  await api.dispose()
+  return parties[0].id
+}
+
+export async function createViaApi(token: string, params: { currency: string; estimatedAmount: number }): Promise<number> {
+  const partyId = await seededPartyId(token)
   const api = await newApi()
   const response = await api.post('/api/opportunities', {
-    data: params,
+    data: { partyId, ...params },
     headers: {
       ...CSRF,
       Authorization: `Bearer ${token}`,

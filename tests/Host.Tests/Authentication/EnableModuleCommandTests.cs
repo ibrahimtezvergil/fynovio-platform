@@ -54,11 +54,19 @@ public sealed class EnableModuleCommandTests : IClassFixture<AuthApiFixture>
         return (await Json(login)).GetProperty("accessToken").GetString()!;
     }
 
-    private static async Task<HttpStatusCode> CreateOpportunityAsync(HttpClient client, string bearer)
+    private static async Task<long> SeedPartyAsync(AuthApiHost host, long tenant)
+    {
+        await using var scope = host.Services.CreateAsyncScope();
+        var created = await scope.ServiceProvider.GetRequiredService<MasterData.Application.CreatePartyHandler>().HandleAsync(
+            new MasterData.Application.CreatePartyCommand(new TenantId(tenant), PartyType.Organization, "Acme", null, null, null, Guid.NewGuid().ToString(), Guid.NewGuid()));
+        return created.PartyId;
+    }
+
+    private static async Task<HttpStatusCode> CreateOpportunityAsync(HttpClient client, string bearer, long partyId)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "/opportunities")
         {
-            Content = JsonContent.Create(new { PartyId = 1, Currency = "TRY", EstimatedAmount = 100m })
+            Content = JsonContent.Create(new { PartyId = partyId, Currency = "TRY", EstimatedAmount = 100m })
         };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearer);
         request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
@@ -140,7 +148,8 @@ public sealed class EnableModuleCommandTests : IClassFixture<AuthApiFixture>
         Assert.Equal(BootstrapCommand.Success, bootstrap.Code);
         var bearer = await SignInAsync(client, bootstrap.Output, email);
 
-        Assert.Equal(HttpStatusCode.Forbidden, await CreateOpportunityAsync(client, bearer));
+        var partyId = await SeedPartyAsync(host, tenant);
+        Assert.Equal(HttpStatusCode.Forbidden, await CreateOpportunityAsync(client, bearer, partyId));
 
         var (code, output, error) = await RunEnableAsync(host, "--tenant-id", tenant.ToString(), "--module", "crm");
 
@@ -148,7 +157,7 @@ public sealed class EnableModuleCommandTests : IClassFixture<AuthApiFixture>
         Assert.Empty(error);
         Assert.Contains("enabled for tenant", output);
         Assert.Contains("1 administrator role assignment", output);
-        Assert.Equal(HttpStatusCode.Created, await CreateOpportunityAsync(client, bearer));
+        Assert.Equal(HttpStatusCode.Created, await CreateOpportunityAsync(client, bearer, partyId));
     }
 
     [Fact]
@@ -181,7 +190,7 @@ public sealed class EnableModuleCommandTests : IClassFixture<AuthApiFixture>
         Assert.Equal(BootstrapCommand.Success, code);
         Assert.Empty(error);
         Assert.Contains("Module 'crm' enabled", output);
-        Assert.Equal(HttpStatusCode.Created, await CreateOpportunityAsync(client, await SignInAsync(client, output, email)));
+        Assert.Equal(HttpStatusCode.Created, await CreateOpportunityAsync(client, await SignInAsync(client, output, email), await SeedPartyAsync(host, tenant)));
     }
 
     [Fact]

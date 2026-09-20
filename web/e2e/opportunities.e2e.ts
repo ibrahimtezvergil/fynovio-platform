@@ -12,6 +12,7 @@ import {
   reassignViaApi,
   salesRepToken,
   searchPartiesViaApi,
+  seededPartyId,
   subjectOf,
   viewerToken,
 } from './support/opportunities.ts'
@@ -126,7 +127,7 @@ test.describe('CRM Opportunities workflow', () => {
     const admin = await adminToken(1)
 
     // Prepare via API: create, add line, open
-    const id = await createViaApi(admin, { partyId: 1002, currency: 'USD', estimatedAmount: 500 })
+    const id = await createViaApi(admin, { currency: 'USD', estimatedAmount: 500 })
     await addLineViaApi(admin, id, { expectedVersion: 0, productId: 88, quantity: 1, unitPrice: 300, isOptional: false })
     const opp = await getViaApi(admin, id)
     const futureDate = new Date()
@@ -154,7 +155,7 @@ test.describe('CRM Opportunities workflow', () => {
   test('3b: Lose with blank reason shows validation and creates no request', async ({ page }) => {
     const admin = await adminToken(1)
 
-    const id = await createViaApi(admin, { partyId: 1003, currency: 'GBP', estimatedAmount: 300 })
+    const id = await createViaApi(admin, { currency: 'GBP', estimatedAmount: 300 })
     await addLineViaApi(admin, id, { expectedVersion: 0, productId: 89, quantity: 1, unitPrice: 200, isOptional: false })
     const opp = await getViaApi(admin, id)
     const futureDate = new Date()
@@ -226,7 +227,7 @@ test.describe('CRM Opportunities workflow', () => {
     const viewer = await viewerToken()
 
     // Prepare an open opportunity via admin
-    const id = await createViaApi(admin, { partyId: 2000, currency: 'EUR', estimatedAmount: 1000 })
+    const id = await createViaApi(admin, { currency: 'EUR', estimatedAmount: 1000 })
     const opp = await getViaApi(admin, id)
     const futureDate = new Date()
     futureDate.setDate(futureDate.getDate() + 1)
@@ -270,7 +271,7 @@ test.describe('CRM Opportunities workflow', () => {
   test('6: Reassign — the server lists who can take over; only an authorized caller sees the control', async ({ page }) => {
     const admin = await adminToken(1)
 
-    const id = await createViaApi(admin, { partyId: 2002, currency: 'EUR', estimatedAmount: 800 })
+    const id = await createViaApi(admin, { currency: 'EUR', estimatedAmount: 800 })
     const opp = await getViaApi(admin, id)
     const futureDate = new Date()
     futureDate.setDate(futureDate.getDate() + 1)
@@ -317,7 +318,7 @@ test.describe('CRM Opportunities workflow', () => {
 
   test('6b: Reassign — the server re-validates the target and never trusts a client-supplied principal', async () => {
     const admin = await adminToken(1)
-    const id = await createViaApi(admin, { partyId: 2004, currency: 'EUR', estimatedAmount: 900 })
+    const id = await createViaApi(admin, { currency: 'EUR', estimatedAmount: 900 })
     const opp = await getViaApi(admin, id)
     const issuer = opp.assignedPrincipalIssuer!
 
@@ -372,7 +373,7 @@ test.describe('CRM Opportunities workflow', () => {
   test('8: Concurrency — conflict detection and reload', async ({ browser }) => {
     const admin = await adminToken(1)
 
-    const id = await createViaApi(admin, { partyId: 2003, currency: 'EUR', estimatedAmount: 600 })
+    const id = await createViaApi(admin, { currency: 'EUR', estimatedAmount: 600 })
 
     const contextA = await browser.newContext({ locale: 'tr-TR' })
     const contextB = await browser.newContext({ locale: 'tr-TR' })
@@ -456,13 +457,27 @@ test.describe('CRM Opportunities workflow', () => {
     expect(afterList.length).toBe(beforeList.length + 1)
   })
 
+  test('9a-2: creating an opportunity for a customer that does not exist is a 422 party_not_found', async () => {
+    const admin = await adminToken(1)
+    const api = await newApi()
+
+    const response = await api.post('/api/opportunities', {
+      data: { partyId: 987654321, currency: 'EUR', estimatedAmount: 10 },
+      headers: { Authorization: `Bearer ${admin}`, ...CSRF, 'Idempotency-Key': crypto.randomUUID() },
+    })
+
+    expect(response.status()).toBe(422)
+    expect(((await response.json()) as { type: string }).type).toBe('party_not_found')
+    await api.dispose()
+  })
+
   test('9b: Idempotency — same key with same body vs. different body', async () => {
     const admin = await adminToken(1)
 
     const api = await newApi()
 
     const idempotencyKey = crypto.randomUUID()
-    const body1 = { partyId: 3001, currency: 'EUR', estimatedAmount: 2000 }
+    const body1 = { partyId: await seededPartyId(admin), currency: 'EUR', estimatedAmount: 2000 }
 
     // First request
     const response1 = await api.post('/api/opportunities', {
@@ -486,7 +501,7 @@ test.describe('CRM Opportunities workflow', () => {
 
     // Same key, different body → 409 idempotency_key_reused
     const response3 = await api.post('/api/opportunities', {
-      data: { partyId: 3002, currency: 'GBP', estimatedAmount: 3000 },
+      data: { ...body1, currency: 'GBP', estimatedAmount: 3000 },
       headers: { Authorization: `Bearer ${admin}`, ...CSRF, 'Idempotency-Key': idempotencyKey },
     })
     expect(response3.status()).toBe(409)
@@ -506,7 +521,7 @@ test.describe('CRM Opportunities workflow', () => {
     const admin2 = await adminToken(2)
 
     // Create in tenant 1
-    const id = await createViaApi(admin, { partyId: 4000, currency: 'EUR', estimatedAmount: 5000 })
+    const id = await createViaApi(admin, { currency: 'EUR', estimatedAmount: 5000 })
 
     // Verify visible in tenant 1
     await signIn(page, ADMIN, SEED_PASSWORD)
@@ -598,7 +613,7 @@ test.describe('CRM Opportunities workflow', () => {
 
   test('12a: no CRM grant — the list is empty (fail-closed scope) and a record is indistinguishable from a missing one', async ({ page }) => {
     const admin = await adminToken(1)
-    const id = await createViaApi(admin, { partyId: 5000, currency: 'EUR', estimatedAmount: 10 })
+    const id = await createViaApi(admin, { currency: 'EUR', estimatedAmount: 10 })
 
     await signIn(page, SINGLE, SEED_PASSWORD)
     await expect(page).toHaveURL(/\/dashboard$/)
