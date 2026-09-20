@@ -95,6 +95,26 @@ internal static class AuthTestSetup
         return mail.TokenFor(email);
     }
 
+    public static RequestPasswordResetHandler Forgot(AccessDbContext context, FakeEmailSender mail, TimeProvider time) =>
+        new(context, Tokens(context), mail, new AuthEventWriter(context), time);
+
+    public static ResetPasswordHandler Reset(AccessDbContext context, TimeProvider time) =>
+        new(context, new PasswordService(), new PasswordPolicy(new PasswordPolicyOptions()), Tokens(context), new AuthEventWriter(context), time);
+
+    public static async Task<AuthenticateResult> LoginAsync(PostgresFixture fixture, string email, string password, TimeProvider time)
+    {
+        await using var context = await RuntimeContextAsync(fixture);
+        return await new AuthenticateHandler(context, new PasswordService(), new LockoutOptions(), Session, new AuthEventWriter(context), time)
+            .HandleAsync(new AuthenticateCommand(email, password));
+    }
+
+    public static async Task<RefreshSessionResult> RefreshAsync(PostgresFixture fixture, string cookie, TimeProvider time)
+    {
+        await using var context = await RuntimeContextAsync(fixture);
+        return await new RefreshSessionHandler(context, Session, new AuthEventWriter(context), time)
+            .HandleAsync(new RefreshSessionCommand(cookie));
+    }
+
     public static ActorContext Actor(TenantId tenant, PrincipalRef principal) => new(tenant, principal, Guid.NewGuid());
 
     /// <summary>Inserts a token straight into the table (as the superuser) and returns the raw `<id>.<secret>` value.</summary>
