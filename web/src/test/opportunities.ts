@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { endpoints } from '@/api/endpoints'
 import { server } from '@/mocks/server'
 import { url } from '@/test/authHandlers'
+export { PAGE_SIZE } from '@/features/opportunities/api'
 
 /** Wire shapes (what the .NET API really sends — note the integer lifecycle status). */
 export const wireOpportunity = (overrides: Record<string, unknown> = {}) => ({
