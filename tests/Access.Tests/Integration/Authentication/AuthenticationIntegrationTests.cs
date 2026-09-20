@@ -369,8 +369,10 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
         var parts = refreshCookie.Split('.');
         var tokenId = Guid.Parse(parts[0]);
 
-        await using (var ctx2 = PostgresFixture.CreateContext(await _fixture.RuntimeConnectionStringAsync()))
+        var runtimeConnString = await _fixture.RuntimeConnectionStringAsync();
+        await using (var ctx2 = PostgresFixture.CreateContext(runtimeConnString))
         {
+            await using var tx2 = await ctx2.Database.BeginTransactionAsync();
             await ctx2.SetAccountContextAsync(accountId);
             var now = _fixture.TimeProvider.GetUtcNow();
 
@@ -381,12 +383,13 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
                     .SetProperty(t => t.ReplacedById, Guid.NewGuid()));
 
             Assert.Equal(1, affected);
+            await tx2.CommitAsync();
         }
 
         var handler = new SelectTenantHandler(
-            _context,
+            PostgresFixture.CreateContext(runtimeConnString),
             new SessionOptions { PlatformIssuer = "https://platform.example.com" },
-            new AuthEventWriter(_context),
+            new AuthEventWriter(PostgresFixture.CreateContext(runtimeConnString)),
             _fixture.TimeProvider);
 
         var result = await handler.HandleAsync(
@@ -445,7 +448,6 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task RefreshSessionHandler_ConcurrentRefresh_OneSucceedsOneConflicts()
     {
-        var (session, refreshCookie) = await CreateSession();
         var runtimeConnString = await _fixture.RuntimeConnectionStringAsync();
 
         var handler1 = new RefreshSessionHandler(
@@ -461,9 +463,6 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
             _fixture.TimeProvider);
 
         // Run concurrent refreshes 20 times to ensure we hit the race
-        int successCount = 0;
-        int conflictCount = 0;
-
         for (int i = 0; i < 20; i++)
         {
             // Create fresh session and token for each round
@@ -497,14 +496,13 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
         // Parse token id from cookie
         var parts = refreshCookie.Split('.');
         var tokenId = Guid.Parse(parts[0]);
-        var tokenSecret = parts[1];
 
-        // Create a second context to simulate the "winner"
+        // Create a second context to simulate the "winner" and manually rotate the token
         using (var ctx2 = PostgresFixture.CreateContext(runtimeConnString))
         {
+            await using var tx = await ctx2.Database.BeginTransactionAsync();
             await ctx2.SetAccountContextAsync(session.AccountId);
 
-            // Manually rotate the token from another context
             var now = _fixture.TimeProvider.GetUtcNow();
             var newTokenId = Guid.NewGuid();
 
@@ -515,7 +513,11 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
                     .SetProperty(t => t.ReplacedById, newTokenId));
 
             Assert.Equal(1, affected);
+            await tx.CommitAsync();
         }
+
+        // Advance time beyond grace window to trigger reuse detection
+        _fixture.TimeProvider.Advance(TimeSpan.FromSeconds(10));
 
         // Now handler should detect the race
         var handler = new RefreshSessionHandler(
@@ -526,13 +528,16 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
 
         var result = await handler.HandleAsync(new RefreshSessionCommand(refreshCookie));
 
-        // Outside grace window by default
+        // Outside grace window after advance
         Assert.Equal(RefreshResult.SessionInvalid, result.Status);
 
-        // Session should be revoked
-        var revokedSession = await _context.AuthSessions.FirstAsync(s => s.Id == session.Id);
-        Assert.True(revokedSession.IsRevoked);
-        Assert.Equal("reuse_detected", revokedSession.RevokedReason);
+        // Session should be revoked — check from a fresh context
+        using (var freshContext = PostgresFixture.CreateContext(runtimeConnString))
+        {
+            var revokedSession = await freshContext.AuthSessions.FirstAsync(s => s.Id == session.Id);
+            Assert.True(revokedSession.IsRevoked, "Session should be revoked after reuse detection");
+            Assert.Equal("reuse_detected", revokedSession.RevokedReason);
+        }
     }
 
     [Fact]
@@ -571,9 +576,13 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
         Assert.All(results, r => Assert.Equal(AuthenticationStatus.InvalidCredentials, r.Status));
 
         // Verify account is locked (≥ threshold attempts)
-        var credential = await _context.AccountCredentials.FirstAsync(c => c.AccountId == accountId);
-        Assert.True(credential.FailedAttempts >= 3, $"Expected FailedAttempts >= 3, got {credential.FailedAttempts}");
-        Assert.True(credential.IsLocked(_fixture.TimeProvider.GetUtcNow()));
+        // Reload from a fresh context to see the concurrent updates
+        using (var freshContext = PostgresFixture.CreateContext(runtimeConnString))
+        {
+            var credential = await freshContext.AccountCredentials.FirstAsync(c => c.AccountId == accountId);
+            Assert.True(credential.FailedAttempts >= 3, $"Expected FailedAttempts >= 3, got {credential.FailedAttempts}");
+            Assert.True(credential.IsLocked(_fixture.TimeProvider.GetUtcNow()));
+        }
     }
 
     [Fact]

@@ -84,7 +84,6 @@ public sealed class AuthenticateHandler
         {
             // Retry failed login update up to 3 times in case of concurrency conflicts
             const int maxRetries = 3;
-            bool saved = false;
 
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
@@ -92,7 +91,6 @@ public sealed class AuthenticateHandler
                 {
                     credential.RecordFailedAttempt(_lockoutOptions.MaxFailedAttempts, _lockoutOptions.LockoutMinutes, now);
                     await _context.SaveChangesAsync(cancellationToken);
-                    saved = true;
                     break;
                 }
                 catch (DbUpdateConcurrencyException)
