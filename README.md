@@ -164,7 +164,45 @@ curl -i -X POST http://localhost:5208/auth/login \
   -d '{"email":"single@fynovio.local","password":"<DevSeed:Password>"}'
 ```
 
-Production has no seed and no default credential (the one-time bootstrap command arrives with Phase 2.5A slice S3). Authentication settings live under `Authentication:*` in `appsettings*.json`; the signing key, allowed origins and public base URL must be supplied per environment.
+Production has no seed and no default credential (see *Bootstrapping a tenant administrator* below). Authentication settings live under `Authentication:*` in `appsettings*.json`; the signing key, allowed origins and public base URL must be supplied per environment.
+
+### Invitations, password reset and e-mail
+
+Invitation and password-reset links are e-mailed. The link always points at `Authentication:PublicAppBaseUrl` and carries the single-use token in the URL *fragment* (`/accept-invite#token=…`, `/reset-password#token=…`), so it never reaches server logs, proxies or `Referer`.
+
+| Where | What happens to a message |
+|---|---|
+| Development (always) | recorded in memory and readable at `GET /dev/mailbox[?to=address]` (newest first, with `link` and `token`); `DELETE /dev/mailbox` clears it. The route is not mapped outside Development. |
+| `Email:Smtp:Enabled=true` | additionally delivered over SMTP, off the request path (a background worker), so the time an e-mail takes can never show through a response. Failures are logged (template + masked recipient only) and change no response. |
+| Otherwise | not delivered; a log line says so (masked recipient + template, never the link). |
+
+SMTP settings are `Email:Smtp:{Enabled,Host,Port,Username,Password,EnableSsl,FromAddress,FromName}`. **Keep the credentials out of tracked files** — use user-secrets (the Host has a `UserSecretsId`) or environment variables (`Email__Smtp__Password`). Example with a Mailtrap sandbox inbox:
+
+```bash
+cd src/Host
+dotnet user-secrets set "Email:Smtp:Enabled"  "true"
+dotnet user-secrets set "Email:Smtp:Host"     "sandbox.smtp.mailtrap.io"
+dotnet user-secrets set "Email:Smtp:Port"     "2525"
+dotnet user-secrets set "Email:Smtp:Username" "<mailtrap username>"
+dotnet user-secrets set "Email:Smtp:Password" "<mailtrap password>"
+```
+
+Then, with the API running, `curl -X POST http://localhost:5208/auth/password/forgot -H 'Content-Type: application/json' -H 'X-Requested-With: fynovio' -d '{"email":"admin@fynovio.local"}'` puts a reset mail in the Mailtrap inbox. Automated tests force `Email:Smtp:Enabled=false`, so they never send mail even when secrets are present. Queued mail is in memory only: a crash loses it (a transactional outbox is the follow-up if that matters).
+
+Related switches (all off by default): `Authentication:SelfRegistration:Enabled` (public sign-up creates an identity and *nothing else* — no membership; outside Development it also needs `AcknowledgeUnverifiedEmail=true` because addresses are not verified), and `Authentication:Tokens:{InviteDays=7,PasswordResetMinutes=30,PasswordSetupHours=24}`.
+
+A tenant administrator invites a member with `POST /tenants/{tenantId}/invitations` (bearer token, action `identity.membership.invite`); `GET /auth/me` reports `capabilities.canInviteMembers`. A development database that was bootstrapped *before* this action existed has no such grant for its administrators — recreate the database (or re-run the seed against a fresh one).
+
+### Bootstrapping a tenant administrator (production)
+
+There is no default credential. The first administrator of a tenant is created by an operator command that runs *instead of* the web server (never over HTTP):
+
+```bash
+Bootstrap__Enabled=true dotnet Host.dll bootstrap-tenant-admin \
+  --tenant-id 1 --email admin@example.com --display-name "Jane Admin"
+```
+
+It refuses unless `Bootstrap:Enabled=true`, refuses a tenant that is already bootstrapped, and prints a **single-use password-setup link** (valid `PasswordSetupHours`) once to stdout — never to the logs. The operator hands it to the administrator, who sets a password through `/reset-password`; every further member arrives by invitation. Exit codes: `0` ok, `2` not enabled, `3` already bootstrapped, `64` bad arguments.
 
 ## Getting started
 
