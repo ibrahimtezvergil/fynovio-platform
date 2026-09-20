@@ -113,6 +113,9 @@ builder.Services.AddScoped<ProvisionPasswordAccountHandler>();
 builder.Services.AddScoped<AccessTokenIssuer>();
 builder.Services.AddScoped<RefreshCookieWriter>();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+builder.Services.AddSingleton(new IdentifierRateLimiter(
+    loginPerMinute: authOptions.RateLimiting.LoginPerMinute,
+    forgotPerHour: authOptions.RateLimiting.ForgotPerHour));
 
 // Register CRM handlers
 builder.Services.AddScoped<CreateOpportunityHandler>();
@@ -229,6 +232,7 @@ app.UseAuthorization();
 app.UseMiddleware<ActorContextMiddleware>();
 
 app.UseExceptionHandler();
+app.MapAuthEndpoints();
 app.MapOpportunityEndpoints();
 
 app.MapGet("/", () => "Hello World!");
