@@ -6,7 +6,7 @@ import { endpoints } from '@/api/endpoints'
 import { useSessionStore } from '@/lib/auth'
 import { server } from '@/mocks/server'
 import { authenticated, url } from '@/test/authHandlers'
-import { mockDetailApi, noActions, problemResponse, recordRequests, wireOpportunity } from '@/test/opportunities'
+import { mockDetailApi, mockParties, noActions, problemResponse, recordRequests, wireOpportunity } from '@/test/opportunities'
 import { renderRoutes, tr } from '@/test/render'
 import { resetSession } from '@/test/session'
 import OpportunityDetailPage from './OpportunityDetailPage'
@@ -57,20 +57,33 @@ describe('detail — actions come from the backend projection, not from the life
     expect(screen.queryByRole('button', { name: t('lose.action') })).not.toBeInTheDocument()
   })
 
-  it('offers the reassign dependency notice only when the backend says reassign is allowed, and never a principal input', async () => {
+  it('offers Reassign only when the backend says it is allowed', async () => {
     mockDetailApi(12, recordRequests(), { actions: () => HttpResponse.json({ ...noActions, canReassign: true }) })
     render()
 
-    expect(await screen.findByTestId('reassign-dependency')).toBeInTheDocument()
-    expect(screen.queryByRole('textbox', { name: /principal|subject|owner|sahip/i })).not.toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: t('summary.reassign') })).toBeInTheDocument()
+    expect(screen.queryByTestId('no-actions')).not.toBeInTheDocument()
   })
 
-  it('shows no reassign notice when it is not allowed', async () => {
+  it('shows no Reassign control when it is not allowed, and never a free-text principal input', async () => {
     mockDetailApi(12, recordRequests())
     render()
 
     await screen.findByText(t('detail.title', { id: 12 }))
-    expect(screen.queryByTestId('reassign-dependency')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: t('summary.reassign') })).not.toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: /principal|subject|owner|sahip/i })).not.toBeInTheDocument()
+  })
+
+  it('names the customer through the reference lookup, and keeps the bare id when the lookup is refused', async () => {
+    mockParties()
+    mockDetailApi(12, recordRequests())
+    const { unmount } = render()
+    expect(await screen.findByText(t('summary.partyNamed', { name: 'Acme Ltd', id: 1001 }))).toBeInTheDocument()
+    unmount()
+
+    server.use(http.get(url(endpoints.references.parties), () => problemResponse(403, 'forbidden')))
+    render()
+    expect(await screen.findByText(t('summary.partyValue', { id: 1001 }))).toBeInTheDocument()
   })
 
   it('a masked/omitted field is simply not rendered', async () => {

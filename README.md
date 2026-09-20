@@ -167,11 +167,12 @@ No `.env` is needed: the dev server proxies `/api/*` to the API on `:5208`, whic
 
 ### 4. Signing in
 
-On start the API seeds four sign-in identities plus the CRM data the Opportunity screens need (idempotent; Development only, and only via the `dotnet run` launch profiles — `DevSeed:Enabled` is `false` in `appsettings.Development.json` so test hosts are unaffected). All four share the password **`Dev-Only-Passw0rd-Change-Me`** (`DevSeed:Password` in `src/Host/appsettings.Development.json`; a development-only value that must never be reused anywhere else). An account is created only if it does not exist yet, so changing `DevSeed:Password` later does not touch existing accounts — set a new one with the *Forgot password* flow or the account-security page instead.
+On start the API seeds five sign-in identities plus the CRM data the Opportunity screens need (idempotent; Development only, and only via the `dotnet run` launch profiles — `DevSeed:Enabled` is `false` in `appsettings.Development.json` so test hosts are unaffected). All five share the password **`Dev-Only-Passw0rd-Change-Me`** (`DevSeed:Password` in `src/Host/appsettings.Development.json`; a development-only value that must never be reused anywhere else). An account is created only if it does not exist yet, so changing `DevSeed:Password` later does not touch existing accounts — set a new one with the *Forgot password* flow or the account-security page instead.
 
 | Account | State it exercises |
 |---|---|
-| `admin@fynovio.local` | tenant administrator of tenants 1 and 2 → tenant selection, then full CRM access (the seed grants the `crm_manager` role in both tenants) |
+| `admin@fynovio.local` | tenant administrator of tenants 1 and 2 → tenant selection, then full CRM access (the seed enables the CRM module in both tenants, which grants the administrator the `crm_manager` role) |
+| `rep@fynovio.local` | member of tenant 1 only, CRM sales representative (`crm_sales_representative`: read + create/work opportunities + customer search, **no** reassign) → is offered as a Reassign candidate, is not offered the Reassign control |
 | `single@fynovio.local` | member of tenant 1 only, no grants → signed in directly, CRM calls are `403` |
 | `viewer@fynovio.local` | member of tenant 1 only, read-only CRM (`crm_viewer`: `crm.opportunity.read`/`list`) → sees Opportunities, every mutation is denied and no action is offered |
 | `nomember@fynovio.local` | no membership → the `no_membership` state |
@@ -184,7 +185,7 @@ curl -i -X POST http://localhost:5208/auth/login \
   -d '{"email":"single@fynovio.local","password":"<DevSeed:Password>"}'
 ```
 
-The seed also creates one pipeline per dev tenant (`Sales pipeline` v1: Qualification → Proposal → Negotiation, plus one retired stage). It is the only place CRM grants and a pipeline come from today: the production tenant bootstrap grants only Access's own actions, so a production tenant administrator holds no `crm.*` grant until the template/bootstrap strategy is decided (Phase 2.5B plan, OD2). A database seeded before this change gets the CRM roles and pipeline on the next start (the seed is idempotent per piece).
+The seed also creates one pipeline per dev tenant (`Sales pipeline` v1: Qualification → Proposal → Negotiation, plus one retired stage) and a few sample customers (`Party` rows, created through the real `CreatePartyHandler`; six in tenant 1, three in tenant 2) so the customer picker has something to search. The CRM roles are **not** seeded separately any more: the seed runs the same module-enablement path production uses (see *Enabling a business module for a tenant* below), so the development database exercises the production grant mechanism. Both go through production paths too: the pipeline through `ProvisionPipelineHandler` (the `provision-crm-pipeline` command below; the seed adds one retired stage on top), the parties through `CreatePartyHandler` behind `POST /crm/references/parties`. Only the sample data itself is dev-only. A development database created before Phase 2.6 already holds `crm_*` roles that the template would have to adopt; enablement refuses to adopt tenant-authored rows (`TemplateKeyConflict`, logged as a warning by the seed), so recreate such a database.
 
 Production has no seed and no default credential (see *Bootstrapping a tenant administrator* below). Authentication settings live under `Authentication:*` in `appsettings*.json`; the signing key, allowed origins and public base URL must be supplied per environment.
 
@@ -225,6 +226,32 @@ Bootstrap__Enabled=true dotnet Host.dll bootstrap-tenant-admin \
 ```
 
 It refuses unless `Bootstrap:Enabled=true`, refuses a tenant that is already bootstrapped, and prints a **single-use password-setup link** (valid `PasswordSetupHours`) once to stdout — never to the logs. The operator hands it to the administrator, who sets a password through `/reset-password`; every further member arrives by invitation. Exit codes: `0` ok, `2` not enabled, `3` already bootstrapped, `64` bad arguments.
+
+Add `--modules crm` (comma-separated module keys) to enable business modules in the same run: the keys are validated **before** anything is created, and the modules are enabled after the administrator exists (a module that fails to enable does not hide the setup link — fix the cause and run `enable-tenant-module` for the remainder).
+
+### Enabling a business module for a tenant (production)
+
+A tenant administrator's grants are Access's own catalog only. Business modules (CRM first; Sales/Inventory later, same mechanism) arrive through their **versioned capability template**: each module publishes a manifest (permission sets of explicit action keys — never a `crm.*` wildcard — and system roles built from them) and the operator enables it for a tenant:
+
+```bash
+Bootstrap__Enabled=true dotnet Host.dll enable-tenant-module --tenant-id 1 --module crm
+```
+
+Enablement copies the module's **current** template version into ordinary tenant-local `Role`/`PermissionSet` rows (provenance: `origin_module_key`, `origin_version`), assigns the roles marked for administrators (CRM: `crm_manager`) to the tenant's current administrators, bumps `TenantAccessRevision` and writes evidence + outbox in one transaction. It is idempotent by state: re-running reports `AlreadyEnabled` (exit `0`) and changes nothing, **even if the template has since moved to a newer version** — there is deliberately no reconciler and no silent propagation (Phase 1.5 decision); an upgrade path would be a new decision. It never adopts a role or permission set with a colliding key that a tenant authored itself (`TemplateKeyConflict`, exit `5`). Exit codes: `0` enabled/already enabled, `2` not enabled by configuration, `4` tenant not bootstrapped, `5` template key conflict, `64` bad arguments or unknown module. Module keys come from `Host.Modules.PlatformModules` — adding a module there is what makes it enable-able and registers its actions.
+
+### Giving a tenant its first sales pipeline (production)
+
+A tenant with the CRM module still cannot Open or move an opportunity until it has a pipeline. The platform does **not** invent a stage template — the operator names the stages, in order; the first is the entry stage:
+
+```bash
+Bootstrap__Enabled=true dotnet Host.dll provision-crm-pipeline --tenant-id 1 --name "Sales pipeline" --stages "Qualification,Proposal,Negotiation"
+```
+
+It creates pipeline version 1 in one transaction under the tenant's RLS context. Like module enablement it is idempotent by state and never edits what exists: a tenant that already has a pipeline gets `already has a pipeline; nothing changed` (exit `0`), even when different stages are passed. A tenant that is not bootstrapped is refused (a typo in `--tenant-id` must not create configuration for a tenant that does not exist). Exit codes: `0` provisioned/already provisioned, `2` not enabled by configuration, `4` tenant not bootstrapped, `64` bad arguments (missing values, duplicate stage names ignoring case, more than 50 stages, names over 100 characters). Changing a pipeline afterwards has no path yet.
+
+### Customers (Parties) and opportunities
+
+`POST /crm/references/parties` (header `Idempotency-Key`; body `{ partyType: "Person"|"Organization", name, surname?, phone?, email? }`) registers a customer in the caller's tenant — gated by the CRM action `crm.reference.party.create` (held by `crm_sales_representative` and `crm_manager`, not `crm_viewer`), answering `201 { id, replayed }`. `POST /opportunities` now verifies the customer: an unknown or other-tenant party is `422 party_not_found`, and a merged party is stored as its surviving party. **Template note:** `crm.reference.party.create` was added to the CRM v1 permission set *in place* — no v2 — because enablement is copy-once (no reconciler) and nothing is in production yet; from the first production tenant on, a template content change must bump the version. A tenant enabled *before* this key existed does not receive it (recreate a development database).
 
 ### End-to-end tests (real API + PostgreSQL + browser)
 

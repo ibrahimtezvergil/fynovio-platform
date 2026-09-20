@@ -10,6 +10,7 @@ using Host.Authentication;
 using Host.Bootstrap;
 using Host.Email;
 using Host.Endpoints;
+using Host.Modules;
 using MasterData.Application;
 using MasterData.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -40,12 +41,16 @@ builder.Services.AddDbContext<AccessDbContext>(options => options
     .AddInterceptors(new RowVersionInterceptor()));
 
 builder.Services.AddScoped<IPartyDirectory, PartyDirectory>();
+builder.Services.AddScoped<IPartySearch, PartyDirectory>();
+builder.Services.AddScoped<CreatePartyHandler>();
+builder.Services.AddScoped<IPartyRegistration, PartyRegistration>();
 builder.Services.AddScoped<IPartyIdentityResolver, PartyIdentityResolver>();
 
 builder.Services.AddScoped<PrincipalResolver>();
 builder.Services.AddScoped<IActionCatalog, AccessActionCatalogService>();
 builder.Services.AddScoped<IAuthorizer, AccessAuthorizer>();
 builder.Services.AddScoped<IAccessScopeResolver, AccessScopeResolver>();
+builder.Services.AddScoped<IAuthorizedPrincipalDirectory, AuthorizedPrincipalDirectory>();
 
 // Load and validate JWT options (fail-fast at startup)
 var jwtOptions = builder.Configuration.GetSection("Authentication:Jwt").Get<JwtOptions>()
@@ -138,6 +143,8 @@ builder.Services.AddScoped<SelectTenantHandler>();
 builder.Services.AddScoped<GetSessionOverviewHandler>();
 builder.Services.AddScoped<ProvisionPasswordAccountHandler>();
 builder.Services.AddScoped<BootstrapTenantAccessHandler>();
+builder.Services.AddSingleton(new ModuleCapabilityCatalog(PlatformModules.CapabilityManifests));
+builder.Services.AddScoped<EnableTenantModuleHandler>();
 
 // Invitations, password lifecycle, registration, bootstrap and capabilities
 builder.Services.AddScoped<AccountTokenService>();
@@ -188,6 +195,10 @@ builder.Services.AddScoped<ChangePipelineStageHandler>();
 builder.Services.AddScoped<WinOpportunityHandler>();
 builder.Services.AddScoped<LoseOpportunityHandler>();
 builder.Services.AddScoped<ReassignOpportunityHandler>();
+builder.Services.AddScoped<ListAssignablePrincipalsHandler>();
+builder.Services.AddScoped<ProvisionPipelineHandler>(); // operator command `provision-crm-pipeline` and the Development seed
+builder.Services.AddScoped<SearchPartyReferencesHandler>();
+builder.Services.AddScoped<CreatePartyReferenceHandler>();
 builder.Services.AddScoped<GetOpportunityHandler>();
 builder.Services.AddScoped<ListOpportunitiesHandler>();
 builder.Services.AddScoped<GetPipelineStagesHandler>();
@@ -291,14 +302,16 @@ if (!app.Environment.IsDevelopment())
 using (var scope = app.Services.CreateScope())
 {
     var accessDb = scope.ServiceProvider.GetRequiredService<AccessDbContext>();
-    var manifest = AccessActionCatalog.All
-        .Concat(CrmActionCatalog.All.Select(d => new ActionRegistryDescriptor(d.ActionKey, "CRM", d.ResourceType, d.RiskClass)));
-    await AccessActionCatalogSeeder.EnsureSeededAsync(accessDb, manifest);
+    await AccessActionCatalogSeeder.EnsureSeededAsync(accessDb, PlatformModules.ActionRegistry);
 }
 
 // Operator command: runs instead of the web server (never over HTTP), after the action registry is seeded.
 if (BootstrapCommand.IsRequested(args))
     return await BootstrapCommand.RunAsync(app.Services, app.Configuration, args, Console.Out, Console.Error);
+if (EnableModuleCommand.IsRequested(args))
+    return await EnableModuleCommand.RunAsync(app.Services, app.Configuration, args, Console.Out, Console.Error);
+if (ProvisionCrmPipelineCommand.IsRequested(args))
+    return await ProvisionCrmPipelineCommand.RunAsync(app.Services, app.Configuration, args, Console.Out, Console.Error);
 
 if (!app.Environment.IsDevelopment() && !emailOptions.Smtp.Enabled)
     app.Logger.LogWarning("Email:Smtp:Enabled is false: invitation and password-reset e-mails will not be delivered.");

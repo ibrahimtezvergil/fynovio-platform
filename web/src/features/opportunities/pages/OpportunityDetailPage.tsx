@@ -11,12 +11,13 @@ import { useAvailableActions, useOpportunity, useReloadOpportunity } from '../ap
 import { ApiModeChip } from '../components/ApiModeChip'
 import { LinesCard } from '../components/LinesCard'
 import { LoseDialog, OpenDialog, WinDialog } from '../components/LifecycleDialogs'
+import { ReassignDialog } from '../components/ReassignDialog'
 import { OpportunityStatusBadge } from '../components/OpportunityStatusBadge'
 import { PipelineCard } from '../components/PipelineCard'
 import { QueryProblemState } from '../components/QueryProblemState'
 import { SummaryCard } from '../components/SummaryCard'
 
-type LifecycleAction = 'open' | 'win' | 'lose'
+type LifecycleAction = 'open' | 'win' | 'lose' | 'reassign'
 
 export default function OpportunityDetailPage() {
   const { t } = useTranslation('opportunities')
@@ -53,7 +54,7 @@ export default function OpportunityDetailPage() {
   // Fail closed: while the projection is loading or failed, no lifecycle control is offered.
   const actions = actionsQuery.data
   const terminal = data.status === 'Won' || data.status === 'Lost'
-  const noActionAvailable = actions !== undefined && !actions.canOpen && !actions.canWin && !actions.canLose && !terminal
+  const noActionAvailable = actions !== undefined && !actions.canOpen && !actions.canWin && !actions.canLose && !actions.canReassign && !terminal
 
   return (
     <div className="flex flex-col gap-5">
@@ -69,6 +70,11 @@ export default function OpportunityDetailPage() {
             {opportunity.isFetching && <RefreshCw aria-label={t('detail.refreshing')} className="text-muted-foreground size-4 animate-spin" />}
             {actions?.canOpen && <Button onClick={() => setDialog('open')}>{t('open.action')}</Button>}
             {actions?.canWin && <Button onClick={() => setDialog('win')}>{t('win.action')}</Button>}
+            {actions?.canReassign && (
+              <Button variant="outline" onClick={() => setDialog('reassign')}>
+                {t('summary.reassign')}
+              </Button>
+            )}
             {actions?.canLose && (
               <Button variant="destructive" onClick={() => setDialog('lose')}>
                 {t('lose.action')}
@@ -103,7 +109,7 @@ export default function OpportunityDetailPage() {
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <div className="grid content-start gap-5">
-          <SummaryCard opportunity={data} actions={actions} />
+          <SummaryCard opportunity={data} />
           <LinesCard opportunity={data} onReload={() => void reload()} />
         </div>
         <div className="grid content-start gap-5">
@@ -113,6 +119,7 @@ export default function OpportunityDetailPage() {
 
       {dialog === 'open' && <OpenDialog opportunity={data} onClose={() => setDialog(null)} onReload={() => void reload()} />}
       {dialog === 'win' && <WinDialog opportunity={data} onClose={() => setDialog(null)} onReload={() => void reload()} />}
+      {dialog === 'reassign' && <ReassignDialog opportunity={data} onClose={() => setDialog(null)} onReload={() => void reload()} />}
       {dialog === 'lose' && <LoseDialog opportunity={data} onClose={() => setDialog(null)} onReload={() => void reload()} />}
     </div>
   )

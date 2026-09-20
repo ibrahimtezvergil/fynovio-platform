@@ -77,6 +77,24 @@ export const pipelineStageSchema = z.object({
 })
 export type PipelineStage = z.infer<typeof pipelineStageSchema>
 
+/** A member the SERVER says may be assigned this opportunity (authorization-aware; the UI never filters or adds to the list). */
+export const assignablePrincipalSchema = z.object({
+  issuer: z.string(),
+  subject: z.string(),
+  displayName: z.string(),
+  email: z.string().nullish(),
+})
+export type AssignablePrincipal = z.infer<typeof assignablePrincipalSchema>
+
+/** Display fields of a Party from the CRM reference query — nothing beyond what a picker needs. */
+export const partyReferenceSchema = z.object({
+  id: z.number(),
+  partyType: z.string(),
+  displayName: z.string(),
+  email: z.string().nullish(),
+})
+export type PartyReference = z.infer<typeof partyReferenceSchema>
+
 // The command results carry only what the caller needs; the canonical state is refetched after every command.
 export const createResultSchema = z.object({ opportunityId: z.number(), replayed: z.boolean() })
 export const commandResultSchema = z.object({ opportunityId: z.number(), replayed: z.boolean().optional() }).loose()

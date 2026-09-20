@@ -15,6 +15,7 @@ export type ProblemKind =
   | 'idempotencyConflict'
   | 'lifecycle'
   | 'pipeline'
+  | 'notAssignable'
   | 'rateLimited'
   | 'unavailable'
 
@@ -39,6 +40,8 @@ export function toProblem(error: ApiError): Problem {
     case 'invalid_pipeline_transition':
     case 'invalid_pipeline_configuration':
       return { kind: 'pipeline', detail }
+    case 'principal_not_assignable':
+      return { kind: 'notAssignable' }
     case 'validation_error':
       return { kind: 'validation', detail }
     case 'not_found':

@@ -12,15 +12,17 @@ public static class CrmActionCatalog
 {
     public static readonly IReadOnlyList<CrmActionDescriptor> All =
     [
-        new("crm.opportunity.create", "Opportunity"),
-        new("crm.opportunity.add_line", "Opportunity"),
-        new("crm.opportunity.cancel_line", "Opportunity"),
-        new("crm.opportunity.open", "Opportunity"),
-        new("crm.opportunity.change_stage", "Opportunity"),
-        new("crm.opportunity.win", "Opportunity", RiskClass: "high"),
-        new("crm.opportunity.lose", "Opportunity", RiskClass: "high"),
-        new("crm.opportunity.reassign", "Opportunity", RiskClass: "high"),
-        new("crm.opportunity.read", "Opportunity"),
-        new("crm.opportunity.list", "Opportunity")
+        new(CrmActionKeys.OpportunityCreate, "Opportunity"),
+        new(CrmActionKeys.OpportunityAddLine, "Opportunity"),
+        new(CrmActionKeys.OpportunityCancelLine, "Opportunity"),
+        new(CrmActionKeys.OpportunityOpen, "Opportunity"),
+        new(CrmActionKeys.OpportunityChangeStage, "Opportunity"),
+        new(CrmActionKeys.OpportunityWin, "Opportunity", RiskClass: "high"),
+        new(CrmActionKeys.OpportunityLose, "Opportunity", RiskClass: "high"),
+        new(CrmActionKeys.OpportunityReassign, "Opportunity", RiskClass: "high"),
+        new(CrmActionKeys.OpportunityRead, "Opportunity"),
+        new(CrmActionKeys.OpportunityList, "Opportunity"),
+        new(CrmActionKeys.PartyReferenceSearch, "PartyReference"),
+        new(CrmActionKeys.PartyReferenceCreate, "PartyReference")
     ];
 }

@@ -3,7 +3,9 @@ using Access.Application.Authentication;
 using Access.Domain.Identity;
 using Access.Persistence;
 using Contracts;
+using CRM.Application;
 using CRM.Persistence;
+using MasterData.Application;
 using Microsoft.EntityFrameworkCore;
 
 namespace Host.Authentication;
@@ -37,6 +39,10 @@ public static class DevSeeder
     /// <summary>Active member of tenant 1 only, read-only CRM grants (`crm.opportunity.read`/`list`) →
     /// sees Opportunities but every mutation is denied and every available action is false.</summary>
     public const string ViewerEmail = "viewer@fynovio.local";
+
+    /// <summary>Active member of tenant 1 only, the CRM sales-representative template role (works opportunities,
+    /// cannot reassign) → an eligible assignee besides the administrator.</summary>
+    public const string SalesRepEmail = "rep@fynovio.local";
 
     /// <summary>Account without any membership → the `no_membership` state.</summary>
     public const string NoMembershipEmail = "nomember@fynovio.local";
@@ -101,6 +107,14 @@ public static class DevSeeder
             seeded++;
         }
 
+        if (!await CredentialExistsAsync(context, SalesRepEmail, cancellationToken))
+        {
+            await provision.HandleAsync(
+                new ProvisionPasswordAccountCommand(SalesRepEmail, "Dev Sales Representative", options.Password, platformIssuer, TenantOne),
+                cancellationToken);
+            seeded++;
+        }
+
         if (!await CredentialExistsAsync(context, NoMembershipEmail, cancellationToken))
         {
             await provision.HandleAsync(
@@ -109,24 +123,43 @@ public static class DevSeeder
             seeded++;
         }
 
-        await SeedCrmAsync(scope.ServiceProvider, context, cancellationToken);
+        await SeedCrmAsync(scope.ServiceProvider, context, platformIssuer, logger, cancellationToken);
 
-        logger.LogInformation("Dev seed applied ({Created} new accounts). Sign-in identities: {Admin}, {Single}, {Viewer}, {NoMembership}.",
-            seeded, AdminEmail, SingleTenantEmail, ViewerEmail, NoMembershipEmail);
+        logger.LogInformation("Dev seed applied ({Created} new accounts). Sign-in identities: {Admin}, {Single}, {Viewer}, {SalesRep}, {NoMembership}.",
+            seeded, AdminEmail, SingleTenantEmail, ViewerEmail, SalesRepEmail, NoMembershipEmail);
     }
 
-    private static async Task SeedCrmAsync(IServiceProvider services, AccessDbContext access, CancellationToken cancellationToken)
+    private static async Task SeedCrmAsync(
+        IServiceProvider services, AccessDbContext access, string platformIssuer, ILogger logger, CancellationToken cancellationToken)
     {
-        var crm = services.GetRequiredService<CrmDbContext>();
+        var enableModule = services.GetRequiredService<EnableTenantModuleHandler>();
         var adminAccountId = await AccountIdAsync(access, AdminEmail, cancellationToken);
         var viewerAccountId = await AccountIdAsync(access, ViewerEmail, cancellationToken);
+        var salesRepAccountId = await AccountIdAsync(access, SalesRepEmail, cancellationToken);
+        var seedOperator = new PrincipalRef(platformIssuer, "operator:dev-seed");
 
         foreach (var tenant in new[] { TenantOne, TenantTwo })
         {
-            // The viewer belongs to tenant 1 only (a role assignment needs an active membership there).
-            var viewerHere = tenant == TenantOne ? viewerAccountId : (long?)null;
-            await CrmDevSeed.EnsureRolesAsync(access, tenant, adminAccountId, adminAccountId, viewerHere, cancellationToken);
-            await CrmDevSeed.EnsurePipelineAsync(crm, tenant, cancellationToken);
+            // The production mechanism, not a dev shortcut: copies the CRM template and gives the tenant
+            // administrator the manager role. Idempotent (a second run reports AlreadyEnabled).
+            var enabled = await enableModule.HandleAsync(
+                new EnableTenantModuleCommand(tenant, CrmModuleCapabilities.ModuleKey, seedOperator, Guid.NewGuid()), cancellationToken);
+            if (enabled.Status == EnableTenantModuleStatus.TemplateKeyConflict)
+            {
+                logger.LogWarning(
+                    "Tenant {Tenant} already has CRM roles from an older dev seed, so the CRM template was not applied. Reset the dev database to pick it up. {Detail}",
+                    tenant.Value, enabled.Detail);
+            }
+
+            // Viewer and sales representative belong to tenant 1 only (an assignment needs an active membership there).
+            if (tenant == TenantOne)
+            {
+                await CrmDevSeed.EnsureAssignmentAsync(access, tenant, CrmModuleCapabilities.ViewerRoleKey, viewerAccountId, adminAccountId, cancellationToken);
+                await CrmDevSeed.EnsureAssignmentAsync(access, tenant, CrmModuleCapabilities.SalesRepresentativeRoleKey, salesRepAccountId, adminAccountId, cancellationToken);
+            }
+
+            await CrmDevSeed.EnsurePipelineAsync(services.GetRequiredService<ProvisionPipelineHandler>(), tenant, cancellationToken);
+            await PartyDevSeed.EnsurePartiesAsync(services.GetRequiredService<CreatePartyHandler>(), tenant, cancellationToken);
         }
     }
 

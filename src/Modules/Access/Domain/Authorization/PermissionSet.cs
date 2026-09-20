@@ -18,12 +18,18 @@ public sealed class PermissionSet
     public string Name { get; private set; } = null!;
     public string Origin { get; private set; } = null!;
 
+    /// <summary>See <see cref="Role.OriginModuleKey"/>.</summary>
+    public string? OriginModuleKey { get; private set; }
+    public int? OriginVersion { get; private set; }
+
     private readonly List<PermissionSetItem> _items = [];
     public IReadOnlyCollection<PermissionSetItem> Items => _items;
 
     private PermissionSet() { }
 
-    public static PermissionSet Create(TenantId tenantId, string key, string name, string origin = OriginTenant)
+    public static PermissionSet Create(
+        TenantId tenantId, string key, string name, string origin = OriginTenant,
+        string? originModuleKey = null, int? originVersion = null)
     {
         if (string.IsNullOrWhiteSpace(key))
             throw new ArgumentException("Key is required.", nameof(key));
@@ -31,8 +37,17 @@ public sealed class PermissionSet
             throw new ArgumentException("Name is required.", nameof(name));
         if (origin is not (OriginTenant or OriginSystemTemplate))
             throw new ArgumentException("Origin must be 'tenant' or 'system_template'.", nameof(origin));
+        TemplateProvenance.Validate(origin, originModuleKey, originVersion, OriginSystemTemplate);
 
-        return new PermissionSet { TenantId = tenantId, Key = key, Name = name, Origin = origin };
+        return new PermissionSet
+        {
+            TenantId = tenantId,
+            Key = key,
+            Name = name,
+            Origin = origin,
+            OriginModuleKey = originModuleKey,
+            OriginVersion = originVersion
+        };
     }
 
     public PermissionSetItem Grant(string actionKey, string? relation = null)

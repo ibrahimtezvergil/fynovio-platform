@@ -41,3 +41,9 @@ export async function expectNoTokenInStorage(page: Page) {
   expect(stored).not.toMatch(/eyJ[A-Za-z0-9_-]{10,}/) // a JWT
   expect(stored).not.toMatch(/fynovio_rt/)
 }
+
+/** Types into the customer picker and picks the option the SERVER returned — the only way to choose a customer. */
+export async function choosePartyByName(page: Page, typed: string, optionName: string) {
+  await page.getByRole('combobox', { name: opportunities.form.partyId.label }).fill(typed)
+  await page.getByRole('option', { name: optionName }).click()
+}

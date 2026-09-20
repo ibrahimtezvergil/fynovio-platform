@@ -1,13 +1,19 @@
 import { expect, test } from '@playwright/test'
 import { adminToken, newApi } from './support/api.ts'
-import { ADMIN, SEED_PASSWORD, VIEWER, SINGLE } from './support/env.ts'
-import { expectNoTokenInStorage, openUserMenu, signIn, t } from './support/ui.ts'
+import { ADMIN, SALES_REP, SEED_PASSWORD, VIEWER, SINGLE } from './support/env.ts'
+import { choosePartyByName, expectNoTokenInStorage, openUserMenu, signIn, t } from './support/ui.ts'
 import {
   addLineViaApi,
+  assignableViaApi,
   createViaApi,
   getViaApi,
   listViaApi,
   openViaApi,
+  reassignViaApi,
+  salesRepToken,
+  searchPartiesViaApi,
+  seededPartyId,
+  subjectOf,
   viewerToken,
 } from './support/opportunities.ts'
 
@@ -47,8 +53,8 @@ test.describe('CRM Opportunities workflow', () => {
     await page.getByRole('button', { name: t.opportunities.list.newAction, exact: true }).first().click()
     await expect(page).toHaveURL(/\/crm\/opportunities\/new$/)
 
-    // Create opportunity: party 1001, EUR, 250
-    await page.getByLabel(t.opportunities.form.partyId.label).fill('1001')
+    // Create opportunity: the customer is chosen from the server-side party search, EUR, 250
+    await choosePartyByName(page, 'Acme', 'Acme Corporation')
     await page.getByLabel(t.opportunities.form.currency.label).fill('EUR')
     await page.getByLabel(t.opportunities.form.estimatedAmount.label).fill('250')
     await page.getByRole('button', { name: t.opportunities.form.submit, exact: true }).click()
@@ -57,6 +63,8 @@ test.describe('CRM Opportunities workflow', () => {
     await expect(page).toHaveURL(/\/crm\/opportunities\/\d+$/)
     const opportunityId = Number(page.url().split('/').pop())
     await expect(page.getByText(t.opportunities.status.Draft)).toBeVisible()
+    // The summary names the customer (through the reference lookup), not just its id.
+    await expect(page.getByTestId('summary-party')).toContainText('Acme Corporation')
 
     // Add a required line: product 77, qty 2, unit price 50
     await page.getByRole('button', { name: t.opportunities.lines.add.action, exact: true }).click()
@@ -119,7 +127,7 @@ test.describe('CRM Opportunities workflow', () => {
     const admin = await adminToken(1)
 
     // Prepare via API: create, add line, open
-    const id = await createViaApi(admin, { partyId: 1002, currency: 'USD', estimatedAmount: 500 })
+    const id = await createViaApi(admin, { currency: 'USD', estimatedAmount: 500 })
     await addLineViaApi(admin, id, { expectedVersion: 0, productId: 88, quantity: 1, unitPrice: 300, isOptional: false })
     const opp = await getViaApi(admin, id)
     const futureDate = new Date()
@@ -147,7 +155,7 @@ test.describe('CRM Opportunities workflow', () => {
   test('3b: Lose with blank reason shows validation and creates no request', async ({ page }) => {
     const admin = await adminToken(1)
 
-    const id = await createViaApi(admin, { partyId: 1003, currency: 'GBP', estimatedAmount: 300 })
+    const id = await createViaApi(admin, { currency: 'GBP', estimatedAmount: 300 })
     await addLineViaApi(admin, id, { expectedVersion: 0, productId: 89, quantity: 1, unitPrice: 200, isOptional: false })
     const opp = await getViaApi(admin, id)
     const futureDate = new Date()
@@ -195,7 +203,7 @@ test.describe('CRM Opportunities workflow', () => {
     await expect(page.getByText(t.opportunities.form.partyId.invalid)).toBeVisible()
 
     // Invalid currency
-    await page.getByLabel(t.opportunities.form.partyId.label).fill('999')
+    await choosePartyByName(page, 'Globex', 'Globex Ltd')
     await page.getByLabel(t.opportunities.form.currency.label).fill('TR') // Too short, should be 3 chars
     await page.getByLabel(t.opportunities.form.estimatedAmount.label).fill('100')
     await page.getByRole('button', { name: t.opportunities.form.submit, exact: true }).click()
@@ -219,7 +227,7 @@ test.describe('CRM Opportunities workflow', () => {
     const viewer = await viewerToken()
 
     // Prepare an open opportunity via admin
-    const id = await createViaApi(admin, { partyId: 2000, currency: 'EUR', estimatedAmount: 1000 })
+    const id = await createViaApi(admin, { currency: 'EUR', estimatedAmount: 1000 })
     const opp = await getViaApi(admin, id)
     const futureDate = new Date()
     futureDate.setDate(futureDate.getDate() + 1)
@@ -260,27 +268,101 @@ test.describe('CRM Opportunities workflow', () => {
     await expect(page.getByRole('button', { name: t.opportunities.lose.action, exact: true })).not.toBeVisible()
   })
 
-  test('6: Reassign dependency visible for authorized users only', async ({ page }) => {
+  test('6: Reassign — the server lists who can take over; only an authorized caller sees the control', async ({ page }) => {
     const admin = await adminToken(1)
 
-    const id = await createViaApi(admin, { partyId: 2002, currency: 'EUR', estimatedAmount: 800 })
+    const id = await createViaApi(admin, { currency: 'EUR', estimatedAmount: 800 })
     const opp = await getViaApi(admin, id)
     const futureDate = new Date()
     futureDate.setDate(futureDate.getDate() + 1)
     await openViaApi(admin, id, { expectedVersion: opp.rowVersion, expiryDate: futureDate.toISOString() })
+    const ownerBefore = (await getViaApi(admin, id)).assignedPrincipalSubject
 
-    // Admin: sees reassign dependency
     await signIn(page, ADMIN, SEED_PASSWORD)
     await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
     await page.goto(`/crm/opportunities/${id}`)
-    await expect(page.locator('[data-testid="reassign-dependency"]')).toBeVisible()
+    await page.getByRole('button', { name: t.opportunities.summary.reassign, exact: true }).click()
 
-    // Viewer: does not see it
+    const dialog = page.getByRole('dialog')
+    await dialog.getByRole('combobox', { name: t.opportunities.reassign.assignee.label }).fill('Dev')
+    // "Dev" matches every seeded member's name; the SERVER offers only the one who is actually assignable:
+    // the viewer (cannot move a stage), the no-grant member and the current owner are not in the list.
+    await expect(page.getByRole('option')).toHaveText([/Dev Sales Representative/])
+    await page.getByRole('option', { name: /Dev Sales Representative/ }).click()
+    await dialog.getByRole('button', { name: t.opportunities.reassign.submit, exact: true }).click()
+    await expect(dialog).not.toBeVisible()
+
+    const ownerAfter = (await getViaApi(admin, id)).assignedPrincipalSubject
+    expect(ownerAfter).not.toBe(ownerBefore)
+    expect(ownerAfter).toBe(subjectOf(await salesRepToken()))
+    await expect(page.getByTestId('summary-owner')).toContainText(ownerAfter!)
+
+    // The sales representative can work the record (tenant-wide read) but is offered no Reassign control, and the API agrees.
+    await page.context().clearCookies()
+    await signIn(page, SALES_REP, SEED_PASSWORD)
+    await expect(page).toHaveURL(/\/dashboard$/) // wait for the session before navigating
+    await page.goto(`/crm/opportunities/${id}`)
+    await expect(page.getByText(t.opportunities.detail.title.replace('{{id}}', String(id)))).toBeVisible()
+    await expect(page.getByRole('button', { name: t.opportunities.summary.reassign, exact: true })).not.toBeVisible()
+    expect((await assignableViaApi(await salesRepToken(), id)).status).toBe(403)
+
+    // The viewer: same.
     await page.context().clearCookies()
     await signIn(page, VIEWER, SEED_PASSWORD)
+    await expect(page).toHaveURL(/\/dashboard$/) // wait for the session before navigating
     await page.goto(`/crm/opportunities/${id}`)
-    await expect(page.locator('[data-testid="reassign-dependency"]')).not.toBeVisible()
+    await expect(page.getByRole('button', { name: t.opportunities.summary.reassign, exact: true })).not.toBeVisible()
+    expect((await assignableViaApi(await viewerToken(), id)).status).toBe(403)
+  })
+
+  test('6b: Reassign — the server re-validates the target and never trusts a client-supplied principal', async () => {
+    const admin = await adminToken(1)
+    const id = await createViaApi(admin, { currency: 'EUR', estimatedAmount: 900 })
+    const opp = await getViaApi(admin, id)
+    const issuer = opp.assignedPrincipalIssuer!
+
+    // The candidate query: search narrows, and non-assignable members never appear even when they match.
+    const all = await assignableViaApi(admin, id)
+    expect(all.status).toBe(200)
+    expect(all.body!.map((p) => p.displayName)).toEqual(['Dev Sales Representative'])
+    expect((await assignableViaApi(admin, id, 'viewer')).body).toEqual([])
+
+    // The viewer reads but cannot move a stage: naming them directly is refused by the server (422), as is a foreign issuer.
+    const viewerSubject = subjectOf(await viewerToken())
+    const toViewer = await reassignViaApi(admin, id, opp.rowVersion, issuer, viewerSubject)
+    expect(toViewer).toEqual({ status: 422, type: 'principal_not_assignable' })
+    const foreign = await reassignViaApi(admin, id, opp.rowVersion, 'https://someone-else.example', subjectOf(await salesRepToken()))
+    expect(foreign).toEqual({ status: 422, type: 'principal_not_assignable' })
+    expect((await getViaApi(admin, id)).assignedPrincipalSubject).toBe(opp.assignedPrincipalSubject) // nothing changed
+
+    // Tenant isolation: another tenant's administrator cannot reach this record's candidates at all.
+    const otherTenant = await assignableViaApi(await adminToken(2), id)
+    expect(otherTenant.status).toBe(404)
+  })
+
+  test('6c: Party reference query — tenant-scoped, permission-gated, and the picker fails closed', async ({ page }) => {
+    const admin1 = await adminToken(1)
+    const admin2 = await adminToken(2)
+
+    // Tenant 1 sees its own customers; tenant 2's are not reachable by name or by id.
+    const own = await searchPartiesViaApi(admin1, { search: 'acme' })
+    expect(own.body!.map((p) => p.displayName)).toEqual(['Acme Corporation'])
+    expect((await searchPartiesViaApi(admin1, { search: 'umbrella' })).body).toEqual([])
+    const foreign = await searchPartiesViaApi(admin2, { search: 'umbrella' })
+    expect(foreign.body!.map((p) => p.displayName)).toEqual(['Umbrella Holdings'])
+    expect((await searchPartiesViaApi(admin2, { ids: String(own.body![0].id) })).body).toEqual([])
+
+    // A read-only member has no party-search permission: the API refuses, and the form's picker says so instead of falling back to a typed id.
+    expect((await searchPartiesViaApi(await viewerToken(), { search: 'acme' })).status).toBe(403)
+    expect((await searchPartiesViaApi(await salesRepToken(), { search: 'acme' })).status).toBe(200)
+
+    await signIn(page, VIEWER, SEED_PASSWORD)
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await page.goto('/crm/opportunities/new')
+    await page.getByRole('combobox', { name: t.opportunities.form.partyId.label }).fill('acme')
+    await expect(page.getByText(t.opportunities.picker.forbidden)).toBeVisible()
+    await expect(page.getByRole('textbox', { name: t.opportunities.form.partyId.label })).toHaveCount(0)
   })
 
   test('7: Field READ/WRITE restrictions - not applicable: Phase 1.5 has no field-level security (plan gap G7)', async () => {
@@ -291,7 +373,7 @@ test.describe('CRM Opportunities workflow', () => {
   test('8: Concurrency — conflict detection and reload', async ({ browser }) => {
     const admin = await adminToken(1)
 
-    const id = await createViaApi(admin, { partyId: 2003, currency: 'EUR', estimatedAmount: 600 })
+    const id = await createViaApi(admin, { currency: 'EUR', estimatedAmount: 600 })
 
     const contextA = await browser.newContext({ locale: 'tr-TR' })
     const contextB = await browser.newContext({ locale: 'tr-TR' })
@@ -359,7 +441,7 @@ test.describe('CRM Opportunities workflow', () => {
     await page.goto('/crm/opportunities')
     await page.getByRole('button', { name: t.opportunities.list.newAction, exact: true }).first().click()
 
-    await page.getByLabel(t.opportunities.form.partyId.label).fill('3000')
+    await choosePartyByName(page, 'Initech', 'Initech')
     await page.getByLabel(t.opportunities.form.currency.label).fill('EUR')
     await page.getByLabel(t.opportunities.form.estimatedAmount.label).fill('1000')
 
@@ -375,13 +457,27 @@ test.describe('CRM Opportunities workflow', () => {
     expect(afterList.length).toBe(beforeList.length + 1)
   })
 
+  test('9a-2: creating an opportunity for a customer that does not exist is a 422 party_not_found', async () => {
+    const admin = await adminToken(1)
+    const api = await newApi()
+
+    const response = await api.post('/api/opportunities', {
+      data: { partyId: 987654321, currency: 'EUR', estimatedAmount: 10 },
+      headers: { Authorization: `Bearer ${admin}`, ...CSRF, 'Idempotency-Key': crypto.randomUUID() },
+    })
+
+    expect(response.status()).toBe(422)
+    expect(((await response.json()) as { type: string }).type).toBe('party_not_found')
+    await api.dispose()
+  })
+
   test('9b: Idempotency — same key with same body vs. different body', async () => {
     const admin = await adminToken(1)
 
     const api = await newApi()
 
     const idempotencyKey = crypto.randomUUID()
-    const body1 = { partyId: 3001, currency: 'EUR', estimatedAmount: 2000 }
+    const body1 = { partyId: await seededPartyId(admin), currency: 'EUR', estimatedAmount: 2000 }
 
     // First request
     const response1 = await api.post('/api/opportunities', {
@@ -405,7 +501,7 @@ test.describe('CRM Opportunities workflow', () => {
 
     // Same key, different body → 409 idempotency_key_reused
     const response3 = await api.post('/api/opportunities', {
-      data: { partyId: 3002, currency: 'GBP', estimatedAmount: 3000 },
+      data: { ...body1, currency: 'GBP', estimatedAmount: 3000 },
       headers: { Authorization: `Bearer ${admin}`, ...CSRF, 'Idempotency-Key': idempotencyKey },
     })
     expect(response3.status()).toBe(409)
@@ -425,7 +521,7 @@ test.describe('CRM Opportunities workflow', () => {
     const admin2 = await adminToken(2)
 
     // Create in tenant 1
-    const id = await createViaApi(admin, { partyId: 4000, currency: 'EUR', estimatedAmount: 5000 })
+    const id = await createViaApi(admin, { currency: 'EUR', estimatedAmount: 5000 })
 
     // Verify visible in tenant 1
     await signIn(page, ADMIN, SEED_PASSWORD)
@@ -517,7 +613,7 @@ test.describe('CRM Opportunities workflow', () => {
 
   test('12a: no CRM grant — the list is empty (fail-closed scope) and a record is indistinguishable from a missing one', async ({ page }) => {
     const admin = await adminToken(1)
-    const id = await createViaApi(admin, { partyId: 5000, currency: 'EUR', estimatedAmount: 10 })
+    const id = await createViaApi(admin, { currency: 'EUR', estimatedAmount: 10 })
 
     await signIn(page, SINGLE, SEED_PASSWORD)
     await expect(page).toHaveURL(/\/dashboard$/)

@@ -8,16 +8,21 @@ import { useSessionStore } from '@/lib/auth'
 import { useAppMutation } from '@/lib/mutations/useAppMutation'
 import type { ApiError } from '@/types'
 import {
+  assignablePrincipalSchema,
   availableActionsSchema,
   commandResultSchema,
   createResultSchema,
   opportunitySchema,
   opportunitySummarySchema,
+  partyReferenceSchema,
   pipelineStageSchema,
   type OpportunityStatus,
 } from './schema'
 
 export const PAGE_SIZE = 25
+
+/** Candidates offered by a picker per request; the server caps it at 50. */
+export const PICKER_PAGE_SIZE = 20
 
 export interface OpportunityListFilter {
   status?: OpportunityStatus
@@ -37,6 +42,13 @@ export const opportunityKeys = {
   detail: (tenantId: number | null, id: number) => [...opportunityKeys.all(tenantId), 'detail', id] as const,
   actions: (tenantId: number | null, id: number) => [...opportunityKeys.all(tenantId), 'actions', id] as const,
   stages: (tenantId: number | null, versionId: number) => ['crm-pipeline-stages', tenantId, versionId] as const,
+  assignable: (tenantId: number | null, id: number, search: string) => [...opportunityKeys.all(tenantId), 'assignable', id, search] as const,
+}
+
+/** Reference lookups (Parties) are tenant-rooted too — a switch must never show another tenant's customers. */
+export const referenceKeys = {
+  parties: (tenantId: number | null, search: string) => ['crm-references', tenantId, 'parties', 'search', search] as const,
+  partyNames: (tenantId: number | null, ids: readonly number[]) => ['crm-references', tenantId, 'parties', 'ids', ...ids] as const,
 }
 
 export const useTenantId = () => useSessionStore((state) => state.activeTenantId)
@@ -103,6 +115,58 @@ export function usePipelineStages(versionId: number | null | undefined) {
     enabled: tenantId !== null && versionId != null,
     staleTime: 5 * 60_000, // tenant configuration, not record data
     queryFn: async () => (await get(endpoints.pipelines.stages(versionId as number), pipelineStageSchema.array())).toSorted((a, b) => a.sortOrder - b.sortOrder),
+  })
+}
+
+/**
+ * Who the SERVER offers as a new owner for this opportunity: authorization-aware and already filtered by the
+ * backend, so callers render the list as-is. Never reused across searches for long — assignability changes with grants.
+ * Returns a searcher for `AsyncCombobox`; it goes through the query cache so a tenant switch discards it.
+ */
+export function useAssigneeSearcher(id: number) {
+  const tenantId = useTenantId()
+  const queryClient = useQueryClient()
+  return (search: string) =>
+    queryClient.fetchQuery({
+      queryKey: opportunityKeys.assignable(tenantId, id, search),
+      staleTime: 0,
+      gcTime: 30_000,
+      retry: false,
+      queryFn: () =>
+        get(endpoints.opportunities.assignablePrincipals(id), assignablePrincipalSchema.array(), { search: search || undefined, take: PICKER_PAGE_SIZE }),
+    })
+}
+
+/** Type-ahead over the tenant's Parties (blank search = the first alphabetical page), as a searcher for `AsyncCombobox`. */
+export function usePartySearcher() {
+  const tenantId = useTenantId()
+  const queryClient = useQueryClient()
+  return (search: string) =>
+    queryClient.fetchQuery({
+      queryKey: referenceKeys.parties(tenantId, search),
+      staleTime: 30_000,
+      gcTime: 60_000,
+      retry: false,
+      queryFn: () => get(endpoints.references.parties, partyReferenceSchema.array(), { search: search || undefined, take: PICKER_PAGE_SIZE }),
+    })
+}
+
+/**
+ * Display names for parties already referenced by a record. Best effort by design: a caller without the
+ * party-search permission gets a 403 here and the UI keeps showing the bare id — a name is never required.
+ */
+export function usePartyNames(ids: readonly number[]) {
+  const tenantId = useTenantId()
+  const wanted = ids.filter((id) => Number.isInteger(id) && id > 0)
+  return useQuery({
+    ...READ_OPTIONS,
+    queryKey: referenceKeys.partyNames(tenantId, wanted),
+    enabled: tenantId !== null && wanted.length > 0,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const rows = await get(endpoints.references.parties, partyReferenceSchema.array(), { ids: wanted.join(',') })
+      return new Map(rows.map((row) => [row.id, row.displayName] as const))
+    },
   })
 }
 
@@ -219,8 +283,8 @@ export const useCancelLine = () =>
   }))
 
 /**
- * Bound to the real contract and unit-tested, but NOT wired to any control: the API takes a raw
- * (issuer, subject) and there is no eligible-assignee source, so no UI may collect a principal (plan OD1).
+ * The API takes a raw (issuer, subject); the only control that supplies one is the assignee picker, which offers
+ * exactly the principals `useAssignablePrincipals` returned. The server re-validates the target regardless.
  */
 export const useReassignOpportunity = () =>
   useOpportunityCommand<CommandBase & { newPrincipalIssuer: string; newPrincipalSubject: string }>(

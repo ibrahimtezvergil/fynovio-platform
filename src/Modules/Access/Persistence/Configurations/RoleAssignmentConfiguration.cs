@@ -22,7 +22,7 @@ public sealed class RoleAssignmentConfiguration : IEntityTypeConfiguration<RoleA
             .HasMaxLength(16)
             .IsRequired();
 
-        builder.Property(r => r.Source).HasMaxLength(16).IsRequired();
+        builder.Property(r => r.Source).HasMaxLength(24).IsRequired();
         builder.Property(r => r.Reason).HasMaxLength(500);
         builder.Property(r => r.RowVersion).IsConcurrencyToken().IsRequired();
 
@@ -42,7 +42,7 @@ public sealed class RoleAssignmentConfiguration : IEntityTypeConfiguration<RoleA
             "principal_type = 'user'"));
         builder.ToTable(t => t.HasCheckConstraint(
             "ck_role_assignments_source",
-            "source IN ('manual','bootstrap')"));
+            "source IN ('manual','bootstrap','module_enablement')"));
         builder.ToTable(t => t.HasCheckConstraint(
             "ck_role_assignments_valid_range",
             "valid_to IS NULL OR valid_to > valid_from"));

@@ -14,9 +14,13 @@ interface CommandMutation<V extends { idempotencyKey: string }, R> {
  * Runs one logical user action against a command mutation: exactly one request in flight (a same-tick
  * double click is dropped, not queued), one idempotency key per logical action, held across an unknown
  * outcome and released on a definitive one (`AttemptKeys`). Resolves the result, or `undefined` when it failed;
- * the failure is exposed as a `Problem` for the caller to render inline.
+ * the failure is exposed as a `Problem` for the caller to render inline (and to `onFailure`, for a caller that must
+ * also react — e.g. refresh a candidate list).
  */
-export function useKeyedCommand<V extends { idempotencyKey: string }, R>(mutation: CommandMutation<V, R>) {
+export function useKeyedCommand<V extends { idempotencyKey: string }, R>(
+  mutation: CommandMutation<V, R>,
+  options?: { onFailure?: (problem: Problem) => void },
+) {
   const keys = useAttemptKeys()
   const singleFlight = useSingleFlight()
 
@@ -29,6 +33,7 @@ export function useKeyedCommand<V extends { idempotencyKey: string }, R>(mutatio
         keys.settle(null)
       } catch (error) {
         keys.settle(error as ApiError)
+        options?.onFailure?.(toProblem(error as ApiError))
       }
     })
     return result

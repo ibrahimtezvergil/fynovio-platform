@@ -381,6 +381,15 @@ namespace Access.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("origin");
 
+                    b.Property<string>("OriginModuleKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("origin_module_key");
+
+                    b.Property<int?>("OriginVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("origin_version");
+
                     b.Property<long>("TenantId")
                         .HasColumnType("bigint")
                         .HasColumnName("tenant_id");
@@ -402,6 +411,8 @@ namespace Access.Persistence.Migrations
                     b.ToTable("permission_sets", "access", t =>
                         {
                             t.HasCheckConstraint("ck_permission_sets_origin", "origin IN ('tenant','system_template')");
+
+                            t.HasCheckConstraint("ck_permission_sets_provenance", "(origin_module_key IS NULL) = (origin_version IS NULL) AND (origin_module_key IS NULL OR origin = 'system_template') AND (origin_version IS NULL OR origin_version >= 1)");
                         });
                 });
 
@@ -475,6 +486,15 @@ namespace Access.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("origin");
 
+                    b.Property<string>("OriginModuleKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("origin_module_key");
+
+                    b.Property<int?>("OriginVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("origin_version");
+
                     b.Property<long>("TenantId")
                         .HasColumnType("bigint")
                         .HasColumnName("tenant_id");
@@ -500,6 +520,8 @@ namespace Access.Persistence.Migrations
                     b.ToTable("roles", "access", t =>
                         {
                             t.HasCheckConstraint("ck_roles_origin", "origin IN ('tenant','system_template')");
+
+                            t.HasCheckConstraint("ck_roles_provenance", "(origin_module_key IS NULL) = (origin_version IS NULL) AND (origin_module_key IS NULL OR origin = 'system_template') AND (origin_version IS NULL OR origin_version >= 1)");
                         });
                 });
 
@@ -542,8 +564,8 @@ namespace Access.Persistence.Migrations
 
                     b.Property<string>("Source")
                         .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)")
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)")
                         .HasColumnName("source");
 
                     b.Property<long>("TenantId")
@@ -571,7 +593,7 @@ namespace Access.Persistence.Migrations
                         {
                             t.HasCheckConstraint("ck_role_assignments_principal_type", "principal_type = 'user'");
 
-                            t.HasCheckConstraint("ck_role_assignments_source", "source IN ('manual','bootstrap')");
+                            t.HasCheckConstraint("ck_role_assignments_source", "source IN ('manual','bootstrap','module_enablement')");
 
                             t.HasCheckConstraint("ck_role_assignments_valid_range", "valid_to IS NULL OR valid_to > valid_from");
                         });
@@ -624,6 +646,46 @@ namespace Access.Persistence.Migrations
                         .HasName("pk_tenant_access_state");
 
                     b.ToTable("tenant_access_state", "access");
+                });
+
+            modelBuilder.Entity("Access.Domain.Authorization.TenantModuleEnablement", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("EnabledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("enabled_at");
+
+                    b.Property<string>("ModuleKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("module_key");
+
+                    b.Property<int>("TemplateVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("template_version");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tenant_module_enablements");
+
+                    b.HasIndex("TenantId", "ModuleKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_tenant_module_enablements_tenant_id_module_key");
+
+                    b.ToTable("tenant_module_enablements", "access", t =>
+                        {
+                            t.HasCheckConstraint("ck_tenant_module_enablements_version", "template_version >= 1");
+                        });
                 });
 
             modelBuilder.Entity("Access.Domain.Identity.Account", b =>

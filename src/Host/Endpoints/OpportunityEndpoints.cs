@@ -116,12 +116,44 @@ public static class OpportunityEndpoints
             return Results.Ok(await handler.HandleAsync(query, cancellationToken));
         });
 
+        group.MapGet("/{id:long}/assignable-principals", async (
+            long id, string? search, int? take, ListAssignablePrincipalsHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
+        {
+            var actor = httpContext.GetActorContext();
+            var query = new ListAssignablePrincipalsQuery(actor.TenantId, id, actor.Principal, search, take ?? ListAssignablePrincipalsHandler.DefaultTake, actor.CorrelationId);
+            return Results.Ok(await handler.HandleAsync(query, cancellationToken));
+        });
+
         group.MapGet("/{id:long}/actions", async (
             long id, GetOpportunityAvailableActionsHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
         {
             var actor = httpContext.GetActorContext();
             var dto = await handler.HandleAsync(new GetOpportunityAvailableActionsQuery(actor.TenantId, id, actor.Principal, actor.CorrelationId), cancellationToken);
             return dto is null ? Results.NotFound() : Results.Ok(dto);
+        });
+
+        app.MapGroup("/crm/references").RequireAuthorization().MapGet("/parties", async (
+            string? search, string? ids, int? take, SearchPartyReferencesHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
+        {
+            var actor = httpContext.GetActorContext();
+            var query = new SearchPartyReferencesQuery(
+                actor.TenantId, actor.Principal, search, ParseIds(ids), take ?? SearchPartyReferencesHandler.DefaultTake, actor.CorrelationId);
+            return Results.Ok(await handler.HandleAsync(query, cancellationToken));
+        });
+
+        app.MapGroup("/crm/references").RequireAuthorization().MapPost("/parties", async (
+            CreatePartyReferenceRequest request, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
+            CreatePartyReferenceHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
+        {
+            if (!Enum.TryParse<PartyType>(request.PartyType, ignoreCase: true, out var partyType) || !Enum.IsDefined(partyType))
+                throw new ArgumentException("partyType must be 'Person' or 'Organization'.");
+
+            var actor = httpContext.GetActorContext();
+            var command = new CreatePartyReferenceCommand(
+                actor.TenantId, actor.Principal, partyType, request.Name ?? string.Empty, request.Surname, request.Phone, request.Email,
+                idempotencyKey, actor.CorrelationId);
+            var result = await handler.HandleAsync(command, cancellationToken);
+            return Results.Created($"/crm/references/parties?ids={result.Id}", result);
         });
 
         app.MapGroup("/pipelines").RequireAuthorization().MapGet("/{versionId:long}/stages", async (
@@ -131,9 +163,29 @@ public static class OpportunityEndpoints
             return Results.Ok(await handler.HandleAsync(new GetPipelineStagesQuery(actor.TenantId, versionId, actor.Principal, actor.CorrelationId), cancellationToken));
         });
     }
+
+    /// <summary>`ids=1,2,3` → [1,2,3]; a malformed list is a 400 (ArgumentException → validation_error), not a silent partial answer.</summary>
+    private static IReadOnlyCollection<long>? ParseIds(string? ids)
+    {
+        if (string.IsNullOrWhiteSpace(ids))
+            return null;
+
+        var parts = ids.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var parsed = new List<long>(parts.Length);
+        foreach (var part in parts)
+        {
+            if (!long.TryParse(part, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var id))
+                throw new ArgumentException("ids must be a comma-separated list of positive identifiers.");
+            parsed.Add(id);
+        }
+
+        return parsed;
+    }
 }
 
 public sealed record CreateOpportunityRequest(long PartyId, string Currency, decimal EstimatedAmount);
+
+public sealed record CreatePartyReferenceRequest(string? PartyType, string? Name, string? Surname, string? Phone, string? Email);
 public sealed record AddOpportunityLineRequest(long ExpectedVersion, long ProductId, int Quantity, decimal UnitPrice, bool IsOptional, int SortOrder);
 public sealed record CancelOpportunityLineRequest(long ExpectedVersion, string CancelReason);
 public sealed record OpenOpportunityRequest(long ExpectedVersion, DateTimeOffset ExpiryDate);

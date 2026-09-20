@@ -132,6 +132,20 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
         Assert.True(body.GetProperty("opportunityId").GetInt64() > 0);
     }
 
+    [Fact]
+    public async Task Creating_for_a_party_that_does_not_exist_is_a_422_party_not_found()
+    {
+        var tenantId = 5010;
+        var (subject, _) = await SeedGrantAsync(tenantId, "crm.opportunity.create", relation: null);
+
+        using var client = AuthorizedClient(subject, tenantId);
+        var response = await client.PostAsJsonAsync("/opportunities",
+            new { PartyId = 987_654_321L, Currency = "TRY", EstimatedAmount = 100m });
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        Assert.Equal("party_not_found", (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("type").GetString());
+    }
+
     /// <summary>The 2026-09-19 authorization-delta's core external claim, proven over real
     /// HTTP rather than just the unit-level CrmProblemDetailsExceptionHandlerTests: a caller
     /// who holds an owner-relation grant that doesn't cover this specific opportunity gets

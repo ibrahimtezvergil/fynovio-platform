@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { usePartyNames } from '../api'
 import { formatDate, formatMoney } from '../lib/format'
-import type { AvailableActions, Opportunity } from '../schema'
+import type { Opportunity } from '../schema'
 
 function Row({ label, children, testId }: { label: string; children: React.ReactNode; testId?: string }) {
   if (children === null || children === undefined || children === false) return null
@@ -19,8 +20,11 @@ function Row({ label, children, testId }: { label: string; children: React.React
  * Renders what the DTO carries and nothing else: a field the backend omitted is simply absent (never inferred
  * or reconstructed elsewhere), and the row version is deliberately not shown.
  */
-export function SummaryCard({ opportunity, actions }: { opportunity: Opportunity; actions: AvailableActions | undefined }) {
+export function SummaryCard({ opportunity }: { opportunity: Opportunity }) {
   const { t } = useTranslation('opportunities')
+  // Best effort: a caller without the party-search permission (or a failed lookup) just keeps seeing the id.
+  const partyIds = opportunity.partyId != null ? [opportunity.partyId] : []
+  const partyName = usePartyNames(partyIds).data?.get(opportunity.partyId ?? -1)
   return (
     <Card>
       <CardHeader>
@@ -29,7 +33,8 @@ export function SummaryCard({ opportunity, actions }: { opportunity: Opportunity
       <CardContent>
         <dl className="divide-border/60 divide-y">
           <Row label={t('summary.party')} testId="summary-party">
-            {opportunity.partyId != null && t('summary.partyValue', { id: opportunity.partyId })}
+            {opportunity.partyId != null &&
+              (partyName ? t('summary.partyNamed', { name: partyName, id: opportunity.partyId }) : t('summary.partyValue', { id: opportunity.partyId }))}
           </Row>
           <Row label={t('summary.estimatedAmount')} testId="summary-estimated">
             {formatMoney(opportunity.estimatedAmount, opportunity.currency)}
@@ -38,17 +43,7 @@ export function SummaryCard({ opportunity, actions }: { opportunity: Opportunity
             {formatMoney(opportunity.totalAmount, opportunity.currency)}
           </Row>
           <Row label={t('summary.owner')} testId="summary-owner">
-            {opportunity.assignedPrincipalSubject && (
-              <span className="grid gap-1">
-                <code className="text-[12px]">{opportunity.assignedPrincipalSubject}</code>
-                {actions?.canReassign && (
-                  // Plan OD1: the command exists but no eligible-assignee source does, so no control collects a principal.
-                  <span data-testid="reassign-dependency" className="text-muted-foreground text-[12px]">
-                    {t('summary.reassignDependency')}
-                  </span>
-                )}
-              </span>
-            )}
+            {opportunity.assignedPrincipalSubject && <code className="text-[12px]">{opportunity.assignedPrincipalSubject}</code>}
           </Row>
           <Row label={t('summary.expiryDate')}>{formatDate(opportunity.expiryDate)}</Row>
           <Row label={t('summary.openedDate')}>{formatDate(opportunity.openedDate)}</Row>

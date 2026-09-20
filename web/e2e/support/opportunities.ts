@@ -1,13 +1,14 @@
 import { expect } from '@playwright/test'
 import { newApi } from './api.ts'
-import { VIEWER } from './env.ts'
+import { SALES_REP, VIEWER } from './env.ts'
 
 const CSRF = { 'X-Requested-With': 'fynovio' }
 
-export async function viewerToken(): Promise<string> {
+/** A single-tenant member's access token (no tenant selection step). */
+export async function tokenFor(email: string): Promise<string> {
   const api = await newApi()
   const response = await api.post('/api/auth/login', {
-    data: { email: VIEWER, password: process.env.E2E_SEED_PASSWORD ?? 'E2E-Seed-Passw0rd-1234' },
+    data: { email, password: process.env.E2E_SEED_PASSWORD ?? 'E2E-Seed-Passw0rd-1234' },
     headers: CSRF,
   })
   expect(response.status()).toBe(200)
@@ -16,18 +17,72 @@ export async function viewerToken(): Promise<string> {
   return token
 }
 
+export const viewerToken = () => tokenFor(VIEWER)
+export const salesRepToken = () => tokenFor(SALES_REP)
+
+/** The `sub` of an access token — the principal subject the API records as an opportunity owner. */
+export const subjectOf = (token: string): string => JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString()).sub as string
+
+export interface AssignablePrincipal {
+  issuer: string
+  subject: string
+  displayName: string
+  email: string | null
+}
+
+export async function assignableViaApi(token: string, opportunityId: number, search?: string) {
+  const api = await newApi()
+  const response = await api.get(`/api/opportunities/${opportunityId}/assignable-principals`, {
+    params: search ? { search } : undefined,
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const body = response.ok() ? ((await response.json()) as AssignablePrincipal[]) : null
+  const status = response.status()
+  await api.dispose()
+  return { status, body }
+}
+
+export async function searchPartiesViaApi(token: string, params: { search?: string; ids?: string }) {
+  const api = await newApi()
+  const response = await api.get('/api/crm/references/parties', { params, headers: { Authorization: `Bearer ${token}` } })
+  const body = response.ok() ? ((await response.json()) as Array<{ id: number; displayName: string }>) : null
+  const status = response.status()
+  await api.dispose()
+  return { status, body }
+}
+
+export async function reassignViaApi(token: string, opportunityId: number, expectedVersion: number, issuer: string, subject: string) {
+  const api = await newApi()
+  const response = await api.post(`/api/opportunities/${opportunityId}/reassign`, {
+    data: { expectedVersion, newPrincipalIssuer: issuer, newPrincipalSubject: subject },
+    headers: { ...CSRF, Authorization: `Bearer ${token}`, 'Idempotency-Key': crypto.randomUUID() },
+  })
+  const type = (await response.json().catch(() => null))?.type as string | undefined
+  const status = response.status()
+  await api.dispose()
+  return { status, type }
+}
+
 export interface CreateOpportunityResponse {
   opportunityId: number
   replayed: boolean
 }
 
-export async function createViaApi(
-  token: string,
-  params: { partyId: number; currency: string; estimatedAmount: number },
-): Promise<number> {
+/** A real customer of the token's tenant — an opportunity can only be created against an existing Party. */
+export async function seededPartyId(token: string): Promise<number> {
+  const api = await newApi()
+  const response = await api.get('/api/crm/references/parties?take=1', { headers: { Authorization: `Bearer ${token}` } })
+  expect(response.status()).toBe(200)
+  const parties = (await response.json()) as { id: number }[]
+  await api.dispose()
+  return parties[0].id
+}
+
+export async function createViaApi(token: string, params: { currency: string; estimatedAmount: number }): Promise<number> {
+  const partyId = await seededPartyId(token)
   const api = await newApi()
   const response = await api.post('/api/opportunities', {
-    data: params,
+    data: { partyId, ...params },
     headers: {
       ...CSRF,
       Authorization: `Bearer ${token}`,
@@ -74,6 +129,8 @@ export interface Opportunity {
   openedDate: string | null
   wonDate: string | null
   lostDate: string | null
+  assignedPrincipalIssuer: string | null
+  assignedPrincipalSubject: string | null
   rowVersion: number
   lines: Array<{ id: number; quantity: number; unitPrice: number; lineTotal: number | null; isOptional: boolean; isCanceled: boolean }>
 }

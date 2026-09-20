@@ -117,20 +117,20 @@ describe('useReassignOpportunity — contract and error handling', () => {
     expect(capturedError!.status).toBe(409)
   })
 
-  it('no component under components/ or pages/ references useReassignOpportunity', async () => {
-    // Use import.meta.glob to find all component and page files
+  it('the only component that issues a reassign is ReassignDialog, and it collects no free-text principal', () => {
     const componentFiles = import.meta.glob('/src/features/opportunities/components/**/*.tsx', { query: '?raw', import: 'default', eager: true })
     const pageFiles = import.meta.glob('/src/features/opportunities/pages/**/*.tsx', { query: '?raw', import: 'default', eager: true })
 
-    const allFiles = { ...componentFiles, ...pageFiles }
-
-    // Filter out test files since we're checking component source, not test source
-    const nonTestFiles = Object.entries(allFiles)
+    const sources = Object.entries({ ...componentFiles, ...pageFiles })
       .filter(([path]) => !path.includes('.test.tsx'))
-      .map(([, content]) => content as string)
+      .map(([path, content]) => ({ path, content: content as string }))
 
-    nonTestFiles.forEach((content) => {
-      expect(content).not.toContain('useReassignOpportunity')
-    })
+    const users = sources.filter(({ content }) => content.includes('useReassignOpportunity')).map(({ path }) => path.split('/').pop())
+    expect(users).toEqual(['ReassignDialog.tsx'])
+
+    // The (issuer, subject) can only come from a picker option the server listed — never from a typed field.
+    const dialog = sources.find(({ path }) => path.endsWith('/ReassignDialog.tsx'))?.content ?? ''
+    expect(dialog).toContain('AssigneePicker')
+    expect(dialog).not.toMatch(/<Input\b|<Textarea\b|register\(/)
   })
 })

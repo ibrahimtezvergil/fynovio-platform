@@ -26,6 +26,10 @@ export const endpoints = {
     win: (id: number) => `/opportunities/${id}/win`,
     lose: (id: number) => `/opportunities/${id}/lose`,
     reassign: (id: number) => `/opportunities/${id}/reassign`,
+    assignablePrincipals: (id: number) => `/opportunities/${id}/assignable-principals`,
+  },
+  references: {
+    parties: '/crm/references/parties',
   },
   pipelines: {
     stages: (versionId: number) => `/pipelines/${versionId}/stages`,

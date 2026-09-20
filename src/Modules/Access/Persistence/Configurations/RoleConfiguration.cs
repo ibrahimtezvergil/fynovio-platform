@@ -22,6 +22,7 @@ public sealed class RoleConfiguration : IEntityTypeConfiguration<Role>
         builder.Property(r => r.Key).IsRequired();
         builder.Property(r => r.Name).IsRequired();
         builder.Property(r => r.Origin).HasMaxLength(20).IsRequired();
+        builder.Property(r => r.OriginModuleKey).HasMaxLength(64);
 
         builder.HasIndex(r => new { r.TenantId, r.Id }).IsUnique();
         builder.HasIndex(r => new { r.TenantId, r.Key }).IsUnique();
@@ -30,5 +31,10 @@ public sealed class RoleConfiguration : IEntityTypeConfiguration<Role>
         builder.ToTable(t => t.HasCheckConstraint(
             "ck_roles_origin",
             "origin IN ('tenant','system_template')"));
+        builder.ToTable(t => t.HasCheckConstraint(
+            "ck_roles_provenance",
+            "(origin_module_key IS NULL) = (origin_version IS NULL) "
+            + "AND (origin_module_key IS NULL OR origin = 'system_template') "
+            + "AND (origin_version IS NULL OR origin_version >= 1)"));
     }
 }

@@ -13,7 +13,7 @@ using Npgsql;
 
 namespace CRM.Application;
 
-public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer authorizer)
+public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer authorizer, IPartyIdentityResolver partyResolver)
 {
     private const string Operation = "CreateOpportunity";
     private const string ActionKeyValue = "crm.opportunity.create";
@@ -57,12 +57,21 @@ public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer a
             return new CreateOpportunityResult(stored.OpportunityId, Replayed: true);
         }
 
+        // The customer must exist in this tenant, and a merged one is stored as its survivor — a command
+        // precondition, so it goes through the identity resolver, not the display-oriented directory. Resolved
+        // AFTER the replay check (a replay must keep working once the party is later merged) and the request hash
+        // stays over the INPUT ref (a merge between two attempts must not turn a retry into a key-reuse conflict).
+        // The resolver reads through the MasterData context, outside this transaction: a party removed between
+        // this read and the commit is not detected here (accepted TOCTOU for a reference precondition).
+        var partyRef = await partyResolver.ResolveAsync(command.PartyRef, cancellationToken)
+            ?? throw new PartyNotFoundException(command.PartyRef);
+
         var opportunity = Opportunity.Create(
-            command.TenantId, command.PartyRef, command.AssignedPrincipal, command.Currency, command.EstimatedAmount);
+            command.TenantId, partyRef, command.AssignedPrincipal, command.Currency, command.EstimatedAmount);
         context.Opportunities.Add(opportunity);
         await context.SaveChangesAsync(cancellationToken); // assigns opportunity.Id
 
-        var payload = new CreatedPayload(opportunity.Id, command.PartyRef.PartyId, command.Currency, command.EstimatedAmount);
+        var payload = new CreatedPayload(opportunity.Id, partyRef.PartyId, command.Currency, command.EstimatedAmount);
         var payloadJson = JsonSerializer.Serialize(payload);
 
         context.OutboxMessages.Add(OutboxMessage.Create(
