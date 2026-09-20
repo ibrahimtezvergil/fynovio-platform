@@ -5,6 +5,7 @@ using Access.Persistence;
 using Contracts;
 using CRM.Application;
 using CRM.Persistence;
+using MasterData.Application;
 using Microsoft.EntityFrameworkCore;
 
 namespace Host.Authentication;
@@ -159,6 +160,7 @@ public static class DevSeeder
             }
 
             await CrmDevSeed.EnsurePipelineAsync(crm, tenant, cancellationToken);
+            await PartyDevSeed.EnsurePartiesAsync(services.GetRequiredService<CreatePartyHandler>(), tenant, cancellationToken);
         }
     }
 

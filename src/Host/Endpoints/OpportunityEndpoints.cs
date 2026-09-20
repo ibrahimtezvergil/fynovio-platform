@@ -132,12 +132,39 @@ public static class OpportunityEndpoints
             return dto is null ? Results.NotFound() : Results.Ok(dto);
         });
 
+        app.MapGroup("/crm/references").RequireAuthorization().MapGet("/parties", async (
+            string? search, string? ids, int? take, SearchPartyReferencesHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
+        {
+            var actor = httpContext.GetActorContext();
+            var query = new SearchPartyReferencesQuery(
+                actor.TenantId, actor.Principal, search, ParseIds(ids), take ?? SearchPartyReferencesHandler.DefaultTake, actor.CorrelationId);
+            return Results.Ok(await handler.HandleAsync(query, cancellationToken));
+        });
+
         app.MapGroup("/pipelines").RequireAuthorization().MapGet("/{versionId:long}/stages", async (
             long versionId, GetPipelineStagesHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
         {
             var actor = httpContext.GetActorContext();
             return Results.Ok(await handler.HandleAsync(new GetPipelineStagesQuery(actor.TenantId, versionId, actor.Principal, actor.CorrelationId), cancellationToken));
         });
+    }
+
+    /// <summary>`ids=1,2,3` → [1,2,3]; a malformed list is a 400 (ArgumentException → validation_error), not a silent partial answer.</summary>
+    private static IReadOnlyCollection<long>? ParseIds(string? ids)
+    {
+        if (string.IsNullOrWhiteSpace(ids))
+            return null;
+
+        var parts = ids.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var parsed = new List<long>(parts.Length);
+        foreach (var part in parts)
+        {
+            if (!long.TryParse(part, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var id))
+                throw new ArgumentException("ids must be a comma-separated list of positive identifiers.");
+            parsed.Add(id);
+        }
+
+        return parsed;
     }
 }
 

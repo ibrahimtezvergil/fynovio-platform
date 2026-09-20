@@ -41,6 +41,8 @@ builder.Services.AddDbContext<AccessDbContext>(options => options
     .AddInterceptors(new RowVersionInterceptor()));
 
 builder.Services.AddScoped<IPartyDirectory, PartyDirectory>();
+builder.Services.AddScoped<IPartySearch, PartyDirectory>();
+builder.Services.AddScoped<CreatePartyHandler>(); // used by the Development seed only; no HTTP endpoint creates Parties yet
 builder.Services.AddScoped<IPartyIdentityResolver, PartyIdentityResolver>();
 
 builder.Services.AddScoped<PrincipalResolver>();
@@ -193,6 +195,7 @@ builder.Services.AddScoped<WinOpportunityHandler>();
 builder.Services.AddScoped<LoseOpportunityHandler>();
 builder.Services.AddScoped<ReassignOpportunityHandler>();
 builder.Services.AddScoped<ListAssignablePrincipalsHandler>();
+builder.Services.AddScoped<SearchPartyReferencesHandler>();
 builder.Services.AddScoped<GetOpportunityHandler>();
 builder.Services.AddScoped<ListOpportunitiesHandler>();
 builder.Services.AddScoped<GetPipelineStagesHandler>();
