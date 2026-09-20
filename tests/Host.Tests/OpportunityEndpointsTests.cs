@@ -69,6 +69,10 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
         Environment.SetEnvironmentVariable("ConnectionStrings__MasterData", runtimeConnectionString);
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
 
+        // Legacy tests use JwtTestTokenFactory which doesn't mint sid claims — disable
+        // RequireSessionClaim so these tests stay green unchanged (they predate session validation).
+        Environment.SetEnvironmentVariable("Authentication__Session__RequireSessionClaim", "false");
+
         _factory = new WebApplicationFactory<Program>();
 
         // Force the host to actually start now (Program.cs's action-catalog seeding runs as
