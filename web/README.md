@@ -28,7 +28,7 @@ npm run build    # tsc -b && vite build
 
 Sign-in is real: start the API first (see the repository README, "Running locally: API, web and signing
 in") — the dev server proxies `/api/*` to `http://localhost:5208` — then sign in with a seeded account:
-`admin@fynovio.local`, `single@fynovio.local` or `nomember@fynovio.local`, all with the development-only
+`admin@fynovio.local` (full CRM), `viewer@fynovio.local` (read-only CRM), `single@fynovio.local` (no CRM grants) or `nomember@fynovio.local`, all with the development-only
 password `Dev-Only-Passw0rd-Change-Me`. Deals, calendar and the demo pages are still mocked (MSW).
 
 ## Folder layout
