@@ -127,6 +127,29 @@ public sealed class InvitationAcceptanceTests : IClassFixture<PostgresFixture>
         }
     }
 
+    /// <summary>For a NEW address the credential's unique index would also stop a double redemption, so this is the
+    /// test that proves the token's own single-use guard: an existing account has no such second line of defence.</summary>
+    [Fact]
+    public async Task Concurrent_accepts_for_an_existing_account_still_produce_exactly_one_session()
+    {
+        var (tenant, admin) = await TenantWithAdminAsync();
+        var time = new TestTimeProvider();
+
+        for (var round = 0; round < 3; round++)
+        {
+            var email = AuthTestSetup.NewEmail();
+            var (accountId, _) = await AuthTestSetup.SeedAccountAsync(_fixture, email);
+            var token = await AuthTestSetup.InviteAsync(_fixture, tenant, admin, email, time);
+
+            var results = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => AcceptAsync(token, AuthTestSetup.Password, time)));
+
+            Assert.Equal(1, results.Count(r => r.Status == AcceptInvitationStatus.Accepted));
+            Assert.Equal(7, results.Count(r => r.Status == AcceptInvitationStatus.InvalidOrExpiredToken));
+            Assert.Equal(1, await CountAsync("SELECT count(*) FROM identity.auth_sessions WHERE account_id = @a", ("a", accountId)));
+            Assert.Equal(1, await CountAsync("SELECT count(*) FROM identity.tenant_memberships WHERE account_id = @a AND tenant_id = @t", ("a", accountId), ("t", tenant.Value)));
+        }
+    }
+
     [Fact]
     public async Task A_password_that_breaks_the_policy_creates_nothing_and_keeps_the_token_usable()
     {
