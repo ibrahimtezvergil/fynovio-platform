@@ -15,6 +15,7 @@ public static class AccessActionCatalog
         new("access.role_assignment.grant", "Access", "Access.RoleAssignment", RiskClass: "high"),
         new("access.role_assignment.revoke", "Access", "Access.RoleAssignment", RiskClass: "high"),
         new("access.role.manage", "Access", "Access.Role"),
-        new("access.permission_set.manage", "Access", "Access.PermissionSet")
+        new("access.permission_set.manage", "Access", "Access.PermissionSet"),
+        new("identity.membership.invite", "Access", "Identity.TenantMembership", RiskClass: "high")
     ];
 }

@@ -26,7 +26,9 @@ public sealed class AuthEventWriter
         "sessionId",
         "reason",
         "attemptCount",
-        "lockoutUntil"
+        "lockoutUntil",
+        "known",
+        "purpose"
     };
 
     public AuthEventWriter(AccessDbContext context)
