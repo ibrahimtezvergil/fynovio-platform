@@ -18,8 +18,10 @@ beforeEach(() => {
   useSessionStore.getState().applyAuthResult(authenticated())
 })
 
-const render = (initialEntry = '/crm/opportunities') =>
-  renderRoutes([{ path: '/crm/opportunities', element: <OpportunitiesPage /> }], initialEntry, new QueryClient({ defaultOptions: { queries: { retryDelay: 0, staleTime: 0 } } }))
+const render = (initialEntry = '/crm/opportunities') => {
+  const result = renderRoutes([{ path: '/crm/opportunities', element: <OpportunitiesPage /> }], initialEntry, new QueryClient({ defaultOptions: { queries: { retryDelay: 0, staleTime: 0 } } }))
+  return result
+}
 
 describe('opportunities list — loading and empty states', () => {
   it('shows skeleton rows while loading', async () => {
@@ -47,21 +49,37 @@ describe('opportunities list — loading and empty states', () => {
 
   it('shows empty state when no opportunities exist', async () => {
     server.use(http.get(url(endpoints.opportunities.list), () => HttpResponse.json([])))
-    render()
+    const { container } = render()
 
     expect(await screen.findByText(t('list.empty.title'))).toBeInTheDocument()
     expect(screen.getByText(t('list.empty.description'))).toBeInTheDocument()
+
+    // Verify the new action link to /crm/opportunities/new exists
+    const newLink = container.querySelector(`a[href="/crm/opportunities/new"]`)
+    expect(newLink).toBeTruthy()
   })
 
   it('shows filtered empty state with a clear filter button', async () => {
-    server.use(http.get(url(endpoints.opportunities.list), () => HttpResponse.json([])))
-    render('/crm/opportunities?status=Won')
+    let lastStatusParam: string | null = null
+    server.use(
+      http.get(url(endpoints.opportunities.list), ({ request }) => {
+        const searchParams = new URL(request.url).searchParams
+        lastStatusParam = searchParams.get('status')
+        return HttpResponse.json([])
+      }),
+    )
+    const { router } = render('/crm/opportunities?status=Won')
 
     expect(await screen.findByText(t('list.empty.filteredTitle'))).toBeInTheDocument()
     const clearButton = screen.getByRole('button', { name: t('list.empty.clearFilter') })
     fireEvent.click(clearButton)
 
-    expect(screen.queryByText(t('list.empty.filteredTitle'))).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(t('list.empty.filteredTitle'))).not.toBeInTheDocument()
+    })
+
+    expect(router.state.location.search).not.toContain('status')
+    expect(lastStatusParam).toBeNull()
   })
 })
 
@@ -93,23 +111,37 @@ describe('opportunities list — error states', () => {
 
 describe('opportunities list — filtering and pagination', () => {
   it('sends status filter in the request and resets to page 0', async () => {
-    let lastSearchParams: URLSearchParams | null = null
+    const rows = Array.from({ length: 26 }, (_, i) => wireOpportunity({ id: i + 1 }))
+    const requestParams: Array<{ status: string | null; skip: string | null }> = []
+    const { router } = render('/crm/opportunities?page=1')
+
     server.use(
       http.get(url(endpoints.opportunities.list), ({ request }) => {
         const searchParams = new URL(request.url).searchParams
-        lastSearchParams = searchParams
-        return HttpResponse.json([])
+        requestParams.push({
+          status: searchParams.get('status'),
+          skip: searchParams.get('skip'),
+        })
+        const skip = Number(searchParams.get('skip') ?? 0)
+        return HttpResponse.json(skip === 25 ? rows : [])
       }),
     )
-    render()
 
-    await screen.findByText(t('list.empty.title'))
+    // Start at page 1 (skip=25)
+    await screen.findAllByTestId('opportunity-row')
+    expect(requestParams[requestParams.length - 1].skip).toBe('25')
+
+    // Click Open filter
     const openSegment = screen.getByRole('tab', { name: t('status.Open') })
     fireEvent.click(openSegment)
 
     await waitFor(() => {
-      expect(lastSearchParams?.get('status')).toBe('Open')
+      const lastReq = requestParams[requestParams.length - 1]
+      expect(lastReq.status).toBe('Open')
+      expect(lastReq.skip).toBe('0')
     })
+
+    expect(router.state.location.search).not.toContain('page')
   })
 
   it('renders up to 25 rows and disables/enables next button based on 26th row', async () => {

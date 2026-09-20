@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { endpoints } from '@/api/endpoints'
@@ -233,13 +233,14 @@ describe('opportunity create — failure and retry', () => {
   it('generates a new Idempotency-Key when a value changes after a definitive failure', async () => {
     const recorder = recordRequests()
     let firstKey: string | null = null
+    const domainMessage = 'Currency must be a 3-letter ISO code.'
     server.use(
       http.post(url(endpoints.opportunities.create), async ({ request }) => {
         const key = request.headers.get('Idempotency-Key')
         if (firstKey === null) {
           firstKey = key
           await recorder.record(request)
-          return problemResponse(400, 'validation_error', 'Invalid request')
+          return problemResponse(400, 'validation_error', domainMessage)
         }
         await recorder.record(request)
         return HttpResponse.json({ opportunityId: 42, replayed: false })
@@ -252,9 +253,10 @@ describe('opportunity create — failure and retry', () => {
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
 
-    // Wait for the error notice to appear
-    await screen.findByRole('alert')
-    expect(screen.getByRole('alert')).toHaveAttribute('data-problem', 'validation')
+    // Wait for the error notice to appear and verify the domain message is visible inside it
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveAttribute('data-problem', 'validation')
+    within(alert).getByText(domainMessage)
 
     // Change a value to trigger a new key
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '200' } })
