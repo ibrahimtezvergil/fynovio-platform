@@ -43,11 +43,13 @@ export async function createViaApi(
 export async function addLineViaApi(
   token: string,
   opportunityId: number,
-  params: { expectedVersion: number; productId: number; quantity: number; unitPrice: number; isOptional: boolean },
+  params: { expectedVersion?: number; productId: number; quantity: number; unitPrice: number; isOptional: boolean },
 ): Promise<void> {
+  // Without an explicit version the helper uses the record's current one (a fresh Draft is at 1, not 0).
+  const expectedVersion = params.expectedVersion || (await getViaApi(token, opportunityId)).rowVersion
   const api = await newApi()
   const response = await api.post(`/api/opportunities/${opportunityId}/lines`, {
-    data: { ...params, sortOrder: 0 },
+    data: { ...params, expectedVersion, sortOrder: 0 },
     headers: {
       ...CSRF,
       Authorization: `Bearer ${token}`,

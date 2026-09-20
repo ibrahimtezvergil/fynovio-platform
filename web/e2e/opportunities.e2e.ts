@@ -20,16 +20,18 @@ test.describe('CRM Opportunities workflow', () => {
     // Select tenant 1
     await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
+    await expect(page).toHaveURL(/\/dashboard$/)
 
-    // Navigate to opportunities via the nav item
-    await page.getByRole('link', { name: t.nav.items.opportunities }).click()
+    // The CRM rail (with its Opportunities entry) only exists inside the CRM application surface.
+    await page.goto('/crm/opportunities')
     await expect(page).toHaveURL(/\/crm\/opportunities$/)
+    await expect(page.getByRole('link', { name: t.nav.items.opportunities, exact: true })).toBeVisible()
     await expect(page.getByRole('heading', { name: t.opportunities.list.title })).toBeVisible()
 
     // Assert the api-mode chip is visible and shows real API
     const apiChip = page.locator('[data-testid="api-mode"]')
     await expect(apiChip).toBeVisible()
-    await expect(apiChip).toContainText(t.opportunities.apiMode.real)
+    await expect(apiChip).toContainText(t.opportunities.apiMode.real.replace('{{base}}', '/api'))
 
     await expectNoTokenInStorage(page)
   })
@@ -40,15 +42,16 @@ test.describe('CRM Opportunities workflow', () => {
     // Sign in and navigate to create form
     await signIn(page, ADMIN, SEED_PASSWORD)
     await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
-    await page.getByRole('link', { name: t.nav.items.opportunities }).click()
-    await page.getByRole('button', { name: t.opportunities.list.newAction }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await page.goto('/crm/opportunities')
+    await page.getByRole('button', { name: t.opportunities.list.newAction, exact: true }).first().click()
     await expect(page).toHaveURL(/\/crm\/opportunities\/new$/)
 
     // Create opportunity: party 1001, EUR, 250
     await page.getByLabel(t.opportunities.form.partyId.label).fill('1001')
     await page.getByLabel(t.opportunities.form.currency.label).fill('EUR')
     await page.getByLabel(t.opportunities.form.estimatedAmount.label).fill('250')
-    await page.getByRole('button', { name: t.opportunities.form.submit }).click()
+    await page.getByRole('button', { name: t.opportunities.form.submit, exact: true }).click()
 
     // Lands on detail page in Draft status
     await expect(page).toHaveURL(/\/crm\/opportunities\/\d+$/)
@@ -56,43 +59,37 @@ test.describe('CRM Opportunities workflow', () => {
     await expect(page.getByText(t.opportunities.status.Draft)).toBeVisible()
 
     // Add a required line: product 77, qty 2, unit price 50
-    await page.getByRole('button', { name: t.opportunities.lines.add.action }).click()
+    await page.getByRole('button', { name: t.opportunities.lines.add.action, exact: true }).click()
     const dialog = page.locator('role=dialog')
     await expect(dialog).toBeVisible()
     await page.getByLabel(t.opportunities.lines.add.productId.label).fill('77')
     await page.getByLabel(t.opportunities.lines.add.quantity.label).fill('2')
     await page.getByLabel(t.opportunities.lines.add.unitPrice.label).fill('50')
     // isOptional is false by default
-    await page.getByRole('button', { name: t.opportunities.lines.add.submit }).click()
+    await page.getByRole('dialog').getByRole('button', { name: t.opportunities.lines.add.submit, exact: true }).click()
     await expect(dialog).not.toBeVisible()
 
     // Open the opportunity with default expiry
-    await page.getByRole('button', { name: t.opportunities.open.action }).click()
+    await page.getByRole('button', { name: t.opportunities.open.action, exact: true }).click()
     await expect(page.locator('role=dialog')).toBeVisible()
-    await page.getByRole('button', { name: t.opportunities.open.submit }).click()
+    await page.getByRole('dialog').getByRole('button', { name: t.opportunities.open.submit, exact: true }).click()
     await expect(page.locator('role=dialog')).not.toBeVisible()
 
-    // Assert current stage is Qualification (entry stage)
-    const currentStage = page.locator('[data-testid="current-stage"]')
-    await expect(currentStage).toBeVisible()
-    const currentStageName = await currentStage.textContent()
-    expect(currentStageName).toBeTruthy()
+    // The entry stage assigned by Open is the tenant's configured one.
+    const currentStage = page.getByTestId('current-stage')
+    await expect(currentStage).toHaveText('Qualification')
 
-    // Move to Proposal stage: the select should have it as an option
-    const stageSelect = page.locator('select').filter({ has: page.getByText(t.opportunities.pipeline.move.label) }).first()
-    // Just select the second option (should be Proposal after Qualification)
-    const options = stageSelect.locator('option:not([value=""])')
-    const firstNonPlaceholder = await options.first().getAttribute('value')
-    await stageSelect.selectOption(firstNonPlaceholder ?? '')
-    await page.getByRole('button', { name: t.opportunities.pipeline.move.submit }).click()
-
-    // Verify current stage changed
-    await expect(currentStage).toContainText(/Proposal|Teklif/)
+    // The selectable targets are exactly the backend-allowed ones, by name: not the current stage, not the retired one.
+    const stageSelect = page.getByLabel(t.opportunities.pipeline.move.label)
+    await expect(stageSelect.locator('option')).toHaveText([t.opportunities.pipeline.move.placeholder, 'Proposal', 'Negotiation'])
+    await stageSelect.selectOption({ label: 'Proposal' })
+    await page.getByRole('button', { name: t.opportunities.pipeline.move.submit, exact: true }).click()
+    await expect(currentStage).toHaveText('Proposal')
 
     // Mark as won
-    await page.getByRole('button', { name: t.opportunities.win.action }).click()
+    await page.getByRole('button', { name: t.opportunities.win.action, exact: true }).click()
     await expect(page.locator('role=dialog')).toBeVisible()
-    await page.getByRole('button', { name: t.opportunities.win.submit }).click()
+    await page.getByRole('dialog').getByRole('button', { name: t.opportunities.win.submit, exact: true }).click()
     await expect(page.locator('role=dialog')).not.toBeVisible()
 
     // Assert terminal state is visible
@@ -106,9 +103,9 @@ test.describe('CRM Opportunities workflow', () => {
     await expect(summaryTotal).toContainText(expectedTotal)
 
     // Assert no open/win/lose buttons and no stage select
-    await expect(page.getByRole('button', { name: t.opportunities.open.action })).not.toBeVisible()
-    await expect(page.getByRole('button', { name: t.opportunities.win.action })).not.toBeVisible()
-    await expect(page.getByRole('button', { name: t.opportunities.lose.action })).not.toBeVisible()
+    await expect(page.getByRole('button', { name: t.opportunities.open.action, exact: true })).not.toBeVisible()
+    await expect(page.getByRole('button', { name: t.opportunities.win.action, exact: true })).not.toBeVisible()
+    await expect(page.getByRole('button', { name: t.opportunities.lose.action, exact: true })).not.toBeVisible()
     await expect(stageSelect).not.toBeVisible()
 
     // Verify via API that status is 2 (Won)
@@ -133,12 +130,13 @@ test.describe('CRM Opportunities workflow', () => {
     // Navigate to detail page
     await signIn(page, ADMIN, SEED_PASSWORD)
     await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
     await page.goto(`/crm/opportunities/${id}`)
 
     // Mark as lost with reason
-    await page.getByRole('button', { name: t.opportunities.lose.action }).click()
+    await page.getByRole('button', { name: t.opportunities.lose.action, exact: true }).click()
     await page.getByLabel(t.opportunities.lose.reason.label).fill('Competitor offer better terms')
-    await page.getByRole('button', { name: t.opportunities.lose.submit }).click()
+    await page.getByRole('dialog').getByRole('button', { name: t.opportunities.lose.submit, exact: true }).click()
 
     // Assert terminal state and lost reason
     await expect(page.locator('[data-testid="terminal-state"]')).toBeVisible()
@@ -158,6 +156,7 @@ test.describe('CRM Opportunities workflow', () => {
 
     await signIn(page, ADMIN, SEED_PASSWORD)
     await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
     await page.goto(`/crm/opportunities/${id}`)
 
     // Track POST requests to /lose
@@ -169,9 +168,9 @@ test.describe('CRM Opportunities workflow', () => {
     })
 
     // Try to lose with blank reason
-    await page.getByRole('button', { name: t.opportunities.lose.action }).click()
+    await page.getByRole('button', { name: t.opportunities.lose.action, exact: true }).click()
     // Leave reason blank and try to submit
-    await page.getByRole('button', { name: t.opportunities.lose.submit }).click()
+    await page.getByRole('dialog').getByRole('button', { name: t.opportunities.lose.submit, exact: true }).click()
 
     // Validation error should show
     await expect(page.getByText(t.opportunities.reason.required)).toBeVisible()
@@ -186,11 +185,12 @@ test.describe('CRM Opportunities workflow', () => {
 
     await signIn(page, ADMIN, SEED_PASSWORD)
     await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
-    await page.getByRole('link', { name: t.nav.items.opportunities }).click()
-    await page.getByRole('button', { name: t.opportunities.list.newAction }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await page.goto('/crm/opportunities')
+    await page.getByRole('button', { name: t.opportunities.list.newAction, exact: true }).first().click()
 
     // Empty submission
-    await page.getByRole('button', { name: t.opportunities.form.submit }).click()
+    await page.getByRole('button', { name: t.opportunities.form.submit, exact: true }).click()
     await expect(page).toHaveURL(/\/crm\/opportunities\/new$/) // stays on form
     await expect(page.getByText(t.opportunities.form.partyId.invalid)).toBeVisible()
 
@@ -198,14 +198,14 @@ test.describe('CRM Opportunities workflow', () => {
     await page.getByLabel(t.opportunities.form.partyId.label).fill('999')
     await page.getByLabel(t.opportunities.form.currency.label).fill('TR') // Too short, should be 3 chars
     await page.getByLabel(t.opportunities.form.estimatedAmount.label).fill('100')
-    await page.getByRole('button', { name: t.opportunities.form.submit }).click()
+    await page.getByRole('button', { name: t.opportunities.form.submit, exact: true }).click()
     await expect(page).toHaveURL(/\/crm\/opportunities\/new$/)
     await expect(page.getByText(t.opportunities.form.currency.invalid)).toBeVisible()
 
     // Invalid amount (too many decimals)
     await page.getByLabel(t.opportunities.form.currency.label).fill('USD')
     await page.getByLabel(t.opportunities.form.estimatedAmount.label).fill('100.999')
-    await page.getByRole('button', { name: t.opportunities.form.submit }).click()
+    await page.getByRole('button', { name: t.opportunities.form.submit, exact: true }).click()
     await expect(page).toHaveURL(/\/crm\/opportunities\/new$/)
     await expect(page.getByText(t.opportunities.form.estimatedAmount.decimals)).toBeVisible()
 
@@ -255,9 +255,9 @@ test.describe('CRM Opportunities workflow', () => {
 
     // Assert no-actions state is visible
     await expect(page.locator('[data-testid="no-actions"]')).toBeVisible()
-    await expect(page.getByRole('button', { name: t.opportunities.open.action })).not.toBeVisible()
-    await expect(page.getByRole('button', { name: t.opportunities.win.action })).not.toBeVisible()
-    await expect(page.getByRole('button', { name: t.opportunities.lose.action })).not.toBeVisible()
+    await expect(page.getByRole('button', { name: t.opportunities.open.action, exact: true })).not.toBeVisible()
+    await expect(page.getByRole('button', { name: t.opportunities.win.action, exact: true })).not.toBeVisible()
+    await expect(page.getByRole('button', { name: t.opportunities.lose.action, exact: true })).not.toBeVisible()
   })
 
   test('6: Reassign dependency visible for authorized users only', async ({ page }) => {
@@ -272,6 +272,7 @@ test.describe('CRM Opportunities workflow', () => {
     // Admin: sees reassign dependency
     await signIn(page, ADMIN, SEED_PASSWORD)
     await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
     await page.goto(`/crm/opportunities/${id}`)
     await expect(page.locator('[data-testid="reassign-dependency"]')).toBeVisible()
 
@@ -300,10 +301,12 @@ test.describe('CRM Opportunities workflow', () => {
     // Both sign in and navigate to the detail page
     await signIn(pageA, ADMIN, SEED_PASSWORD)
     await pageA.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await expect(pageA).toHaveURL(/\/dashboard$/)
     await pageA.goto(`/crm/opportunities/${id}`)
 
     await signIn(pageB, ADMIN, SEED_PASSWORD)
     await pageB.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await expect(pageB).toHaveURL(/\/dashboard$/)
     await pageB.goto(`/crm/opportunities/${id}`)
 
     // Context B adds a line (bumps version)
@@ -312,11 +315,11 @@ test.describe('CRM Opportunities workflow', () => {
 
     // Context A tries to open with stale version
     // Open dialog
-    await pageA.getByRole('button', { name: t.opportunities.open.action }).click()
-    await pageA.getByRole('button', { name: t.opportunities.open.submit }).click()
+    await pageA.getByRole('button', { name: t.opportunities.open.action, exact: true }).click()
+    await pageA.getByRole('dialog').getByRole('button', { name: t.opportunities.open.submit, exact: true }).click()
 
     // Concurrency alert appears
-    const problem = pageA.locator('role=alert[data-problem="concurrency"]')
+    const problem = pageA.locator('[role="alert"][data-problem="concurrency"]')
     await expect(problem).toBeVisible()
 
     // Verify server state is unchanged
@@ -324,16 +327,17 @@ test.describe('CRM Opportunities workflow', () => {
     expect(oppAfterConflict.status).toBe(0) // Draft
 
     // Click "Reload latest" button
-    const reloadBtn = pageA.getByRole('button', { name: t.opportunities.problem.reload })
+    const reloadBtn = pageA.getByRole('button', { name: t.opportunities.problem.reload, exact: true })
     await expect(reloadBtn).toBeVisible()
     await reloadBtn.click()
 
     // Lines table should now show the line B added
-    await expect(pageA.locator('table tbody tr').nth(1)).toBeVisible() // at least 2 rows now
+    // B's line is now on A's page (a Draft that had none has exactly this one).
+    // (CSS locator: the open dialog makes the page behind it aria-hidden, which role queries exclude.)
+    await expect(pageA.locator('table tbody tr')).toHaveCount(1)
 
-    // Submit again explicitly
-    await pageA.getByRole('button', { name: t.opportunities.open.action }).click()
-    await pageA.getByRole('button', { name: t.opportunities.open.submit }).click()
+    // The dialog is still open with the user's input; submitting again is an explicit act and now carries the fresh version.
+    await pageA.getByRole('dialog').getByRole('button', { name: t.opportunities.open.submit, exact: true }).click()
 
     // Should succeed this time
     await expect(pageA.locator('role=dialog')).not.toBeVisible()
@@ -351,15 +355,16 @@ test.describe('CRM Opportunities workflow', () => {
 
     await signIn(page, ADMIN, SEED_PASSWORD)
     await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
-    await page.getByRole('link', { name: t.nav.items.opportunities }).click()
-    await page.getByRole('button', { name: t.opportunities.list.newAction }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await page.goto('/crm/opportunities')
+    await page.getByRole('button', { name: t.opportunities.list.newAction, exact: true }).first().click()
 
     await page.getByLabel(t.opportunities.form.partyId.label).fill('3000')
     await page.getByLabel(t.opportunities.form.currency.label).fill('EUR')
     await page.getByLabel(t.opportunities.form.estimatedAmount.label).fill('1000')
 
     // Double-click the submit button quickly
-    const submitBtn = page.getByRole('button', { name: t.opportunities.form.submit })
+    const submitBtn = page.getByRole('button', { name: t.opportunities.form.submit, exact: true })
     await submitBtn.dblclick()
 
     // Wait for navigation
@@ -393,7 +398,7 @@ test.describe('CRM Opportunities workflow', () => {
       data: body1,
       headers: { Authorization: `Bearer ${admin}`, ...CSRF, 'Idempotency-Key': idempotencyKey },
     })
-    expect(response2.status()).toBe(200) // replayed
+    expect(response2.status()).toBe(201) // a replay answers like the original
     const result2 = (await response2.json()) as { opportunityId: number; replayed: boolean }
     expect(result2.opportunityId).toBe(id)
     expect(result2.replayed).toBe(true)
@@ -425,7 +430,8 @@ test.describe('CRM Opportunities workflow', () => {
     // Verify visible in tenant 1
     await signIn(page, ADMIN, SEED_PASSWORD)
     await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
-    await page.getByRole('link', { name: t.nav.items.opportunities }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await page.goto('/crm/opportunities')
     const rows = page.locator('[data-testid="opportunity-row"]')
     await expect(rows.first()).toBeVisible()
 
@@ -436,11 +442,11 @@ test.describe('CRM Opportunities workflow', () => {
     // Switch to tenant 2
     await openUserMenu(page)
     const tenantTwo = page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '2') })
-    await tenantTwo.click()
-    await expect(page).toHaveURL(/\/dashboard$/)
+    // Switching inside the app keeps the page; wait for the server to have issued the tenant-2 token.
+    await Promise.all([page.waitForResponse((response) => response.url().includes('/auth/tenants/select') && response.ok()), tenantTwo.click()])
 
     // Navigate to opportunities
-    await page.getByRole('link', { name: t.nav.items.opportunities }).click()
+    await page.goto('/crm/opportunities')
 
     // The row should be gone
     await expect(ourRow).not.toBeVisible()
@@ -457,8 +463,13 @@ test.describe('CRM Opportunities workflow', () => {
       headers: { Authorization: `Bearer ${admin2}` },
     })
     expect(response.status()).toBe(404)
-    const error = (await response.json()) as { type: string }
-    expect(error.type).toBe('not_found')
+    // A read of a record in another tenant is answered exactly like a read of an id that never existed.
+    const missing = await api.get('/api/opportunities/999999', { headers: { Authorization: `Bearer ${admin2}` } })
+    expect(missing.status()).toBe(404)
+    expect(await response.text()).toBe(await missing.text())
+    expect([...Object.keys(response.headers())].filter((name) => name.startsWith('x-')).sort()).toEqual(
+      [...Object.keys(missing.headers())].filter((name) => name.startsWith('x-')).sort(),
+    )
     await api.dispose()
 
     // Also verify that a nonexistent id (999999) shows the same state
@@ -469,7 +480,8 @@ test.describe('CRM Opportunities workflow', () => {
   test('11: 401 recovery — mid-session token refresh on list refetch', async ({ page }) => {
     await signIn(page, ADMIN, SEED_PASSWORD)
     await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
-    await page.getByRole('link', { name: t.nav.items.opportunities }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await page.goto('/crm/opportunities')
 
     // Set up a route interceptor that answers the FIRST GET to /api/opportunities (not /api/opportunities/{id})
     let interceptCount = 0
@@ -503,20 +515,27 @@ test.describe('CRM Opportunities workflow', () => {
     await expectNoTokenInStorage(page)
   })
 
-  test('12a: Forbidden state — single@fynovio.local has no CRM grants', async ({ page }) => {
+  test('12a: no CRM grant — the list is empty (fail-closed scope) and a record is indistinguishable from a missing one', async ({ page }) => {
+    const admin = await adminToken(1)
+    const id = await createViaApi(admin, { partyId: 5000, currency: 'EUR', estimatedAmount: 10 })
+
     await signIn(page, SINGLE, SEED_PASSWORD)
     await expect(page).toHaveURL(/\/dashboard$/)
 
-    // Try to access the opportunities list
+    // Reads are scoped, not refused: the list answers 200 with nothing in it.
     await page.goto('/crm/opportunities')
+    await expect(page.getByText(t.opportunities.list.empty.title)).toBeVisible()
 
-    // Should show forbidden state
-    await expect(page.getByText(t.opportunities.state.forbidden.title)).toBeVisible()
+    // The API answers a denied read exactly like a missing record (404), so the UI must not tell them apart.
+    await page.goto(`/crm/opportunities/${id}`)
+    await expect(page.getByText(t.opportunities.state.notFound.title)).toBeVisible()
+    await expect(page.getByText(t.opportunities.state.forbidden.title)).toHaveCount(0)
   })
 
   test('12b: Not-found state — admin on nonexistent opportunity', async ({ page }) => {
     await signIn(page, ADMIN, SEED_PASSWORD)
     await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
 
     await page.goto('/crm/opportunities/999999')
 
@@ -526,6 +545,7 @@ test.describe('CRM Opportunities workflow', () => {
   test('12c: Malformed ID returns not-found state', async ({ page }) => {
     await signIn(page, ADMIN, SEED_PASSWORD)
     await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
 
     await page.goto('/crm/opportunities/abc')
 
