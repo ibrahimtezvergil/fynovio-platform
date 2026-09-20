@@ -335,6 +335,99 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task RefreshSessionHandler_ConcurrentRefresh_OneSucceedsOneConflicts()
+    {
+        var (session, refreshCookie) = await CreateSession();
+        var runtimeConnString = await _fixture.RuntimeConnectionStringAsync();
+
+        var handler1 = new RefreshSessionHandler(
+            PostgresFixture.CreateContext(runtimeConnString),
+            new SessionOptions { PlatformIssuer = "https://platform.example.com", RefreshAbsoluteDays = 30, RefreshGraceSeconds = 5 },
+            new AuthEventWriter(PostgresFixture.CreateContext(runtimeConnString)),
+            _fixture.TimeProvider);
+
+        var handler2 = new RefreshSessionHandler(
+            PostgresFixture.CreateContext(runtimeConnString),
+            new SessionOptions { PlatformIssuer = "https://platform.example.com", RefreshAbsoluteDays = 30, RefreshGraceSeconds = 5 },
+            new AuthEventWriter(PostgresFixture.CreateContext(runtimeConnString)),
+            _fixture.TimeProvider);
+
+        // Run concurrent refreshes 20 times to ensure we hit the race
+        int successCount = 0;
+        int conflictCount = 0;
+
+        for (int i = 0; i < 20; i++)
+        {
+            // Create fresh session and token for each round
+            var (session_, refreshCookie_) = await CreateSession();
+
+            var result1Task = handler1.HandleAsync(new RefreshSessionCommand(refreshCookie_));
+            var result2Task = handler2.HandleAsync(new RefreshSessionCommand(refreshCookie_));
+
+            var results = await Task.WhenAll(result1Task, result2Task);
+
+            var successResults = results.Where(r => r.Status == RefreshResult.Success).Count();
+            var conflictResults = results.Where(r => r.Status == RefreshResult.RefreshConflict).Count();
+
+            Assert.Equal(1, successResults);
+            Assert.Equal(1, conflictResults);
+
+            // Verify exactly one non-rotated successor token
+            var successorCount = await _context.RefreshTokens
+                .Where(t => t.SessionId == session_.Id && t.RotatedAt == null)
+                .CountAsync();
+            Assert.Equal(1, successorCount);
+        }
+    }
+
+    [Fact]
+    public async Task RefreshSessionHandler_DeterministicConcurrencyTest()
+    {
+        var (session, refreshCookie) = await CreateSession();
+        var runtimeConnString = await _fixture.RuntimeConnectionStringAsync();
+
+        // Parse token id from cookie
+        var parts = refreshCookie.Split('.');
+        var tokenId = Guid.Parse(parts[0]);
+        var tokenSecret = parts[1];
+
+        // Create a second context to simulate the "winner"
+        using (var ctx2 = PostgresFixture.CreateContext(runtimeConnString))
+        {
+            await ctx2.SetAccountContextAsync(session.AccountId);
+
+            // Manually rotate the token from another context
+            var now = _fixture.TimeProvider.GetUtcNow();
+            var newTokenId = Guid.NewGuid();
+
+            var affected = await ctx2.RefreshTokens
+                .Where(t => t.Id == tokenId && t.RotatedAt == null)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(t => t.RotatedAt, now)
+                    .SetProperty(t => t.ReplacedById, newTokenId));
+
+            Assert.Equal(1, affected);
+        }
+
+        // Now handler should detect the race
+        var handler = new RefreshSessionHandler(
+            PostgresFixture.CreateContext(runtimeConnString),
+            new SessionOptions { PlatformIssuer = "https://platform.example.com", RefreshAbsoluteDays = 30, RefreshGraceSeconds = 5 },
+            new AuthEventWriter(PostgresFixture.CreateContext(runtimeConnString)),
+            _fixture.TimeProvider);
+
+        var result = await handler.HandleAsync(new RefreshSessionCommand(refreshCookie));
+
+        // Outside grace window by default
+        Assert.Equal(RefreshResult.SessionInvalid, result.Status);
+
+        // Session should be revoked
+        var revokedSession = await _context.AuthSessions.FirstAsync(s => s.Id == session.Id);
+        Assert.True(revokedSession.IsRevoked);
+        Assert.Equal("reuse_detected", revokedSession.RevokedReason);
+    }
+
+    [Fact]
     public async Task AuthEventWriter_NeverPersistsSecrets()
     {
         var writer = new AuthEventWriter(_context);

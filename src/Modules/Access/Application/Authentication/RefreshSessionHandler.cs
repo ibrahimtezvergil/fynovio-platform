@@ -47,52 +47,119 @@ public sealed class RefreshSessionHandler
         var tokenSecret = parts[1];
         var tokenHash = TokenSecrets.HashToken(tokenSecret);
 
-        // Lookup token
+        // Use transaction for rotation — load and rotate atomically
+        await using var tx = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        // Lookup token inside transaction (will be read again after potential CAS)
         var token = await _context.RefreshTokens
+            .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == tokenId, cancellationToken);
 
         if (token is null)
         {
+            await tx.RollbackAsync(cancellationToken);
             return new RefreshSessionResult(RefreshResult.SessionInvalid);
         }
 
         // Constant-time hash comparison
         if (!TokenSecrets.HashesEqual(token.TokenHash, tokenHash))
         {
+            await tx.RollbackAsync(cancellationToken);
             return new RefreshSessionResult(RefreshResult.SessionInvalid);
         }
 
         // Check expiry
         if (token.IsExpired(now))
         {
+            await tx.RollbackAsync(cancellationToken);
             return new RefreshSessionResult(RefreshResult.SessionInvalid);
         }
 
         // Load session
         var session = await _context.AuthSessions
+            .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == token.SessionId, cancellationToken);
 
         if (session is null || session.IsRevoked || session.IsExpired(now))
         {
+            await tx.RollbackAsync(cancellationToken);
             return new RefreshSessionResult(RefreshResult.SessionInvalid);
         }
 
-        // Reuse detection: if token is already rotated, check grace period
-        if (token.IsRotated)
+        // Load account and external identity
+        var account = await _context.Accounts
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == session.AccountId, cancellationToken);
+        if (account is null)
         {
+            await tx.RollbackAsync(cancellationToken);
+            return new RefreshSessionResult(RefreshResult.SessionInvalid);
+        }
+
+        var externalIdentity = await _context.ExternalIdentities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                x => x.AccountId == account.Id && x.Issuer == _sessionOptions.PlatformIssuer,
+                cancellationToken);
+
+        if (externalIdentity is null)
+        {
+            await tx.RollbackAsync(cancellationToken);
+            return new RefreshSessionResult(RefreshResult.SessionInvalid);
+        }
+
+        // Set account context for RLS
+        await _context.SetAccountContextAsync(account.Id, cancellationToken);
+
+        // Atomic compare-and-set: rotate token only if RotatedAt is null
+        var newTokenId = Guid.NewGuid();
+        var affectedRows = await _context.RefreshTokens
+            .Where(t => t.Id == tokenId && t.RotatedAt == null)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(t => t.RotatedAt, now)
+                .SetProperty(t => t.ReplacedById, newTokenId), cancellationToken);
+
+        if (affectedRows == 0)
+        {
+            // Someone else rotated this token first — reload and apply reuse logic
+            var rotatedToken = await _context.RefreshTokens
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == tokenId, cancellationToken);
+
+            if (rotatedToken is null || !rotatedToken.IsRotated)
+            {
+                // Token disappeared or is not rotated (shouldn't happen)
+                await tx.RollbackAsync(cancellationToken);
+                return new RefreshSessionResult(RefreshResult.SessionInvalid);
+            }
+
+            // Reload session too (winner may have updated it)
+            var reuseSession = await _context.AuthSessions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == token.SessionId, cancellationToken);
+
             var gracePeriod = TimeSpan.FromSeconds(_sessionOptions.RefreshGraceSeconds);
-            if (now.Subtract(token.RotatedAt!.Value) > gracePeriod)
+            if (now.Subtract(rotatedToken.RotatedAt!.Value) > gracePeriod)
             {
                 // Outside grace window — revoke session
-                session.Revoke("reuse_detected", now);
-                await _context.SaveChangesAsync(cancellationToken);
+                // Reload session for update (was read AsNoTracking)
+                var reuseSessionForUpdate = await _context.AuthSessions
+                    .FirstOrDefaultAsync(s => s.Id == token.SessionId, cancellationToken);
+
+                if (reuseSessionForUpdate is not null && !reuseSessionForUpdate.IsRevoked)
+                {
+                    reuseSessionForUpdate.Revoke("reuse_detected", now);
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+
+                await tx.CommitAsync(cancellationToken);
 
                 await _eventWriter.WriteAsync(
                     "refresh_reuse_detected",
                     "session_revoked",
                     now,
-                    session.AccountId,
-                    sessionId: session.Id,
+                    account.Id,
+                    sessionId: token.SessionId,
                     correlationId: command.CorrelationId,
                     cancellationToken: cancellationToken);
 
@@ -101,54 +168,44 @@ public sealed class RefreshSessionHandler
             else
             {
                 // Inside grace window — return conflict without revocation
+                await tx.CommitAsync(cancellationToken);
                 return new RefreshSessionResult(RefreshResult.RefreshConflict);
             }
         }
 
-        // Load account and external identity
-        var account = await _context.Accounts
-            .FirstOrDefaultAsync(a => a.Id == session.AccountId, cancellationToken);
-        if (account is null)
-            return new RefreshSessionResult(RefreshResult.SessionInvalid);
-
-        var externalIdentity = await _context.ExternalIdentities
-            .FirstOrDefaultAsync(
-                x => x.AccountId == account.Id && x.Issuer == _sessionOptions.PlatformIssuer,
-                cancellationToken);
-
-        if (externalIdentity is null)
-            return new RefreshSessionResult(RefreshResult.SessionInvalid);
-
-        // Use transaction for rotation
-        await using var tx = await _context.Database.BeginTransactionAsync(cancellationToken);
-        await _context.SetAccountContextAsync(account.Id, cancellationToken);
-
-        // Mark old token as rotated
-        token.MarkRotated(Guid.NewGuid(), now);
-
-        // Create new refresh token with sliding idle expiry
+        // Create new refresh token with sliding idle expiry, using the pre-generated ID
         var newTokenCreatedAt = now;
         var newIdleExpiry = newTokenCreatedAt.AddDays(_sessionOptions.RefreshIdleDays);
         var (newTokenSecret, newTokenHash) = TokenSecrets.GenerateAndHash();
-        var newToken = RefreshToken.Create(session.Id, newTokenHash, newTokenCreatedAt, newIdleExpiry);
+        var newToken = RefreshToken.Create(session.Id, newTokenHash, newTokenCreatedAt, newIdleExpiry, newTokenId);
         _context.RefreshTokens.Add(newToken);
 
+        // Reload session for update (was read AsNoTracking earlier)
+        var sessionForUpdate = await _context.AuthSessions
+            .FirstOrDefaultAsync(s => s.Id == session.Id, cancellationToken);
+
+        if (sessionForUpdate is null)
+        {
+            await tx.RollbackAsync(cancellationToken);
+            return new RefreshSessionResult(RefreshResult.SessionInvalid);
+        }
+
         // Update session last used and re-check active membership
-        session.UpdateLastUsed(now);
+        sessionForUpdate.UpdateLastUsed(now);
 
         // If no active tenant selected, validate current selection still exists
-        if (session.ActiveTenantId.HasValue)
+        if (sessionForUpdate.ActiveTenantId.HasValue)
         {
             var membershipExists = await _context.TenantMemberships
                 .AnyAsync(m =>
                     m.AccountId == account.Id &&
-                    m.TenantId == session.ActiveTenantId &&
+                    m.TenantId == sessionForUpdate.ActiveTenantId &&
                     m.Status == Domain.Identity.MembershipStatus.Active,
                     cancellationToken);
 
             if (!membershipExists)
             {
-                session.ClearTenant();
+                sessionForUpdate.ClearTenant();
             }
         }
 
@@ -163,7 +220,7 @@ public sealed class RefreshSessionHandler
 
         // Determine response: token is valid, always return Success.
         // The endpoint translates the membership state into authenticated/tenant_selection_required/no_membership
-        long? selectedTenantId = session.ActiveTenantId?.Value;
+        long? selectedTenantId = sessionForUpdate.ActiveTenantId?.Value;
 
         // If a tenant was selected but is no longer a member, clear it for the response
         if (selectedTenantId.HasValue && !memberships.Contains(selectedTenantId.Value))
@@ -185,7 +242,7 @@ public sealed class RefreshSessionHandler
             status.ToString().ToLowerInvariant(),
             now,
             account.Id,
-            sessionId: session.Id,
+            sessionId: sessionForUpdate.Id,
             correlationId: command.CorrelationId,
             cancellationToken: cancellationToken);
 
@@ -199,7 +256,7 @@ public sealed class RefreshSessionHandler
             selectedTenantId,
             null, // AccessToken issued by Host
             newRefreshCookieValue,
-            session.Id,
+            sessionForUpdate.Id,
             externalIdentity.Principal);
     }
 }

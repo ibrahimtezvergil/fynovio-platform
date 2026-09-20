@@ -18,7 +18,7 @@ public sealed class RefreshToken
 
     private RefreshToken() { }
 
-    public static RefreshToken Create(Guid sessionId, string tokenHash, DateTimeOffset issuedAt, DateTimeOffset expiresAt)
+    public static RefreshToken Create(Guid sessionId, string tokenHash, DateTimeOffset issuedAt, DateTimeOffset expiresAt, Guid? id = null)
     {
         if (sessionId == Guid.Empty)
             throw new ArgumentException("Session ID cannot be empty.", nameof(sessionId));
@@ -29,7 +29,7 @@ public sealed class RefreshToken
 
         return new RefreshToken
         {
-            Id = Guid.NewGuid(),
+            Id = id ?? Guid.NewGuid(),
             SessionId = sessionId,
             TokenHash = tokenHash,
             IssuedAt = issuedAt,
