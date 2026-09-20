@@ -9,6 +9,7 @@ describe('toProblem — the backend ProblemDetails types map to the right UX', (
     [error(409, 'idempotency_key_reused'), 'idempotencyConflict'],
     [error(409, 'illegal_lifecycle_transition'), 'lifecycle'],
     [error(409, 'invalid_pipeline_transition'), 'pipeline'],
+    [error(422, 'principal_not_assignable'), 'notAssignable'],
     [error(409, 'invalid_pipeline_configuration'), 'pipeline'],
     [error(400, 'validation_error'), 'validation'],
     [error(404, 'not_found'), 'notFound'],

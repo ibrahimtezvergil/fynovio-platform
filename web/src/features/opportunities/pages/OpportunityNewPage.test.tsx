@@ -6,7 +6,7 @@ import { endpoints } from '@/api/endpoints'
 import { useSessionStore } from '@/lib/auth'
 import { server } from '@/mocks/server'
 import { authenticated, url } from '@/test/authHandlers'
-import { problemResponse, recordRequests } from '@/test/opportunities'
+import { chooseFromCombobox, mockParties, problemResponse, recordRequests, typeInCombobox, wirePath } from '@/test/opportunities'
 import { renderRoutes, tr } from '@/test/render'
 import { resetSession } from '@/test/session'
 import OpportunityNewPage from './OpportunityNewPage'
@@ -16,7 +16,11 @@ const t = (key: string, options?: Record<string, unknown>) => tr(key, options, '
 beforeEach(() => {
   resetSession()
   useSessionStore.getState().applyAuthResult(authenticated())
+  mockParties()
 })
+
+const partyLabel = () => t('form.partyId.label')
+const chooseParty = () => chooseFromCombobox(partyLabel(), 'Acme', /Acme Ltd/)
 
 const render = () =>
   renderRoutes(
@@ -62,7 +66,7 @@ describe('opportunity create — validation', () => {
     server.use(http.post(url(endpoints.opportunities.create), () => HttpResponse.json({ opportunityId: 1, replayed: false })))
     render()
 
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.partyId.label') }), { target: { value: '1001' } })
+    await chooseParty()
     fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TR' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
@@ -74,7 +78,7 @@ describe('opportunity create — validation', () => {
     server.use(http.post(url(endpoints.opportunities.create), () => HttpResponse.json({ opportunityId: 1, replayed: false })))
     render()
 
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.partyId.label') }), { target: { value: '1001' } })
+    await chooseParty()
     fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100.123' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
@@ -86,18 +90,18 @@ describe('opportunity create — validation', () => {
     server.use(http.post(url(endpoints.opportunities.create), () => HttpResponse.json({ opportunityId: 1, replayed: false })))
     render()
 
-    const partyInput = screen.getByRole('textbox', { name: t('form.partyId.label') })
+    await chooseParty()
+    const partyInput = screen.getByRole('combobox', { name: partyLabel() })
     const currencyInput = screen.getByRole('textbox', { name: t('form.currency.label') })
     const amountInput = screen.getByRole('textbox', { name: t('form.estimatedAmount.label') })
 
-    fireEvent.change(partyInput, { target: { value: '999' } })
     fireEvent.change(currencyInput, { target: { value: 'INVALID' } })
     fireEvent.change(amountInput, { target: { value: '250.50' } })
 
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
     await screen.findByText(t('form.currency.invalid'))
 
-    expect(partyInput).toHaveValue('999')
+    expect(partyInput).toHaveValue('Acme Ltd')
     expect(amountInput).toHaveValue('250.50')
     expect(currencyInput).toHaveValue('INVALID')
   })
@@ -114,7 +118,7 @@ describe('opportunity create — success', () => {
     )
     render()
 
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.partyId.label') }), { target: { value: '1001' } })
+    await chooseParty()
     fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'try' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '250.5' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
@@ -134,7 +138,7 @@ describe('opportunity create — success', () => {
     )
     render()
 
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.partyId.label') }), { target: { value: '1001' } })
+    await chooseParty()
     fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'EUR' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '500' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
@@ -147,7 +151,7 @@ describe('opportunity create — success', () => {
     server.use(http.post(url(endpoints.opportunities.create), () => HttpResponse.json({ opportunityId: 42, replayed: false })))
     render()
 
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.partyId.label') }), { target: { value: '1001' } })
+    await chooseParty()
     fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '250' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
@@ -170,7 +174,7 @@ describe('opportunity create — concurrency', () => {
     )
     render()
 
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.partyId.label') }), { target: { value: '1001' } })
+    await chooseParty()
     fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100' } })
     const submitButton = screen.getByRole('button', { name: t('form.submit') })
@@ -193,14 +197,14 @@ describe('opportunity create — failure and retry', () => {
     )
     render()
 
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.partyId.label') }), { target: { value: '1001' } })
+    await chooseParty()
     fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
 
     const notice = await screen.findByRole('alert')
     expect(notice).toHaveAttribute('data-problem', 'unavailable')
-    expect(screen.getByRole('textbox', { name: t('form.partyId.label') })).toHaveValue('1001')
+    expect(screen.getByRole('combobox', { name: partyLabel() })).toHaveValue('Acme Ltd')
     expect(recorder.commands()).toHaveLength(1)
   })
 
@@ -216,7 +220,7 @@ describe('opportunity create — failure and retry', () => {
     )
     render()
 
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.partyId.label') }), { target: { value: '1001' } })
+    await chooseParty()
     fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
@@ -248,7 +252,7 @@ describe('opportunity create — failure and retry', () => {
     )
     render()
 
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.partyId.label') }), { target: { value: '1001' } })
+    await chooseParty()
     fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
@@ -271,14 +275,14 @@ describe('opportunity create — failure and retry', () => {
     server.use(http.post(url(endpoints.opportunities.create), () => problemResponse(403, 'forbidden')))
     render()
 
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.partyId.label') }), { target: { value: '1001' } })
+    await chooseParty()
     fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
 
     const notice = await screen.findByRole('alert')
     expect(notice).toHaveAttribute('data-problem', 'forbidden')
-    expect(screen.getByRole('textbox', { name: t('form.partyId.label') })).toHaveValue('1001')
+    expect(screen.getByRole('combobox', { name: partyLabel() })).toHaveValue('Acme Ltd')
   })
 })
 
@@ -299,5 +303,72 @@ describe('opportunity create — form contract', () => {
     render()
 
     expect(screen.queryByRole('textbox', { name: /principal|subject/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('opportunity create — customer picker', () => {
+  it('is a server-backed picker: there is no free-text party id field', () => {
+    render()
+    expect(screen.getByRole('combobox', { name: partyLabel() })).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: partyLabel() })).not.toBeInTheDocument()
+  })
+
+  it('asks the server for the typed text and lists exactly what comes back (no local filtering)', async () => {
+    const recorder = recordRequests()
+    // The server matches "zz" to Bora although the name does not contain it: a client-side filter would hide her.
+    server.use(
+      http.get(url(endpoints.references.parties), async ({ request }) => {
+        await recorder.record(request)
+        const search = new URL(request.url).searchParams.get('search')
+        return HttpResponse.json(search === 'zz' ? [{ id: 1002, partyType: 'Organization', displayName: 'Bora Tekstil', email: null }] : [])
+      }),
+    )
+    render()
+
+    await typeInCombobox(partyLabel(), 'zz')
+    expect(await screen.findByRole('option', { name: /Bora Tekstil/ })).toBeInTheDocument()
+    expect(recorder.seen.some((entry) => entry.path === wirePath(endpoints.references.parties) && entry.search.includes('search=zz'))).toBe(true)
+  })
+
+  it('says so when nothing matches', async () => {
+    render()
+    await typeInCombobox(partyLabel(), 'nobody-by-this-name')
+    expect(await screen.findByText(t('picker.empty'))).toBeInTheDocument()
+  })
+
+  it('fails closed on 403: a forbidden message, no manual fallback, and no create request', async () => {
+    const recorder = recordRequests()
+    server.use(
+      http.get(url(endpoints.references.parties), () => problemResponse(403, 'forbidden')),
+      http.post(url(endpoints.opportunities.create), async ({ request }) => {
+        await recorder.record(request)
+        return HttpResponse.json({ opportunityId: 1, replayed: false })
+      }),
+    )
+    render()
+
+    await typeInCombobox(partyLabel(), 'a')
+    expect(await screen.findByText(t('picker.forbidden'))).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: partyLabel() })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: t('form.submit'), hidden: true }))
+    expect(await screen.findByText(t('form.partyId.invalid'))).toBeInTheDocument()
+    expect(recorder.commands()).toHaveLength(0)
+  })
+
+  it('clearing the choice makes the form invalid again — a stale id is never submitted', async () => {
+    const recorder = recordRequests()
+    server.use(
+      http.post(url(endpoints.opportunities.create), async ({ request }) => {
+        await recorder.record(request)
+        return HttpResponse.json({ opportunityId: 1, replayed: false })
+      }),
+    )
+    render()
+    await chooseParty()
+    fireEvent.click(screen.getByRole('button', { name: tr('asyncCombobox.clearSelection', undefined, 'common') }))
+
+    fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
+    expect(await screen.findByText(t('form.partyId.invalid'))).toBeInTheDocument()
+    expect(recorder.commands()).toHaveLength(0)
   })
 })

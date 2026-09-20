@@ -10,7 +10,7 @@ import { server } from '@/mocks/server'
 import { authenticated, url } from '@/test/authHandlers'
 import { resetSession } from '@/test/session'
 import { wireOpportunity } from '@/test/opportunities'
-import { opportunityKeys, useOpportunityList } from './api'
+import { opportunityKeys, referenceKeys, useOpportunityList } from './api'
 
 beforeEach(() => {
   resetSession()
@@ -34,6 +34,17 @@ describe('Opportunity query keys — tenant isolation via key root', () => {
 
     expect(opportunityKeys.stages(1, 3)[1]).toBe(1)
     expect(opportunityKeys.stages(2, 3)[1]).toBe(2)
+  })
+
+  it('the assignee and party reference lookups are tenant-rooted too — a switch can never show another tenant’s people or customers', () => {
+    expect(opportunityKeys.assignable(1, 5, 'a')[1]).toBe(1)
+    expect(opportunityKeys.assignable(2, 5, 'a')[1]).toBe(2)
+    expect(opportunityKeys.assignable(1, 5, 'a')).not.toEqual(opportunityKeys.assignable(2, 5, 'a'))
+
+    expect(referenceKeys.parties(1, 'acme')[1]).toBe(1)
+    expect(referenceKeys.parties(2, 'acme')[1]).toBe(2)
+    expect(referenceKeys.parties(1, 'acme')).not.toEqual(referenceKeys.parties(2, 'acme'))
+    expect(referenceKeys.partyNames(1, [7])).not.toEqual(referenceKeys.partyNames(2, [7]))
   })
 
   it('renders tenant-1 data while authenticated in tenant 1; after switch data is GONE, tenant-2 data SHOWN, cache cleared', async () => {

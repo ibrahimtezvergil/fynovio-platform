@@ -1,21 +1,24 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
-import { useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { useMemo, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Field } from '@/components/common/Field'
+import type { SelectOption } from '@/components/common/inputs/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { paths } from '@/routes/paths'
 import { useCreateOpportunity } from '../api'
 import { useKeyedCommand } from '../lib/useKeyedCommand'
 import { createOpportunityFormSchema, type CreateOpportunityInput, type CreateOpportunityValues } from '../schema'
+import { PartyPicker } from './PartyPicker'
 import { ProblemNotice } from './ProblemNotice'
 
 /**
  * Built from the real Phase 2 create contract and nothing more. Tenant and owner are taken from the
- * authenticated session by the backend, so neither is a field. The initial lifecycle (Draft, no stage) is the
+ * authenticated session by the backend, so neither is a field. The customer is chosen from the server-side Party search
+ * (never typed as a raw id). The initial lifecycle (Draft, no stage) is the
  * backend's; the entry stage is assigned by Open.
  */
 export function OpportunityForm() {
@@ -23,8 +26,11 @@ export function OpportunityForm() {
   const navigate = useNavigate()
   const schema = useMemo(() => createOpportunityFormSchema(t), [t])
   const command = useKeyedCommand(useCreateOpportunity())
+  // The form stores the Party id; the picker needs the whole option (its label) to keep showing the chosen name.
+  const [party, setParty] = useState<SelectOption | null>(null)
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<CreateOpportunityInput, unknown, CreateOpportunityValues>({
@@ -40,7 +46,22 @@ export function OpportunityForm() {
   return (
     <form onSubmit={submit} noValidate className="grid max-w-xl gap-4">
       <Field label={t('form.partyId.label')} hint={t('form.partyId.hint')} error={errors.partyId?.message}>
-        {(props) => <Input {...props} inputMode="numeric" autoComplete="off" {...register('partyId')} />}
+        {(props) => (
+          <Controller
+            control={control}
+            name="partyId"
+            render={({ field }) => (
+              <PartyPicker
+                {...props}
+                value={party}
+                onValueChange={(option) => {
+                  setParty(option)
+                  field.onChange(option?.value ?? '')
+                }}
+              />
+            )}
+          />
+        )}
       </Field>
       <div className="grid grid-cols-[120px_1fr] gap-3">
         <Field label={t('form.currency.label')} error={errors.currency?.message}>

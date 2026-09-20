@@ -34,6 +34,7 @@ Owner scope (2026-09-20): OD2 → OD1 → Party search (G2) → Product search (
   → Commit: `f734c73` "feat(crm): production CRM access via module enablement; dev seed uses the same path"
 - [x] T3 OD1 directory + CRM assignable-principals query/endpoint + Reassign target validation; tests
   → Commit: `d60abfc` "feat(crm): authorization-aware Assignable Principals query; Reassign re-validates its target"
-- [ ] T4 G2 party search (Contracts, MasterData, CRM handler, endpoint, dev parties); tests
+- [x] T4 G2 party search (Contracts, MasterData, CRM handler, endpoint, dev parties); tests
+  → Commit: `519b9be` "feat(masterdata,crm): tenant-safe party search and reference lookup"
 - [ ] T5 Frontend: party picker, assignee picker, Reassign dialog, G3 notice; vitest
 - [ ] T6 Playwright E2E updates, docs (README, schema doc, AGENTS status), final report, graphify refresh
