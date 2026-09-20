@@ -9,4 +9,7 @@ public sealed record OpportunitySummaryDto(
     string Currency,
     string AssignedPrincipalIssuer,
     string AssignedPrincipalSubject,
-    long? PipelineStageId);
+    long? PipelineStageId,
+    long PartyId,
+    long? PipelineDefinitionVersionId,
+    DateTimeOffset? ExpiryDate);

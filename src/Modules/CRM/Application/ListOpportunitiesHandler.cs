@@ -34,7 +34,8 @@ public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeR
             .Skip(query.Skip)
             .Take(query.Take)
             .Select(o => new OpportunitySummaryDto(
-                o.Id, o.Status, o.EstimatedAmount, o.Currency, o.AssignedPrincipalIssuer, o.AssignedPrincipalSubject, o.PipelineStageId))
+                o.Id, o.Status, o.EstimatedAmount, o.Currency, o.AssignedPrincipalIssuer, o.AssignedPrincipalSubject, o.PipelineStageId,
+                o.PartyRefPartyId, o.PipelineDefinitionVersionId, o.ExpiryDate))
             .ToListAsync(cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);

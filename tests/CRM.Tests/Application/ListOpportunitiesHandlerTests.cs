@@ -59,6 +59,27 @@ public sealed class ListOpportunitiesHandlerTests
         Assert.Equal(TestData.Seller.Subject, results[0].AssignedPrincipalSubject);
     }
 
+    [Fact]
+    public async Task Summary_carries_the_party_the_pipeline_version_and_the_expiry_date_the_list_page_shows()
+    {
+        var tenant = TestData.NextTenant();
+        await using var seed = _fixture.CreateAdminContext();
+        await using var seedMasterData = _fixture.CreateMasterDataContext();
+        var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 100m);
+        seed.Opportunities.Add(opportunity);
+        await seed.SaveChangesAsync();
+
+        await using var context = _fixture.CreateAdminContext();
+        var results = await new ListOpportunitiesHandler(context, new StubScopeResolver(new AccessScope.All()))
+            .HandleAsync(new ListOpportunitiesQuery(tenant, TestData.Seller, Guid.NewGuid(), Status: null, Skip: 0, Take: 50));
+
+        var summary = Assert.Single(results);
+        Assert.Equal(partyRef.PartyId, summary.PartyId);
+        Assert.Null(summary.PipelineDefinitionVersionId); // a Draft has no pipeline version until it is opened
+        Assert.Null(summary.ExpiryDate);
+    }
+
     private async Task<TenantId> SeedTwoOpportunitiesAsync()
     {
         var tenant = TestData.NextTenant();
