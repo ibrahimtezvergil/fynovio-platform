@@ -41,3 +41,21 @@ Owner scope (2026-09-20): OD2 → OD1 → Party search (G2) → Product search (
   Deviation: built on the existing `AsyncCombobox` (`common/inputs`) instead of a new combobox primitive; the planned `useAssignablePrincipals`/`usePartySearch` hooks became `useAssigneeSearcher`/`usePartySearcher` (searchers over the tenant-rooted query cache) because `AsyncCombobox` owns its debounce/abort.
 - [x] T6 Playwright E2E updates, docs (README, schema doc, AGENTS status), final report, graphify refresh
   → Commits: `ecf6886` "test(e2e): Reassign, customer picker and reference-query scenarios against the real API"; `5ff4e5c` "docs: Phase 2.6 operator guide, schema revision 10, status and final report"; `b7aefca` "chore(graphify): refresh graph after Phase 2.6"
+
+## Gap closure (2026-09-20, owner: "boşlukları hızlıca kapat")
+Only the gaps that close **without a new architecture decision**; one commit each.
+- **P2b** `CreateOpportunity` validates the customer through `IPartyIdentityResolver` — the command-precondition surface its own contract names for exactly this. Resolved *after* the idempotency-replay return (a replay keeps working once the party is merged/removed), the *resolved* (merge-survivor) ref is persisted, and the request hash stays over the *input* ref. Unknown / other-tenant party → 422 `party_not_found` (no existence oracle across tenants). The resolver runs on the MasterData context, outside the CRM transaction: an accepted TOCTOU for a reference precondition.
+- **P1** Pipeline provisioning without inventing a stage template: the **operator supplies the stages** (`provision-crm-pipeline --tenant-id N --name ... --stages "A,B,C"`). The first stage is the entry stage (`AddStage` default, `MarkEntry` never called — avoids the two-phase-save hazard). Idempotent by state: a tenant that already has a pipeline is reported `AlreadyProvisioned` and never modified (same "no reconciler / no upgrade" rule as module enablement). `CrmDevSeed.EnsurePipelineAsync` now calls the same handler.
+- **P2a** Party creation over HTTP under the existing precedent (`crm.reference.party.search`): a CRM-gated endpoint over MasterData's `CreatePartyHandler`, new action `crm.reference.party.create`. **The key is added to the v1 permission set in place, not via a v2 bump**: enablement is copy-once with no reconciler, so a v2 would leave every already-enabled tenant without the permission. Nothing is in production yet (local-only scope), so amending v1 is safe; the report says so. The key must be in the Host manifest union (the action seeder deprecates keys absent from it).
+
+**Deliberately not closed** (each needs a decision the owner has not made): L-3 (a MasterData authorization layer), a template upgrade path (frozen by Phase 1.5 §13), showing the owner by display name (needs a principal-resolve surface).
+
+- [x] G1 P2b party validation in `CreateOpportunity`
+  → Commit: `de4a389` "feat(crm): CreateOpportunity verifies the customer through IPartyIdentityResolver"
+- [x] G2 P1 pipeline provisioning handler + operator command; dev seed uses it
+  → Commit: `d9a61bd` "feat(crm): operator-provisioned sales pipeline (provision-crm-pipeline); dev seed uses the same handler"
+  Deviation: `ProvisionPipelineCommand` gained an optional `RetiredStageNames` so the dev seed's retired stage is created in the same transaction (the domain's stage factory is internal to CRM); the operator command never sets it.
+- [x] G3 P2a party creation endpoint + `crm.reference.party.create`
+  → Commit: `939c1d9` "feat(crm,masterdata): register a customer over HTTP (crm.reference.party.create)"
+  Note: MasterData gained `IPartyRegistration` (Contracts) as its write surface — CRM cannot reference MasterData. Field-length limits (name/surname 200, phone 50, e-mail 320) are enforced in the CRM handler, after authorization.
+- [ ] G4 docs: README, AGENTS status, final report (P1/P2 → closed), schema note

@@ -3,9 +3,8 @@ using MasterData.Application;
 
 namespace Host.Authentication;
 
-/// <summary>Development-only sample Parties so the opportunity form's customer picker has something to search. There is
-/// no HTTP or production path that creates Parties yet (Phase 2.6 plan, P2); the seed uses the real
-/// <see cref="CreatePartyHandler"/> with fixed idempotency keys, so re-running it never duplicates a party.</summary>
+/// <summary>Development-only sample Parties so the opportunity form's customer picker has something to search. The seed uses the real <see cref="CreatePartyHandler"/> (the one behind
+/// `POST /crm/references/parties`) with fixed idempotency keys, so re-running it never duplicates a party.</summary>
 public static class PartyDevSeed
 {
     private sealed record Sample(PartyType Type, string Name, string? Surname, string? Email);

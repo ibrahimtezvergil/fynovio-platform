@@ -66,12 +66,21 @@ Root `README.md`: "Enabling a business module for a tenant (production)" ve `--m
 Repoda Product master yok; `AddOpportunityLine` `EntityRef(tenant, "masterdata", "product", id)` üretir ama masterdata böyle bir kavramın sahibi değil. Bir ürün kataloğu uydurmak, sizin koyduğunuz sınırı (CRM içinde yeni ürün sahipliği/domain'i uydurma) ihlal ederdi. Sayısal `productId` girişi kaldı; alanın ipucu artık "ürün kataloğu henüz yok, kimlik sunucuda doğrulanmaz" der. Askıdaki `masterdata/product` referansı belgelendi. Bir Product master'ı olan modül (Inventory/Sales) geldiğinde `IPartySearch` ile aynı örüntü (Contracts arayüzü + tüketen tarafta eylem) uygulanır.
 
 ## 6. Bilinen boşluklar (bu kapsamda inşa edilmedi)
-- **P1** Production'da **pipeline** yaratan yol yok: gerçek bir kiracı Open/Stage yapamaz. İş kararı gerekir (aşama şablonu).
-- **P2** Production'da **Party** yaratan HTTP yolu yok; `CreateOpportunity` party'nin varlığını doğrulamaz (Phase 2 handler sözleşmesini değiştirirdi).
-- **L-3** MasterData'nın kendi yetkilendirme katmanı yok; okuma yolunu CRM eylemi (`crm.reference.party.search`) koruyor.
+- ~~**P1** Production'da pipeline yaratan yol yok~~ → **kapatıldı** (bkz. §6a).
+- ~~**P2** Party yaratan HTTP yolu yok; `CreateOpportunity` party'yi doğrulamaz~~ → **kapatıldı** (bkz. §6a).
+- **L-3** MasterData'nın kendi yetkilendirme katmanı yok; hem okuma (`crm.reference.party.search`) hem yazma (`crm.reference.party.create`) yolunu CRM eylemi koruyor. Yeni bir katman bağlayıcı bir mimari karardır.
+- Pipeline'ı provisioning'den **sonra** değiştirme yolu yok (aşama ekle/kaldır/yeniden sırala) — ayrı karar.
 - Detay sayfasında sahip hâlâ ham `subject` olarak gösteriliyor (görünen ad için ayrı bir sorgu gerekir).
 - Şablon **yükseltme** yolu (kiracıyı v1'den v2'ye taşıma) yok — Phase 1.5 kararı gereği yeni bir karar gerektirir.
 - Yeni bir sistem (Sales, Inventory) eklemek: manifest yaz + `PlatformModules`'e ekle; başka kod gerekmez.
+
+## 6a. Boşluk kapatma (aynı gün, "boşlukları hızlıca kapat")
+Yalnızca yeni mimari karar gerektirmeyenler; her biri ayrı commit:
+- **P2b** `CreateOpportunity`, müşteriyi `IPartyIdentityResolver` ile doğrular (sözleşmesinin kendi tarif ettiği komut-önkoşulu yüzeyi). Bilinmeyen/başka kiracı party → `422 party_not_found` (varlık oracle'ı yok). Çözümleme idempotency **replay kontrolünden sonra** (party sonradan birleşse/silinse bile replay çalışır), saklanan ref **merge survivor**, istek hash'i **girdi ref**'i üzerinde (iki deneme arası merge, retry'ı `idempotency_key_reused`'a çevirmez). Kabul edilen TOCTOU: resolver MasterData context'inde, CRM transaction'ı dışında okur. → `de4a389`
+- **P1** Aşama şablonu **uydurmadan**: operatör aşamaları verir (`provision-crm-pipeline --tenant-id N --name ... --stages "A,B,C"`), ilk aşama giriş aşamasıdır. Durum bazında idempotent (pipeline'ı olan kiracıya dokunmaz), bootstrap edilmemiş kiracıyı reddeder, dev seed aynı handler'ı kullanır. → `d9a61bd`
+- **P2a** `POST /crm/references/parties` (`crm.reference.party.create`): MasterData `IPartyRegistration` ile Contracts üzerinden yazma yüzeyi sunar; CRM önce yetkilendirir, sonra girdiyi doğrular ve devreder. **Şablon notu:** yeni eylem anahtarı CRM **v1**'e *yerinde* eklendi, v2'ye çıkılmadı — etkinleştirme bir kez kopyalar (reconciler yok), v2 olsaydı halihazırda etkinleştirilmiş her kiracı yeni yetkiyi hiç alamazdı; production'da kiracı yok. **İlk production kiracısından itibaren şablon içeriği değişikliği sürümü artırmak zorundadır.** → `939c1d9`
+- **Bilinçli olarak kapatılmadı** (her biri sahip kararı ister): L-3, şablon yükseltme yolu, owner'ın görünen adı, pipeline'ı sonradan düzenleme.
+- **Test:** CRM 185/185, MasterData 42/42, Access 301/301 (bir çalıştırmada 1 test kırmızı çıktı, aynı kodla tekrarında 301/301 geçti; hangi testin olduğu yakalanamadı — Access'e dokunulmadı, kararsız/zamanlamaya bağlı bir test olarak not edildi), Host 205/206 (tek kırmızı önceden beri bilinen Mailtrap user-secrets testi), Playwright 41/41 (P1, P2a ve P2b'nin üçü de uygulanmış halde, gerçek API + Chrome; yeni senaryo `9a-2` `party_not_found`).
 
 ## 7. Doğrulanamayanlar / dikkat
 - **Görsel/tema kontrolü yapılmadı** (tarayıcı aracıyla açık/koyu tema, picker popup stili). Picker mevcut `AsyncCombobox` stilini yeniden kullanır; E2E gerçek Chrome'da çalıştı ama görsel doğrulama yerine geçmez.

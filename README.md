@@ -185,7 +185,7 @@ curl -i -X POST http://localhost:5208/auth/login \
   -d '{"email":"single@fynovio.local","password":"<DevSeed:Password>"}'
 ```
 
-The seed also creates one pipeline per dev tenant (`Sales pipeline` v1: Qualification → Proposal → Negotiation, plus one retired stage) and a few sample customers (`Party` rows, created through the real `CreatePartyHandler`; six in tenant 1, three in tenant 2) so the customer picker has something to search. The CRM roles are **not** seeded separately any more: the seed runs the same module-enablement path production uses (see *Enabling a business module for a tenant* below), so the development database exercises the production grant mechanism. The pipeline and the parties are the only dev-only pieces — there is still no production path that creates a pipeline or a Party (Phase 2.6 plan, P1/P2). A development database created before Phase 2.6 already holds `crm_*` roles that the template would have to adopt; enablement refuses to adopt tenant-authored rows (`TemplateKeyConflict`, logged as a warning by the seed), so recreate such a database.
+The seed also creates one pipeline per dev tenant (`Sales pipeline` v1: Qualification → Proposal → Negotiation, plus one retired stage) and a few sample customers (`Party` rows, created through the real `CreatePartyHandler`; six in tenant 1, three in tenant 2) so the customer picker has something to search. The CRM roles are **not** seeded separately any more: the seed runs the same module-enablement path production uses (see *Enabling a business module for a tenant* below), so the development database exercises the production grant mechanism. Both go through production paths too: the pipeline through `ProvisionPipelineHandler` (the `provision-crm-pipeline` command below; the seed adds one retired stage on top), the parties through `CreatePartyHandler` behind `POST /crm/references/parties`. Only the sample data itself is dev-only. A development database created before Phase 2.6 already holds `crm_*` roles that the template would have to adopt; enablement refuses to adopt tenant-authored rows (`TemplateKeyConflict`, logged as a warning by the seed), so recreate such a database.
 
 Production has no seed and no default credential (see *Bootstrapping a tenant administrator* below). Authentication settings live under `Authentication:*` in `appsettings*.json`; the signing key, allowed origins and public base URL must be supplied per environment.
 
@@ -238,6 +238,20 @@ Bootstrap__Enabled=true dotnet Host.dll enable-tenant-module --tenant-id 1 --mod
 ```
 
 Enablement copies the module's **current** template version into ordinary tenant-local `Role`/`PermissionSet` rows (provenance: `origin_module_key`, `origin_version`), assigns the roles marked for administrators (CRM: `crm_manager`) to the tenant's current administrators, bumps `TenantAccessRevision` and writes evidence + outbox in one transaction. It is idempotent by state: re-running reports `AlreadyEnabled` (exit `0`) and changes nothing, **even if the template has since moved to a newer version** — there is deliberately no reconciler and no silent propagation (Phase 1.5 decision); an upgrade path would be a new decision. It never adopts a role or permission set with a colliding key that a tenant authored itself (`TemplateKeyConflict`, exit `5`). Exit codes: `0` enabled/already enabled, `2` not enabled by configuration, `4` tenant not bootstrapped, `5` template key conflict, `64` bad arguments or unknown module. Module keys come from `Host.Modules.PlatformModules` — adding a module there is what makes it enable-able and registers its actions.
+
+### Giving a tenant its first sales pipeline (production)
+
+A tenant with the CRM module still cannot Open or move an opportunity until it has a pipeline. The platform does **not** invent a stage template — the operator names the stages, in order; the first is the entry stage:
+
+```bash
+Bootstrap__Enabled=true dotnet Host.dll provision-crm-pipeline --tenant-id 1 --name "Sales pipeline" --stages "Qualification,Proposal,Negotiation"
+```
+
+It creates pipeline version 1 in one transaction under the tenant's RLS context. Like module enablement it is idempotent by state and never edits what exists: a tenant that already has a pipeline gets `already has a pipeline; nothing changed` (exit `0`), even when different stages are passed. A tenant that is not bootstrapped is refused (a typo in `--tenant-id` must not create configuration for a tenant that does not exist). Exit codes: `0` provisioned/already provisioned, `2` not enabled by configuration, `4` tenant not bootstrapped, `64` bad arguments (missing values, duplicate stage names ignoring case, more than 50 stages, names over 100 characters). Changing a pipeline afterwards has no path yet.
+
+### Customers (Parties) and opportunities
+
+`POST /crm/references/parties` (header `Idempotency-Key`; body `{ partyType: "Person"|"Organization", name, surname?, phone?, email? }`) registers a customer in the caller's tenant — gated by the CRM action `crm.reference.party.create` (held by `crm_sales_representative` and `crm_manager`, not `crm_viewer`), answering `201 { id, replayed }`. `POST /opportunities` now verifies the customer: an unknown or other-tenant party is `422 party_not_found`, and a merged party is stored as its surviving party. **Template note:** `crm.reference.party.create` was added to the CRM v1 permission set *in place* — no v2 — because enablement is copy-once (no reconciler) and nothing is in production yet; from the first production tenant on, a template content change must bump the version. A tenant enabled *before* this key existed does not receive it (recreate a development database).
 
 ### End-to-end tests (real API + PostgreSQL + browser)
 
