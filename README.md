@@ -75,6 +75,7 @@ The full architecture rationale (module boundaries, canonical domain concepts, f
 - **.NET 10 SDK**
 - **PostgreSQL 17** (local dev is expected to run against Postgres, not an in-memory provider)
 - **Docker** (Docker Desktop on macOS) — the integration tests start their own PostgreSQL container
+- **Node.js 22.13+** and npm — for the frontend in `web/`
 
 ### Installing PostgreSQL locally (macOS / Homebrew)
 
@@ -127,9 +128,11 @@ export ConnectionStrings__MasterData="Host=localhost;Database=fynovio_platform;U
 
 `ConnectionStrings__Crm`/`ConnectionStrings__MasterData` are what `Host` reads first; `FYNOVIO_CRM_CONNECTION_STRING`/`FYNOVIO_MASTERDATA_CONNECTION_STRING` are the fallbacks, and are also what `dotnet ef` uses — keep those on the `postgres` role, since migrations need it.
 
-## Running the API locally (and signing in)
+## Running locally: API, web and signing in
 
-Requires the local PostgreSQL from above. Development only — none of this is a production procedure.
+Requires the local PostgreSQL from above, with the `fynovio_platform` database created. Development only — none of this is a production procedure. In short: **(1)** migrations and runtime role once, **(2)** the API in one terminal, **(3)** the web app in another, **(4)** sign in with a seeded account.
+
+### 1–2. Database and API
 
 ```bash
 # 1. Migrations for every module, as the migration role (postgres)
@@ -148,7 +151,23 @@ sed "s/change-me/runtime/" scripts/create-runtime-role.sql \
 dotnet run --project src/Host --launch-profile http     # http://localhost:5208
 ```
 
-On start the API seeds three sign-in identities (idempotent; Development only, and only via the `dotnet run` launch profiles — `DevSeed:Enabled` is `false` in `appsettings.Development.json` so test hosts are unaffected). The shared password is `DevSeed:Password` in `src/Host/appsettings.Development.json`.
+If the API stops at start-up with `relation "access.actions" does not exist` (or any other missing relation), step 1 was skipped or your database predates the current migrations — run the migration loop again. `curl http://localhost:5208/health/db` returns `200` when the API is up.
+
+### 3. Web
+
+In a second terminal (Node 22.13+):
+
+```bash
+cd web
+npm ci
+npm run dev      # http://localhost:5173
+```
+
+No `.env` is needed: the dev server proxies `/api/*` to the API on `:5208`, which keeps the refresh cookie (`SameSite=Strict`) and the CSRF/Origin checks same-origin. **Use port 5173** — `appsettings.Development.json` allows exactly `http://localhost:5173` as the app origin and as the base of e-mailed links, so another port makes sign-in fail the origin check. Stop any other dev server holding that port first.
+
+### 4. Signing in
+
+On start the API seeds three sign-in identities (idempotent; Development only, and only via the `dotnet run` launch profiles — `DevSeed:Enabled` is `false` in `appsettings.Development.json` so test hosts are unaffected). All three share the password **`Dev-Only-Passw0rd-Change-Me`** (`DevSeed:Password` in `src/Host/appsettings.Development.json`; a development-only value that must never be reused anywhere else). An account is created only if it does not exist yet, so changing `DevSeed:Password` later does not touch existing accounts — set a new one with the *Forgot password* flow or the account-security page instead.
 
 | Account | State it exercises |
 |---|---|

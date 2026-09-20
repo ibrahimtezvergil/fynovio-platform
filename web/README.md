@@ -1,8 +1,9 @@
 # Fynovio — Dashboard
 
 Private dashboard panel for the Fynovio B2B SaaS CRM. React + TypeScript, organised
-along Feature-Sliced Design lines. **No backend yet** — the data layer is mocked
-behind React Query so that swapping in real endpoints touches one file per feature.
+along Feature-Sliced Design lines. Authentication and the session run against the real .NET API;
+the feature data that has no backend yet (deals, calendar, demo pages) is mocked behind React Query
+so that swapping in real endpoints touches one file per feature.
 
 ## Stack
 
@@ -25,9 +26,10 @@ npm run dev      # http://localhost:5173
 npm run build    # tsc -b && vite build
 ```
 
-Sign-in is real: start the API first (see the repository README, "Running the API locally") — the dev
-server proxies `/api/*` to `http://localhost:5208` — then sign in with a seeded account such as
-`single@fynovio.local`. Deals, calendar and the demo pages are still mocked (MSW).
+Sign-in is real: start the API first (see the repository README, "Running locally: API, web and signing
+in") — the dev server proxies `/api/*` to `http://localhost:5208` — then sign in with a seeded account:
+`admin@fynovio.local`, `single@fynovio.local` or `nomember@fynovio.local`, all with the development-only
+password `Dev-Only-Passw0rd-Change-Me`. Deals, calendar and the demo pages are still mocked (MSW).
 
 ## Folder layout
 
