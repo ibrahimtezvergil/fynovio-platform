@@ -1,5 +1,5 @@
 import { Inbox, Plus } from 'lucide-react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -7,13 +7,20 @@ import { PageHeader } from '@/components/common/PageHeader'
 import { SegmentedControl, type Segment } from '@/components/common/SegmentedControl'
 import { Button } from '@/components/ui/button'
 import { paths } from '@/routes/paths'
-import { PAGE_SIZE, useOpportunityList, type OpportunityListFilter } from '../api'
+import { usePartyNames, usePipelineStageNames, useOpportunityList, stageKey, type OpportunityListFilter } from '../api'
 import { ApiModeChip } from '../components/ApiModeChip'
-import { OpportunityTable } from '../components/OpportunityTable'
+import { OpportunitiesBoard } from '../components/OpportunitiesBoard'
+import { OpportunitiesFilters } from '../components/OpportunitiesFilters'
+import { OpportunitiesGrid } from '../components/OpportunitiesGrid'
 import { QueryProblemState } from '../components/QueryProblemState'
+import { NO_ROW_FILTERS, filterRows, hasRowFilters, toRows, totalAmountLabel, type RowFilters } from '../lib/rows'
 import { OPPORTUNITY_STATUSES, type OpportunityStatus } from '../schema'
 
 type StatusFilter = OpportunityStatus | 'all'
+type ListView = 'grid' | 'board'
+
+/** The view rides in the URL, so a reload or a shared link lands on the same one; the grid is the default and stays out of it. */
+const readView = (params: URLSearchParams): ListView => (params.get('view') === 'board' ? 'board' : 'grid')
 
 function readFilter(params: URLSearchParams): OpportunityListFilter {
   const status = params.get('status')
@@ -28,19 +35,39 @@ export default function OpportunitiesPage() {
   const { t } = useTranslation('opportunities')
   const [searchParams, setSearchParams] = useSearchParams()
   const filter = readFilter(searchParams)
+  const view = readView(searchParams)
   const list = useOpportunityList(filter)
+  const [rowFilters, setRowFilters] = useState<RowFilters>(NO_ROW_FILTERS)
+
+  const items = list.data?.items
+  const partyIds = useMemo(() => [...new Set((items ?? []).flatMap((item) => (item.partyId == null ? [] : [item.partyId])))].toSorted((a, b) => a - b), [items])
+  const versionIds = useMemo(() => [...new Set((items ?? []).flatMap((item) => (item.pipelineDefinitionVersionId == null ? [] : [item.pipelineDefinitionVersionId])))].toSorted((a, b) => a - b), [items])
+  const partyNames = usePartyNames(partyIds).data
+  const stageNames = usePipelineStageNames(versionIds)
+
+  const loadedRows = useMemo(() => toRows(items ?? [], partyNames, (versionId, stageId) => stageNames.get(stageKey(versionId, stageId))), [items, partyNames, stageNames])
+  const rows = useMemo(() => filterRows(loadedRows, rowFilters), [loadedRows, rowFilters])
+  const owners = useMemo(() => [...new Set(loadedRows.flatMap((row) => (row.owner ? [row.owner] : [])))].toSorted(), [loadedRows])
+  const total = totalAmountLabel(rows)
 
   const segments = useMemo<readonly Segment<StatusFilter>[]>(
     () => [{ value: 'all', label: t('list.filter.all') }, ...OPPORTUNITY_STATUSES.map((status) => ({ value: status, label: t(`status.${status}`) }))],
     [t],
   )
 
-  const goTo = (next: OpportunityListFilter) => {
+  const viewSegments = useMemo<readonly Segment<ListView>[]>(
+    () => [{ value: 'grid', label: t('list.view.grid') }, { value: 'board', label: t('list.view.board') }],
+    [t],
+  )
+
+  const navigateTo = (next: OpportunityListFilter, nextView: ListView) => {
     const params = new URLSearchParams()
     if (next.status) params.set('status', next.status)
     if (next.page > 0) params.set('page', String(next.page))
+    if (nextView === 'board') params.set('view', 'board')
     setSearchParams(params)
   }
+  const goTo = (next: OpportunityListFilter) => navigateTo(next, view)
 
   const createAction = (
     <Button render={<Link to={paths.crmOpportunityNew} />} nativeButton={false}>
@@ -64,27 +91,51 @@ export default function OpportunitiesPage() {
   } else {
     body = (
       <>
-        <OpportunityTable items={list.data?.items} refreshing={list.isFetching && list.data !== undefined} />
-        <div className="flex items-center justify-between gap-3 pt-2">
-          <span className="text-muted-foreground text-[12.5px]" aria-live="polite">
-            {list.isFetching && list.data ? t('list.refreshing') : t('list.page', { page: filter.page + 1, size: PAGE_SIZE })}
-          </span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={filter.page === 0} onClick={() => goTo({ ...filter, page: filter.page - 1 })}>
-              {t('list.previous')}
-            </Button>
-            <Button variant="outline" size="sm" disabled={!list.data?.hasNext} onClick={() => goTo({ ...filter, page: filter.page + 1 })}>
-              {t('list.next')}
-            </Button>
-          </div>
-        </div>
+        <OpportunitiesFilters filters={rowFilters} onChange={setRowFilters} owners={owners} showDensity={view === 'grid'} />
+        {view === 'grid' ? (
+          <OpportunitiesGrid
+            rows={rows}
+            isLoading={list.data === undefined}
+            refreshing={list.isFetching && list.data !== undefined}
+            page={filter.page}
+            hasNext={list.data?.hasNext ?? false}
+            loadedCount={loadedRows.length}
+            onPageChange={(page) => goTo({ ...filter, page })}
+          />
+        ) : (
+          <OpportunitiesBoard
+            rows={rows}
+            refreshing={list.isFetching && list.data !== undefined}
+            page={filter.page}
+            hasNext={list.data?.hasNext ?? false}
+            loadedCount={loadedRows.length}
+            onPageChange={(page) => goTo({ ...filter, page })}
+          />
+        )}
+        {hasRowFilters(rowFilters) && (
+          <p className="text-muted-foreground text-[12.5px]">
+            <button
+              type="button"
+              onClick={() => setRowFilters(NO_ROW_FILTERS)}
+              className="cursor-pointer font-[550] text-[var(--nx-tint)] underline-offset-4 hover:underline"
+            >
+              {t('list.filters.clear')}
+            </button>
+          </p>
+        )}
       </>
     )
   }
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader eyebrow={t('list.eyebrow')} title={t('list.title')} description={t('list.description')} actions={<><ApiModeChip />{createAction}</>} />
+      <PageHeader eyebrow={t('list.eyebrow')} title={t('list.title')} description={list.data ? (total ? t('list.summary', { count: rows.length, total }) : t('list.summaryCount', { count: rows.length })) : t('list.description')} actions={
+          <>
+            <ApiModeChip />
+            <SegmentedControl<ListView> aria-label={t('list.view.label')} segments={viewSegments} value={view} onChange={(next) => navigateTo(filter, next)} />
+            {createAction}
+          </>
+        } />
       <SegmentedControl<StatusFilter>
         aria-label={t('list.filter.label')}
         segments={segments}

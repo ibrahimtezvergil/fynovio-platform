@@ -8,7 +8,6 @@ export default {
   items: {
     dashboard: 'Dashboard',
     opportunities: 'Fırsatlar',
-    pipeline: 'Pipeline',
     crmDashboard: 'Genel Bakış',
     calendar: 'Takvim',
     reports: 'Raporlar',

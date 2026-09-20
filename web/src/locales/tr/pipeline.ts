@@ -1,5 +1,7 @@
 export default {
   page: {
+    title: 'Fırsatlar',
+    newOpportunity: 'Yeni fırsat',
     viewLabel: 'Görünüm',
     viewGrid: 'Tablo',
     viewBoard: 'Pano',

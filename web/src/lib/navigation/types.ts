@@ -6,12 +6,12 @@ export type NavigationSurface = 'sidebar' | 'topbar'
 
 /**
  * Which sidebar an item belongs to. Only surfaces that own a sidebar
- * (`RouteSurface`'s 'application' | 'system' | 'developer') ever get matched
+ * (`RouteSurface`'s 'application' | 'developer') ever get matched
  * against this — Home and Utility routes never mount a `Sidebar`, so nothing
  * needs a scope for them. A future domain app (e.g. an eventual Inventory)
  * adds its own id here, not a conditional.
  */
-export type NavScope = 'crm' | 'system' | 'developer'
+export type NavScope = 'crm' | 'developer'
 
 /**
  * What kind of shell surface a route (or route group) is — drives whether
@@ -21,15 +21,14 @@ export type NavScope = 'crm' | 'system' | 'developer'
  *
  * - home        Global Home. No sidebar — the app-distribution surface.
  * - application A domain application (CRM, and future ones). Owns a sidebar.
- * - utility     A cross-domain tool (Calendar, Reports, Files, ...). No
- *               sidebar — opening it should feel like opening a tool, not
- *               entering an application.
- * - system      Platform administration (Settings, Members). Owns a sidebar.
+ * - utility     A cross-domain tool or global page (Calendar, Reports, Files,
+ *               Members, the user's Settings, ...). No sidebar — opening it
+ *               should feel like opening a tool, not entering an application.
  * - developer   Cross-cutting dev tooling (demo/playground pages). Owns a
  *               sidebar, and is excluded from the route tree entirely in
  *               production (see `routes/index.tsx`).
  */
-export type RouteSurface = 'home' | 'application' | 'utility' | 'system' | 'developer'
+export type RouteSurface = 'home' | 'application' | 'utility' | 'developer'
 
 export interface NavParentDefinition {
   id: string

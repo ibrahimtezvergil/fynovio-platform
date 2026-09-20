@@ -8,7 +8,6 @@ export default {
   items: {
     dashboard: 'Dashboard',
     opportunities: 'Opportunities',
-    pipeline: 'Pipeline',
     crmDashboard: 'Dashboard',
     calendar: 'Calendar',
     reports: 'Reports',

@@ -4,7 +4,6 @@ export default {
     title: 'Sales Dashboard',
     description: 'Last 30 days · open deals and pipeline health',
     rangeLabel: 'Range',
-    newDeal: 'New deal',
     rangeCurrent: 'This period',
     rangePrevious: 'Previous period',
     rangeYearly: 'Yearly',

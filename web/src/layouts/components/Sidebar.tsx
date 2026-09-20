@@ -1,4 +1,4 @@
-import { ChevronsUpDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -7,8 +7,7 @@ import type { NavScope } from '@/lib/navigation/types'
 import { useSidebar } from '@/store/useAppStore'
 import { registerShortcut } from '@/lib/shortcuts'
 import { SidebarNav } from './SidebarNav'
-
-const TENANT_NAME = 'Nordwind Lojistik'
+import { TenantMenu } from './TenantMenu'
 
 /** The physical key to the right of P, whatever this layout prints on it. */
 const BRACKET_CODE = 'BracketLeft'
@@ -129,40 +128,7 @@ export function Sidebar({ scope }: { scope: NavScope }) {
         )}
       </div>
 
-      {/* tenant switcher — square avatar: an org, not a person */}
-      <Tooltip>
-        <TooltipTrigger
-          disabled={!collapsed}
-          render={
-            <button
-              type="button"
-              aria-label={TENANT_NAME}
-              className={cn(
-                'nx-material flex h-11 cursor-pointer items-center gap-2.5 rounded-[16px] text-left',
-                'text-[13.5px] font-medium transition-[background,border-color] duration-[250ms] ease-fluid',
-                'hover:bg-[var(--nx-fill-hover)] hover:border-[var(--nx-hairline-strong)]',
-                collapsed ? 'w-11 shrink-0 justify-center px-0' : 'w-full px-[11px]',
-              )}
-            />
-          }
-        >
-          <span
-            aria-hidden
-            className="nx-avatar size-[26px] shrink-0 rounded-[var(--nx-r-tile)] text-[11px]"
-          >
-            N
-          </span>
-          {!collapsed && (
-            <>
-              <span className="min-w-0 flex-1 truncate">{TENANT_NAME}</span>
-              <ChevronsUpDown aria-hidden className="text-muted-foreground size-[15px] shrink-0" />
-            </>
-          )}
-        </TooltipTrigger>
-        <TooltipContent side="right" sideOffset={10}>
-          {TENANT_NAME}
-        </TooltipContent>
-      </Tooltip>
+      <TenantMenu collapsed={collapsed} />
 
       <SidebarNav collapsed={collapsed} scope={scope} />
 

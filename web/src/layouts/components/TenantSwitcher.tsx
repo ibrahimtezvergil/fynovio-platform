@@ -32,8 +32,8 @@ export function TenantSwitcher({ onSwitched }: { onSwitched?: () => void }) {
   }
 
   return (
-    <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0 py-1">
-      <legend className="text-muted-foreground px-4 pt-1.5 pb-1 text-[11px] font-[550]">{t('tenantSwitcher.label')}</legend>
+    <fieldset className="m-0 flex min-w-0 flex-col gap-0.5 border-0 p-1.5">
+      <legend className="sr-only">{t('tenantSwitcher.label')}</legend>
       {memberships.map(({ tenantId }) => {
         const active = tenantId === activeTenantId
         return (
@@ -44,11 +44,14 @@ export function TenantSwitcher({ onSwitched }: { onSwitched?: () => void }) {
             disabled={pendingId !== null}
             onClick={() => void switchTo(tenantId)}
             className={cn(
-              'flex w-full items-center gap-2.5 px-4 py-2 text-left text-[13px] transition-colors duration-[250ms] ease-fluid hover:bg-[var(--nx-fill-hover)] enabled:cursor-pointer disabled:cursor-default',
-              active && 'font-[590]',
+              'flex h-10 w-full items-center gap-2.5 rounded-[var(--nx-r-ctl-lg)] px-2.5 text-left text-[13.5px] font-medium transition-colors duration-[250ms] ease-fluid hover:bg-[var(--nx-fill-hover)] enabled:cursor-pointer disabled:cursor-default',
+              active && 'bg-[var(--nx-fill-hover)] font-[590]',
             )}
           >
-            <span className="flex-1">{t('tenantSelector.tenantLabel', { id: tenantId })}</span>
+            <span aria-hidden className="nx-avatar size-[26px] shrink-0 rounded-[var(--nx-r-tile)] text-[11px]">
+              {tenantId}
+            </span>
+            <span className="flex-1 truncate">{t('tenantSelector.tenantLabel', { id: tenantId })}</span>
             {active && <Check aria-hidden className="size-4 shrink-0" strokeWidth={1.75} />}
           </button>
         )

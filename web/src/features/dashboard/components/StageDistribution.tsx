@@ -55,7 +55,7 @@ export function StageDistribution({
         <button
           key={bucket.stage}
           type="button"
-          onClick={() => navigate(`${paths.crmPipeline}?stage=${bucket.stage}`)}
+          onClick={() => navigate(`${paths.crmOpportunities}?stage=${bucket.stage}`)}
           className="group flex flex-col gap-[7px] rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={t('stageDistribution.drillThrough', { stage: bucket.stage, count: bucket.count })}
         >

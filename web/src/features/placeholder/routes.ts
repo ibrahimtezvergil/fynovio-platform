@@ -8,9 +8,5 @@ export const placeholderUtilityRoutes = [
   { path: paths.reports, protected: true, element: createElement(PlaceholderPage, { titleKey: 'reports' }) },
   { path: paths.files, protected: true, element: createElement(PlaceholderPage, { titleKey: 'files' }) },
   { path: paths.feedback, protected: true, element: createElement(PlaceholderPage, { titleKey: 'feedback' }) },
-] satisfies FeatureRoute[]
-
-/** Platform administration pages — mounted on the System rail. */
-export const placeholderSystemRoutes = [
   { path: paths.members, protected: true, element: createElement(PlaceholderPage, { titleKey: 'members' }) },
 ] satisfies FeatureRoute[]

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { ADMIN, APP_URL, NO_MEMBERSHIP, SEED_PASSWORD, SINGLE } from './support/env.ts'
-import { emailField, expectNoTokenInStorage, openUserMenu, passwordField, signIn, signOut, t, userMenuTrigger } from './support/ui.ts'
+import { emailField, expectNoTokenInStorage, passwordField, signIn, signOut, t, tenantLabel, userMenuTrigger } from './support/ui.ts'
 
 test.describe('signing in and out', () => {
   test('signs in, survives a reload, holds no token in web storage, and signs out for good', async ({ page }) => {
@@ -85,18 +85,21 @@ test.describe('signing in and out', () => {
     await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
 
-    const tenantTwo = page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '2') })
-    await openUserMenu(page)
+    // The organisation switcher is the sidebar's top slot; the home page has no sidebar, so go into the CRM.
+    await page.goto('/crm/opportunities')
+    const slot = (id: number) => page.getByRole('button', { name: tenantLabel(id), exact: true })
+    await slot(1).click()
     const selected = page.waitForResponse((r) => r.url().endsWith('/api/auth/tenants/select') && r.request().method() === 'POST')
-    await tenantTwo.click() // the server checks the membership and mints a token for tenant 2; the menu closes itself
+    await slot(2).click() // the server checks the membership and mints a token for tenant 2; the popover closes itself
     const response = await selected
     expect(response.status()).toBe(200)
     expect(response.request().postDataJSON()).toEqual({ tenantId: 2 })
 
-    // The shell re-renders after the switch (caches are cleared), so reopen the menu until it stays open.
+    // The shell re-renders after the switch (caches are cleared), so reopen the switcher until it stays open.
+    const switcher = page.getByRole('group', { name: t.auth.tenantSwitcher.label })
     await expect(async () => {
-      if (!(await tenantTwo.isVisible())) await openUserMenu(page)
-      await expect(tenantTwo).toHaveAttribute('aria-current', 'true', { timeout: 1_000 })
+      if (!(await switcher.isVisible())) await slot(2).click()
+      await expect(switcher.getByRole('button', { name: tenantLabel(2), exact: true })).toHaveAttribute('aria-current', 'true', { timeout: 1_000 })
     }).toPass({ timeout: 10_000 })
   })
 

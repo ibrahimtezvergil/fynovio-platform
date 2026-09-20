@@ -33,5 +33,5 @@ export function weightedValue(deals: { value: number; probability: number }[]): 
 
 /** Pipeline has no detail route yet, so a deal reference resolves to its shared workspace. */
 export function dealToEntityRef(deal: Deal): EntityRef {
-  return buildEntityRef('deal', deal.id, deal.title, paths.crmPipeline, deal.account)
+  return buildEntityRef('deal', deal.id, deal.title, paths.crmOpportunities, deal.account)
 }

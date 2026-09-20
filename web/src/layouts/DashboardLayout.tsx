@@ -19,7 +19,7 @@ interface RouteHandle {
  * from the Topbar's Tools menu), not an application with its own rail — see
  * `buildSidebarNav` in `layouts/navigation.ts`.
  */
-const SIDEBAR_SURFACES: ReadonlySet<RouteSurface> = new Set(['application', 'system'])
+const SIDEBAR_SURFACES: ReadonlySet<RouteSurface> = new Set(['application'])
 
 /**
  * Rail + header + scrolling content, over an ambient depth wash. The wash
@@ -28,9 +28,9 @@ const SIDEBAR_SURFACES: ReadonlySet<RouteSurface> = new Set(['application', 'sys
  *
  * Which rail (if any) renders is read off the matched route tree, not the
  * pathname: `routes/index.tsx` tags every top-level route group with a
- * `{ surface, navScope }` handle. Only an 'application' | 'system' |
- * 'developer' surface mounts a `Sidebar`, scoped to its `navScope` — Home and
- * every Utility route render with none. Adding a second domain application
+ * `{ surface, navScope }` handle. Only an 'application' surface mounts a
+ * `Sidebar`, scoped to its `navScope` — Home, every Utility route and the
+ * Developer tools render with none. Adding a second domain application
  * later means tagging its route group, not touching this component.
  */
 export function DashboardLayout() {

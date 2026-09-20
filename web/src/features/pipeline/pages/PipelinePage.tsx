@@ -1,8 +1,9 @@
+import { Plus } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
 import { toast } from 'sonner'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Can } from '@/components/common/Can'
 import { PageHeader } from '@/components/common/PageHeader'
 import { SegmentedControl, type Segment } from '@/components/common/SegmentedControl'
@@ -15,6 +16,7 @@ import { NO_DEALS } from '@/features/pipeline/data/deals'
 import { money, weightedValue } from '@/features/pipeline/data/format'
 import { usePipelineStore, type PipelineView } from '@/features/pipeline/store/usePipelineStore'
 import { useCapability } from '@/lib/capabilities'
+import { paths } from '@/routes/paths'
 import type { PipelineRowActions } from '@/features/pipeline/table/pipelineTable'
 import type { TFunction } from 'i18next'
 import { STAGES, type Deal, type Stage } from '@/types'
@@ -114,7 +116,7 @@ export default function PipelinePage() {
   return (
     <div className="flex flex-col gap-[18px]">
       <PageHeader
-        title="Pipeline"
+        title={t('page.title')}
         description={summarize(visible, t)}
         actions={
           <>
@@ -131,6 +133,10 @@ export default function PipelinePage() {
                 </Button>
               </Can>
             )}
+            <Button render={<Link to={paths.crmOpportunityNew} />} nativeButton={false}>
+              <Plus aria-hidden strokeWidth={2} />
+              {t('page.newOpportunity')}
+            </Button>
           </>
         }
       />

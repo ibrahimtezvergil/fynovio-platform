@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { adminToken, newApi } from './support/api.ts'
 import { ADMIN, SALES_REP, SEED_PASSWORD, VIEWER, SINGLE } from './support/env.ts'
-import { choosePartyByName, expectNoTokenInStorage, openUserMenu, signIn, t } from './support/ui.ts'
+import { choosePartyByName, expectNoTokenInStorage, signIn, t, tenantLabel } from './support/ui.ts'
 import {
   addLineViaApi,
   assignableViaApi,
@@ -536,8 +536,9 @@ test.describe('CRM Opportunities workflow', () => {
     await expect(ourRow).toBeVisible()
 
     // Switch to tenant 2
-    await openUserMenu(page)
-    const tenantTwo = page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '2') })
+    // The organisation switcher is the sidebar's top slot; this page is inside the CRM, so the rail is there.
+    await page.getByRole('button', { name: tenantLabel(1), exact: true }).click()
+    const tenantTwo = page.getByRole('button', { name: tenantLabel(2), exact: true })
     // Switching inside the app keeps the page; wait for the server to have issued the tenant-2 token.
     await Promise.all([page.waitForResponse((response) => response.url().includes('/auth/tenants/select') && response.ok()), tenantTwo.click()])
 

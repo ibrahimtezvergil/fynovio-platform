@@ -25,7 +25,7 @@ const MOCK_ATTENTION_ITEMS: AttentionItem[] = [
     priority: 1,
     timestamp: '18 Eyl teslimat',
     owner: 'Deniz Kaya',
-    action: { label: 'İncele', url: paths.crmPipeline },
+    action: { label: 'İncele', url: paths.crmOpportunities },
   },
   {
     id: 'att-2',
@@ -41,7 +41,7 @@ const MOCK_ATTENTION_ITEMS: AttentionItem[] = [
     priority: 2,
     timestamp: '2 saat önce',
     owner: 'Selin Arslan',
-    action: { label: 'İncele', url: paths.crmPipeline },
+    action: { label: 'İncele', url: paths.crmOpportunities },
   },
   {
     id: 'att-3',
@@ -56,7 +56,7 @@ const MOCK_ATTENTION_ITEMS: AttentionItem[] = [
     priority: 3,
     timestamp: 'Bugün',
     owner: 'Jonas Weber',
-    action: { label: 'İncele', url: paths.crmPipeline },
+    action: { label: 'İncele', url: paths.crmOpportunities },
   },
   {
     id: 'att-4',
@@ -70,7 +70,7 @@ const MOCK_ATTENTION_ITEMS: AttentionItem[] = [
     priority: 4,
     timestamp: '6 gün önce',
     owner: 'Deniz Kaya',
-    action: { label: 'İncele', url: paths.crmPipeline },
+    action: { label: 'İncele', url: paths.crmOpportunities },
   },
 ]
 
@@ -82,7 +82,7 @@ const MOCK_RECENT_WORK: RecentWorkItem[] = [
     title: 'Q-2381',
     subtitle: 'ACME Holding',
     reference: 'Teklif',
-    route: paths.crmPipeline,
+    route: paths.crmOpportunities,
     lastAccessedAt: '12 dk önce',
   },
   {
@@ -92,7 +92,7 @@ const MOCK_RECENT_WORK: RecentWorkItem[] = [
     title: 'SO-291',
     subtitle: 'Baltic Freight AB',
     reference: 'Sipariş',
-    route: paths.crmPipeline,
+    route: paths.crmOpportunities,
     lastAccessedAt: '38 dk önce',
   },
   {
@@ -101,7 +101,7 @@ const MOCK_RECENT_WORK: RecentWorkItem[] = [
     entityId: 'Meridian Retail Group',
     title: 'Meridian Retail Group',
     reference: 'Müşteri',
-    route: paths.crmPipeline,
+    route: paths.crmOpportunities,
     lastAccessedAt: 'Dün',
   },
 ]
@@ -116,7 +116,7 @@ const MOCK_TEAM_ACTIVITY: TeamActivityItem[] = [
     entityId: 'Q-2381',
     entityLabel: 'ACME Holding',
     timestamp: 'şimdi',
-    route: paths.crmPipeline,
+    route: paths.crmOpportunities,
   },
   {
     id: 'ta-2',
@@ -127,7 +127,7 @@ const MOCK_TEAM_ACTIVITY: TeamActivityItem[] = [
     entityId: 'SO-291',
     entityLabel: 'Baltic Freight AB',
     timestamp: '4 dk önce',
-    route: paths.crmPipeline,
+    route: paths.crmOpportunities,
   },
   {
     id: 'ta-3',
@@ -138,7 +138,7 @@ const MOCK_TEAM_ACTIVITY: TeamActivityItem[] = [
     entityId: 'Meridian Retail Group',
     entityLabel: 'Meridian Retail Group',
     timestamp: '12 dk önce',
-    route: paths.crmPipeline,
+    route: paths.crmOpportunities,
   },
 ]
 

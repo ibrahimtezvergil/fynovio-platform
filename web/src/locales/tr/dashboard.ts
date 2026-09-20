@@ -4,7 +4,6 @@ export default {
     title: 'Satış Paneli',
     description: 'Son 30 gün · açık fırsatlar ve pipeline sağlığı',
     rangeLabel: 'Dönem',
-    newDeal: 'Yeni fırsat',
     rangeCurrent: 'Bu dönem',
     rangePrevious: 'Önceki dönem',
     rangeYearly: 'Yıllık',

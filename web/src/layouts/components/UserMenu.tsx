@@ -1,12 +1,12 @@
-import { Bell, BellOff, ChevronUp, KeyRound, Moon, Sun } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Bell, BellOff, ChevronUp, KeyRound, Moon, Settings, Sun } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { OptionGroup, type Option } from '@/components/common/OptionGroup'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { logout, useSessionStore } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 import { paths } from '@/routes/paths'
-import { TenantSwitcher } from '@/layouts/components/TenantSwitcher'
 import { useAppStore } from '@/store/useAppStore'
 import type { Locale, ThemePreference } from '@/types'
 
@@ -45,30 +45,8 @@ export function UserMenu({
 
   const [open, setOpen] = useState(false)
   const [permission, setPermission] = useState<Permission>(readPermission)
-  const rootRef = useRef<HTMLDivElement>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
 
-  const close = useCallback(() => {
-    setOpen(false)
-    triggerRef.current?.focus()
-  }, [])
-
-  // Dismiss on outside click or Escape; return focus to the trigger.
-  useEffect(() => {
-    if (!open) return
-    const onPointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
-    }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') close()
-    }
-    document.addEventListener('mousedown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open, close])
+  const close = () => setOpen(false)
 
   if (!user) return null
 
@@ -82,8 +60,13 @@ export function UserMenu({
     navigate(paths.accountSecurity)
   }
 
+  const openSettings = () => {
+    close()
+    navigate(paths.settings)
+  }
+
   const handleLogout = async () => {
-    setOpen(false)
+    close()
     await logout() // ends the server session, then clears memory + caches even if the request failed
     navigate(paths.login, { replace: true })
   }
@@ -97,13 +80,8 @@ export function UserMenu({
   const NotificationIcon = permission === 'granted' ? Bell : BellOff
 
   return (
-    <div ref={rootRef} className="relative">
-      <button
-        ref={triggerRef}
-        type="button"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
         aria-label={collapsed ? user.name : undefined}
         title={collapsed ? user.name : undefined}
         className={cn(
@@ -132,65 +110,68 @@ export function UserMenu({
             />
           </>
         )}
-      </button>
+      </PopoverTrigger>
 
-      {open && (
-        <div
-          role="dialog"
-          aria-label={t('userMenu.accountSettings')}
-          className={cn(
-            'nx-overlay absolute z-50 w-64 overflow-hidden rounded-[var(--nx-r-card)]',
-            placement === 'topbar'
-              ? 'top-[calc(100%+8px)] right-0'
-              : 'bottom-[calc(100%+8px)] left-0',
-          )}
-        >
-          <div className="px-4 py-3">
-            <p className="font-heading truncate text-[15px] leading-5 font-[620] tracking-[-0.022em]">{user.name}</p>
-            <p className="text-muted-foreground truncate text-[12.5px] leading-5">{user.email}</p>
-          </div>
-
-          <TenantSwitcher onSwitched={close} />
-
-          <Divider />
-          <OptionGroup label={t('userMenu.theme')} options={themeOptions} value={theme} onChange={setTheme} />
-
-          <Divider />
-          <OptionGroup label={t('userMenu.language')} options={LOCALE_OPTIONS} value={locale} onChange={setLocale} />
-
-          <Divider />
-          <button
-            type="button"
-            onClick={requestNotifications}
-            disabled={permission !== 'default'}
-            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] transition-colors duration-[250ms] ease-fluid hover:bg-[var(--nx-fill-hover)] enabled:cursor-pointer disabled:cursor-default"
-          >
-            <NotificationIcon aria-hidden className="size-4 shrink-0" strokeWidth={1.5} />
-            <span className="flex-1">{t('userMenu.notifications')}</span>
-            <span className="text-muted-foreground">{permissionLabel[permission]}</span>
-          </button>
-
-          <Divider />
-          <button
-            type="button"
-            onClick={openSecurity}
-            className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2.5 text-left text-[13px] transition-colors duration-[250ms] ease-fluid hover:bg-[var(--nx-fill-hover)]"
-          >
-            <KeyRound aria-hidden className="size-4 shrink-0" strokeWidth={1.5} />
-            <span className="flex-1">{t('userMenu.security')}</span>
-          </button>
-
-          <Divider />
-          <button
-            type="button"
-            onClick={() => void handleLogout()}
-            className="text-destructive w-full cursor-pointer px-4 py-2.5 text-left text-[13px] font-[590] transition-colors duration-[250ms] ease-fluid hover:bg-[var(--nx-st-red-bg)]"
-          >
-            {t('userMenu.logout')}
-          </button>
+      <PopoverContent
+        aria-label={t('userMenu.accountSettings')}
+        side={placement === 'topbar' ? 'bottom' : 'top'}
+        align={placement === 'topbar' ? 'end' : 'start'}
+        sideOffset={8}
+        className="w-64 gap-0 overflow-hidden rounded-[var(--nx-r-card)] p-0"
+      >
+        <div className="px-4 py-3">
+          <p className="font-heading truncate text-[15px] leading-5 font-[620] tracking-[-0.022em]">{user.name}</p>
+          <p className="text-muted-foreground truncate text-[12.5px] leading-5">{user.email}</p>
         </div>
-      )}
-    </div>
+
+        <Divider />
+        <OptionGroup label={t('userMenu.theme')} options={themeOptions} value={theme} onChange={setTheme} />
+
+        <Divider />
+        <OptionGroup label={t('userMenu.language')} options={LOCALE_OPTIONS} value={locale} onChange={setLocale} />
+
+        <Divider />
+        <button
+          type="button"
+          onClick={requestNotifications}
+          disabled={permission !== 'default'}
+          className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] transition-colors duration-[250ms] ease-fluid hover:bg-[var(--nx-fill-hover)] enabled:cursor-pointer disabled:cursor-default"
+        >
+          <NotificationIcon aria-hidden className="size-4 shrink-0" strokeWidth={1.5} />
+          <span className="flex-1">{t('userMenu.notifications')}</span>
+          <span className="text-muted-foreground">{permissionLabel[permission]}</span>
+        </button>
+
+        <Divider />
+        <button
+          type="button"
+          onClick={openSecurity}
+          className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2.5 text-left text-[13px] transition-colors duration-[250ms] ease-fluid hover:bg-[var(--nx-fill-hover)]"
+        >
+          <KeyRound aria-hidden className="size-4 shrink-0" strokeWidth={1.5} />
+          <span className="flex-1">{t('userMenu.security')}</span>
+        </button>
+
+        <Divider />
+        <button
+          type="button"
+          onClick={openSettings}
+          className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2.5 text-left text-[13px] transition-colors duration-[250ms] ease-fluid hover:bg-[var(--nx-fill-hover)]"
+        >
+          <Settings aria-hidden className="size-4 shrink-0" strokeWidth={1.5} />
+          <span className="flex-1">{t('items.settings')}</span>
+        </button>
+
+        <Divider />
+        <button
+          type="button"
+          onClick={() => void handleLogout()}
+          className="text-destructive w-full cursor-pointer px-4 py-2.5 text-left text-[13px] font-[590] transition-colors duration-[250ms] ease-fluid hover:bg-[var(--nx-st-red-bg)]"
+        >
+          {t('userMenu.logout')}
+        </button>
+      </PopoverContent>
+    </Popover>
   )
 }
 

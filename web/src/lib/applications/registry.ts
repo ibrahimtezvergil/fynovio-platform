@@ -4,8 +4,8 @@ import type { ApplicationItem } from './types'
 /**
  * Central Application Registry — no JSX call site hardcodes an app tile.
  * Read by the Home launcher, the Topbar Applications/Tools menus, and (via
- * the same nav contributions) Cmd+K. Settings is deliberately absent: it's a
- * System-owned page (its own rail, its own breadcrumb path), not a global
+ * the same nav contributions) Cmd+K. Settings is deliberately absent: it's the
+ * signed-in user's own page (`/profile/settings`, no rail), not a global
  * application or tool.
  */
 export const applicationRegistry: ApplicationItem[] = [

@@ -6,7 +6,7 @@ import { endpoints } from '@/api/endpoints'
 import { useSessionStore } from '@/lib/auth'
 import { server } from '@/mocks/server'
 import { authenticated, url } from '@/test/authHandlers'
-import { PAGE_SIZE, problemResponse, wireOpportunity } from '@/test/opportunities'
+import { PAGE_SIZE, problemResponse, stages, wireOpportunity } from '@/test/opportunities'
 import { renderRoutes, tr } from '@/test/render'
 import { resetSession } from '@/test/session'
 import OpportunitiesPage from './OpportunitiesPage'
@@ -16,6 +16,11 @@ const t = (key: string, options?: Record<string, unknown>) => tr(key, options, '
 beforeEach(() => {
   resetSession()
   useSessionStore.getState().applyAuthResult(authenticated())
+  // The list resolves customer and stage names on the side; tests that do not care get empty lookups.
+  server.use(
+    http.get(url(endpoints.references.parties), () => HttpResponse.json([])),
+    http.get(url(endpoints.pipelines.stages(3)), () => HttpResponse.json([])),
+  )
 })
 
 const render = (initialEntry = '/crm/opportunities') => {
@@ -252,5 +257,160 @@ describe('opportunities list — rows and rendering', () => {
 
     await screen.findByTestId('opportunity-row')
     expect(screen.queryByRole('button', { name: /edit|delete|change|update/i })).not.toBeInTheDocument()
+  })
+})
+
+const wireParty = (id: number, displayName: string) => ({ id, partyType: 'organization', displayName, email: null })
+
+describe('opportunities list — resolved columns', () => {
+  it('shows the customer name and the stage name of the row’s own pipeline version', async () => {
+    const rows = [
+      wireOpportunity({ id: 1, partyId: 1001, pipelineDefinitionVersionId: 3, pipelineStageId: 30 }),
+      wireOpportunity({ id: 2, partyId: 1002, pipelineDefinitionVersionId: 4, pipelineStageId: 30 }),
+    ]
+    server.use(
+      http.get(url(endpoints.opportunities.list), () => HttpResponse.json(rows)),
+      http.get(url(endpoints.references.parties), () => HttpResponse.json([wireParty(1001, 'Acme'), wireParty(1002, 'Globex')])),
+      http.get(url(endpoints.pipelines.stages(3)), () => HttpResponse.json(stages)),
+      // The same stage id in another version is a different stage.
+      http.get(url(endpoints.pipelines.stages(4)), () => HttpResponse.json([{ id: 30, name: 'Discovery', sortOrder: 10, isActive: true, isEntry: true }])),
+    )
+    render()
+
+    const [first, second] = await screen.findAllByTestId('opportunity-row')
+    expect(await within(first).findByText('Acme')).toBeInTheDocument()
+    expect(await within(first).findByText('Qualification')).toBeInTheDocument()
+    expect(await within(second).findByText('Globex')).toBeInTheDocument()
+    expect(await within(second).findByText('Discovery')).toBeInTheDocument()
+  })
+
+  it('falls back to the bare ids when the names cannot be read', async () => {
+    server.use(
+      http.get(url(endpoints.opportunities.list), () => HttpResponse.json([wireOpportunity({ id: 1, partyId: 1001, pipelineStageId: 30 })])),
+      http.get(url(endpoints.references.parties), () => problemResponse(403, 'forbidden')),
+      http.get(url(endpoints.pipelines.stages(3)), () => problemResponse(403, 'forbidden')),
+    )
+    render()
+
+    const row = await screen.findByTestId('opportunity-row')
+    expect(await within(row).findByText(t('list.partyId', { id: 1001 }))).toBeInTheDocument()
+    expect(within(row).getByText(t('list.stageId', { id: 30 }))).toBeInTheDocument()
+  })
+})
+
+describe('opportunities list — filters over the loaded page', () => {
+  it('searches the loaded rows by customer name without asking the server again', async () => {
+    const rows = [wireOpportunity({ id: 1, partyId: 1001 }), wireOpportunity({ id: 2, partyId: 1002 })]
+    let listCalls = 0
+    server.use(
+      http.get(url(endpoints.opportunities.list), () => {
+        listCalls++
+        return HttpResponse.json(rows)
+      }),
+      http.get(url(endpoints.references.parties), () => HttpResponse.json([wireParty(1001, 'Acme'), wireParty(1002, 'Globex')])),
+      http.get(url(endpoints.pipelines.stages(3)), () => HttpResponse.json(stages)),
+    )
+    render()
+
+    expect(await screen.findAllByTestId('opportunity-row')).toHaveLength(2)
+    await screen.findByText('Globex')
+    fireEvent.change(screen.getByPlaceholderText(t('list.filters.searchPlaceholder')), { target: { value: 'glob' } })
+
+    await waitFor(() => expect(screen.getAllByTestId('opportunity-row')).toHaveLength(1))
+    expect(screen.getByText('Globex')).toBeInTheDocument()
+    expect(listCalls).toBe(1)
+  })
+
+  it('totals the amounts of the visible rows in their shared currency', async () => {
+    const rows = [wireOpportunity({ id: 1, estimatedAmount: 100 }), wireOpportunity({ id: 2, estimatedAmount: 50 })]
+    server.use(http.get(url(endpoints.opportunities.list), () => HttpResponse.json(rows)))
+    render()
+
+    await screen.findAllByTestId('opportunity-row')
+    expect(screen.getByText(/2 fırsat · .*150/)).toBeInTheDocument()
+  })
+
+  it('says so when the filters leave nothing on the page, and clears them', async () => {
+    server.use(http.get(url(endpoints.opportunities.list), () => HttpResponse.json([wireOpportunity({ id: 1 })])))
+    render()
+
+    await screen.findByTestId('opportunity-row')
+    fireEvent.change(screen.getByPlaceholderText(t('list.filters.searchPlaceholder')), { target: { value: 'zzz' } })
+
+    expect(await screen.findByText(t('list.grid.noMatchTitle'))).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: t('list.filters.clear') }))
+    expect(await screen.findByTestId('opportunity-row')).toBeInTheDocument()
+  })
+})
+
+describe('opportunities list — table / board switcher', () => {
+  const twoStages = [
+    wireOpportunity({ id: 1, pipelineStageId: 30 }),
+    wireOpportunity({ id: 2, pipelineStageId: 30 }),
+    wireOpportunity({ id: 3, pipelineStageId: 31 }),
+    wireOpportunity({ id: 4, status: 0, pipelineDefinitionVersionId: null, pipelineStageId: null }),
+  ]
+  const useRows = (rows: unknown[]) =>
+    server.use(
+      http.get(url(endpoints.opportunities.list), () => HttpResponse.json(rows)),
+      http.get(url(endpoints.pipelines.stages(3)), () => HttpResponse.json(stages)),
+    )
+
+  it('opens on the table, with both views offered', async () => {
+    useRows(twoStages)
+    render()
+
+    expect(await screen.findAllByTestId('opportunity-row')).toHaveLength(4)
+    expect(screen.queryByTestId('opportunity-card')).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: t('list.view.grid') })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: t('list.view.board') })).toHaveAttribute('aria-selected', 'false')
+  })
+
+  it('shows the same rows as cards grouped by stage, drafts without a stage first, and keeps the choice in the URL', async () => {
+    useRows(twoStages)
+    const { router } = render()
+    await screen.findAllByTestId('opportunity-row')
+
+    fireEvent.click(screen.getByRole('tab', { name: t('list.view.board') }))
+
+    expect(await screen.findAllByTestId('opportunity-card')).toHaveLength(4)
+    expect(screen.queryByTestId('opportunity-row')).not.toBeInTheDocument()
+    expect(router.state.location.search).toBe('?view=board')
+    const headings = screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)
+    expect(headings).toEqual([t('list.board.noStage'), 'Qualification', 'Proposal'])
+    expect(screen.getByRole('link', { name: /#3/ })).toHaveAttribute('href', '/crm/opportunities/3')
+  })
+
+  it('opens straight on the board from the URL and returns to the table', async () => {
+    useRows(twoStages)
+    const { router } = render('/crm/opportunities?view=board')
+
+    expect(await screen.findAllByTestId('opportunity-card')).toHaveLength(4)
+    fireEvent.click(screen.getByRole('tab', { name: t('list.view.grid') }))
+
+    expect(await screen.findAllByTestId('opportunity-row')).toHaveLength(4)
+    expect(router.state.location.search).toBe('')
+  })
+
+  it('keeps the view when the status filter or the page changes', async () => {
+    useRows(twoStages)
+    const { router } = render('/crm/opportunities?view=board')
+    await screen.findAllByTestId('opportunity-card')
+
+    fireEvent.click(screen.getByRole('tab', { name: t('status.Won') }))
+
+    await waitFor(() => expect(router.state.location.search).toBe('?status=Won&view=board'))
+  })
+
+  it('leaves the density toggle to the table, since it only resizes the grid', async () => {
+    useRows(twoStages)
+    render()
+    await screen.findAllByTestId('opportunity-row')
+    const densityLabel = tr('densityToggle.ariaLabel', {}, 'common')
+
+    expect(screen.getByRole('tablist', { name: densityLabel })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab', { name: t('list.view.board') }))
+    await screen.findAllByTestId('opportunity-card')
+    expect(screen.queryByRole('tablist', { name: densityLabel })).not.toBeInTheDocument()
   })
 })

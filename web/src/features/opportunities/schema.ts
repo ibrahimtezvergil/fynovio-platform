@@ -54,6 +54,10 @@ export const opportunitySummarySchema = z.object({
   assignedPrincipalIssuer: z.string().nullish(),
   assignedPrincipalSubject: z.string().nullish(),
   pipelineStageId: z.number().nullish(),
+  partyId: z.number().nullish(),
+  /** With `pipelineStageId` this names the stage: stage ids are only meaningful inside their pipeline version. */
+  pipelineDefinitionVersionId: z.number().nullish(),
+  expiryDate: z.string().nullish(),
 })
 export type OpportunitySummary = z.infer<typeof opportunitySummarySchema>
 

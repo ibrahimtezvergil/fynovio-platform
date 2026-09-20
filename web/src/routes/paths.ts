@@ -9,12 +9,13 @@ export const paths = {
   register: '/register',
   accountSecurity: '/account/security',
   dashboard: '/dashboard',
-  /** Legacy URLs, kept only as redirect targets into `/crm/*` — see `routes/index.tsx`. */
+  /** Legacy URLs, kept only so old links redirect to the current ones — see `routes/index.tsx`. */
+  legacySettings: '/settings',
   pipeline: '/pipeline',
   pipelineDashboard: '/pipeline/dashboard',
+  crmLegacyPipeline: '/crm/pipeline',
   crm: '/crm',
   crmDashboard: '/crm/dashboard',
-  crmPipeline: '/crm/pipeline',
   crmOpportunities: '/crm/opportunities',
   crmOpportunityNew: '/crm/opportunities/new',
   /** The react-router pattern; use `crmOpportunity(id)` to build a link. */
@@ -24,7 +25,7 @@ export const paths = {
   reports: '/reports',
   files: '/files',
   feedback: '/feedback',
-  settings: '/settings',
+  settings: '/profile/settings',
   members: '/members',
   demoTables: '/demo/tables',
   demoForms: '/demo/forms',

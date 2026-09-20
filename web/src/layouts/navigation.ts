@@ -14,7 +14,6 @@ import { demoTablesNav } from '@/features/demo-tables/nav'
 import { demoTimelineNav } from '@/features/demo-timeline/nav'
 import { homeNav } from '@/features/home/nav'
 import { opportunitiesNav } from '@/features/opportunities/nav'
-import { pipelineNav } from '@/features/pipeline/nav'
 import { membersNav, placeholderNav } from '@/features/placeholder/nav'
 import { settingsNav } from '@/features/settings/nav'
 import { navParents } from '@/lib/navigation/parents'
@@ -22,7 +21,7 @@ import type { NavigationSurface, NavContribution, NavGroupId, NavScope } from '@
 import { isNavParent, type NavGroup, type NavItem, type NavLeaf, type NavLink } from '@/types'
 
 const navContributions: NavContribution[] = [
-  homeNav, dashboardNav, opportunitiesNav, pipelineNav, calendarNav, ...placeholderNav, settingsNav, membersNav, demoTablesNav,
+  homeNav, dashboardNav, opportunitiesNav, calendarNav, ...placeholderNav, settingsNav, membersNav, demoTablesNav,
   demoChartsNav, demoFiltersNav, demoFormsNav, demoOverlaysNav, demoNotificationsNav, demoStatesNav,
   demoDrawersNav, demoBadgesNav, demoKanbanNav, demoTimelineNav,
 ]
@@ -33,7 +32,7 @@ const groupKeys: { id: NavGroupId; labelKey: string }[] = [
 
 /**
  * Assemble the localized nav from feature-owned contributions. `surface`
- * narrows sidebar vs. topbar; `scope` narrows one domain/system rail from
+ * narrows sidebar vs. topbar; `scope` narrows one domain rail from
  * another (see `NavScope` — Home and Utility routes have no rail at all, so
  * they never pass one). Called with neither for the breadcrumb resolver and
  * the command palette, which need every contribution regardless of which
@@ -69,7 +68,7 @@ export function buildNavGroups(t: TFunction<'nav'>, surface?: NavigationSurface,
 /**
  * A sidebar's full nav: just its own scope. Developer is no longer appended
  * here — it's a global Tool reached from the Topbar's Tools menu (see
- * `ToolsMenu`), not sidebar content grafted onto every domain/system rail.
+ * `ToolsMenu`), not sidebar content grafted onto every domain rail.
  */
 export function buildSidebarNav(t: TFunction<'nav'>, scope: NavScope): NavGroup[] {
   return buildNavGroups(t, 'sidebar', scope)

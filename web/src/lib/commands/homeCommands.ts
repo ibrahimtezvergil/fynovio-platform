@@ -13,5 +13,5 @@ registerCommand({
   group: 'Hızlı İşlemler',
   icon: Plus,
   when: () => true,
-  run: ({ navigate }) => navigate(paths.crmPipeline),
+  run: ({ navigate }) => navigate(paths.crmOpportunities),
 })

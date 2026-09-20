@@ -18,13 +18,13 @@ export interface SearchResultItem {
  * attention item and a recent-work row about "ACME Holding" always agree.
  */
 export const MOCK_SEARCH_ENTITIES: SearchResultItem[] = [
-  { id: 'acme', type: 'customer', label: 'ACME Holding', subtitle: 'Müşteri', url: paths.crmPipeline },
-  { id: 'q-2381', type: 'quote', label: 'Q-2381', subtitle: 'ACME Holding', url: paths.crmPipeline },
-  { id: 'so-23891', type: 'order', label: 'SO-23891', subtitle: 'ACME Holding', url: paths.crmPipeline },
-  { id: 'baltic-freight', type: 'customer', label: 'Baltic Freight AB', subtitle: 'Müşteri', url: paths.crmPipeline },
-  { id: 'q-8392', type: 'quote', label: 'Q-8392', subtitle: 'Baltic Freight AB', url: paths.crmPipeline },
-  { id: 'so-291', type: 'order', label: 'SO-291', subtitle: 'Baltic Freight AB', url: paths.crmPipeline },
-  { id: 'meridian', type: 'customer', label: 'Meridian Retail Group', subtitle: 'Müşteri', url: paths.crmPipeline },
-  { id: 'q-1292', type: 'quote', label: 'Q-1292', subtitle: 'Meridian Retail Group', url: paths.crmPipeline },
-  { id: 'ege-yapi', type: 'customer', label: 'Ege Yapı Malzeme', subtitle: 'Müşteri', url: paths.crmPipeline },
+  { id: 'acme', type: 'customer', label: 'ACME Holding', subtitle: 'Müşteri', url: paths.crmOpportunities },
+  { id: 'q-2381', type: 'quote', label: 'Q-2381', subtitle: 'ACME Holding', url: paths.crmOpportunities },
+  { id: 'so-23891', type: 'order', label: 'SO-23891', subtitle: 'ACME Holding', url: paths.crmOpportunities },
+  { id: 'baltic-freight', type: 'customer', label: 'Baltic Freight AB', subtitle: 'Müşteri', url: paths.crmOpportunities },
+  { id: 'q-8392', type: 'quote', label: 'Q-8392', subtitle: 'Baltic Freight AB', url: paths.crmOpportunities },
+  { id: 'so-291', type: 'order', label: 'SO-291', subtitle: 'Baltic Freight AB', url: paths.crmOpportunities },
+  { id: 'meridian', type: 'customer', label: 'Meridian Retail Group', subtitle: 'Müşteri', url: paths.crmOpportunities },
+  { id: 'q-1292', type: 'quote', label: 'Q-1292', subtitle: 'Meridian Retail Group', url: paths.crmOpportunities },
+  { id: 'ege-yapi', type: 'customer', label: 'Ege Yapı Malzeme', subtitle: 'Müşteri', url: paths.crmOpportunities },
 ]

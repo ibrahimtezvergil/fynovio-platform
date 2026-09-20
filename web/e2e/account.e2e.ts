@@ -71,8 +71,8 @@ test.describe('password lifecycle', () => {
     await expect(a).toHaveURL(/\/dashboard$/)
     await signIn(b, email, SEED_PASSWORD)
     await expect(b).toHaveURL(/\/dashboard$/)
-    await b.goto('/crm/pipeline')
-    await expect(b).toHaveURL(/\/crm\/pipeline$/)
+    await b.goto('/crm/opportunities')
+    await expect(b).toHaveURL(/\/crm\/opportunities$/)
 
     await a.goto('/account/security')
     await passwordField(a, t.auth.passwordFields.currentPassword).fill(SEED_PASSWORD)

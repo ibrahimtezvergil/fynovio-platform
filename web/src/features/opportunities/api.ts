@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
+import { useQueries, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { z } from 'zod'
 import { apiClient } from '@/api/client'
@@ -107,14 +107,42 @@ export function useAvailableActions(id: number, enabled = true) {
   })
 }
 
+const STAGES_STALE_TIME = 5 * 60_000 // tenant configuration, not record data
+
+async function fetchStages(versionId: number) {
+  return (await get(endpoints.pipelines.stages(versionId), pipelineStageSchema.array())).toSorted((a, b) => a.sortOrder - b.sortOrder)
+}
+
 export function usePipelineStages(versionId: number | null | undefined) {
   const tenantId = useTenantId()
   return useQuery({
     ...READ_OPTIONS,
     queryKey: opportunityKeys.stages(tenantId, versionId ?? -1),
     enabled: tenantId !== null && versionId != null,
-    staleTime: 5 * 60_000, // tenant configuration, not record data
-    queryFn: async () => (await get(endpoints.pipelines.stages(versionId as number), pipelineStageSchema.array())).toSorted((a, b) => a.sortOrder - b.sortOrder),
+    staleTime: STAGES_STALE_TIME,
+    queryFn: () => fetchStages(versionId as number),
+  })
+}
+
+/** A stage id only means something inside its pipeline version, so names are keyed by the pair. */
+export const stageKey = (versionId: number, stageId: number) => `${versionId}:${stageId}`
+
+/**
+ * Stage names for every pipeline version present on a page of rows (one request per distinct version, shared with
+ * `usePipelineStages` through the same cache key). Best effort: a version the caller cannot read is simply absent.
+ */
+export function usePipelineStageNames(versionIds: readonly number[]) {
+  const tenantId = useTenantId()
+  return useQueries({
+    queries: versionIds.map((versionId) => ({
+      ...READ_OPTIONS,
+      queryKey: opportunityKeys.stages(tenantId, versionId),
+      enabled: tenantId !== null,
+      staleTime: STAGES_STALE_TIME,
+      queryFn: () => fetchStages(versionId),
+    })),
+    combine: (results) =>
+      new Map(results.flatMap((result, index) => (result.data ?? []).map((stage) => [stageKey(versionIds[index], stage.id), stage.name] as const))),
   })
 }
 

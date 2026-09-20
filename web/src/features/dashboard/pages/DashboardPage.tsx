@@ -1,4 +1,4 @@
-import { CircleDollarSign, Plus, Target, Timer, Layers, SlidersHorizontal } from 'lucide-react'
+import { CircleDollarSign, Target, Timer, Layers, SlidersHorizontal } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DensityToggle } from '@/components/common/DensityToggle'
@@ -57,10 +57,6 @@ export default function DashboardPage() {
               value={range}
               onChange={setRange}
             />
-            <Button>
-              <Plus aria-hidden strokeWidth={2} />
-              {t('page.newDeal')}
-            </Button>
           </>
         }
       />

@@ -1,5 +1,7 @@
 export default {
   page: {
+    title: 'Opportunities',
+    newOpportunity: 'New opportunity',
     viewLabel: 'View',
     viewGrid: 'Table',
     viewBoard: 'Board',

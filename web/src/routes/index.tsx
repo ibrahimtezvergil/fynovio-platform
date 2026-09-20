@@ -16,8 +16,7 @@ import { demoTablesRoutes } from '@/features/demo-tables/routes'
 import { demoTimelineRoutes } from '@/features/demo-timeline/routes'
 import { homeRoutes } from '@/features/home/routes'
 import { opportunityRoutes } from '@/features/opportunities/routes'
-import { pipelineRoutes } from '@/features/pipeline/routes'
-import { placeholderSystemRoutes, placeholderUtilityRoutes } from '@/features/placeholder/routes'
+import { placeholderUtilityRoutes } from '@/features/placeholder/routes'
 import { settingsRoutes } from '@/features/settings/routes'
 import type { FeatureRoute } from '@/lib/routes/types'
 import { AuthLayout } from '@/layouts/AuthLayout'
@@ -49,7 +48,7 @@ const sessionRoutes = toRouteObjects(authSessionRoutes, true)
  * Global Home. Its own pathless group purely for symmetry with the others
  * below — `surface: 'home'` isn't load-bearing for `DashboardLayout` (no
  * sidebar is the default for any surface outside `SIDEBAR_SURFACES`), but
- * keeping it explicit here is what makes the shell's five-surface model
+ * keeping it explicit here is what makes the shell's four-surface model
  * (`RouteSurface`) a complete, self-documenting route tree rather than one
  * with an implicit "everything else" case.
  */
@@ -59,24 +58,16 @@ const homeRouteGroup: RouteObject = {
 }
 
 /**
- * Global utilities — cross-domain tools that are not a business application.
+ * Global utilities — cross-domain tools that are not a business application,
+ * plus platform pages that own no rail: the signed-in user's Settings
+ * (`/profile/settings`, reached from the user menu) and Members.
  * No `navScope`, so `DashboardLayout` renders no sidebar for any of them:
  * opening Calendar should feel like opening a tool, not entering CRM. Add a
  * new utility page's feature routes here, not a new group.
  */
 const utilityRoutes: RouteObject = {
   handle: { surface: 'utility' },
-  children: toRouteObjects([...calendarRoutes, ...placeholderUtilityRoutes, ...authAccountRoutes], true),
-}
-
-/**
- * Platform administration — Settings and Members. Its own rail
- * (`navScope: 'system'`), distinct from both a domain application's rail and
- * the sidebar-less utilities above.
- */
-const systemRoutes: RouteObject = {
-  handle: { surface: 'system', navScope: 'system' },
-  children: toRouteObjects([...settingsRoutes, ...placeholderSystemRoutes], true),
+  children: toRouteObjects([...calendarRoutes, ...placeholderUtilityRoutes, ...settingsRoutes, ...authAccountRoutes], true),
 }
 
 /**
@@ -92,7 +83,7 @@ const crmRoutes: RouteObject = {
   handle: { surface: 'application', navScope: 'crm' },
   children: [
     { index: true, element: <Navigate to={paths.crmDashboard} replace /> },
-    ...toRouteObjects([...opportunityRoutes, ...pipelineRoutes, ...dashboardRoutes], true),
+    ...toRouteObjects([...opportunityRoutes, ...dashboardRoutes], true),
   ],
 }
 
@@ -114,10 +105,12 @@ const developerRoutes: RouteObject = {
   ),
 }
 
-/** Pre-CRM URLs — kept working as redirects, not kept navigable anywhere. */
+/** Moved URLs (pre-CRM, and Settings before `/profile/settings`) — kept working as redirects, not navigable anywhere. */
 const legacyRedirects: RouteObject[] = [
-  { path: paths.pipeline, element: <Navigate to={paths.crmPipeline} replace /> },
+  { path: paths.pipeline, element: <Navigate to={paths.crmOpportunities} replace /> },
+  { path: paths.crmLegacyPipeline, element: <Navigate to={paths.crmOpportunities} replace /> },
   { path: paths.pipelineDashboard, element: <Navigate to={paths.crmDashboard} replace /> },
+  { path: paths.legacySettings, element: <Navigate to={paths.settings} replace /> },
 ]
 
 export const router = createBrowserRouter([{
@@ -134,7 +127,6 @@ export const router = createBrowserRouter([{
         children: [
           homeRouteGroup,
           utilityRoutes,
-          systemRoutes,
           crmRoutes,
           ...(import.meta.env.DEV ? [developerRoutes] : []),
           ...legacyRedirects,

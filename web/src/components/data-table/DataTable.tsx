@@ -34,18 +34,20 @@ interface DataTableRowProps<TData extends RowData> {
   row: AnyRow<TData>
   resizable: boolean
   onRowClick?: (row: TData) => void
+  rowTestId?: string
 }
 
-function DataTableBodyRow<TData extends RowData>({ row, resizable, onRowClick }: DataTableRowProps<TData>) {
+function DataTableBodyRow<TData extends RowData>({ row, resizable, onRowClick, rowTestId }: DataTableRowProps<TData>) {
   const cells = renderableCells(row)
 
   const renderRow = (selected: boolean) => (
     <tr
       data-selected={selected || undefined}
+      data-testid={rowTestId}
       onClick={onRowClick ? (event) => {
-        // Checkboxes and row-menu controls own their click; opening a peek as
+        // Links, checkboxes and row-menu controls own their click; opening a peek as
         // their side effect would make multi-select unusable.
-        if ((event.target as HTMLElement).closest('button, input, [role="menuitem"]')) return
+        if ((event.target as HTMLElement).closest('a, button, input, [role="menuitem"]')) return
         onRowClick(row.original)
       } : undefined}
       // Height, zebra, hover and selection all resolve against the `--nx-d-*`
@@ -115,6 +117,8 @@ export interface DataTableProps<
   className?: string
   /** A detail/peek affordance for grids that keep readers in context. */
   onRowClick?: (row: TData) => void
+  /** `data-testid` written on every body row, for suites that need to count or scope to rows. */
+  rowTestId?: string
 }
 
 /**
@@ -135,6 +139,7 @@ export function DataTable<TFeatures extends TableFeatures, TData extends RowData
   caption,
   className,
   onRowClick,
+  rowTestId,
 }: DataTableProps<TFeatures, TData>) {
   const table = widenTable<TData>(instance)
   const headerGroups = table.getHeaderGroups()
@@ -158,6 +163,7 @@ export function DataTable<TFeatures extends TableFeatures, TData extends RowData
     // whatever region, or `<html>`, is in scope.
     <div data-density={density} className={cn('nx-dense w-full overflow-x-auto', className)}>
       <table
+        aria-busy={isLoading || undefined}
         style={{
           ...sizeVars,
           ...(resizable
@@ -202,7 +208,7 @@ export function DataTable<TFeatures extends TableFeatures, TData extends RowData
           )}
 
           {rows.map((row) => (
-            <DataTableBodyRow key={row.id} row={row} resizable={resizable} onRowClick={onRowClick} />
+            <DataTableBodyRow key={row.id} row={row} resizable={resizable} onRowClick={onRowClick} rowTestId={rowTestId} />
           ))}
         </tbody>
       </table>

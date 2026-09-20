@@ -100,9 +100,11 @@ export function ToolbarSearch({
 
   // Push settled input outwards. Once `onChange` lands, `value` catches up and
   // this becomes a no-op, so the two directions cannot chase each other.
+  // `draft === debounced` is the "settled" test: right after an outside reset the
+  // debounced copy still holds the old text, and pushing it would undo the reset.
   useEffect(() => {
-    if (debounced !== value) onChange(debounced)
-  }, [debounced, value, onChange])
+    if (debounced !== value && draft === debounced) onChange(debounced)
+  }, [debounced, draft, value, onChange])
 
   return (
     <div className={cn('relative min-w-[200px] flex-1 sm:max-w-[280px] sm:flex-none', className)}>

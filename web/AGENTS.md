@@ -21,14 +21,16 @@ mocked with MSW.
   assembler. `paths.ts` holds route strings and guards live alongside it.
 - `src/layouts/navigation.ts` assembles feature-owned `NavContribution`s into `NavGroup`s via
   `buildNavGroups`/`buildSidebarNav`/`buildTopbarNav`/`findNavTrail`; layouts compose feature pages.
-  Route ownership follows a five-surface model (`RouteSurface`, `src/lib/navigation/types.ts`):
+  Route ownership follows a four-surface model (`RouteSurface`, `src/lib/navigation/types.ts`):
   `home` (`/dashboard`, no sidebar — the app-launcher surface), `application` (a domain app — CRM
-  today — owns a `NavScope`-scoped sidebar), `utility` (cross-domain tools: Calendar, Reports,
-  Files, Feedback — no sidebar), `system` (Settings, Members — its own sidebar), `developer`
+  today — owns a `NavScope`-scoped sidebar; the only surface with one), `utility` (cross-domain
+  tools and global pages: Calendar, Reports, Files, Feedback, Members, and the user's own Settings
+  at `/profile/settings` — no sidebar), `developer`
   (demo/playground pages, `DEV`-only, excluded from the route tree in production, **no sidebar of
   its own** — reached only through the Topbar's Tools menu and Cmd+K, never appended to another
   surface's sidebar). A route group declares its surface via `handle: { surface, navScope }` in
-  `routes/index.tsx`; `DashboardLayout` reads it to decide whether/which `Sidebar` to mount. Don't
+  `routes/index.tsx`; `DashboardLayout` reads it to decide whether/which `Sidebar` to mount. A URL that moved stays
+  alive as a `<Navigate replace>` in `routes/index.tsx`'s `legacyRedirects`, its old string kept in `paths.ts`. Don't
   reintroduce a Developer sidebar or append Developer entries to another sidebar — that composition
   step was deliberately removed from `buildSidebarNav`.
 - The Topbar is the permanent app-switcher, not just chrome: `ApplicationsMenu` (Uygulamalar) and

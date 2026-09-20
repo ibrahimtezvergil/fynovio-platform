@@ -9,8 +9,7 @@ export const placeholderNav = [
   { group: 'operations', item: { id: 'feedback', labelKey: 'items.feedback', to: paths.feedback, icon: ClipboardList } },
 ] satisfies NavContribution[]
 
-/** Platform administration — on the System rail alongside Settings. */
+/** Platform administration — a global page like the utilities above, no rail. */
 export const membersNav = {
   group: 'system', item: { id: 'members', labelKey: 'items.members', to: paths.members, icon: Users },
-  scope: 'system',
 } satisfies NavContribution

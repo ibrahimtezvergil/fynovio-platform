@@ -19,6 +19,9 @@ export async function signIn(page: Page, email: string, password: string) {
 /** The avatar button of the shell (other topbar buttons — notifications, messages — are dialog triggers too). */
 export const userMenuTrigger = (page: Page) => page.locator('button[aria-haspopup="dialog"]:has(.nx-avatar):visible').first()
 
+/** Label of a tenant as the shell prints it. The organisation switcher is the sidebar's top slot, so it only exists on rail surfaces such as `/crm/*`. */
+export const tenantLabel = (id: number) => auth.tenantSelector.tenantLabel.replace('{{id}}', String(id))
+
 export async function openUserMenu(page: Page) {
   await userMenuTrigger(page).click()
 }
