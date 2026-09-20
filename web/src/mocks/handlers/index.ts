@@ -1,4 +1,3 @@
-import { authHandlers } from '@/mocks/handlers/auth'
 import { calendarHandlers } from '@/mocks/handlers/calendar'
 import { dashboardHandlers } from '@/mocks/handlers/dashboard'
 import { demoFormsHandlers } from '@/mocks/handlers/demo-forms'
@@ -8,7 +7,6 @@ import { pipelineHandlers } from '@/mocks/handlers/pipeline'
 
 /** Every feature's network mock, combined at the boundary MSW intercepts. */
 export const handlers = [
-  ...authHandlers,
   ...homeHandlers,
   ...dashboardHandlers,
   ...pipelineHandlers,

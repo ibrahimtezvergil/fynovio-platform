@@ -127,6 +127,92 @@ export ConnectionStrings__MasterData="Host=localhost;Database=fynovio_platform;U
 
 `ConnectionStrings__Crm`/`ConnectionStrings__MasterData` are what `Host` reads first; `FYNOVIO_CRM_CONNECTION_STRING`/`FYNOVIO_MASTERDATA_CONNECTION_STRING` are the fallbacks, and are also what `dotnet ef` uses — keep those on the `postgres` role, since migrations need it.
 
+## Running the API locally (and signing in)
+
+Requires the local PostgreSQL from above. Development only — none of this is a production procedure.
+
+```bash
+# 1. Migrations for every module, as the migration role (postgres)
+dotnet tool restore
+for module in MasterData CRM Access; do   # this order: CRM's migrations reference masterdata tables
+  dotnet ef database update \
+    --project src/Modules/$module/$module.csproj \
+    --startup-project src/Modules/$module/$module.csproj
+done
+
+# 2. Runtime role. appsettings.Development.json expects the password `runtime`
+sed "s/change-me/runtime/" scripts/create-runtime-role.sql \
+  | psql -h localhost -U postgres -d fynovio_platform
+
+# 3. Start the API (the launch profile also switches the development seed on)
+dotnet run --project src/Host --launch-profile http     # http://localhost:5208
+```
+
+On start the API seeds three sign-in identities (idempotent; Development only, and only via the `dotnet run` launch profiles — `DevSeed:Enabled` is `false` in `appsettings.Development.json` so test hosts are unaffected). The shared password is `DevSeed:Password` in `src/Host/appsettings.Development.json`.
+
+| Account | State it exercises |
+|---|---|
+| `admin@fynovio.local` | tenant administrator of tenants 1 and 2 → tenant selection, then full CRM access |
+| `single@fynovio.local` | member of tenant 1 only, no grants → signed in directly, CRM calls are `403` |
+| `nomember@fynovio.local` | no membership → the `no_membership` state |
+
+Quick check without the frontend (note the required CSRF header; the refresh cookie is `HttpOnly`):
+
+```bash
+curl -i -X POST http://localhost:5208/auth/login \
+  -H 'Content-Type: application/json' -H 'X-Requested-With: fynovio' \
+  -d '{"email":"single@fynovio.local","password":"<DevSeed:Password>"}'
+```
+
+Production has no seed and no default credential (see *Bootstrapping a tenant administrator* below). Authentication settings live under `Authentication:*` in `appsettings*.json`; the signing key, allowed origins and public base URL must be supplied per environment.
+
+### Invitations, password reset and e-mail
+
+Invitation and password-reset links are e-mailed. The link always points at `Authentication:PublicAppBaseUrl` and carries the single-use token in the URL *fragment* (`/accept-invite#token=…`, `/reset-password#token=…`), so it never reaches server logs, proxies or `Referer`.
+
+| Where | What happens to a message |
+|---|---|
+| Development (always) | recorded in memory and readable at `GET /dev/mailbox[?to=address]` (newest first, with `link` and `token`); `DELETE /dev/mailbox` clears it. The route is not mapped outside Development. |
+| `Email:Smtp:Enabled=true` | additionally delivered over SMTP, off the request path (a background worker), so the time an e-mail takes can never show through a response. Failures are logged (template + masked recipient only) and change no response. |
+| Otherwise | not delivered; a log line says so (masked recipient + template, never the link). |
+
+SMTP settings are `Email:Smtp:{Enabled,Host,Port,Username,Password,EnableSsl,FromAddress,FromName}`. **Keep the credentials out of tracked files** — use user-secrets (the Host has a `UserSecretsId`) or environment variables (`Email__Smtp__Password`). Example with a Mailtrap sandbox inbox:
+
+```bash
+cd src/Host
+dotnet user-secrets set "Email:Smtp:Enabled"  "true"
+dotnet user-secrets set "Email:Smtp:Host"     "sandbox.smtp.mailtrap.io"
+dotnet user-secrets set "Email:Smtp:Port"     "2525"
+dotnet user-secrets set "Email:Smtp:Username" "<mailtrap username>"
+dotnet user-secrets set "Email:Smtp:Password" "<mailtrap password>"
+```
+
+Then, with the API running, `curl -X POST http://localhost:5208/auth/password/forgot -H 'Content-Type: application/json' -H 'X-Requested-With: fynovio' -d '{"email":"admin@fynovio.local"}'` puts a reset mail in the Mailtrap inbox. Automated tests force `Email:Smtp:Enabled=false`, so they never send mail even when secrets are present. Queued mail is in memory only: a crash loses it (a transactional outbox is the follow-up if that matters).
+
+Related switches (all off by default): `Authentication:SelfRegistration:Enabled` (public sign-up creates an identity and *nothing else* — no membership; outside Development it also needs `AcknowledgeUnverifiedEmail=true` because addresses are not verified), and `Authentication:Tokens:{InviteDays=7,PasswordResetMinutes=30,PasswordSetupHours=24}`.
+
+A tenant administrator invites a member with `POST /tenants/{tenantId}/invitations` (bearer token, action `identity.membership.invite`); `GET /auth/me` reports `capabilities.canInviteMembers`. A development database that was bootstrapped *before* this action existed has no such grant for its administrators — recreate the database (or re-run the seed against a fresh one).
+
+### Bootstrapping a tenant administrator (production)
+
+There is no default credential. The first administrator of a tenant is created by an operator command that runs *instead of* the web server (never over HTTP):
+
+```bash
+Bootstrap__Enabled=true dotnet Host.dll bootstrap-tenant-admin \
+  --tenant-id 1 --email admin@example.com --display-name "Jane Admin"
+```
+
+It refuses unless `Bootstrap:Enabled=true`, refuses a tenant that is already bootstrapped, and prints a **single-use password-setup link** (valid `PasswordSetupHours`) once to stdout — never to the logs. The operator hands it to the administrator, who sets a password through `/reset-password`; every further member arrives by invitation. Exit codes: `0` ok, `2` not enabled, `3` already bootstrapped, `64` bad arguments.
+
+### End-to-end tests (real API + PostgreSQL + browser)
+
+```bash
+scripts/e2e.sh                   # or: cd web && npm run e2e
+scripts/e2e.sh e2e/login.e2e.ts  # arguments go to `playwright test`
+```
+
+The script starts a **throwaway PostgreSQL container** (removed on exit; nothing touches a local database), applies the migrations and the runtime role, builds and starts the real API (Development: dev seed and dev mailbox on, SMTP off, rate limits raised) and the Vite dev server, then drives your installed Google Chrome with Playwright (`E2E_BROWSER_CHANNEL=chromium` after `npx playwright install chromium` uses the bundled browser). It needs Docker, the .NET SDK and `cd web && npm ci`. Ports (all overridable, chosen not to collide with a normal dev setup): PostgreSQL `55432` (`E2E_PG_PORT`), API `5209` (`E2E_API_PORT`), Vite `5174` (`E2E_APP_PORT`). The suite covers sign-in/out and reload, deep-link return and open-redirect attempts, tenant selection and switching, invitation acceptance (new and existing accounts), forgot/reset/change password across two browser contexts, the registration-disabled screen, and token/tenant manipulation (edited claims, foreign tenants, missing CSRF header, foreign origin).
+
 ## Getting started
 
 ```bash

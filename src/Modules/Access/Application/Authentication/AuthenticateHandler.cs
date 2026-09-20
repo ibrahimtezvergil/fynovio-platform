@@ -1,0 +1,220 @@
+using Access.Domain.Authentication;
+using Access.Domain.Identity;
+using Access.Persistence;
+using Contracts;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
+namespace Access.Application.Authentication;
+
+/// <summary>Authenticate a user by email and password. On success, creates an AuthSession,
+/// issues a RefreshToken, and loads the account's active memberships. Identical error result
+/// for unknown user, bad password, locked account, and no-membership to avoid user enumeration.</summary>
+public sealed class AuthenticateHandler
+{
+    private readonly AccessDbContext _context;
+    private readonly PasswordService _passwordService;
+    private readonly LockoutOptions _lockoutOptions;
+    private readonly SessionOptions _sessionOptions;
+    private readonly AuthEventWriter _eventWriter;
+    private readonly TimeProvider _timeProvider;
+
+    public AuthenticateHandler(
+        AccessDbContext context,
+        PasswordService passwordService,
+        LockoutOptions lockoutOptions,
+        SessionOptions sessionOptions,
+        AuthEventWriter eventWriter,
+        TimeProvider? timeProvider = null)
+    {
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _passwordService = passwordService ?? throw new ArgumentNullException(nameof(passwordService));
+        _lockoutOptions = lockoutOptions ?? throw new ArgumentNullException(nameof(lockoutOptions));
+        _sessionOptions = sessionOptions ?? throw new ArgumentNullException(nameof(sessionOptions));
+        _eventWriter = eventWriter ?? throw new ArgumentNullException(nameof(eventWriter));
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
+
+    public async Task<AuthenticateResult> HandleAsync(
+        AuthenticateCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        if (command is null)
+            throw new ArgumentNullException(nameof(command));
+
+        var normalizedEmail = EmailNormalizer.Normalize(command.Email);
+        var now = _timeProvider.GetUtcNow();
+
+        // Lookup credential
+        var credential = await _context.AccountCredentials
+            .FirstOrDefaultAsync(c => c.LoginEmailNormalized == normalizedEmail, cancellationToken);
+
+        // Determine if we should verify a real password or a dummy
+        if (credential is null)
+        {
+            // Unknown user: cost the same time
+            _passwordService.VerifyDummy(command.Password);
+            AuthMetrics.LoginFailed.Add(1, new KeyValuePair<string, object?>("reason", "unknown_user"));
+            await _eventWriter.WriteAsync(
+                "login_failed",
+                "unknown_user",
+                now,
+                correlationId: command.CorrelationId,
+                ipHash: command.IpHash,
+                cancellationToken: cancellationToken);
+            return new AuthenticateResult(AuthenticationStatus.InvalidCredentials);
+        }
+
+        // Check lockout
+        if (credential.IsLocked(now))
+        {
+            _passwordService.VerifyDummy(command.Password);
+            AuthMetrics.LoginFailed.Add(1, new KeyValuePair<string, object?>("reason", "account_locked"));
+            await _eventWriter.WriteAsync(
+                "login_failed",
+                "account_locked",
+                now,
+                credential.AccountId,
+                correlationId: command.CorrelationId,
+                ipHash: command.IpHash,
+                cancellationToken: cancellationToken);
+            return new AuthenticateResult(AuthenticationStatus.InvalidCredentials);
+        }
+
+        // Verify password
+        var result = _passwordService.Verify(credential.PasswordHash, command.Password);
+
+        if (result == PasswordVerificationResult.Failed)
+        {
+            // Retry failed login update up to 3 times in case of concurrency conflicts
+            const int maxRetries = 3;
+
+            for (int attempt = 0; attempt < maxRetries; attempt++)
+            {
+                try
+                {
+                    credential.RecordFailedAttempt(_lockoutOptions.MaxFailedAttempts, _lockoutOptions.LockoutMinutes, now);
+                    await _context.SaveChangesAsync(cancellationToken);
+                    break;
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (attempt < maxRetries - 1)
+                    {
+                        // Reload credential and retry
+                        await _context.Entry(credential).ReloadAsync(cancellationToken);
+                        continue;
+                    }
+                    // Last attempt failed, but don't let exception escape — just continue
+                    break;
+                }
+            }
+
+            var outcome = credential.IsLocked(now) ? "account_locked" : "bad_password";
+            AuthMetrics.LoginFailed.Add(1, new KeyValuePair<string, object?>("reason", outcome));
+            await _eventWriter.WriteAsync(
+                "login_failed",
+                outcome,
+                now,
+                credential.AccountId,
+                detail: new() { { "attemptCount", credential.FailedAttempts } },
+                correlationId: command.CorrelationId,
+                ipHash: command.IpHash,
+                cancellationToken: cancellationToken);
+
+            return new AuthenticateResult(AuthenticationStatus.InvalidCredentials);
+        }
+
+        // Success: reset lockout and record login — retry once on concurrency conflict
+        try
+        {
+            credential.ResetFailedAttempts();
+            credential.RecordLogin(now);
+            if (result == PasswordVerificationResult.SuccessRehashNeeded)
+            {
+                credential.UpdatePasswordHash(_passwordService.HashPassword(command.Password), now);
+            }
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Reload and retry once
+            await _context.Entry(credential).ReloadAsync(cancellationToken);
+            credential.ResetFailedAttempts();
+            credential.RecordLogin(now);
+            if (result == PasswordVerificationResult.SuccessRehashNeeded)
+            {
+                credential.UpdatePasswordHash(_passwordService.HashPassword(command.Password), now);
+            }
+        }
+
+        // Load account and external identity
+        var account = await _context.Accounts
+            .FirstOrDefaultAsync(a => a.Id == credential.AccountId, cancellationToken);
+        if (account is null)
+            return new AuthenticateResult(AuthenticationStatus.InvalidCredentials);
+
+        var externalIdentity = await _context.ExternalIdentities
+            .FirstOrDefaultAsync(
+                x => x.AccountId == account.Id && x.Issuer == _sessionOptions.PlatformIssuer,
+                cancellationToken);
+
+        if (externalIdentity is null)
+        {
+            // Account exists but no platform identity — should not happen in normal flow
+            return new AuthenticateResult(AuthenticationStatus.InvalidCredentials);
+        }
+
+        // Use transaction for session creation and membership lookup
+        await using var tx = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        // Session + first refresh token + membership state (shared with invitation acceptance)
+        var issued = await new SessionIssuer(_sessionOptions)
+            .PrepareAsync(_context, account.Id, now, command.UserAgentHash, cancellationToken);
+        var session = issued.Session;
+        var memberships = issued.MembershipTenantIds;
+        var selectedTenantId = issued.SelectedTenantId;
+        var status = issued.Status;
+
+        // Save all changes atomically — concurrency on credential allowed to be ignored (session creation doesn't depend on exact lockout state)
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Credential may have been updated concurrently, but session creation should still proceed
+            // Clear the tracked changes from credential conflict and save session
+            var entry = _context.Entry(credential);
+            entry.State = EntityState.Unchanged;
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        await tx.CommitAsync(cancellationToken);
+
+        // Write event (outside transaction)
+        await _eventWriter.WriteAsync(
+            "login_succeeded",
+            status.ToString().ToLowerInvariant(),
+            now,
+            account.Id,
+            sessionId: session.Id,
+            correlationId: command.CorrelationId,
+                ipHash: command.IpHash,
+            cancellationToken: cancellationToken);
+
+        var refreshCookieValue = issued.RefreshCookie;
+
+        return new AuthenticateResult(
+            status,
+            account.Id,
+            account.DisplayName,
+            memberships,
+            selectedTenantId,
+            null, // AccessToken will be issued by Host
+            refreshCookieValue,
+            session.Id,
+            externalIdentity.Principal,
+            new AccountSummary(account.Id, account.Email, account.DisplayName, account.Locale),
+            session.AbsoluteExpiresAt);
+    }
+}

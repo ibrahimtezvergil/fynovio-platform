@@ -134,4 +134,8 @@ export interface ApiError {
    * shape. See `docs/design-system/07-forms.md`.
    */
   fields?: Record<string, string[]>
+  /** A `password_policy_violation`'s machine codes (`too_short`, `too_long`, `equals_email`, …) — the UI words them. */
+  violations?: string[]
+  /** A 429's `Retry-After`, in seconds. */
+  retryAfterSeconds?: number
 }

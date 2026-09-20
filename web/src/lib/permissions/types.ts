@@ -9,4 +9,5 @@ export type PermissionId = string
  */
 export type PermissionPolicy = Readonly<Record<UserRole, readonly PermissionId[]>>
 
-export type PermissionUser = Pick<User, 'role'>
+/** `role` is optional on purpose: the real session has none, and a missing role must never grant anything. */
+export type PermissionUser = Partial<Pick<User, 'role'>>

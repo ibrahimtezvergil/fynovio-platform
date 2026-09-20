@@ -13,7 +13,8 @@ here; it belongs in `AGENTS.md` so both agents see one copy, not two that can dr
   pass/fail evidence — delegate post-implementation verification to it rather than
   re-deriving commands yourself.
 - Browser verification: use `claude-in-chrome` tooling for the visual/theme checks
-  `AGENTS.md`'s "UI changes" note calls for — no Playwright/E2E harness exists yet.
+  `AGENTS.md`'s "UI changes" note calls for. The Playwright E2E suite (`e2e/`, `npm run e2e`) covers the
+  auth flows against the real API; it is not a substitute for a visual/theme check.
 - This block is owned by `docs/claude/CLAUDE-BOOTSTRAP.md`'s bootstrap tooling (see
   `.claude/.bootstrap-manifest.json`); edits inside the markers are expected and
   preserved across re-runs, not overwritten wholesale.

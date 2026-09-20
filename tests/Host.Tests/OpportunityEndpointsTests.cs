@@ -18,6 +18,7 @@ using Xunit;
 
 namespace Host.Tests;
 
+[Collection(Host.Tests.Fixtures.HostIntegrationCollection.Name)]
 public sealed class OpportunityEndpointsTests : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:17-alpine")
@@ -68,6 +69,10 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
         Environment.SetEnvironmentVariable("ConnectionStrings__Access", runtimeConnectionString);
         Environment.SetEnvironmentVariable("ConnectionStrings__MasterData", runtimeConnectionString);
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
+
+        // Legacy tests use JwtTestTokenFactory which doesn't mint sid claims — disable
+        // RequireSessionClaim so these tests stay green unchanged (they predate session validation).
+        Environment.SetEnvironmentVariable("Authentication__Session__RequireSessionClaim", "false");
 
         _factory = new WebApplicationFactory<Program>();
 

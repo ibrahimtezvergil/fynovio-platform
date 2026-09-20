@@ -5,7 +5,9 @@
 This repository is a single-package React 19 + TypeScript SPA built with Vite,
 Tailwind CSS v4, and shadcn/ui. Use npm and the existing package-lock.json.
 Ancestor Laravel/PHP commands do not apply here: use the frontend checks below.
-There is no backend in this repository; feature data and login are mocked.
+This frontend lives in the `fynovio-platform` monorepo (`web/`) next to the .NET API. Authentication is
+real (the API's `/auth/*`); the feature data that has no backend yet (deals, calendar, demo pages) is still
+mocked with MSW.
 
 - `src/features/<name>/` owns feature pages, components, API hooks, schemas, and stores.
 - `src/components/ui/` contains shadcn primitives; reuse before customizing.
@@ -76,6 +78,7 @@ Run commands from the repository root. Canonical scripts are in `package.json`.
 | Unit tests | `npm test` (`vitest run`) |
 | Preview existing build | `npm run preview` |
 | Fast check (lint + typecheck + test) | `npm run check` |
+| End-to-end (real API + throwaway PostgreSQL + Chrome) | `npm run e2e` (runs `../scripts/e2e.sh`; needs Docker and the .NET SDK — see the root README) |
 
 - Small source edits: start with focused lint. Behavior/type changes: run
   `npm run check` and verify the affected flow. Cross-cutting edits also warrant
@@ -207,16 +210,38 @@ Run commands from the repository root. Canonical scripts are in `package.json`.
   Same for `graphify-out/` (see the repo-map entry above) — one `graphify update .`
   before relying on query/path/explain there.
 - `.env*` files are untracked and won't exist in a fresh worktree; the app degrades
-  correctly to MSW-mocked mode with no `.env` present (see `.env.example`) — that's the
+  correctly with no `.env` present (see `.env.example`): `/api/*` goes to the .NET host through the Vite
+  proxy (`http://localhost:5208`), and MSW mocks only the features without a backend — that's the
   correct default, not something to "fix" by inventing a `.env`.
 - Vite has no `strictPort`, so concurrent dev servers across worktrees auto-increment
   past 5173 instead of colliding — use the URL Vite actually reports (see Commands table).
 
 ## Risk boundaries
 
-- Mock login lives in `src/features/auth/api.ts`; the persisted auth store and route
-  guards are client-side UI behavior, not server-side authorization. Review these
-  seams carefully when wiring a real backend; do not present mock auth as secure auth.
+- **Session model (`src/lib/auth/`).** The short-lived access token lives in memory only
+  (`useSessionStore`, never persisted — no token, refresh secret or session data in
+  `localStorage`/`sessionStorage`; a boot step purges the legacy `fynovio-auth` key). A reload restores the
+  session through `POST /auth/refresh`, using the HttpOnly `SameSite=Strict` refresh cookie the browser
+  holds (`withCredentials`), before any route renders (`SessionGate`). One shared single-flight refresh
+  serves the boot sequence and the 401 interceptor (Web Locks across tabs); a 401 on a non-`/auth/*` call
+  refreshes and replays the request once, and a failed refresh ends the session as `expired`. 403 never
+  logs out. The tenant is chosen server-side (`/auth/tenants/select` returns a token with that `tid`); the
+  client never builds or edits a tenant claim, and clears the React Query cache on every login, tenant
+  switch, expiry and sign-out. State-changing calls carry `X-Requested-With: fynovio` (the API's CSRF guard).
+- **E-mailed link pages** (`/accept-invite`, `/reset-password`, in `authLinkRoutes`) sit outside `PublicOnlyRoute`
+  on purpose: the single-use token in the link is the credential, and bouncing a signed-in browser away would
+  lose it. The token travels in the URL *fragment* (never sent to a server or in `Referer`); `useFragmentToken`
+  reads it once into memory and replaces the address, and it is never written to storage, logs or a query key
+  that outlives the page (`gcTime: 0`). Every bad link — missing, expired, used, revoked — ends on the same
+  `LinkInvalidNotice`; a reset ends the local session because the server revokes all of them; a wrong *current*
+  password on `/auth/password/change` is a 400 (`invalid_current_password`), never a 401.
+- Route guards (`ProtectedRoute`, `PublicOnlyRoute`, `SessionRoute`) and every `usePermission`/`<Can>`
+  check are UX/navigation control, **not** authorization — the API authorises every request. Post-login
+  destinations go through `sanitizeReturnUrl()` (same-origin relative paths only); never navigate to a
+  raw `returnUrl`.
+- `usePermission`/`hasPermission` is a mock-era remnant that **fails closed**: the real session carries no
+  role, so it grants nothing. Real capabilities come from the backend in Phase 2.5B; today the mock policy
+  only affects the pipeline demo's approve action.
 - `RichTextInput` (`src/components/common/inputs/RichTextInput.tsx`) emits HTML and does not
   sanitize it — that is the caller's job. Any code that renders that HTML back
   (`dangerouslySetInnerHTML` or otherwise) must pass it through `sanitizeHtml()`

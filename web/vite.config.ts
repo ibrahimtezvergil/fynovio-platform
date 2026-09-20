@@ -26,6 +26,17 @@ export default defineConfig({
       'recharts',
     ],
   },
+  server: {
+    // Same-origin API in development: the refresh cookie (HttpOnly, SameSite=Strict) and the CSRF/Origin
+    // checks both prefer it. `/api/x` reaches the .NET host as `/x`.
+    proxy: {
+      '/api': {
+        target: process.env.API_PROXY_TARGET ?? 'http://localhost:5208',
+        changeOrigin: false,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
   build: {
     rollupOptions: {
       output: {

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { useAuthStore } from '@/features/auth/store/useAuthStore'
+import { useSessionStore } from '@/lib/auth'
 
 /** Before noon reads "Günaydın", after reads "İyi günler" — the two forms the brief itself gives. */
 function useGreetingKey(): 'morning' | 'day' {
@@ -13,7 +13,7 @@ interface GreetingSectionProps {
 /** Calm, first-person context — not a marketing hero. Sets the day's one question: what needs me now. */
 export function GreetingSection({ attentionCount }: GreetingSectionProps) {
   const { t } = useTranslation('home')
-  const user = useAuthStore((s) => s.user)
+  const user = useSessionStore((s) => s.user)
   const greetingKey = useGreetingKey()
   const firstName = user?.name.split(' ')[0] ?? t('greeting.fallbackName')
 

@@ -70,6 +70,7 @@ export default {
     accountSettings: 'Hesap ayarları',
     theme: 'Tema',
     language: 'Dil',
+    security: 'Güvenlik ve şifre',
     notifications: 'Bildirimler',
     logout: 'Çıkış Yap',
   },

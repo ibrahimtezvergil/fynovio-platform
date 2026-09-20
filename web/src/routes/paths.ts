@@ -1,6 +1,13 @@
 /** Every route string lives here so links and guards can never drift apart. */
 export const paths = {
   login: '/login',
+  selectTenant: '/select-tenant',
+  noAccess: '/no-access',
+  forgotPassword: '/forgot-password',
+  resetPassword: '/reset-password',
+  acceptInvite: '/accept-invite',
+  register: '/register',
+  accountSecurity: '/account/security',
   dashboard: '/dashboard',
   /** Legacy URLs, kept only as redirect targets into `/crm/*` — see `routes/index.tsx`. */
   pipeline: '/pipeline',

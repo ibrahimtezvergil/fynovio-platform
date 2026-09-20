@@ -5,6 +5,7 @@ import { RouterProvider } from 'react-router-dom'
 import { queryClient } from '@/api/queryClient'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { SessionGate } from '@/lib/auth'
 import { CapabilityProvider } from '@/lib/capabilities'
 import { i18n } from '@/lib/i18n'
 import { router } from '@/routes'
@@ -34,7 +35,9 @@ export default function App() {
           {/* One provider at the root: it owns the shared open/close delay, so
               moving between neighbouring triggers skips the re-open wait. */}
           <TooltipProvider delay={350} closeDelay={80}>
-            <RouterProvider router={router} />
+            <SessionGate>
+              <RouterProvider router={router} />
+            </SessionGate>
           </TooltipProvider>
           <Toaster position="bottom-right" />
           {ReactQueryDevtools && (

@@ -1,6 +1,6 @@
 import { lazy, Suspense, type ReactElement } from 'react'
 import { createBrowserRouter, Navigate, Outlet, type RouteObject } from 'react-router-dom'
-import { authRoutes } from '@/features/auth/routes'
+import { authAccountRoutes, authLinkRoutes, authRoutes, authSessionRoutes } from '@/features/auth/routes'
 import { calendarRoutes } from '@/features/calendar/routes'
 import { dashboardRoutes } from '@/features/dashboard/routes'
 import { demoBadgesRoutes } from '@/features/demo-badges/routes'
@@ -26,6 +26,7 @@ import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { PublicOnlyRoute } from '@/routes/PublicOnlyRoute'
 import { RouteErrorBoundary } from '@/routes/RouteErrorBoundary'
 import { RouteFallback } from '@/routes/RouteFallback'
+import { SessionRoute } from '@/routes/SessionRoute'
 
 const NotFoundPage = lazy(() => import('@/routes/NotFoundPage'))
 
@@ -40,6 +41,8 @@ const toRouteObjects = (routes: FeatureRoute[], isProtected: boolean): RouteObje
   routes.filter((route) => route.protected === isProtected).map((route) => ({ path: route.path, element: routeElement(route) }))
 
 const publicRoutes = toRouteObjects(authRoutes, false)
+const linkRoutes = toRouteObjects(authLinkRoutes, false)
+const sessionRoutes = toRouteObjects(authSessionRoutes, true)
 
 /**
  * Global Home. Its own pathless group purely for symmetry with the others
@@ -62,7 +65,7 @@ const homeRouteGroup: RouteObject = {
  */
 const utilityRoutes: RouteObject = {
   handle: { surface: 'utility' },
-  children: toRouteObjects([...calendarRoutes, ...placeholderUtilityRoutes], true),
+  children: toRouteObjects([...calendarRoutes, ...placeholderUtilityRoutes, ...authAccountRoutes], true),
 }
 
 /**
@@ -121,6 +124,8 @@ export const router = createBrowserRouter([{
   children: [
     { path: '/', element: <Navigate to={paths.dashboard} replace /> },
     { element: <PublicOnlyRoute />, children: [{ element: <AuthLayout />, children: publicRoutes }] },
+    { element: <AuthLayout />, children: linkRoutes },
+    { element: <SessionRoute />, children: [{ element: <AuthLayout />, children: sessionRoutes }] },
     {
       element: <ProtectedRoute />,
       children: [{

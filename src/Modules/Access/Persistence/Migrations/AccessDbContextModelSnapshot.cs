@@ -22,6 +22,307 @@ namespace Access.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Access.Domain.Authentication.AccountCredential", b =>
+                {
+                    b.Property<long>("AccountId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("account_id");
+
+                    b.Property<int>("FailedAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("failed_attempts");
+
+                    b.Property<DateTimeOffset?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login_at");
+
+                    b.Property<DateTimeOffset?>("LockedUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("locked_until");
+
+                    b.Property<string>("LoginEmailNormalized")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("login_email_normalized");
+
+                    b.Property<DateTimeOffset>("PasswordChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("password_changed_at");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("password_hash");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("row_version");
+
+                    b.HasKey("AccountId")
+                        .HasName("pk_account_credentials");
+
+                    b.HasIndex("LoginEmailNormalized")
+                        .IsUnique()
+                        .HasDatabaseName("ix_account_credentials_login_email_normalized_unique");
+
+                    b.ToTable("account_credentials", "identity");
+                });
+
+            modelBuilder.Entity("Access.Domain.Authentication.AccountToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<long?>("AccountId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("account_id");
+
+                    b.Property<DateTimeOffset?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consumed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<long?>("CreatedByAccountId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("created_by_account_id");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("display_name");
+
+                    b.Property<string>("EmailNormalized")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("email_normalized");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Locale")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("locale");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("purpose");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<long?>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("token_hash");
+
+                    b.HasKey("Id")
+                        .HasName("pk_account_tokens");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("ix_account_tokens_account_id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_account_tokens_token_hash_unique");
+
+                    b.HasIndex("EmailNormalized", "TenantId")
+                        .HasDatabaseName("ix_account_tokens_outstanding_invites")
+                        .HasFilter("purpose = 'invite' AND consumed_at IS NULL AND revoked_at IS NULL");
+
+                    b.ToTable("account_tokens", "identity", t =>
+                        {
+                            t.HasCheckConstraint("ck_account_tokens_account_purposes_have_account", "purpose = 'invite' OR account_id IS NOT NULL");
+
+                            t.HasCheckConstraint("ck_account_tokens_invite_shape", "purpose <> 'invite' OR (tenant_id IS NOT NULL AND email_normalized IS NOT NULL)");
+
+                            t.HasCheckConstraint("ck_account_tokens_purpose", "purpose IN ('invite', 'password_reset', 'password_setup')");
+                        });
+                });
+
+            modelBuilder.Entity("Access.Domain.Authentication.AuthEvent", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("AccountId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("account_id");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<string>("Detail")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("detail");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("event_type");
+
+                    b.Property<string>("IpHash")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("ip_hash");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("outcome");
+
+                    b.Property<Guid?>("SessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("session_id");
+
+                    b.Property<long?>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_auth_events");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("ix_auth_events_account_id");
+
+                    b.HasIndex("CorrelationId")
+                        .HasDatabaseName("ix_auth_events_correlation_id");
+
+                    b.HasIndex("OccurredAt")
+                        .HasDatabaseName("ix_auth_events_occurred_at");
+
+                    b.HasIndex("SessionId")
+                        .HasDatabaseName("ix_auth_events_session_id");
+
+                    b.ToTable("auth_events", "identity");
+                });
+
+            modelBuilder.Entity("Access.Domain.Authentication.AuthSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("AbsoluteExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("absolute_expires_at");
+
+                    b.Property<long>("AccountId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("account_id");
+
+                    b.Property<long?>("ActiveTenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("active_tenant_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_used_at");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<string>("RevokedReason")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("revoked_reason");
+
+                    b.Property<string>("UserAgentHash")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("user_agent_hash");
+
+                    b.HasKey("Id")
+                        .HasName("pk_auth_sessions");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("ix_auth_sessions_account_id");
+
+                    b.HasIndex("AccountId", "CreatedAt")
+                        .HasDatabaseName("ix_auth_sessions_account_id_created_at");
+
+                    b.ToTable("auth_sessions", "identity");
+                });
+
+            modelBuilder.Entity("Access.Domain.Authentication.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<DateTimeOffset>("IssuedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("issued_at");
+
+                    b.Property<Guid?>("ReplacedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("replaced_by_id");
+
+                    b.Property<DateTimeOffset?>("RotatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rotated_at");
+
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("session_id");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("token_hash");
+
+                    b.HasKey("Id")
+                        .HasName("pk_auth_refresh_tokens");
+
+                    b.HasIndex("SessionId")
+                        .HasDatabaseName("ix_auth_refresh_tokens_session_id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_auth_refresh_tokens_token_hash_unique");
+
+                    b.ToTable("auth_refresh_tokens", "identity");
+                });
+
             modelBuilder.Entity("Access.Domain.Authorization.ActionRegistryEntry", b =>
                 {
                     b.Property<string>("ActionKey")
@@ -658,6 +959,45 @@ namespace Access.Persistence.Migrations
                         .HasDatabaseName("ix_outbox_messages_tenant_id_processed_at");
 
                     b.ToTable("outbox_messages", "access");
+                });
+
+            modelBuilder.Entity("Access.Domain.Authentication.AccountCredential", b =>
+                {
+                    b.HasOne("Access.Domain.Identity.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_account_credentials_accounts_account_id");
+                });
+
+            modelBuilder.Entity("Access.Domain.Authentication.AccountToken", b =>
+                {
+                    b.HasOne("Access.Domain.Identity.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_account_tokens_accounts_account_id");
+                });
+
+            modelBuilder.Entity("Access.Domain.Authentication.AuthSession", b =>
+                {
+                    b.HasOne("Access.Domain.Identity.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_auth_sessions_accounts_account_id");
+                });
+
+            modelBuilder.Entity("Access.Domain.Authentication.RefreshToken", b =>
+                {
+                    b.HasOne("Access.Domain.Authentication.AuthSession", null)
+                        .WithMany()
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_auth_refresh_tokens_auth_sessions_session_id");
                 });
 
             modelBuilder.Entity("Access.Domain.Authorization.PermissionSetItem", b =>

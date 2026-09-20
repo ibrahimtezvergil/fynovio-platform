@@ -2,8 +2,17 @@
 export const endpoints = {
   auth: {
     login: '/auth/login',
+    refresh: '/auth/refresh',
     logout: '/auth/logout',
+    selectTenant: '/auth/tenants/select',
     me: '/auth/me',
+    config: '/auth/config',
+    validateInvitation: '/auth/invitations/validate',
+    acceptInvitation: '/auth/invitations/accept',
+    forgotPassword: '/auth/password/forgot',
+    resetPassword: '/auth/password/reset',
+    changePassword: '/auth/password/change',
+    register: '/auth/register',
   },
   deals: {
     list: '/deals',

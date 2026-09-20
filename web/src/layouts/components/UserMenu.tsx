@@ -1,11 +1,12 @@
-import { Bell, BellOff, ChevronUp, Moon, Sun } from 'lucide-react'
+import { Bell, BellOff, ChevronUp, KeyRound, Moon, Sun } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { OptionGroup, type Option } from '@/components/common/OptionGroup'
-import { useAuthStore } from '@/features/auth/store/useAuthStore'
+import { logout, useSessionStore } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 import { paths } from '@/routes/paths'
+import { TenantSwitcher } from '@/layouts/components/TenantSwitcher'
 import { useAppStore } from '@/store/useAppStore'
 import type { Locale, ThemePreference } from '@/types'
 
@@ -35,8 +36,7 @@ export function UserMenu({
     { value: 'dark', label: t('userMenu.themeDark'), icon: Moon },
     { value: 'system', label: t('userMenu.themeSystem') },
   ]
-  const user = useAuthStore((s) => s.user)
-  const logout = useAuthStore((s) => s.logout)
+  const user = useSessionStore((s) => s.user)
   const theme = useAppStore((s) => s.theme)
   const locale = useAppStore((s) => s.locale)
   const setTheme = useAppStore((s) => s.setTheme)
@@ -77,8 +77,14 @@ export function UserMenu({
     setPermission(await Notification.requestPermission())
   }
 
-  const handleLogout = () => {
-    logout()
+  const openSecurity = () => {
+    close()
+    navigate(paths.accountSecurity)
+  }
+
+  const handleLogout = async () => {
+    setOpen(false)
+    await logout() // ends the server session, then clears memory + caches even if the request failed
     navigate(paths.login, { replace: true })
   }
 
@@ -144,6 +150,8 @@ export function UserMenu({
             <p className="text-muted-foreground truncate text-[12.5px] leading-5">{user.email}</p>
           </div>
 
+          <TenantSwitcher onSwitched={close} />
+
           <Divider />
           <OptionGroup label={t('userMenu.theme')} options={themeOptions} value={theme} onChange={setTheme} />
 
@@ -165,7 +173,17 @@ export function UserMenu({
           <Divider />
           <button
             type="button"
-            onClick={handleLogout}
+            onClick={openSecurity}
+            className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2.5 text-left text-[13px] transition-colors duration-[250ms] ease-fluid hover:bg-[var(--nx-fill-hover)]"
+          >
+            <KeyRound aria-hidden className="size-4 shrink-0" strokeWidth={1.5} />
+            <span className="flex-1">{t('userMenu.security')}</span>
+          </button>
+
+          <Divider />
+          <button
+            type="button"
+            onClick={() => void handleLogout()}
             className="text-destructive w-full cursor-pointer px-4 py-2.5 text-left text-[13px] font-[590] transition-colors duration-[250ms] ease-fluid hover:bg-[var(--nx-st-red-bg)]"
           >
             {t('userMenu.logout')}

@@ -5,6 +5,19 @@ using Testcontainers.PostgreSql;
 
 namespace Access.Tests.Integration;
 
+/// <summary>Test TimeProvider that can be advanced for testing expiry scenarios.</summary>
+public sealed class TestTimeProvider : TimeProvider
+{
+    private DateTimeOffset _utcNow = DateTimeOffset.UtcNow;
+
+    public override DateTimeOffset GetUtcNow() => _utcNow;
+
+    public void Advance(TimeSpan duration)
+    {
+        _utcNow = _utcNow.Add(duration);
+    }
+}
+
 /// <summary>Mirrors `tests/CRM.Tests/Integration/PostgresFixture.cs`. The container's
 /// `postgres` user is superuser and bypasses RLS — isolation tests use
 /// `RuntimeConnectionStringAsync()` instead (FF03).</summary>
@@ -19,6 +32,8 @@ public sealed class PostgresFixture : IAsyncLifetime
     private string? _runtimeConnectionString;
 
     public string AdminConnectionString => _container.GetConnectionString();
+
+    public TestTimeProvider TimeProvider { get; } = new();
 
     public async Task<string> RuntimeConnectionStringAsync()
     {
@@ -37,6 +52,7 @@ public sealed class PostgresFixture : IAsyncLifetime
                 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA access TO fynovio_app;
                 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA access TO fynovio_app;
                 REVOKE UPDATE, DELETE ON access.evidence_records FROM fynovio_app;
+                REVOKE UPDATE, DELETE ON identity.auth_events FROM fynovio_app;
                 """);
         }
 

@@ -39,6 +39,18 @@ export function RouteErrorBoundary() {
     )
   }
 
+  // A query rejected with 403: signed in but not permitted. Says so, leaks nothing, keeps the session.
+  if ((error as { status?: number } | null)?.status === 403) {
+    return (
+      <ErrorFallback
+        title="Erişiminiz yok"
+        description="Bu içeriği görüntülemek için yetkiniz yok."
+        onRetry={() => navigate(paths.dashboard, { replace: true })}
+        retryLabel="Panele dön"
+      />
+    )
+  }
+
   const detail = error instanceof Error ? (error.stack ?? error.message) : String(error)
 
   return (

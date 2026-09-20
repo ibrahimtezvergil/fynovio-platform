@@ -70,6 +70,7 @@ export default {
     accountSettings: 'Account settings',
     theme: 'Theme',
     language: 'Language',
+    security: 'Security & password',
     notifications: 'Notifications',
     logout: 'Log Out',
   },

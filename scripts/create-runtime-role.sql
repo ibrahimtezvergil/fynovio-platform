@@ -51,3 +51,6 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA access
 
 -- access.evidence_records is append-only, same convention as crm/masterdata.
 REVOKE UPDATE, DELETE ON access.evidence_records FROM fynovio_app;
+
+-- identity.auth_events is append-only (authentication audit log; never modify or delete).
+REVOKE UPDATE, DELETE ON identity.auth_events FROM fynovio_app;
