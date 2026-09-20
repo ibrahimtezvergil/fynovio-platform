@@ -28,6 +28,7 @@ public sealed class AccessDbContext : DbContext
     public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<AuthEvent> AuthEvents => Set<AuthEvent>();
+    public DbSet<AccountToken> AccountTokens => Set<AccountToken>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<ActionRegistryEntry> Actions => Set<ActionRegistryEntry>();
     public DbSet<PermissionSet> PermissionSets => Set<PermissionSet>();
