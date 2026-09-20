@@ -1,4 +1,4 @@
-import { Bell, BellOff, ChevronUp, Moon, Sun } from 'lucide-react'
+import { Bell, BellOff, ChevronUp, KeyRound, Moon, Sun } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -75,6 +75,11 @@ export function UserMenu({
   const requestNotifications = async () => {
     if (permission !== 'default') return
     setPermission(await Notification.requestPermission())
+  }
+
+  const openSecurity = () => {
+    close()
+    navigate(paths.accountSecurity)
   }
 
   const handleLogout = async () => {
@@ -163,6 +168,16 @@ export function UserMenu({
             <NotificationIcon aria-hidden className="size-4 shrink-0" strokeWidth={1.5} />
             <span className="flex-1">{t('userMenu.notifications')}</span>
             <span className="text-muted-foreground">{permissionLabel[permission]}</span>
+          </button>
+
+          <Divider />
+          <button
+            type="button"
+            onClick={openSecurity}
+            className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2.5 text-left text-[13px] transition-colors duration-[250ms] ease-fluid hover:bg-[var(--nx-fill-hover)]"
+          >
+            <KeyRound aria-hidden className="size-4 shrink-0" strokeWidth={1.5} />
+            <span className="flex-1">{t('userMenu.security')}</span>
           </button>
 
           <Divider />

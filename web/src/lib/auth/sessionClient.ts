@@ -35,6 +35,24 @@ export async function login(values: { email: string; password: string }): Promis
   return useSessionStore.getState().status
 }
 
+/** Accepting an invitation ends with a brand-new session, exactly like a sign-in. */
+export async function acceptInvitation(values: { token: string; password: string; displayName?: string }): Promise<SessionStatus> {
+  const { data } = await apiClient.post<unknown>(endpoints.auth.acceptInvitation, values, AUTH_REQUEST)
+  useSessionStore.getState().applyAuthResult(authResultSchema.parse(data))
+  resetClientState()
+  return useSessionStore.getState().status
+}
+
+/**
+ * The server revokes EVERY session of the account when a password is reset (and clears the cookie), so the
+ * browser must forget its own session too — otherwise it would keep a token the API already rejects.
+ */
+export async function resetPassword(values: { token: string; newPassword: string }): Promise<void> {
+  await apiClient.post(endpoints.auth.resetPassword, values, AUTH_REQUEST)
+  useSessionStore.getState().endSession('unauthenticated')
+  resetClientState()
+}
+
 export async function logout(): Promise<void> {
   try {
     await apiClient.post(endpoints.auth.logout, undefined, AUTH_REQUEST)

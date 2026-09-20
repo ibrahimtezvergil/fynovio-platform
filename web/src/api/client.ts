@@ -1,4 +1,5 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
+import { endpoints } from '@/api/endpoints'
 import { getAccessToken } from '@/lib/auth/session'
 import type { ApiError } from '@/types'
 
@@ -30,7 +31,10 @@ export function setRefreshHandler(handler: RefreshHandler | null) {
   refreshHandler = handler
 }
 
-const isAuthEndpoint = (url: string | undefined) => (url ?? '').startsWith('/auth/')
+/** `/auth/*` calls that authenticate with the bearer token (not the cookie or a link token): an expired token there IS worth a refresh. */
+const BEARER_AUTH_ENDPOINTS: readonly string[] = [endpoints.auth.me, endpoints.auth.changePassword]
+
+const isAuthEndpoint = (url: string | undefined) => (url ?? '').startsWith('/auth/') && !BEARER_AUTH_ENDPOINTS.includes(url ?? '')
 
 function newCorrelationId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`
@@ -54,6 +58,7 @@ interface ProblemBody {
   message?: string
   code?: string
   errors?: Record<string, string[]>
+  violations?: string[]
 }
 
 /** Collapse every axios failure — RFC 7807 ProblemDetails, the older `{message,code}` shape, network errors — into one `ApiError`. */
@@ -69,6 +74,7 @@ export function toApiError(error: AxiosError<ProblemBody>): ApiError {
     code: data?.code ?? data?.type,
     // Laravel-style 422 and our 400 `validation_error` share the `errors` map.
     fields: status === 422 || status === 400 ? data?.errors : undefined,
+    ...(status === 400 && Array.isArray(data?.violations) ? { violations: data.violations } : {}),
     ...(status === 429 && Number.isFinite(retryAfter) ? { retryAfterSeconds: retryAfter } : {}),
   }
 }

@@ -200,3 +200,49 @@ describe('error normalisation', () => {
     expect(toApiError({ message: 'boom', response: undefined } as never)).toMatchObject({ message: 'boom', status: 0 })
   })
 })
+
+describe('bearer-authenticated /auth endpoints', () => {
+  it('an expired access token on change-password is refreshed and the request replayed once', async () => {
+    signIn('stale')
+    const calls: (string | null)[] = []
+    server.use(
+      http.post(url(endpoints.auth.changePassword), ({ request }) => {
+        calls.push(request.headers.get('authorization'))
+        return request.headers.get('authorization') === 'Bearer fresh' ? new HttpResponse(null, { status: 204 }) : problem(401, 'unauthorized')
+      }),
+      refresh(() => HttpResponse.json(authenticated({ accessToken: 'fresh' }))),
+    )
+
+    const response = await apiClient.post(endpoints.auth.changePassword, { currentPassword: 'a', newPassword: 'b' })
+
+    expect(response.status).toBe(204)
+    expect(calls).toEqual(['Bearer stale', 'Bearer fresh'])
+  })
+
+  it('but a 401 from a cookie/link-token /auth endpoint never triggers a refresh', async () => {
+    let refreshes = 0
+    server.use(
+      refresh(() => { refreshes++; return HttpResponse.json(authenticated()) }),
+      http.post(url(endpoints.auth.resetPassword), () => problem(401, 'invalid_credentials')),
+    )
+
+    await expect(apiClient.post(endpoints.auth.resetPassword, {})).rejects.toMatchObject({ status: 401 })
+
+    expect(refreshes).toBe(0)
+  })
+})
+
+describe('toApiError: password policy violations', () => {
+  it('exposes the machine codes of a 400 password_policy_violation', async () => {
+    server.use(http.post(url(endpoints.auth.resetPassword), () => problem(400, 'password_policy_violation', { violations: ['too_short'] })))
+
+    await expect(apiClient.post(endpoints.auth.resetPassword, {})).rejects.toMatchObject({ status: 400, code: 'password_policy_violation', violations: ['too_short'] })
+  })
+
+  it('ignores a malformed violations value', async () => {
+    server.use(http.post(url(endpoints.auth.resetPassword), () => problem(400, 'password_policy_violation', { violations: 'nope' })))
+
+    const error = (await apiClient.post(endpoints.auth.resetPassword, {}).catch((e) => e)) as ApiError
+    expect(error.violations).toBeUndefined()
+  })
+})

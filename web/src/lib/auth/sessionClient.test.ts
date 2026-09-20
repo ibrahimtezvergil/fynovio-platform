@@ -9,7 +9,7 @@ import {
 } from '@/test/authHandlers'
 import { resetSession } from '@/test/session'
 import { useSessionStore } from './session'
-import { bootstrapSession, LEGACY_STORAGE_KEY, login, logout, refreshSession, selectTenant } from './sessionClient'
+import { acceptInvitation, bootstrapSession, LEGACY_STORAGE_KEY, login, logout, refreshSession, resetPassword, selectTenant } from './sessionClient'
 
 beforeEach(resetSession)
 afterEach(() => {
@@ -260,5 +260,68 @@ describe('nothing sensitive reaches browser storage', () => {
 
     const leaked = writes.filter(([key, value]) => /token|auth|session/i.test(key) || /token|pw-that-must-not-leak|ada@example/i.test(value))
     expect(leaked).toEqual([])
+  })
+})
+
+describe('acceptInvitation', () => {
+  it('applies the new session like a sign-in and drops every cached response of the previous one', async () => {
+    const clear = vi.spyOn(queryClient, 'clear')
+    let body: unknown
+    server.use(http.post(url(endpoints.auth.acceptInvitation), async ({ request }) => { body = await request.json(); return HttpResponse.json(authenticated()) }))
+
+    await expect(acceptInvitation({ token: 'id.secret', password: 'a-long-new-passphrase', displayName: 'Ada' })).resolves.toBe('authenticated')
+
+    expect(body).toEqual({ token: 'id.secret', password: 'a-long-new-passphrase', displayName: 'Ada' })
+    expect(useSessionStore.getState().accessToken).toBe(ACCESS_TOKEN)
+    expect(clear).toHaveBeenCalled()
+  })
+
+  it('lands in tenant selection when the account belongs to several tenants', async () => {
+    server.use(http.post(url(endpoints.auth.acceptInvitation), () => HttpResponse.json(selectionRequired())))
+    await expect(acceptInvitation({ token: 't', password: 'p' })).resolves.toBe('tenant_unresolved')
+  })
+
+  it('a refused invitation leaves the existing session alone', async () => {
+    useSessionStore.getState().applyAuthResult(authenticated())
+    server.use(http.post(url(endpoints.auth.acceptInvitation), () => problem(400, 'invalid_or_expired_token')))
+
+    await expect(acceptInvitation({ token: 't', password: 'p' })).rejects.toMatchObject({ status: 400, code: 'invalid_or_expired_token' })
+
+    expect(status()).toBe('authenticated')
+  })
+
+  it('a 401 from the accept call is an answer, not a reason to refresh (it is an /auth endpoint)', async () => {
+    let refreshes = 0
+    server.use(
+      refresh(() => { refreshes++; return HttpResponse.json(authenticated()) }),
+      http.post(url(endpoints.auth.acceptInvitation), () => problem(401, 'invalid_credentials')),
+    )
+
+    await expect(acceptInvitation({ token: 't', password: 'wrong' })).rejects.toMatchObject({ status: 401 })
+
+    expect(refreshes).toBe(0)
+  })
+})
+
+describe('resetPassword', () => {
+  it('ends the local session and clears the caches — the server revoked every session of the account', async () => {
+    useSessionStore.getState().applyAuthResult(authenticated())
+    const clear = vi.spyOn(queryClient, 'clear')
+    server.use(http.post(url(endpoints.auth.resetPassword), () => new HttpResponse(null, { status: 204 })))
+
+    await resetPassword({ token: 'id.secret', newPassword: 'a-long-new-passphrase' })
+
+    expect(status()).toBe('unauthenticated')
+    expect(useSessionStore.getState().accessToken).toBeNull()
+    expect(clear).toHaveBeenCalled()
+  })
+
+  it('a refused reset keeps the session as it was', async () => {
+    useSessionStore.getState().applyAuthResult(authenticated())
+    server.use(http.post(url(endpoints.auth.resetPassword), () => problem(400, 'invalid_or_expired_token')))
+
+    await expect(resetPassword({ token: 't', newPassword: 'p' })).rejects.toMatchObject({ code: 'invalid_or_expired_token' })
+
+    expect(status()).toBe('authenticated')
   })
 })

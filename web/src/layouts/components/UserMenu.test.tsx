@@ -13,6 +13,7 @@ beforeEach(resetSession)
 
 const routes = () => [
   { path: '/login', element: <p>LOGIN PAGE</p> },
+  { path: '/account/security', element: <p>SECURITY PAGE</p> },
   { path: '*', element: <UserMenu placement="topbar" /> },
 ]
 
@@ -75,5 +76,18 @@ describe('UserMenu sign-out', () => {
     renderRoutes(routes(), '/')
     openMenu()
     expect(screen.getByRole('group', { name: tr('tenantSwitcher.label') })).toBeInTheDocument()
+  })
+})
+
+describe('UserMenu security entry', () => {
+  it('opens the account-security page and closes the menu', async () => {
+    useSessionStore.getState().applyAuthResult(authenticated())
+    const { router } = renderRoutes(routes(), '/')
+
+    openMenu()
+    fireEvent.click(screen.getByRole('button', { name: tr('userMenu.security', {}, 'nav') }))
+
+    expect(await screen.findByText('SECURITY PAGE')).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/account/security')
   })
 })
