@@ -120,6 +120,7 @@ builder.Services.AddScoped<LogoutHandler>();
 builder.Services.AddScoped<SelectTenantHandler>();
 builder.Services.AddScoped<GetSessionOverviewHandler>();
 builder.Services.AddScoped<ProvisionPasswordAccountHandler>();
+builder.Services.AddScoped<BootstrapTenantAccessHandler>();
 
 // Register Host authentication infrastructure
 builder.Services.AddScoped<AccessTokenIssuer>();
@@ -245,6 +246,14 @@ using (var scope = app.Services.CreateScope())
         .Concat(CrmActionCatalog.All.Select(d => new ActionRegistryDescriptor(d.ActionKey, "CRM", d.ResourceType, d.RiskClass)));
     await AccessActionCatalogSeeder.EnsureSeededAsync(accessDb, manifest);
 }
+
+// Local-development seed: only when DevSeed:Enabled AND the environment is Development.
+await DevSeeder.RunAsync(
+    app.Services,
+    app.Environment,
+    builder.Configuration.GetSection("DevSeed").Get<DevSeedOptions>() ?? new DevSeedOptions(),
+    app.Services.GetRequiredService<Access.Application.Authentication.SessionOptions>().PlatformIssuer,
+    app.Logger);
 
 // CORS before rate limiting (so preflights aren't counted)
 if (corsOrigins.Length > 0)

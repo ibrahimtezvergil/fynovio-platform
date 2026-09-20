@@ -1,0 +1,204 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using Host.Authentication;
+using Host.Tests.Fixtures;
+using Npgsql;
+using Xunit;
+
+namespace Host.Tests.Authentication;
+
+/// <summary>The local-development seed: three identities that end in three different login
+/// states, idempotent, and inert outside Development.</summary>
+[Collection(HostIntegrationCollection.Name)]
+public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
+{
+    private const string SeedPassword = "Seed-Test-Passw0rd-1";
+
+    private static readonly Dictionary<string, string?> SeedEnabled = new()
+    {
+        ["DevSeed__Enabled"] = "true",
+        ["DevSeed__Password"] = SeedPassword,
+    };
+
+    private readonly AuthApiFixture _fixture;
+
+    public DevSeederTests(AuthApiFixture fixture) => _fixture = fixture;
+
+    private static async Task<JsonElement> LoginAsync(HttpClient client, string email, string password = SeedPassword)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/auth/login") { Content = JsonContent.Create(new { email, password }) };
+        request.Headers.Add("X-Requested-With", "fynovio");
+        var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>());
+    }
+
+    private static async Task<string> SelectTenantAsync(HttpClient client, string loginCookie, long tenantId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/auth/tenants/select") { Content = JsonContent.Create(new { tenantId }) };
+        request.Headers.Add("X-Requested-With", "fynovio");
+        request.Headers.Add("Cookie", loginCookie);
+        var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
+    }
+
+    /// <summary>Logs in and returns the body plus the `name=value` cookie pair for follow-up calls.</summary>
+    private static async Task<(JsonElement Body, string Cookie)> LoginWithCookieAsync(HttpClient client, string email)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/auth/login") { Content = JsonContent.Create(new { email, password = SeedPassword }) };
+        request.Headers.Add("X-Requested-With", "fynovio");
+        var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var setCookie = response.Headers.GetValues("Set-Cookie").First(v => v.StartsWith("fynovio_rt=", StringComparison.Ordinal));
+        return (await response.Content.ReadFromJsonAsync<JsonElement>(), setCookie.Split(';')[0]);
+    }
+
+    private static Task<HttpResponseMessage> GetAsync(HttpClient client, string path, string token)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return client.SendAsync(request);
+    }
+
+    private async Task<long> CredentialCountAsync(string email)
+    {
+        await using var connection = new NpgsqlConnection(_fixture.AdminConnectionString);
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand(
+            "SELECT count(*) FROM identity.account_credentials WHERE login_email_normalized = @e", connection);
+        command.Parameters.AddWithValue("e", email);
+        return (long)(await command.ExecuteScalarAsync())!;
+    }
+
+    [Fact]
+    public async Task Admin_signs_in_to_the_tenant_selection_state_and_can_use_either_tenant()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+
+        var (body, cookie) = await LoginWithCookieAsync(client, DevSeeder.AdminEmail);
+
+        Assert.Equal("tenant_selection_required", body.GetProperty("status").GetString());
+        Assert.False(body.TryGetProperty("accessToken", out _));
+        var tenants = body.GetProperty("memberships").EnumerateArray().Select(m => m.GetProperty("tenantId").GetInt64()).Order().ToArray();
+        Assert.Equal([1L, 2L], tenants);
+
+        foreach (var tenant in tenants)
+        {
+            var token = await SelectTenantAsync(client, cookie, tenant);
+            Assert.Equal(HttpStatusCode.OK, (await GetAsync(client, "/opportunities", token)).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await GetAsync(client, "/auth/me", token)).StatusCode);
+        }
+    }
+
+    [Fact]
+    public async Task Single_tenant_user_is_signed_in_directly_but_holds_no_crm_grants()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+
+        var body = await LoginAsync(client, DevSeeder.SingleTenantEmail);
+
+        Assert.Equal("authenticated", body.GetProperty("status").GetString());
+        Assert.Equal(1, body.GetProperty("activeTenant").GetProperty("tenantId").GetInt64());
+
+        var create = new HttpRequestMessage(HttpMethod.Post, "/opportunities")
+        {
+            Content = JsonContent.Create(new { partyId = 1, currency = "EUR", estimatedAmount = 100 })
+        };
+        create.Headers.Authorization = new AuthenticationHeaderValue("Bearer", body.GetProperty("accessToken").GetString());
+        create.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.SendAsync(create)).StatusCode); // authenticated ≠ permitted
+    }
+
+    [Fact]
+    public async Task Account_without_membership_ends_in_the_no_membership_state()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+
+        var body = await LoginAsync(client, DevSeeder.NoMembershipEmail);
+
+        Assert.Equal("no_membership", body.GetProperty("status").GetString());
+        Assert.False(body.TryGetProperty("accessToken", out _));
+    }
+
+    [Fact]
+    public async Task Wrong_password_is_still_rejected_for_seeded_accounts()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "/auth/login")
+        {
+            Content = JsonContent.Create(new { email = DevSeeder.AdminEmail, password = "definitely-not-the-password" })
+        };
+        request.Headers.Add("X-Requested-With", "fynovio");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.SendAsync(request)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Seeding_twice_is_idempotent()
+    {
+        using (await _fixture.StartHostAsync(SeedEnabled)) { }
+        using var second = await _fixture.StartHostAsync(SeedEnabled); // re-runs the seed against the seeded database
+        using var client = second.CreateClient();
+
+        Assert.Equal(1, await CredentialCountAsync(DevSeeder.AdminEmail));
+        Assert.Equal(1, await CredentialCountAsync(DevSeeder.SingleTenantEmail));
+        Assert.Equal(1, await CredentialCountAsync(DevSeeder.NoMembershipEmail));
+        Assert.Equal("tenant_selection_required", (await LoginAsync(client, DevSeeder.AdminEmail)).GetProperty("status").GetString());
+    }
+}
+
+/// <summary>Own fixture (own database): the guard must leave a pristine database untouched.</summary>
+[Collection(HostIntegrationCollection.Name)]
+public sealed class DevSeederGuardTests : IClassFixture<AuthApiFixture>
+{
+    private readonly AuthApiFixture _fixture;
+
+    public DevSeederGuardTests(AuthApiFixture fixture) => _fixture = fixture;
+
+    private async Task<long> AccountCountAsync()
+    {
+        await using var connection = new NpgsqlConnection(_fixture.AdminConnectionString);
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand("SELECT count(*) FROM identity.account_credentials", connection);
+        return (long)(await command.ExecuteScalarAsync())!;
+    }
+
+    [Fact]
+    public async Task Enabled_flag_alone_never_seeds_outside_development()
+    {
+        var production = new Dictionary<string, string?>
+        {
+            ["ASPNETCORE_ENVIRONMENT"] = "Production",
+            ["DevSeed__Enabled"] = "true",
+            ["DevSeed__Password"] = "Should-Never-Be-Used-1",
+            ["Authentication__Jwt__Issuer"] = "https://prod.example",
+            ["Authentication__Jwt__Audience"] = "fynovio-platform",
+            ["Authentication__Jwt__SigningKey"] = new string('k', 48),
+            ["Authentication__PublicAppBaseUrl"] = "https://app.prod.example",
+        };
+
+        using var host = await _fixture.StartHostAsync(production);
+
+        Assert.Equal(0, await AccountCountAsync());
+    }
+
+    [Fact]
+    public async Task Enabling_the_seed_without_a_password_fails_fast_in_development()
+    {
+        var noPassword = new Dictionary<string, string?> { ["DevSeed__Enabled"] = "true", ["DevSeed__Password"] = "" };
+
+        await Assert.ThrowsAnyAsync<Exception>(async () =>
+        {
+            using var host = await _fixture.StartHostAsync(noPassword);
+        });
+        Assert.Equal(0, await AccountCountAsync());
+    }
+}
