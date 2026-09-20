@@ -9,7 +9,7 @@ namespace Access.Tests.Integration.Authentication;
 
 /// <summary>The production route to a tenant's first administrator: no default credential, one-time
 /// setup token, refuses to run twice.</summary>
-public sealed class TenantAdministratorBootstrapTests : IClassFixture<PostgresFixture>
+public sealed class TenantAdministratorBootstrapTests : IClassFixture<PostgresFixture>, IAsyncLifetime
 {
     private const string AdminPassword = "First-Admin-Passw0rd-1";
 
@@ -17,11 +17,18 @@ public sealed class TenantAdministratorBootstrapTests : IClassFixture<PostgresFi
 
     public TenantAdministratorBootstrapTests(PostgresFixture fixture) => _fixture = fixture;
 
+    /// <summary>The registry is seeded once, sequentially, exactly like Host does at startup (the seeder itself is not
+    /// meant to run concurrently — parallel seeding collides on the `actions` primary key).</summary>
+    public async Task InitializeAsync()
+    {
+        await using var seed = _fixture.CreateAdminContext();
+        await AccessActionCatalogSeeder.EnsureSeededAsync(seed, AccessActionCatalog.All);
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
+
     private async Task<BootstrapTenantAdministratorResult> BootstrapAsync(Contracts.TenantId tenant, string email, TimeProvider time)
     {
-        await using (var seed = _fixture.CreateAdminContext())
-            await AccessActionCatalogSeeder.EnsureSeededAsync(seed, AccessActionCatalog.All);
-
         await using var context = await AuthTestSetup.RuntimeContextAsync(_fixture);
         return await AuthTestSetup.BootstrapAdmin(context, time)
             .HandleAsync(new BootstrapTenantAdministratorCommand(tenant, email, "First Admin"));

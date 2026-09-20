@@ -3,6 +3,7 @@ using Access.Domain.Identity;
 using Access.Persistence;
 using Contracts;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Access.Application.Authentication;
 
@@ -89,6 +90,12 @@ public sealed class BootstrapTenantAdministratorHandler
         }
         catch (InvalidOperationException exception) when (exception.Message.Contains("already been bootstrapped", StringComparison.OrdinalIgnoreCase))
         {
+            return new BootstrapTenantAdministratorResult(BootstrapTenantAdministratorStatus.AlreadyBootstrapped);
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            // Two bootstraps of one tenant passed the "already bootstrapped?" check together; the unique
+            // (tenant, key) indexes of the tenant-administrator template let exactly one of them through.
             return new BootstrapTenantAdministratorResult(BootstrapTenantAdministratorStatus.AlreadyBootstrapped);
         }
 
