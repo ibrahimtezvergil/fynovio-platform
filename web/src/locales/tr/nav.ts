@@ -9,7 +9,7 @@ export default {
     dashboard: 'Dashboard',
     opportunities: 'Fırsatlar',
     pipeline: 'Pipeline',
-    crmDashboard: 'Panel',
+    crmDashboard: 'Genel Bakış',
     calendar: 'Takvim',
     reports: 'Raporlar',
     files: 'Dosyalar',
