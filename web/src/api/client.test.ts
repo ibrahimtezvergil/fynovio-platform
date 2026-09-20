@@ -114,7 +114,8 @@ describe('401 handling', () => {
     let resourceCalls = 0
     server.use(
       refresh(() => { refreshCalls++; return HttpResponse.json(authenticated({ accessToken: 'new-token' })) }),
-      http.get(url('/deals'), () => { resourceCalls++; return problem(401, 'unauthorized') }),
+      // Bounded on purpose: if the retry guard broke, a runaway loop must end in a clean assertion failure, not a hung run.
+      http.get(url('/deals'), () => { resourceCalls++; return resourceCalls > 4 ? problem(500, 'runaway_retry_loop') : problem(401, 'unauthorized') }),
     )
 
     await expect(apiClient.get('/deals')).rejects.toMatchObject({ status: 401 })
