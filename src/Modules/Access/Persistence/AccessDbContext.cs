@@ -1,3 +1,4 @@
+using Access.Domain.Authentication;
 using Access.Domain.Authorization;
 using Access.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,10 @@ public sealed class AccessDbContext : DbContext
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<ExternalIdentity> ExternalIdentities => Set<ExternalIdentity>();
     public DbSet<TenantMembership> TenantMemberships => Set<TenantMembership>();
+    public DbSet<AccountCredential> AccountCredentials => Set<AccountCredential>();
+    public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<AuthEvent> AuthEvents => Set<AuthEvent>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<ActionRegistryEntry> Actions => Set<ActionRegistryEntry>();
     public DbSet<PermissionSet> PermissionSets => Set<PermissionSet>();
