@@ -132,7 +132,6 @@ public static class DevSeeder
     private static async Task SeedCrmAsync(
         IServiceProvider services, AccessDbContext access, string platformIssuer, ILogger logger, CancellationToken cancellationToken)
     {
-        var crm = services.GetRequiredService<CrmDbContext>();
         var enableModule = services.GetRequiredService<EnableTenantModuleHandler>();
         var adminAccountId = await AccountIdAsync(access, AdminEmail, cancellationToken);
         var viewerAccountId = await AccountIdAsync(access, ViewerEmail, cancellationToken);
@@ -159,7 +158,7 @@ public static class DevSeeder
                 await CrmDevSeed.EnsureAssignmentAsync(access, tenant, CrmModuleCapabilities.SalesRepresentativeRoleKey, salesRepAccountId, adminAccountId, cancellationToken);
             }
 
-            await CrmDevSeed.EnsurePipelineAsync(crm, tenant, cancellationToken);
+            await CrmDevSeed.EnsurePipelineAsync(services.GetRequiredService<ProvisionPipelineHandler>(), tenant, cancellationToken);
             await PartyDevSeed.EnsurePartiesAsync(services.GetRequiredService<CreatePartyHandler>(), tenant, cancellationToken);
         }
     }

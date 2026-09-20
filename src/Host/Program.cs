@@ -195,6 +195,7 @@ builder.Services.AddScoped<WinOpportunityHandler>();
 builder.Services.AddScoped<LoseOpportunityHandler>();
 builder.Services.AddScoped<ReassignOpportunityHandler>();
 builder.Services.AddScoped<ListAssignablePrincipalsHandler>();
+builder.Services.AddScoped<ProvisionPipelineHandler>(); // operator command `provision-crm-pipeline` and the Development seed
 builder.Services.AddScoped<SearchPartyReferencesHandler>();
 builder.Services.AddScoped<GetOpportunityHandler>();
 builder.Services.AddScoped<ListOpportunitiesHandler>();
@@ -307,6 +308,8 @@ if (BootstrapCommand.IsRequested(args))
     return await BootstrapCommand.RunAsync(app.Services, app.Configuration, args, Console.Out, Console.Error);
 if (EnableModuleCommand.IsRequested(args))
     return await EnableModuleCommand.RunAsync(app.Services, app.Configuration, args, Console.Out, Console.Error);
+if (ProvisionCrmPipelineCommand.IsRequested(args))
+    return await ProvisionCrmPipelineCommand.RunAsync(app.Services, app.Configuration, args, Console.Out, Console.Error);
 
 if (!app.Environment.IsDevelopment() && !emailOptions.Smtp.Enabled)
     app.Logger.LogWarning("Email:Smtp:Enabled is false: invitation and password-reset e-mails will not be delivered.");

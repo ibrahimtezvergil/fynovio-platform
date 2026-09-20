@@ -1,18 +1,17 @@
 using Access.Domain.Authorization;
 using Access.Persistence;
 using Contracts;
-using CRM.Domain;
-using CRM.Persistence;
+using CRM.Application;
 using Microsoft.EntityFrameworkCore;
 
 namespace Host.Authentication;
 
-/// <summary>Development-only CRM data that has no production path yet: extra role assignments for the seeded
-/// identities and the sales pipeline. The CRM ROLES themselves are no longer seeded here — the dev seed
-/// enables the module through the same `EnableTenantModuleHandler` an operator uses in production
-/// (`enable-tenant-module`), so dev and production share one grant mechanism. A production tenant still has
-/// no pipeline provisioning (Phase 2.6 plan, P1). Called by <see cref="DevSeeder"/>, which already refuses to
-/// run outside Development. Idempotent: each piece is skipped once it exists.</summary>
+/// <summary>Development-only CRM data: extra role assignments for the seeded identities and the sales pipeline.
+/// Neither the CRM ROLES nor the pipeline are built here — the dev seed enables the module through the same
+/// `EnableTenantModuleHandler` an operator uses in production (`enable-tenant-module`) and provisions the pipeline
+/// through the same `ProvisionPipelineHandler` as `provision-crm-pipeline`, so dev and production share one path.
+/// Called by <see cref="DevSeeder"/>, which already refuses to run outside Development. Idempotent: each piece is
+/// skipped once it exists.</summary>
 public static class CrmDevSeed
 {
     public const string PipelineName = "Sales pipeline";
@@ -54,35 +53,9 @@ public static class CrmDevSeed
         await transaction.CommitAsync(cancellationToken);
     }
 
-    public static async Task EnsurePipelineAsync(CrmDbContext context, TenantId tenantId, CancellationToken cancellationToken)
-    {
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-        await context.SetTenantContextAsync(tenantId, cancellationToken);
-
-        if (await context.PipelineDefinitions.AnyAsync(p => p.TenantId == tenantId, cancellationToken))
-            return;
-
-        var definition = PipelineDefinition.Create(tenantId, PipelineName);
-        context.PipelineDefinitions.Add(definition);
-        await context.SaveChangesAsync(cancellationToken); // assigns definition.Id
-
-        var version = definition.AddVersion(1);
-        context.PipelineDefinitionVersions.Add(version);
-        await context.SaveChangesAsync(cancellationToken); // assigns version.Id
-
-        var sortOrder = 10;
-        foreach (var name in ActiveStageNames)
-        {
-            var stage = version.AddStage(name, sortOrder);
-            context.PipelineStages.Add(stage);
-            sortOrder += 10;
-        }
-
-        var retired = version.AddStage(RetiredStageName, sortOrder);
-        retired.Deactivate();
-        context.PipelineStages.Add(retired);
-
-        await context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-    }
+    /// <summary>The pipeline comes from the same handler the `provision-crm-pipeline` operator command uses. The one
+    /// dev-only addition is a retired stage, so the UI is exercised against a configured-but-inactive stage.
+    /// Idempotent: a tenant that already has a pipeline is left alone.</summary>
+    public static Task EnsurePipelineAsync(ProvisionPipelineHandler handler, TenantId tenantId, CancellationToken cancellationToken) =>
+        handler.HandleAsync(new ProvisionPipelineCommand(tenantId, PipelineName, ActiveStageNames, [RetiredStageName]), cancellationToken);
 }
