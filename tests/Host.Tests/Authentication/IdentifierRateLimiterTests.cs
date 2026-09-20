@@ -110,6 +110,28 @@ public sealed class IdentifierRateLimiterTests
         Assert.False(blockedInWindow);
         Assert.True(allowedAfterWindow);
     }
+
+    [Fact]
+    public void TryAcquire_admits_exactly_the_limit_under_concurrency()
+    {
+        var limiter = new IdentifierRateLimiter(loginPerMinute: 10, forgotPerHour: 2);
+        var allowed = 0;
+
+        Parallel.For(0, 400, _ =>
+        {
+            if (limiter.TryAcquire("login", "concurrent@example.com"))
+                Interlocked.Increment(ref allowed);
+        });
+
+        Assert.Equal(10, allowed);
+    }
+
+    [Fact]
+    public void Non_positive_limits_are_rejected_at_construction()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new IdentifierRateLimiter(0, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new IdentifierRateLimiter(1, 0));
+    }
 }
 
 /// <summary>Mock TimeProvider for testing window resets.</summary>

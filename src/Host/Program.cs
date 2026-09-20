@@ -98,8 +98,19 @@ builder.Services.AddSingleton(authOptions.Session);
 builder.Services.AddSingleton(authOptions.Password);
 builder.Services.AddSingleton(authOptions.Lockout);
 
+// The Access handlers take their own SessionOptions POCO (no cookie/host concerns);
+// the platform issuer defaults to the JWT issuer so sub/iss stay one identity space.
+builder.Services.AddSingleton(new Access.Application.Authentication.SessionOptions
+{
+    RefreshIdleDays = authOptions.Session.RefreshIdleDays,
+    RefreshAbsoluteDays = authOptions.Session.RefreshAbsoluteDays,
+    RefreshGraceSeconds = authOptions.Session.RefreshGraceSeconds,
+    PlatformIssuer = authOptions.Session.PlatformIssuer ?? jwtOptions.Issuer
+});
+
 // Register authentication application handlers
 builder.Services.AddScoped<PasswordService>();
+builder.Services.AddSingleton<PasswordPolicy>();
 builder.Services.AddScoped<AuthEventWriter>();
 builder.Services.AddScoped<SessionValidator>();
 builder.Services.AddScoped<AuthenticateHandler>();
