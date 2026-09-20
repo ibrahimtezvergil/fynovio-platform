@@ -161,18 +161,23 @@ public sealed class RefreshSessionHandler
         await _context.SaveChangesAsync(cancellationToken);
         await tx.CommitAsync(cancellationToken);
 
-        // Determine response
+        // Determine response: token is valid, always return Success.
+        // The endpoint translates the membership state into authenticated/tenant_selection_required/no_membership
         long? selectedTenantId = session.ActiveTenantId?.Value;
 
-        var status = selectedTenantId.HasValue
-            ? (memberships.Contains(selectedTenantId.Value) ? RefreshResult.Success : RefreshResult.SessionInvalid)
-            : (memberships.Count == 1 ? RefreshResult.Success : RefreshResult.SessionInvalid);
+        // If a tenant was selected but is no longer a member, clear it for the response
+        if (selectedTenantId.HasValue && !memberships.Contains(selectedTenantId.Value))
+        {
+            selectedTenantId = null;
+        }
 
-        if (status != RefreshResult.Success && !selectedTenantId.HasValue && memberships.Count == 1)
+        // Auto-select if exactly one active membership and none was previously selected
+        if (!selectedTenantId.HasValue && memberships.Count == 1)
         {
             selectedTenantId = memberships[0];
-            status = RefreshResult.Success;
         }
+
+        var status = RefreshResult.Success;
 
         // Write event
         await _eventWriter.WriteAsync(

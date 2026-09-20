@@ -52,7 +52,11 @@ public sealed class SelectTenantHandler
         if (session is null || session.IsRevoked || session.IsExpired(now))
             return new SelectTenantResult(TenantSelectionStatus.SessionInvalid);
 
-        // Validate membership
+        // Use transaction to validate membership and set tenant context
+        await using var tx = await _context.Database.BeginTransactionAsync(cancellationToken);
+        await _context.SetAccountContextAsync(session.AccountId, cancellationToken);
+
+        // Validate membership (inside transaction with account context set for RLS)
         var membership = await _context.TenantMemberships
             .FirstOrDefaultAsync(m =>
                 m.AccountId == session.AccountId &&
@@ -62,6 +66,9 @@ public sealed class SelectTenantHandler
 
         if (membership is null)
         {
+            // Rollback transaction
+            await tx.RollbackAsync(cancellationToken);
+
             // Same error for unknown tenant and non-member to prevent enumeration
             await _eventWriter.WriteAsync(
                 "tenant_selected",
@@ -75,8 +82,7 @@ public sealed class SelectTenantHandler
             return new SelectTenantResult(TenantSelectionStatus.TenantNotPermitted);
         }
 
-        // Use transaction to set tenant context
-        await using var tx = await _context.Database.BeginTransactionAsync(cancellationToken);
+        // Set tenant context for the session update
         await _context.SetTenantContextAsync(command.TenantId, cancellationToken);
 
         // Update session active tenant

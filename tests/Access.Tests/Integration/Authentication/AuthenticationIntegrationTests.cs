@@ -202,7 +202,7 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
 
         var handler = new RefreshSessionHandler(
             _context,
-            new SessionOptions { RefreshAbsoluteDays = 30 },
+            new SessionOptions { PlatformIssuer = "https://platform.example.com", RefreshAbsoluteDays = 30 },
             new AuthEventWriter(_context),
             _fixture.TimeProvider);
 
@@ -221,7 +221,7 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
 
         var handler = new RefreshSessionHandler(
             _context,
-            new SessionOptions { RefreshAbsoluteDays = 30, RefreshGraceSeconds = 5 },
+            new SessionOptions { PlatformIssuer = "https://platform.example.com", RefreshAbsoluteDays = 30, RefreshGraceSeconds = 5 },
             new AuthEventWriter(_context),
             _fixture.TimeProvider);
 
@@ -248,7 +248,7 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
 
         var handler = new RefreshSessionHandler(
             _context,
-            new SessionOptions { RefreshAbsoluteDays = 30, RefreshGraceSeconds = 5 },
+            new SessionOptions { PlatformIssuer = "https://platform.example.com", RefreshAbsoluteDays = 30, RefreshGraceSeconds = 5 },
             new AuthEventWriter(_context),
             _fixture.TimeProvider);
 
