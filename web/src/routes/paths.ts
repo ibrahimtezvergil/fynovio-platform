@@ -15,6 +15,11 @@ export const paths = {
   crm: '/crm',
   crmDashboard: '/crm/dashboard',
   crmPipeline: '/crm/pipeline',
+  crmOpportunities: '/crm/opportunities',
+  crmOpportunityNew: '/crm/opportunities/new',
+  /** The react-router pattern; use `crmOpportunity(id)` to build a link. */
+  crmOpportunityPattern: '/crm/opportunities/:id',
+  crmOpportunity: (id: number) => `/crm/opportunities/${id}`,
   calendar: '/calendar',
   reports: '/reports',
   files: '/files',

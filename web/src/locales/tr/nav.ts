@@ -7,6 +7,7 @@ export default {
   },
   items: {
     dashboard: 'Dashboard',
+    opportunities: 'Fırsatlar',
     pipeline: 'Pipeline',
     crmDashboard: 'Panel',
     calendar: 'Takvim',

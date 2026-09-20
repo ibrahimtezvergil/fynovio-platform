@@ -13,6 +13,7 @@ import { demoStatesNav } from '@/features/demo-states/nav'
 import { demoTablesNav } from '@/features/demo-tables/nav'
 import { demoTimelineNav } from '@/features/demo-timeline/nav'
 import { homeNav } from '@/features/home/nav'
+import { opportunitiesNav } from '@/features/opportunities/nav'
 import { pipelineNav } from '@/features/pipeline/nav'
 import { membersNav, placeholderNav } from '@/features/placeholder/nav'
 import { settingsNav } from '@/features/settings/nav'
@@ -21,7 +22,7 @@ import type { NavigationSurface, NavContribution, NavGroupId, NavScope } from '@
 import { isNavParent, type NavGroup, type NavItem, type NavLeaf, type NavLink } from '@/types'
 
 const navContributions: NavContribution[] = [
-  homeNav, pipelineNav, dashboardNav, calendarNav, ...placeholderNav, settingsNav, membersNav, demoTablesNav,
+  homeNav, opportunitiesNav, pipelineNav, dashboardNav, calendarNav, ...placeholderNav, settingsNav, membersNav, demoTablesNav,
   demoChartsNav, demoFiltersNav, demoFormsNav, demoOverlaysNav, demoNotificationsNav, demoStatesNav,
   demoDrawersNav, demoBadgesNav, demoKanbanNav, demoTimelineNav,
 ]

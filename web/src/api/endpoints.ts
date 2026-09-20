@@ -14,6 +14,22 @@ export const endpoints = {
     changePassword: '/auth/password/change',
     register: '/auth/register',
   },
+  opportunities: {
+    list: '/opportunities',
+    create: '/opportunities',
+    detail: (id: number) => `/opportunities/${id}`,
+    actions: (id: number) => `/opportunities/${id}/actions`,
+    addLine: (id: number) => `/opportunities/${id}/lines`,
+    cancelLine: (id: number, lineId: number) => `/opportunities/${id}/lines/${lineId}/cancel`,
+    open: (id: number) => `/opportunities/${id}/open`,
+    changeStage: (id: number) => `/opportunities/${id}/stage`,
+    win: (id: number) => `/opportunities/${id}/win`,
+    lose: (id: number) => `/opportunities/${id}/lose`,
+    reassign: (id: number) => `/opportunities/${id}/reassign`,
+  },
+  pipelines: {
+    stages: (versionId: number) => `/pipelines/${versionId}/stages`,
+  },
   deals: {
     list: '/deals',
     detail: (id: string) => `/deals/${id}`,
