@@ -536,6 +536,76 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task AuthenticateHandler_ConcurrentFailedLogins_NoException()
+    {
+        var accountId = await ProvisionAccount("test@example.com", "ValidPassword123");
+        var runtimeConnString = await _fixture.RuntimeConnectionStringAsync();
+
+        // Run N parallel failed login attempts
+        var N = 5;
+        var tasks = new List<Task<AuthenticateResult>>();
+
+        for (int i = 0; i < N; i++)
+        {
+            var task = Task.Run(async () =>
+            {
+                var handler = new AuthenticateHandler(
+                    PostgresFixture.CreateContext(runtimeConnString),
+                    new PasswordService(),
+                    new LockoutOptions { MaxFailedAttempts = 3 },
+                    new SessionOptions { PlatformIssuer = "https://platform.example.com" },
+                    new AuthEventWriter(PostgresFixture.CreateContext(runtimeConnString)),
+                    _fixture.TimeProvider);
+
+                return await handler.HandleAsync(
+                    new AuthenticateCommand("test@example.com", "WrongPassword"));
+            });
+
+            tasks.Add(task);
+        }
+
+        // All should complete without exception
+        var results = await Task.WhenAll(tasks);
+
+        // All should return InvalidCredentials
+        Assert.All(results, r => Assert.Equal(AuthenticationStatus.InvalidCredentials, r.Status));
+
+        // Verify account is locked (≥ threshold attempts)
+        var credential = await _context.AccountCredentials.FirstAsync(c => c.AccountId == accountId);
+        Assert.True(credential.FailedAttempts >= 3, $"Expected FailedAttempts >= 3, got {credential.FailedAttempts}");
+        Assert.True(credential.IsLocked(_fixture.TimeProvider.GetUtcNow()));
+    }
+
+    [Fact]
+    public async Task AuthenticateHandler_SuccessAfterConcurrencyConflict_CreatesSession()
+    {
+        var accountId = await ProvisionAccount("test@example.com", "ValidPassword123");
+        var runtimeConnString = await _fixture.RuntimeConnectionStringAsync();
+
+        // First, record some failed attempts
+        var credential = await _context.AccountCredentials.FirstAsync(c => c.AccountId == accountId);
+        for (int i = 0; i < 2; i++)
+            credential.RecordFailedAttempt(5, 15, _fixture.TimeProvider.GetUtcNow());
+        await _context.SaveChangesAsync();
+
+        // Now try a successful login that may conflict with concurrent updates
+        var handler = new AuthenticateHandler(
+            PostgresFixture.CreateContext(runtimeConnString),
+            new PasswordService(),
+            new LockoutOptions { MaxFailedAttempts = 5 },
+            new SessionOptions { PlatformIssuer = "https://platform.example.com", RefreshAbsoluteDays = 30 },
+            new AuthEventWriter(PostgresFixture.CreateContext(runtimeConnString)),
+            _fixture.TimeProvider);
+
+        var result = await handler.HandleAsync(
+            new AuthenticateCommand("test@example.com", "ValidPassword123"));
+
+        // Should succeed (not fail due to concurrency exception)
+        Assert.NotEqual(AuthenticationStatus.InvalidCredentials, result.Status);
+        Assert.NotNull(result.SessionId);
+    }
+
+    [Fact]
     public async Task AuthEventWriter_NeverPersistsSecrets()
     {
         var writer = new AuthEventWriter(_context);

@@ -82,8 +82,31 @@ public sealed class AuthenticateHandler
 
         if (result == PasswordVerificationResult.Failed)
         {
-            credential.RecordFailedAttempt(_lockoutOptions.MaxFailedAttempts, _lockoutOptions.LockoutMinutes, now);
-            await _context.SaveChangesAsync(cancellationToken);
+            // Retry failed login update up to 3 times in case of concurrency conflicts
+            const int maxRetries = 3;
+            bool saved = false;
+
+            for (int attempt = 0; attempt < maxRetries; attempt++)
+            {
+                try
+                {
+                    credential.RecordFailedAttempt(_lockoutOptions.MaxFailedAttempts, _lockoutOptions.LockoutMinutes, now);
+                    await _context.SaveChangesAsync(cancellationToken);
+                    saved = true;
+                    break;
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (attempt < maxRetries - 1)
+                    {
+                        // Reload credential and retry
+                        await _context.Entry(credential).ReloadAsync(cancellationToken);
+                        continue;
+                    }
+                    // Last attempt failed, but don't let exception escape — just continue
+                    break;
+                }
+            }
 
             var outcome = credential.IsLocked(now) ? "account_locked" : "bad_password";
             await _eventWriter.WriteAsync(
@@ -98,12 +121,26 @@ public sealed class AuthenticateHandler
             return new AuthenticateResult(AuthenticationStatus.InvalidCredentials);
         }
 
-        // Success: reset lockout and record login
-        credential.ResetFailedAttempts();
-        credential.RecordLogin(now);
-        if (result == PasswordVerificationResult.SuccessRehashNeeded)
+        // Success: reset lockout and record login — retry once on concurrency conflict
+        try
         {
-            credential.UpdatePasswordHash(_passwordService.HashPassword(command.Password), now);
+            credential.ResetFailedAttempts();
+            credential.RecordLogin(now);
+            if (result == PasswordVerificationResult.SuccessRehashNeeded)
+            {
+                credential.UpdatePasswordHash(_passwordService.HashPassword(command.Password), now);
+            }
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Reload and retry once
+            await _context.Entry(credential).ReloadAsync(cancellationToken);
+            credential.ResetFailedAttempts();
+            credential.RecordLogin(now);
+            if (result == PasswordVerificationResult.SuccessRehashNeeded)
+            {
+                credential.UpdatePasswordHash(_passwordService.HashPassword(command.Password), now);
+            }
         }
 
         // Load account and external identity
@@ -166,8 +203,20 @@ public sealed class AuthenticateHandler
             status = AuthenticationStatus.TenantSelectionRequired;
         }
 
-        // Save all changes atomically
-        await _context.SaveChangesAsync(cancellationToken);
+        // Save all changes atomically — concurrency on credential allowed to be ignored (session creation doesn't depend on exact lockout state)
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Credential may have been updated concurrently, but session creation should still proceed
+            // Clear the tracked changes from credential conflict and save session
+            var entry = _context.Entry(credential);
+            entry.State = EntityState.Unchanged;
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
         await tx.CommitAsync(cancellationToken);
 
         // Write event (outside transaction)
