@@ -32,8 +32,8 @@ export function TenantSwitcher({ onSwitched }: { onSwitched?: () => void }) {
   }
 
   return (
-    <div role="group" aria-label={t('tenantSwitcher.label')} className="flex flex-col py-1">
-      <p className="text-muted-foreground px-4 pt-1.5 pb-1 text-[11px] font-[550]">{t('tenantSwitcher.label')}</p>
+    <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0 py-1">
+      <legend className="text-muted-foreground px-4 pt-1.5 pb-1 text-[11px] font-[550]">{t('tenantSwitcher.label')}</legend>
       {memberships.map(({ tenantId }) => {
         const active = tenantId === activeTenantId
         return (
@@ -53,6 +53,6 @@ export function TenantSwitcher({ onSwitched }: { onSwitched?: () => void }) {
           </button>
         )
       })}
-    </div>
+    </fieldset>
   )
 }
