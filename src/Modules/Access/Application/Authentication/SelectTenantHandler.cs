@@ -88,6 +88,7 @@ public sealed class SelectTenantHandler
                 session.AccountId,
                 sessionId: session.Id,
                 correlationId: command.CorrelationId,
+                ipHash: command.IpHash,
                 cancellationToken: cancellationToken);
 
             return new SelectTenantResult(TenantSelectionStatus.TenantNotPermitted);
@@ -103,6 +104,14 @@ public sealed class SelectTenantHandler
         await _context.SaveChangesAsync(cancellationToken);
         await tx.CommitAsync(cancellationToken);
 
+        var externalIdentity = await _context.ExternalIdentities
+            .FirstOrDefaultAsync(
+                x => x.AccountId == session.AccountId && x.Issuer == _sessionOptions.PlatformIssuer,
+                cancellationToken);
+
+        if (externalIdentity is null)
+            return new SelectTenantResult(TenantSelectionStatus.SessionInvalid);
+
         // Write event
         await _eventWriter.WriteAsync(
             "tenant_selected",
@@ -112,12 +121,14 @@ public sealed class SelectTenantHandler
             command.TenantId.Value,
             session.Id,
             correlationId: command.CorrelationId,
+                ipHash: command.IpHash,
             cancellationToken: cancellationToken);
 
         return new SelectTenantResult(
             TenantSelectionStatus.Success,
             command.TenantId.Value,
             null, // AccessToken issued by Host
-            session.Id);
+            session.Id,
+            externalIdentity.Principal);
     }
 }

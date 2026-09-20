@@ -161,6 +161,7 @@ public sealed class RefreshSessionHandler
                     account.Id,
                     sessionId: token.SessionId,
                     correlationId: command.CorrelationId,
+                ipHash: command.IpHash,
                     cancellationToken: cancellationToken);
 
                 return new RefreshSessionResult(RefreshResult.SessionInvalid);
@@ -244,6 +245,7 @@ public sealed class RefreshSessionHandler
             account.Id,
             sessionId: sessionForUpdate.Id,
             correlationId: command.CorrelationId,
+                ipHash: command.IpHash,
             cancellationToken: cancellationToken);
 
         var newRefreshCookieValue = $"{newToken.Id}.{newTokenSecret}";
@@ -257,6 +259,8 @@ public sealed class RefreshSessionHandler
             null, // AccessToken issued by Host
             newRefreshCookieValue,
             sessionForUpdate.Id,
-            externalIdentity.Principal);
+            externalIdentity.Principal,
+            new AccountSummary(account.Id, account.Email, account.DisplayName, account.Locale),
+            sessionForUpdate.AbsoluteExpiresAt);
     }
 }

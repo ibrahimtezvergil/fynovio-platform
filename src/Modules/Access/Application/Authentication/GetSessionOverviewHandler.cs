@@ -9,7 +9,8 @@ public sealed record SessionOverview(
     long AccountId,
     string DisplayName,
     long? SelectedTenantId,
-    IReadOnlyList<long> MembershipTenantIds);
+    IReadOnlyList<long> MembershipTenantIds,
+    AccountSummary? Account = null);
 
 /// <summary>Get the current account's session overview (used by GET /auth/me).
 /// Loads the account, active memberships, and capabilities from the session.</summary>
@@ -42,18 +43,23 @@ public sealed class GetSessionOverviewHandler
         if (account is null)
             return null;
 
-        // Load active memberships via account context
-        await _context.SetAccountContextAsync(account.Id, CancellationToken.None);
+        // Load active memberships via the account context; the GUC is transaction-local, so
+        // the read must happen inside its own explicit transaction.
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        await _context.SetAccountContextAsync(account.Id, cancellationToken);
 
         var memberships = await _context.TenantMemberships
             .Where(m => m.AccountId == account.Id && m.Status == MembershipStatus.Active)
             .Select(m => m.TenantId.Value)
             .ToListAsync(cancellationToken);
 
+        await transaction.CommitAsync(cancellationToken);
+
         return new SessionOverview(
             account.Id,
             account.DisplayName,
             session.ActiveTenantId?.Value,
-            memberships);
+            memberships,
+            new AccountSummary(account.Id, account.Email, account.DisplayName, account.Locale));
     }
 }

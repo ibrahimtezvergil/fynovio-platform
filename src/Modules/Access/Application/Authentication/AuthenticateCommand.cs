@@ -3,7 +3,12 @@ using Contracts;
 namespace Access.Application.Authentication;
 
 /// <summary>Authenticate a user with email and password. Creates a session and refresh token.</summary>
-public sealed record AuthenticateCommand(string Email, string Password, string? CorrelationId = null);
+public sealed record AuthenticateCommand(
+    string Email,
+    string Password,
+    string? CorrelationId = null,
+    string? IpHash = null,
+    string? UserAgentHash = null);
 
 public enum AuthenticationStatus
 {
@@ -22,4 +27,6 @@ public sealed record AuthenticateResult(
     string? AccessToken = null,
     string? RefreshCookie = null,
     Guid? SessionId = null,
-    PrincipalRef? Principal = null);
+    PrincipalRef? Principal = null,
+    AccountSummary? Account = null,
+    DateTimeOffset? SessionExpiresAt = null);

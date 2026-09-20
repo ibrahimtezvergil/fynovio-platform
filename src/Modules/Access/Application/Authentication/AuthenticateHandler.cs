@@ -59,6 +59,7 @@ public sealed class AuthenticateHandler
                 "unknown_user",
                 now,
                 correlationId: command.CorrelationId,
+                ipHash: command.IpHash,
                 cancellationToken: cancellationToken);
             return new AuthenticateResult(AuthenticationStatus.InvalidCredentials);
         }
@@ -73,6 +74,7 @@ public sealed class AuthenticateHandler
                 now,
                 credential.AccountId,
                 correlationId: command.CorrelationId,
+                ipHash: command.IpHash,
                 cancellationToken: cancellationToken);
             return new AuthenticateResult(AuthenticationStatus.InvalidCredentials);
         }
@@ -114,6 +116,7 @@ public sealed class AuthenticateHandler
                 credential.AccountId,
                 detail: new() { { "attemptCount", credential.FailedAttempts } },
                 correlationId: command.CorrelationId,
+                ipHash: command.IpHash,
                 cancellationToken: cancellationToken);
 
             return new AuthenticateResult(AuthenticationStatus.InvalidCredentials);
@@ -168,7 +171,7 @@ public sealed class AuthenticateHandler
         var sessionCreatedAt = now;
         var sessionAbsoluteExpiry = sessionCreatedAt.AddDays(_sessionOptions.RefreshAbsoluteDays);
 
-        var session = AuthSession.Create(account.Id, sessionCreatedAt, sessionAbsoluteExpiry);
+        var session = AuthSession.Create(account.Id, sessionCreatedAt, sessionAbsoluteExpiry, command.UserAgentHash);
         _context.AuthSessions.Add(session);
 
         // Create refresh token
@@ -225,6 +228,7 @@ public sealed class AuthenticateHandler
             account.Id,
             sessionId: session.Id,
             correlationId: command.CorrelationId,
+                ipHash: command.IpHash,
             cancellationToken: cancellationToken);
 
         var refreshCookieValue = $"{refreshToken.Id}.{tokenSecret}";
@@ -238,6 +242,8 @@ public sealed class AuthenticateHandler
             null, // AccessToken will be issued by Host
             refreshCookieValue,
             session.Id,
-            externalIdentity.Principal);
+            externalIdentity.Principal,
+            new AccountSummary(account.Id, account.Email, account.DisplayName, account.Locale),
+            session.AbsoluteExpiresAt);
     }
 }
