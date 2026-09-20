@@ -1,0 +1,9 @@
+# Codex project defaults. This layer loads only when the project is trusted.
+model_reasoning_effort = "medium"
+plan_mode_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+[agents]
+# Parallel agents add token overhead and are opt-in for this repository.
+max_concurrent_threads_per_session = 1
