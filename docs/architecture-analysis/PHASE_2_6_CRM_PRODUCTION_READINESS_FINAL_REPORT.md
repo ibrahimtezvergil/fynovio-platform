@@ -60,6 +60,13 @@ E2E, gerçek API'de şunları kanıtlar: tam akış (müşteri seçilerek oluşt
 ## 4. Operatör el kitabı
 Root `README.md`: "Enabling a business module for a tenant (production)" ve `--modules` (çıkış kodları: `0` ok/AlreadyEnabled, `2` yapılandırma kapalı, `4` kiracı bootstrap edilmemiş, `5` şablon anahtar çakışması, `64` hatalı argüman/bilinmeyen modül). Şema: `docs/schema/identity-access-schema.md` Revision 10. `AGENTS.md` durum paragrafı güncellendi.
 
+**Gerçek bir kiracıyı Opportunity'ye hazırlama sırası** (boşluk kapatma sonrası, hepsi operatör/HTTP, seed yok):
+1. `bootstrap-tenant-admin --tenant-id N --email E --display-name X --modules crm` (yönetici + CRM rolleri).
+2. `provision-crm-pipeline --tenant-id N --name "Sales pipeline" --stages "Qualification,Proposal,Negotiation"` — aşamaları operatör verir, ilki giriş aşamasıdır; çıkış kodları `0` ok/zaten var, `2` yapılandırma kapalı, `4` kiracı bootstrap edilmemiş, `64` hatalı argüman.
+3. Müşteri: `POST /crm/references/parties` (`Idempotency-Key`, gövde `{ partyType, name, surname?, phone?, email? }`, `crm.reference.party.create`) — **yalnızca API**; arayüzde "yeni müşteri ekle" düğmesi yok.
+4. `POST /opportunities` artık müşterinin varlığını doğrular (`422 party_not_found`).
+Ayrıntı: root `README.md` ("Giving a tenant its first sales pipeline", "Customers (Parties) and opportunities").
+
 **Dev veritabanı notu:** Phase 2.6 öncesi oluşturulmuş bir dev DB'de `crm_*` roller şablon dışı olarak zaten var; etkinleştirme bunları **devralmaz** (`TemplateKeyConflict`, seed uyarı loglar). Dev DB'yi yeniden oluşturun.
 
 ## 5. G3 — Product arama neden yapılmadı

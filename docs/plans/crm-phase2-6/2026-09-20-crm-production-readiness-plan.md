@@ -22,7 +22,7 @@ Owner scope (2026-09-20): OD2 → OD1 → Party search (G2) → Product search (
 - **G2** `IPartySearch` (Contracts, implemented by MasterData's `PartyDirectory`): tenant-scoped, escaped `ILIKE`, capped, canonical (non-merged) parties only. `GET /crm/references/parties` gated by the new CRM action `crm.reference.party.search` (MasterData has no authorization layer yet — recorded as limitation L-3; the same endpoint also resolves `?ids=` for display names). UI: searchable party picker replaces the numeric field. Dev seed adds sample parties through the real `CreatePartyHandler`. **Found while doing this:** `PartyDirectory`/`PartyIdentityResolver` never set `app.tenant_id`, so under the runtime role (RLS) they returned nothing — hidden because every existing test used the admin connection; fixed and covered by runtime-role tests.
 - **G3** **Not done — by design.** No Product master exists; inventing a CRM-owned product catalogue would violate the boundary you set. Numeric `productId` input stays, with an explicit "no product catalogue yet" notice; the dangling `masterdata/product` reference is documented.
 
-## Discovered, out of scope (reported, not built)
+## Discovered during the work (P1/P2 were closed afterwards — see *Gap closure* below)
 - P1 No production path creates a **pipeline** (CRM data): a real tenant cannot Open/Stage until one exists. Needs a business decision on the stage template.
 - P2 No HTTP/production path creates **Parties**; `CreateOpportunity` does not verify the party exists (would change the Phase 2 handler contract).
 - P3 `AccessActionCatalogSeeder` deprecates keys missing from its manifest — the Host union is now built from one place and covered by a test.
