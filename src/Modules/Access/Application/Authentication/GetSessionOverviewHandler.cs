@@ -9,8 +9,7 @@ public sealed record SessionOverview(
     long AccountId,
     string DisplayName,
     long? SelectedTenantId,
-    IReadOnlyList<long> MembershipTenantIds,
-    Dictionary<string, bool> Capabilities);
+    IReadOnlyList<long> MembershipTenantIds);
 
 /// <summary>Get the current account's session overview (used by GET /auth/me).
 /// Loads the account, active memberships, and capabilities from the session.</summary>
@@ -51,17 +50,10 @@ public sealed class GetSessionOverviewHandler
             .Select(m => m.TenantId.Value)
             .ToListAsync(cancellationToken);
 
-        // TODO: Load capabilities from PDP
-        var capabilities = new Dictionary<string, bool>
-        {
-            { "canInviteMembers", false } // Placeholder
-        };
-
         return new SessionOverview(
             account.Id,
             account.DisplayName,
             session.ActiveTenantId?.Value,
-            memberships,
-            capabilities);
+            memberships);
     }
 }
