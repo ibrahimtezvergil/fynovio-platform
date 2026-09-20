@@ -50,13 +50,30 @@ test.describe('signing in and out', () => {
     await expect(page).toHaveURL(/\/crm\/pipeline$/)
   })
 
-  for (const hostile of ['https://evil.example/steal', '//evil.example', '/\\evil.example', 'javascript:alert(1)']) {
+  const hostileReturnUrls = [
+    'https://evil.example/steal',
+    '//evil.example',
+    '/\\evil.example',
+    'javascript:alert(1)',
+    '/.//evil.example', // dot segments normalize to `//evil.example`
+    '/a/..//evil.example',
+  ]
+  for (const hostile of hostileReturnUrls) {
     test(`an open-redirect attempt (${hostile}) never leaves the app`, async ({ page }) => {
+      const offOrigin: string[] = []
+      await page.route(/^https?:\/\/evil\.example\//, (route) => {
+        offOrigin.push(route.request().url())
+        return route.abort()
+      })
+
       await page.goto(`/login?returnUrl=${encodeURIComponent(hostile)}`)
       await emailField(page).fill(SINGLE)
       await passwordField(page).fill(SEED_PASSWORD)
       await page.getByRole('button', { name: t.auth.loginForm.submit }).click()
 
+      // Settle on either outcome first, so an off-origin attempt is reported as that, not as a URL timeout.
+      await expect.poll(() => offOrigin.length > 0 || page.url() === `${APP_URL}/dashboard`).toBe(true)
+      expect(offOrigin).toEqual([])
       await expect(page).toHaveURL(`${APP_URL}/dashboard`)
     })
   }

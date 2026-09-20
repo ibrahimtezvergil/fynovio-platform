@@ -15,6 +15,12 @@ describe('sanitizeReturnUrl', () => {
     ['slash then encoded slash', '/%2Fevil.com'],
     ['slash then encoded backslash', '/%5Cevil.com'],
     ['tab inside', '/\t/evil.com'],
+    // Dot segments collapse to `//host` once the URL is normalized — the check must hold on the output too.
+    ['dot segment before protocol-relative', '/.//evil.com'],
+    ['parent segment before protocol-relative', '/a/..//evil.com'],
+    ['dot segment before backslash host', '/./\\evil.com'],
+    ['encoded dot segment before protocol-relative', '/%2e//evil.com'],
+    ['encoded parent segments before protocol-relative', '/%2E%2E//evil.com'],
     ['newline inside', '/foo\nbar'],
     ['NUL byte', '/foo\u0000'],
     ['no leading slash', 'crm/pipeline'],

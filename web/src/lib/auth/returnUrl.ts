@@ -44,7 +44,9 @@ export function sanitizeReturnUrl(raw: string | null | undefined, fallback: stri
   if (url.origin !== PLACEHOLDER_ORIGIN) return fallback
   if (AUTH_PAGES.includes(url.pathname)) return fallback
 
-  return `${url.pathname}${url.search}${url.hash}`
+  // Parsing collapses dot segments (`/.//host` → `//host`), so the shape check must hold on the output too.
+  const normalized = `${url.pathname}${url.search}${url.hash}`
+  return isSafeRelative(normalized) ? normalized : fallback
 }
 
 /** `?returnUrl=` query string for `target`, omitted when it would just be the dashboard. */
