@@ -45,15 +45,15 @@ public static class CsrfOriginGuard
         else if (context.Request.Headers.TryGetValue("Referer", out var referer))
         {
             // Referer fallback: extract origin and check
-            if (Uri.TryCreate(referer.ToString(), UriKind.Absolute, out var refererUri))
-            {
-                var refererOrigin = $"{refererUri.Scheme}://{refererUri.Host}";
-                if (refererUri.Port != -1)
-                    refererOrigin += $":{refererUri.Port}";
+            if (!Uri.TryCreate(referer.ToString(), UriKind.Absolute, out var refererUri))
+                return false; // a Referer we cannot attribute to an origin is not trusted
 
-                if (!allowedOrigins.Contains(refererOrigin) && refererOrigin != requestOrigin)
-                    return false;
-            }
+            var refererOrigin = $"{refererUri.Scheme}://{refererUri.Host}";
+            if (!refererUri.IsDefaultPort)
+                refererOrigin += $":{refererUri.Port}";
+
+            if (!allowedOrigins.Contains(refererOrigin) && refererOrigin != requestOrigin)
+                return false;
         }
 
         return true;

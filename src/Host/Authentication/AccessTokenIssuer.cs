@@ -36,10 +36,10 @@ public sealed class AccessTokenIssuer
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey)),
             SecurityAlgorithms.HmacSha256);
 
+        // iss/aud come from the JwtSecurityToken constructor — repeating them as claims would
+        // turn them into duplicate-valued arrays in the payload.
         var claims = new[]
         {
-            new Claim("iss", _jwtOptions.Issuer),
-            new Claim("aud", _jwtOptions.Audience),
             new Claim("sub", subject),
             new Claim("tid", tenantId.ToString()),
             new Claim("sid", sessionId.ToString()),
@@ -53,6 +53,8 @@ public sealed class AccessTokenIssuer
             notBefore: now.UtcDateTime,
             expires: expiresAt.UtcDateTime,
             signingCredentials: credentials);
+
+        token.Payload[JwtRegisteredClaimNames.Iat] = now.ToUnixTimeSeconds();
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
         var expiresInSeconds = (int)expiresIn.TotalSeconds;
