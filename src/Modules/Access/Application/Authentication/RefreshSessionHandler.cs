@@ -154,6 +154,7 @@ public sealed class RefreshSessionHandler
 
                 await tx.CommitAsync(cancellationToken);
 
+                AuthMetrics.RefreshReuse.Add(1);
                 await _eventWriter.WriteAsync(
                     "refresh_reuse_detected",
                     "session_revoked",

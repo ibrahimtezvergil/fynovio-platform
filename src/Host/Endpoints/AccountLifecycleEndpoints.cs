@@ -148,6 +148,10 @@ public static class AccountLifecycleEndpoints
                 new RequestPasswordResetCommand(body.Email, AuthEndpoints.CorrelationId(context), fingerprint.HashIp(context)),
                 cancellationToken);
         }
+        else
+        {
+            AuthMetrics.RateLimitRejected.Add(1, new KeyValuePair<string, object?>("policy", "forgot-identifier"));
+        }
 
         return Results.Accepted(value: new { status = "accepted" });
     }

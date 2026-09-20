@@ -1,3 +1,4 @@
+using System.Diagnostics.Metrics;
 using System.Net;
 using Host.Tests.Fixtures;
 using Xunit;
@@ -235,5 +236,35 @@ public sealed class InvitationEndpointsTests : IClassFixture<AuthApiFixture>
         Assert.Equal(HttpStatusCode.TooManyRequests, limited.StatusCode);
         Assert.True(limited.Headers.Contains("Retry-After"));
         Assert.Equal("rate_limited", await ProblemType(limited));
+    }
+
+    [Fact]
+    public async Task Refused_requests_are_counted_by_the_policy_that_refused_them()
+    {
+        using var host = await _fixture.StartHostAsync(new() { ["Authentication__RateLimiting__TokenPer15Minutes"] = "1" });
+        using var client = host.CreateClient();
+        var policies = new List<string?>();
+        using var listener = new MeterListener
+        {
+            InstrumentPublished = (instrument, l) =>
+            {
+                if (instrument.Meter.Name == "Fynovio.Auth" && instrument.Name == "auth.ratelimit.rejected")
+                    l.EnableMeasurementEvents(instrument);
+            }
+        };
+        listener.SetMeasurementEventCallback<long>((_, _, tags, _) =>
+        {
+            foreach (var tag in tags)
+                if (tag.Key == "policy")
+                    lock (policies)
+                        policies.Add(tag.Value?.ToString());
+        });
+        listener.Start();
+
+        await Validate(client, "a.b");
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await Validate(client, "a.b")).StatusCode);
+
+        lock (policies)
+            Assert.Contains("auth-token", policies);
     }
 }

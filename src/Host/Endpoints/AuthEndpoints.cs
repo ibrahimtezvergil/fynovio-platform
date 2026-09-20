@@ -82,6 +82,7 @@ public static class AuthEndpoints
         var email = body!.Email!;
         if (!identifierLimiter.TryAcquire("login", EmailNormalizer.Normalize(email)))
         {
+            AuthMetrics.RateLimitRejected.Add(1, new KeyValuePair<string, object?>("policy", "login-identifier"));
             context.Response.Headers.RetryAfter = "60";
             return AuthProblems.RateLimited();
         }

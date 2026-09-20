@@ -259,6 +259,8 @@ builder.Services.AddRateLimiter(options =>
         var retryAfterSeconds = rejected.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)
             ? (int)Math.Ceiling(retryAfter.TotalSeconds)
             : 60;
+        AuthMetrics.RateLimitRejected.Add(1, new KeyValuePair<string, object?>(
+            "policy", rejected.HttpContext.GetEndpoint()?.Metadata.GetMetadata<EnableRateLimitingAttribute>()?.PolicyName ?? "unknown"));
         rejected.HttpContext.Response.Headers.RetryAfter = retryAfterSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
         await AuthProblems.RateLimited().ExecuteAsync(rejected.HttpContext);
     };

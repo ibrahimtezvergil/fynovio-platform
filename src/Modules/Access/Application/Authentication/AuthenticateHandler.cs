@@ -54,6 +54,7 @@ public sealed class AuthenticateHandler
         {
             // Unknown user: cost the same time
             _passwordService.VerifyDummy(command.Password);
+            AuthMetrics.LoginFailed.Add(1, new KeyValuePair<string, object?>("reason", "unknown_user"));
             await _eventWriter.WriteAsync(
                 "login_failed",
                 "unknown_user",
@@ -68,6 +69,7 @@ public sealed class AuthenticateHandler
         if (credential.IsLocked(now))
         {
             _passwordService.VerifyDummy(command.Password);
+            AuthMetrics.LoginFailed.Add(1, new KeyValuePair<string, object?>("reason", "account_locked"));
             await _eventWriter.WriteAsync(
                 "login_failed",
                 "account_locked",
@@ -109,6 +111,7 @@ public sealed class AuthenticateHandler
             }
 
             var outcome = credential.IsLocked(now) ? "account_locked" : "bad_password";
+            AuthMetrics.LoginFailed.Add(1, new KeyValuePair<string, object?>("reason", outcome));
             await _eventWriter.WriteAsync(
                 "login_failed",
                 outcome,

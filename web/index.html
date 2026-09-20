@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Never leak this app's URLs cross-origin. Deliberately NOT "no-referrer": that makes browsers send
+         "Origin: null" on same-origin POSTs, which the API's CSRF guard would (rightly) refuse. The e-mailed
+         link tokens live in the URL fragment, which browsers never put in a Referer anyway. -->
+    <meta name="referrer" content="same-origin" />
     <title>Fynovio</title>
   </head>
   <body>
