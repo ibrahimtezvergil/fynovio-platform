@@ -1,9 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { render, screen } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { endpoints } from '@/api/endpoints'
-import { queryClient as sharedQueryClient } from '@/api/queryClient'
+import { queryClient } from '@/api/queryClient'
 import { useSessionStore } from '@/lib/auth'
 import { selectTenant } from '@/lib/auth/sessionClient'
 import { server } from '@/mocks/server'
@@ -14,6 +14,7 @@ import { opportunityKeys, useOpportunityList } from './api'
 
 beforeEach(() => {
   resetSession()
+  queryClient.clear()
   useSessionStore.getState().applyAuthResult(authenticated({ activeTenant: { tenantId: 1 } }))
 })
 
@@ -35,14 +36,13 @@ describe('Opportunity query keys — tenant isolation via key root', () => {
     expect(opportunityKeys.stages(2, 3)[1]).toBe(2)
   })
 
-  it('renders tenant-1 data while authenticated in tenant 1; after switch data is GONE, tenant-2 data SHOWN', async () => {
+  it('renders tenant-1 data while authenticated in tenant 1; after switch data is GONE, tenant-2 data SHOWN, cache cleared', async () => {
     const tenant1Opportunity = wireOpportunity({ id: 101, estimatedAmount: 100 })
     const tenant2Opportunity = wireOpportunity({ id: 202, estimatedAmount: 200 })
 
     server.use(
       http.get(url(endpoints.opportunities.list), ({ request }) => {
         const token = request.headers.get('Authorization')
-        // Mock: tenant 1 token returns tenant 1 data, tenant 2 token returns tenant 2 data
         if (token === 'Bearer access-token-1') {
           return HttpResponse.json([tenant1Opportunity])
         }
@@ -56,10 +56,6 @@ describe('Opportunity query keys — tenant isolation via key root', () => {
       ),
     )
 
-    // Render with a dedicated client to isolate the test
-    const testClient = new QueryClient({ defaultOptions: { queries: { retryDelay: 0, staleTime: 0 } } })
-
-    // Component that uses the hook
     const TestComponent = () => {
       const { data, isLoading } = useOpportunityList({ page: 0 })
       if (isLoading) return <div>Loading...</div>
@@ -75,47 +71,38 @@ describe('Opportunity query keys — tenant isolation via key root', () => {
       )
     }
 
-    const { rerender } = render(
-      <QueryClientProvider client={testClient}>
+    render(
+      <QueryClientProvider client={queryClient}>
         <TestComponent />
       </QueryClientProvider>,
     )
 
-    // Verify tenant 1 data is shown
     expect(await screen.findByTestId('opportunity-101')).toBeInTheDocument()
     expect(screen.queryByTestId('opportunity-202')).not.toBeInTheDocument()
 
-    // Switch to tenant 2
-    useSessionStore.getState().applyTenantSelection({ accessToken: 'tenant-2-token', expiresIn: 600, activeTenant: { tenantId: 2 } })
     await selectTenant(2)
 
-    // Re-render component to pick up the new tenant
-    rerender(
-      <QueryClientProvider client={testClient}>
-        <TestComponent />
-      </QueryClientProvider>,
-    )
-
-    // Verify tenant 1 data is GONE and tenant 2 data is shown
-    await waitFor(() => {
-      expect(screen.queryByTestId('opportunity-101')).not.toBeInTheDocument()
-    })
+    // Verify tenant 1 data is gone and tenant 2 data is shown
+    expect(screen.queryByTestId('opportunity-101')).not.toBeInTheDocument()
     expect(await screen.findByTestId('opportunity-202')).toBeInTheDocument()
+
+    // Verify tenant 1's cache entries were cleared by selectTenant
+    expect(queryClient.getQueryCache().findAll({ queryKey: ['opportunities', 1] })).toHaveLength(0)
   })
 
   it('in-flight requests from tenant 1 never land after switch to tenant 2', async () => {
     const tenant1Opportunity = wireOpportunity({ id: 101 })
     const tenant2Opportunity = wireOpportunity({ id: 202 })
+    let tenant1RequestCount = 0
 
     server.use(
       http.get(url(endpoints.opportunities.list), async ({ request }) => {
         const token = request.headers.get('Authorization')
-        // Tenant 1: slow response (80ms)
         if (token === 'Bearer access-token-1') {
+          tenant1RequestCount++
           await new Promise((resolve) => setTimeout(resolve, 80))
           return HttpResponse.json([tenant1Opportunity])
         }
-        // Tenant 2: immediate response
         if (token === 'Bearer tenant-2-token') {
           return HttpResponse.json([tenant2Opportunity])
         }
@@ -125,8 +112,6 @@ describe('Opportunity query keys — tenant isolation via key root', () => {
         HttpResponse.json({ accessToken: 'tenant-2-token', expiresIn: 600, activeTenant: { tenantId: 2 } }),
       ),
     )
-
-    const testClient = new QueryClient({ defaultOptions: { queries: { retryDelay: 0, staleTime: 0 } } })
 
     const TestComponent = () => {
       const { data, isLoading } = useOpportunityList({ page: 0 })
@@ -143,30 +128,82 @@ describe('Opportunity query keys — tenant isolation via key root', () => {
       )
     }
 
-    const { rerender } = render(
-      <QueryClientProvider client={testClient}>
+    render(
+      <QueryClientProvider client={queryClient}>
         <TestComponent />
       </QueryClientProvider>,
     )
 
-    // Start loading tenant 1 data (slow)
     expect(await screen.findByText('Loading...')).toBeInTheDocument()
+    expect(tenant1RequestCount).toBeGreaterThan(0)
 
-    // Immediately switch tenant before the first request completes
-    useSessionStore.getState().applyTenantSelection({ accessToken: 'tenant-2-token', expiresIn: 600, activeTenant: { tenantId: 2 } })
     await selectTenant(2)
 
-    rerender(
-      <QueryClientProvider client={testClient}>
+    expect(await screen.findByTestId('opportunity-202')).toBeInTheDocument()
+
+    // Wait longer than the slow request delay to ensure it would have completed
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
+    // Tenant 1 data never appears, even though the slow request should have landed by now
+    expect(screen.queryByTestId('opportunity-101')).not.toBeInTheDocument()
+
+    // Verify tenant 1's cache is cleared
+    expect(queryClient.getQueryCache().findAll({ queryKey: ['opportunities', 1] })).toHaveLength(0)
+  })
+
+  it('key root alone isolates data: tenant-1 seeded data never renders in tenant-2 session', async () => {
+    const tenant1Opportunity = wireOpportunity({ id: 101, estimatedAmount: 100 })
+    const tenant2Opportunity = wireOpportunity({ id: 202, estimatedAmount: 200 })
+
+    server.use(
+      http.get(url(endpoints.opportunities.list), ({ request }) => {
+        const token = request.headers.get('Authorization')
+        if (token === 'Bearer access-token-1') {
+          return HttpResponse.json([tenant1Opportunity])
+        }
+        if (token === 'Bearer tenant-2-token') {
+          return HttpResponse.json([tenant2Opportunity])
+        }
+        return HttpResponse.json([])
+      }),
+    )
+
+    const TestComponent = () => {
+      const { data, isLoading } = useOpportunityList({ page: 0 })
+      if (isLoading) return <div>Loading...</div>
+      if (!data) return <div>No data</div>
+      return (
+        <div>
+          {data.items.map((opp) => (
+            <div key={opp.id} data-testid={`opportunity-${opp.id}`}>
+              {opp.id}
+            </div>
+          ))}
+        </div>
+      )
+    }
+
+    // Seed tenant 1's cache with data
+    queryClient.setQueryData(opportunityKeys.list(1, { page: 0 }), {
+      items: [tenant1Opportunity],
+      hasNext: false,
+    })
+
+    // Switch session to tenant 2 WITHOUT calling selectTenant (so cache is NOT cleared)
+    useSessionStore.getState().applyTenantSelection({ accessToken: 'tenant-2-token', expiresIn: 600, activeTenant: { tenantId: 2 } })
+
+    // Tenant 1 data is still in the cache, but the hook now looks for a different key
+    render(
+      <QueryClientProvider client={queryClient}>
         <TestComponent />
       </QueryClientProvider>,
     )
 
-    // Tenant 2 data loads and tenant 1 data never appears
+    // Tenant 1 data never renders (key root isolation works)
+    expect(screen.queryByTestId('opportunity-101')).not.toBeInTheDocument()
+
+    // Tenant 2 data loads and renders
     expect(await screen.findByTestId('opportunity-202')).toBeInTheDocument()
-    await waitFor(() => {
-      expect(screen.queryByTestId('opportunity-101')).not.toBeInTheDocument()
-    }, { timeout: 200 })
   })
 
   it('calling selectTenant invokes both cancelQueries and clear on the query client', async () => {
@@ -176,8 +213,8 @@ describe('Opportunity query keys — tenant isolation via key root', () => {
       ),
     )
 
-    const cancelSpy = vi.spyOn(sharedQueryClient, 'cancelQueries')
-    const clearSpy = vi.spyOn(sharedQueryClient, 'clear')
+    const cancelSpy = vi.spyOn(queryClient, 'cancelQueries')
+    const clearSpy = vi.spyOn(queryClient, 'clear')
 
     useSessionStore.getState().applyAuthResult(authenticated({ activeTenant: { tenantId: 1 } }))
 
