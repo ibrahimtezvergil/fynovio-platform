@@ -3,6 +3,7 @@ using Access.Application.Authentication;
 using Access.Domain.Identity;
 using Access.Persistence;
 using Contracts;
+using CRM.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Host.Authentication;
@@ -16,8 +17,9 @@ public sealed class DevSeedOptions
     public string? Password { get; init; }
 }
 
-/// <summary>Idempotent local-development data: three sign-in identities that exercise every
-/// state the login flow can end in. Production has NO seed and no default credential — the
+/// <summary>Idempotent local-development data: four sign-in identities that exercise every
+/// state the login flow can end in, plus the CRM roles and pipeline the Opportunity API needs
+/// (<see cref="CrmDevSeed"/>). Production has NO seed and no default credential — the
 /// one-time bootstrap command (Phase 2.5A slice S3) is the only production path.
 /// Uses the real Access handlers, so it goes through the same RLS-bound runtime role and the
 /// same password policy as any other account.</summary>
@@ -31,6 +33,10 @@ public static class DevSeeder
 
     /// <summary>Active member of tenant 1 only, no grants → auto-selected tenant, CRM calls are 403.</summary>
     public const string SingleTenantEmail = "single@fynovio.local";
+
+    /// <summary>Active member of tenant 1 only, read-only CRM grants (`crm.opportunity.read`/`list`) →
+    /// sees Opportunities but every mutation is denied and every available action is false.</summary>
+    public const string ViewerEmail = "viewer@fynovio.local";
 
     /// <summary>Account without any membership → the `no_membership` state.</summary>
     public const string NoMembershipEmail = "nomember@fynovio.local";
@@ -87,6 +93,14 @@ public static class DevSeeder
             seeded++;
         }
 
+        if (!await CredentialExistsAsync(context, ViewerEmail, cancellationToken))
+        {
+            await provision.HandleAsync(
+                new ProvisionPasswordAccountCommand(ViewerEmail, "Dev CRM Viewer", options.Password, platformIssuer, TenantOne),
+                cancellationToken);
+            seeded++;
+        }
+
         if (!await CredentialExistsAsync(context, NoMembershipEmail, cancellationToken))
         {
             await provision.HandleAsync(
@@ -95,8 +109,34 @@ public static class DevSeeder
             seeded++;
         }
 
-        logger.LogInformation("Dev seed applied ({Created} new accounts). Sign-in identities: {Admin}, {Single}, {NoMembership}.",
-            seeded, AdminEmail, SingleTenantEmail, NoMembershipEmail);
+        await SeedCrmAsync(scope.ServiceProvider, context, cancellationToken);
+
+        logger.LogInformation("Dev seed applied ({Created} new accounts). Sign-in identities: {Admin}, {Single}, {Viewer}, {NoMembership}.",
+            seeded, AdminEmail, SingleTenantEmail, ViewerEmail, NoMembershipEmail);
+    }
+
+    private static async Task SeedCrmAsync(IServiceProvider services, AccessDbContext access, CancellationToken cancellationToken)
+    {
+        var crm = services.GetRequiredService<CrmDbContext>();
+        var adminAccountId = await AccountIdAsync(access, AdminEmail, cancellationToken);
+        var viewerAccountId = await AccountIdAsync(access, ViewerEmail, cancellationToken);
+
+        foreach (var tenant in new[] { TenantOne, TenantTwo })
+        {
+            // The viewer belongs to tenant 1 only (a role assignment needs an active membership there).
+            var viewerHere = tenant == TenantOne ? viewerAccountId : (long?)null;
+            await CrmDevSeed.EnsureRolesAsync(access, tenant, adminAccountId, adminAccountId, viewerHere, cancellationToken);
+            await CrmDevSeed.EnsurePipelineAsync(crm, tenant, cancellationToken);
+        }
+    }
+
+    private static Task<long> AccountIdAsync(AccessDbContext context, string email, CancellationToken cancellationToken)
+    {
+        var normalized = EmailNormalizer.Normalize(email);
+        return context.AccountCredentials
+            .Where(c => c.LoginEmailNormalized == normalized)
+            .Select(c => c.AccountId)
+            .SingleAsync(cancellationToken);
     }
 
     // accounts/credentials are platform-global (no RLS), so this needs no tenant context.

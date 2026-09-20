@@ -141,6 +141,87 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.SendAsync(request)).StatusCode);
     }
 
+    private static HttpRequestMessage Authorized(HttpMethod method, string path, string token, object? body = null)
+    {
+        var request = new HttpRequestMessage(method, path);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        if (body is not null)
+        {
+            request.Content = JsonContent.Create(body);
+            request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
+        }
+        return request;
+    }
+
+    private static async Task<string> AdminTokenAsync(HttpClient client, long tenantId)
+    {
+        var (_, cookie) = await LoginWithCookieAsync(client, DevSeeder.AdminEmail);
+        return await SelectTenantAsync(client, cookie, tenantId);
+    }
+
+    [Fact]
+    public async Task Admin_holds_the_crm_grants_and_the_seeded_pipeline_assigns_the_entry_stage_on_open()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+
+        foreach (var tenantId in new long[] { 1, 2 })
+        {
+            var token = await AdminTokenAsync(client, tenantId);
+
+            var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", token, new { partyId = 1001, currency = "EUR", estimatedAmount = 250 }));
+            Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+            var opportunityId = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("opportunityId").GetInt64();
+
+            var opened = await client.SendAsync(Authorized(HttpMethod.Post, $"/opportunities/{opportunityId}/open", token,
+                new { expectedVersion = 1, expiryDate = DateTimeOffset.UtcNow.AddDays(30) }));
+            Assert.Equal(HttpStatusCode.OK, opened.StatusCode);
+
+            var detail = await (await client.SendAsync(Authorized(HttpMethod.Get, $"/opportunities/{opportunityId}", token))).Content.ReadFromJsonAsync<JsonElement>();
+            var versionId = detail.GetProperty("pipelineDefinitionVersionId").GetInt64();
+            var entryStageId = detail.GetProperty("pipelineStageId").GetInt64();
+
+            var stages = await (await client.SendAsync(Authorized(HttpMethod.Get, $"/pipelines/{versionId}/stages", token))).Content.ReadFromJsonAsync<JsonElement>();
+            var byName = stages.EnumerateArray().ToDictionary(s => s.GetProperty("name").GetString()!);
+            Assert.Equal(entryStageId, byName["Qualification"].GetProperty("id").GetInt64());
+            Assert.True(byName["Qualification"].GetProperty("isEntry").GetBoolean());
+            Assert.Equal(CrmDevSeed.ActiveStageNames.Count + 1, byName.Count);
+            Assert.False(byName[CrmDevSeed.RetiredStageName].GetProperty("isActive").GetBoolean());
+        }
+    }
+
+    [Fact]
+    public async Task Viewer_reads_opportunities_but_every_mutation_is_denied_and_no_action_is_available()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+
+        var adminToken = await AdminTokenAsync(client, 1);
+        var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", adminToken, new { partyId = 1002, currency = "TRY", estimatedAmount = 10 }));
+        var opportunityId = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("opportunityId").GetInt64();
+
+        var viewer = await LoginAsync(client, DevSeeder.ViewerEmail);
+        var viewerToken = viewer.GetProperty("accessToken").GetString()!;
+
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(Authorized(HttpMethod.Get, "/opportunities", viewerToken))).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(Authorized(HttpMethod.Get, $"/opportunities/{opportunityId}", viewerToken))).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", viewerToken, new { partyId = 1, currency = "EUR", estimatedAmount = 1 }))).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.SendAsync(Authorized(HttpMethod.Post, $"/opportunities/{opportunityId}/lose", viewerToken, new { expectedVersion = 1, lostReason = "n/a" }))).StatusCode);
+
+        var actions = await (await client.SendAsync(Authorized(HttpMethod.Get, $"/opportunities/{opportunityId}/actions", viewerToken))).Content.ReadFromJsonAsync<JsonElement>();
+        foreach (var flag in new[] { "canOpen", "canChangeStage", "canWin", "canLose", "canReassign" })
+            Assert.False(actions.GetProperty(flag).GetBoolean(), flag);
+        Assert.Empty(actions.GetProperty("allowedTargetStageIds").EnumerateArray());
+    }
+
+    private async Task<long> CountAsync(string sql)
+    {
+        await using var connection = new NpgsqlConnection(_fixture.AdminConnectionString);
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand(sql, connection);
+        return (long)(await command.ExecuteScalarAsync())!;
+    }
+
     [Fact]
     public async Task Seeding_twice_is_idempotent()
     {
@@ -151,6 +232,10 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
         Assert.Equal(1, await CredentialCountAsync(DevSeeder.AdminEmail));
         Assert.Equal(1, await CredentialCountAsync(DevSeeder.SingleTenantEmail));
         Assert.Equal(1, await CredentialCountAsync(DevSeeder.NoMembershipEmail));
+        Assert.Equal(1, await CredentialCountAsync(DevSeeder.ViewerEmail));
+        Assert.Equal(2, await CountAsync("SELECT count(*) FROM crm.pipeline_definitions"));
+        Assert.Equal(2, await CountAsync($"SELECT count(*) FROM access.roles WHERE key = '{CrmDevSeed.ManagerRoleKey}'"));
+        Assert.Equal(1, await CountAsync($"SELECT count(*) FROM access.roles WHERE key = '{CrmDevSeed.ViewerRoleKey}'"));
         Assert.Equal("tenant_selection_required", (await LoginAsync(client, DevSeeder.AdminEmail)).GetProperty("status").GetString());
     }
 }
