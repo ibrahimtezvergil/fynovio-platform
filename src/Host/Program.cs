@@ -1,5 +1,6 @@
 using System.Text;
 using Access.Application;
+using Access.Application.Authentication;
 using Access.Persistence;
 using Contracts;
 using CRM.Application;
@@ -9,7 +10,9 @@ using Host.Endpoints;
 using MasterData.Application;
 using MasterData.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,8 +44,15 @@ builder.Services.AddScoped<IActionCatalog, AccessActionCatalogService>();
 builder.Services.AddScoped<IAuthorizer, AccessAuthorizer>();
 builder.Services.AddScoped<IAccessScopeResolver, AccessScopeResolver>();
 
+// Load and validate JWT options (fail-fast at startup)
 var jwtOptions = builder.Configuration.GetSection("Authentication:Jwt").Get<JwtOptions>()
     ?? throw new InvalidOperationException("Authentication:Jwt configuration section is required.");
+
+// Validate SigningKey is at least 32 bytes
+var signingKeyBytes = Encoding.UTF8.GetByteCount(jwtOptions.SigningKey);
+if (signingKeyBytes < 32)
+    throw new InvalidOperationException($"Authentication:Jwt:SigningKey must be at least 32 bytes when UTF-8 encoded; got {signingKeyBytes} bytes");
+
 builder.Services.AddSingleton(jwtOptions);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -58,11 +68,53 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
             ValidateLifetime = true,
-            NameClaimType = "sub"
+            NameClaimType = "sub",
+            ClockSkew = TimeSpan.FromSeconds(30) // Explicit 30s clock skew
         };
     });
 builder.Services.AddAuthorization();
 
+// Register Authentication Host options
+var authOptions = builder.Configuration.GetSection("Authentication").Get<AuthenticationHostOptions>()
+    ?? throw new InvalidOperationException("Authentication configuration section is required.");
+
+// Validate PublicAppBaseUrl if set
+if (!string.IsNullOrEmpty(authOptions.PublicAppBaseUrl))
+{
+    if (!Uri.TryCreate(authOptions.PublicAppBaseUrl, UriKind.Absolute, out var uri) ||
+        (uri.Scheme != "http" && uri.Scheme != "https"))
+    {
+        throw new InvalidOperationException(
+            $"Authentication:PublicAppBaseUrl must be an absolute http(s) URL; got '{authOptions.PublicAppBaseUrl}'");
+    }
+}
+
+// In non-Development, PublicAppBaseUrl is required (for email links)
+if (!builder.Environment.IsDevelopment() && string.IsNullOrEmpty(authOptions.PublicAppBaseUrl))
+    throw new InvalidOperationException("Authentication:PublicAppBaseUrl is required outside of Development environment");
+
+builder.Services.AddSingleton(authOptions);
+builder.Services.AddSingleton(authOptions.Session);
+builder.Services.AddSingleton(authOptions.Password);
+builder.Services.AddSingleton(authOptions.Lockout);
+
+// Register authentication application handlers
+builder.Services.AddScoped<PasswordService>();
+builder.Services.AddScoped<AuthEventWriter>();
+builder.Services.AddScoped<SessionValidator>();
+builder.Services.AddScoped<AuthenticateHandler>();
+builder.Services.AddScoped<RefreshSessionHandler>();
+builder.Services.AddScoped<LogoutHandler>();
+builder.Services.AddScoped<SelectTenantHandler>();
+builder.Services.AddScoped<GetSessionOverviewHandler>();
+builder.Services.AddScoped<ProvisionPasswordAccountHandler>();
+
+// Register Host authentication infrastructure
+builder.Services.AddScoped<AccessTokenIssuer>();
+builder.Services.AddScoped<RefreshCookieWriter>();
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+
+// Register CRM handlers
 builder.Services.AddScoped<CreateOpportunityHandler>();
 builder.Services.AddScoped<AddOpportunityLineHandler>();
 builder.Services.AddScoped<CancelOpportunityLineHandler>();
@@ -79,7 +131,85 @@ builder.Services.AddScoped<GetOpportunityAvailableActionsHandler>();
 builder.Services.AddExceptionHandler<CrmProblemDetailsExceptionHandler>();
 builder.Services.AddProblemDetails();
 
+// Configure CORS: explicit origins only, no wildcard
+if (authOptions.AllowedOrigins.Length > 0)
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowSpecificOrigins", policy =>
+        {
+            policy
+                .WithOrigins(authOptions.AllowedOrigins)
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
+        });
+    });
+}
+
+// Configure rate limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("auth-login", config =>
+    {
+        config.PermitLimit = authOptions.RateLimiting.LoginPerMinute;
+        config.Window = TimeSpan.FromMinutes(1);
+    });
+
+    options.AddFixedWindowLimiter("auth-refresh", config =>
+    {
+        config.PermitLimit = authOptions.RateLimiting.RefreshPerMinute;
+        config.Window = TimeSpan.FromMinutes(1);
+    });
+
+    options.AddFixedWindowLimiter("auth-forgot", config =>
+    {
+        config.PermitLimit = authOptions.RateLimiting.ForgotPerHour;
+        config.Window = TimeSpan.FromHours(1);
+    });
+
+    options.AddFixedWindowLimiter("auth-token", config =>
+    {
+        config.PermitLimit = authOptions.RateLimiting.TokenPer15Minutes;
+        config.Window = TimeSpan.FromMinutes(15);
+    });
+
+    options.AddFixedWindowLimiter("auth-password", config =>
+    {
+        config.PermitLimit = authOptions.RateLimiting.PasswordPer15Minutes;
+        config.Window = TimeSpan.FromMinutes(15);
+    });
+
+    options.AddFixedWindowLimiter("auth-public", config =>
+    {
+        config.PermitLimit = authOptions.RateLimiting.PublicPerMinute;
+        config.Window = TimeSpan.FromMinutes(1);
+    });
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
 var app = builder.Build();
+
+// Forwarded headers: only when KnownProxies is configured (prevent host-header poisoning)
+var knownProxies = builder.Configuration.GetSection("Authentication:KnownProxies").Get<string[]>();
+if (knownProxies?.Length > 0)
+{
+    var forwardedHeadersOptions = new ForwardedHeadersOptions();
+    foreach (var proxy in knownProxies)
+    {
+        if (System.Net.IPAddress.TryParse(proxy, out var ipAddress))
+            forwardedHeadersOptions.KnownProxies.Add(ipAddress);
+    }
+    app.UseForwardedHeaders(forwardedHeadersOptions);
+}
+
+// HTTPS hardening in non-Development
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
 
 using (var scope = app.Services.CreateScope())
 {
@@ -89,6 +219,11 @@ using (var scope = app.Services.CreateScope())
     await AccessActionCatalogSeeder.EnsureSeededAsync(accessDb, manifest);
 }
 
+// CORS before rate limiting (so preflights aren't counted)
+if (authOptions.AllowedOrigins.Length > 0)
+    app.UseCors("AllowSpecificOrigins");
+
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ActorContextMiddleware>();
