@@ -23,6 +23,27 @@ public static class AuthProblems
     public static IResult RateLimited() =>
         Results.Problem(statusCode: StatusCodes.Status429TooManyRequests, type: "rate_limited", title: "Too many requests.");
 
+    /// <summary>The single answer for an unknown, malformed, expired, already used or revoked invitation/reset token.</summary>
+    public static IResult InvalidOrExpiredToken() =>
+        Results.Problem(statusCode: StatusCodes.Status400BadRequest, type: "invalid_or_expired_token", title: "The link is invalid or has expired.");
+
+    public static IResult PasswordPolicyViolation(IReadOnlyList<string>? violations) =>
+        Results.Problem(
+            statusCode: StatusCodes.Status400BadRequest,
+            type: "password_policy_violation",
+            title: "The password does not meet the policy.",
+            extensions: new Dictionary<string, object?> { ["violations"] = violations ?? [] });
+
+    /// <summary>400, not 401: a mistyped current password must never look like an expired session (the SPA would try to refresh and sign the user out).</summary>
+    public static IResult InvalidCurrentPassword() =>
+        Results.Problem(statusCode: StatusCodes.Status400BadRequest, type: "invalid_current_password", title: "The current password is not correct.");
+
+    public static IResult Forbidden() =>
+        Results.Problem(statusCode: StatusCodes.Status403Forbidden, type: "forbidden", title: "You are not allowed to do this.");
+
+    public static IResult Conflict() =>
+        Results.Problem(statusCode: StatusCodes.Status409Conflict, type: "conflict", title: "The request conflicted with another change. Please retry.");
+
     public static IResult Validation(IDictionary<string, string[]> errors) =>
         Results.Problem(
             statusCode: StatusCodes.Status400BadRequest,

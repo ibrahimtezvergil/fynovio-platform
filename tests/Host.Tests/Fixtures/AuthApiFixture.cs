@@ -29,14 +29,14 @@ internal sealed class EnvScope : IDisposable
 
     private EnvScope() { }
 
-    public static EnvScope Apply(IReadOnlyDictionary<string, string?> settings, string clearPrefix)
+    public static EnvScope Apply(IReadOnlyDictionary<string, string?> settings, string[] clearPrefixes)
     {
         var scope = new EnvScope();
 
         foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
         {
             var key = (string)entry.Key;
-            if (key.StartsWith(clearPrefix, StringComparison.Ordinal))
+            if (clearPrefixes.Any(prefix => key.StartsWith(prefix, StringComparison.Ordinal)))
                 scope.Set(key, null);
         }
 
@@ -110,6 +110,8 @@ internal sealed class CapturingLoggerProvider : ILoggerProvider
 /// <summary>A running host plus what tests need to talk to it.</summary>
 internal sealed class AuthApiHost(WebApplicationFactory<Program> factory) : IDisposable
 {
+    public IServiceProvider Services => factory.Services;
+
     public HttpClient CreateClient() => factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
     public void Dispose() => factory.Dispose();
@@ -172,6 +174,8 @@ public sealed class AuthApiFixture : IAsyncLifetime
             ["ASPNETCORE_ENVIRONMENT"] = "Development",
             ["Authentication__Session__RequireSessionClaim"] = "true",
             ["Authentication__Session__RefreshGraceSeconds"] = "1",
+            // A developer's user-secrets may hold real SMTP credentials; tests must never send mail.
+            ["Email__Smtp__Enabled"] = "false",
         };
         foreach (var (key, value) in settings ?? [])
             effective[key] = value;
@@ -179,7 +183,7 @@ public sealed class AuthApiFixture : IAsyncLifetime
         await EnvironmentGate.WaitAsync();
         try
         {
-            using var scope = EnvScope.Apply(effective, clearPrefix: "Authentication__");
+            using var scope = EnvScope.Apply(effective, clearPrefixes: ["Authentication__", "Email__", "Bootstrap__"]);
             var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
             {
                 builder.ConfigureServices(services =>

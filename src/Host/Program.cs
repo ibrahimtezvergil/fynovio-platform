@@ -7,6 +7,8 @@ using Contracts;
 using CRM.Application;
 using CRM.Persistence;
 using Host.Authentication;
+using Host.Bootstrap;
+using Host.Email;
 using Host.Endpoints;
 using MasterData.Application;
 using MasterData.Persistence;
@@ -94,7 +96,22 @@ if (!string.IsNullOrEmpty(authOptions.PublicAppBaseUrl))
 if (!builder.Environment.IsDevelopment() && string.IsNullOrEmpty(authOptions.PublicAppBaseUrl))
     throw new InvalidOperationException("Authentication:PublicAppBaseUrl is required outside of Development environment");
 
+// Self-registration: off by default. It never grants tenant access, but it does create identities for
+// unverified e-mail addresses, so outside Development it needs an explicit acknowledgement.
+if (authOptions.SelfRegistration.Enabled
+    && !builder.Environment.IsDevelopment()
+    && !authOptions.SelfRegistration.AcknowledgeUnverifiedEmail)
+{
+    throw new InvalidOperationException(
+        "Authentication:SelfRegistration:Enabled requires Authentication:SelfRegistration:AcknowledgeUnverifiedEmail=true outside Development " +
+        "(e-mail addresses are not verified before an account is created).");
+}
+
+if (authOptions.Tokens.InviteDays <= 0 || authOptions.Tokens.PasswordResetMinutes <= 0 || authOptions.Tokens.PasswordSetupHours <= 0)
+    throw new InvalidOperationException("Authentication:Tokens lifetimes (InviteDays, PasswordResetMinutes, PasswordSetupHours) must be positive.");
+
 builder.Services.AddSingleton(authOptions);
+builder.Services.AddSingleton(authOptions.Tokens);
 builder.Services.AddSingleton(authOptions.Session);
 builder.Services.AddSingleton(authOptions.Password);
 builder.Services.AddSingleton(authOptions.Lockout);
@@ -121,6 +138,36 @@ builder.Services.AddScoped<SelectTenantHandler>();
 builder.Services.AddScoped<GetSessionOverviewHandler>();
 builder.Services.AddScoped<ProvisionPasswordAccountHandler>();
 builder.Services.AddScoped<BootstrapTenantAccessHandler>();
+
+// Invitations, password lifecycle, registration, bootstrap and capabilities
+builder.Services.AddScoped<AccountTokenService>();
+builder.Services.AddScoped<CreateInvitationHandler>();
+builder.Services.AddScoped<ValidateInvitationHandler>();
+builder.Services.AddScoped<AcceptInvitationHandler>();
+builder.Services.AddScoped<RequestPasswordResetHandler>();
+builder.Services.AddScoped<ResetPasswordHandler>();
+builder.Services.AddScoped<ChangePasswordHandler>();
+builder.Services.AddScoped<RegisterAccountHandler>();
+builder.Services.AddScoped<BootstrapTenantAdministratorHandler>();
+builder.Services.AddScoped<GetCapabilitiesHandler>();
+
+// E-mail: the app talks to IEmailSender; delivery happens off the request path (see EmailDispatcher).
+// Nothing leaves the process unless Email:Smtp:Enabled=true. Development also records every message
+// in an in-memory mailbox (GET /dev/mailbox).
+var emailOptions = builder.Configuration.GetSection("Email").Get<EmailOptions>() ?? new EmailOptions();
+if (emailOptions.Smtp.Enabled && string.IsNullOrWhiteSpace(emailOptions.Smtp.Host))
+    throw new InvalidOperationException("Email:Smtp:Host is required when Email:Smtp:Enabled is true.");
+
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
+builder.Services.AddSingleton<EmailOutbox>();
+if (emailOptions.Smtp.Enabled)
+    builder.Services.AddSingleton<IEmailTransport, SmtpEmailTransport>();
+else
+    builder.Services.AddSingleton<IEmailTransport, UndeliveredEmailTransport>();
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddSingleton<DevMailbox>();
+builder.Services.AddSingleton<IEmailSender, EmailDispatcher>();
+builder.Services.AddHostedService<EmailDeliveryService>();
 
 // Register Host authentication infrastructure
 builder.Services.AddScoped<AccessTokenIssuer>();
@@ -247,6 +294,13 @@ using (var scope = app.Services.CreateScope())
     await AccessActionCatalogSeeder.EnsureSeededAsync(accessDb, manifest);
 }
 
+// Operator command: runs instead of the web server (never over HTTP), after the action registry is seeded.
+if (BootstrapCommand.IsRequested(args))
+    return await BootstrapCommand.RunAsync(app.Services, app.Configuration, args, Console.Out, Console.Error);
+
+if (!app.Environment.IsDevelopment() && !emailOptions.Smtp.Enabled)
+    app.Logger.LogWarning("Email:Smtp:Enabled is false: invitation and password-reset e-mails will not be delivered.");
+
 // Local-development seed: only when DevSeed:Enabled AND the environment is Development.
 await DevSeeder.RunAsync(
     app.Services,
@@ -266,7 +320,10 @@ app.UseMiddleware<ActorContextMiddleware>();
 
 app.UseExceptionHandler();
 app.MapAuthEndpoints();
+app.MapAccountLifecycleEndpoints(authOptions.SelfRegistration.Enabled);
 app.MapOpportunityEndpoints();
+if (app.Environment.IsDevelopment())
+    app.MapDevEndpoints();
 
 app.MapGet("/", () => "Hello World!");
 
@@ -274,5 +331,6 @@ app.MapGet("/health/db", async (CrmDbContext db, CancellationToken ct) =>
     await db.Database.CanConnectAsync(ct) ? Results.Ok("crm db reachable") : Results.StatusCode(503));
 
 app.Run();
+return 0;
 
 public partial class Program { }

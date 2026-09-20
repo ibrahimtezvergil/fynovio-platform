@@ -6,7 +6,7 @@ using Host.Authentication;
 
 namespace Host.Endpoints;
 
-/// <summary>Authentication endpoints: config, login, refresh, logout, tenant selection and me.
+/// <summary>Authentication endpoints: config, login, refresh, logout, tenant selection and me (the account lifecycle — invitations, passwords, registration — is in <see cref="AccountLifecycleEndpoints"/>).
 /// Every response is `Cache-Control: no-store`. Endpoints that take the anonymous credential or
 /// the refresh cookie are CSRF-guarded (custom header + Origin allow-list + Fetch metadata).
 /// Errors are ProblemDetails with a short `type` code (<see cref="AuthProblems"/>).</summary>
@@ -52,19 +52,10 @@ public static class AuthEndpoints
             .RequireAuthorization();
     }
 
-    private static RouteHandlerBuilder RequireCsrfProtection(this RouteHandlerBuilder builder) =>
-        builder.AddEndpointFilter(async (invocation, next) =>
-        {
-            var options = invocation.HttpContext.RequestServices.GetRequiredService<AuthenticationHostOptions>();
-            return CsrfOriginGuard.ValidateRequest(invocation.HttpContext, options.AllowedOrigins)
-                ? await next(invocation)
-                : AuthProblems.CsrfRejected();
-        });
-
-    private static IResult GetConfig(AuthenticationHostOptions options, IConfiguration configuration) =>
+    private static IResult GetConfig(AuthenticationHostOptions options) =>
         Results.Ok(new
         {
-            selfRegistrationEnabled = configuration.GetValue("Authentication:SelfRegistration:Enabled", false),
+            selfRegistrationEnabled = options.SelfRegistration.Enabled,
             passwordPolicy = new
             {
                 minLength = options.Password.MinLength,
@@ -106,6 +97,22 @@ public static class AuthEndpoints
 
         if (result.Status == AuthenticationStatus.InvalidCredentials || result.RefreshCookie is null)
             return AuthProblems.InvalidCredentials();
+
+        return StartSession(context, result, issuer, cookieWriter, options, timeProvider);
+    }
+
+    /// <summary>Sets the refresh cookie and answers with the login-shaped body. Used by login and by
+    /// invitation acceptance, which both end with a freshly created session.</summary>
+    internal static IResult StartSession(
+        HttpContext context,
+        AuthenticateResult result,
+        AccessTokenIssuer issuer,
+        RefreshCookieWriter cookieWriter,
+        AuthenticationHostOptions options,
+        TimeProvider timeProvider)
+    {
+        if (result.RefreshCookie is null)
+            return AuthProblems.SessionInvalid();
 
         cookieWriter.WriteToken(
             context.Response,
@@ -210,6 +217,7 @@ public static class AuthEndpoints
     private static async Task<IResult> GetMeAsync(
         HttpContext context,
         GetSessionOverviewHandler handler,
+        GetCapabilitiesHandler capabilitiesHandler,
         CancellationToken cancellationToken)
     {
         var actor = context.GetActorContext();
@@ -220,12 +228,16 @@ public static class AuthEndpoints
         if (overview?.Account is null)
             return AuthProblems.SessionInvalid();
 
+        var capabilities = await capabilitiesHandler.HandleAsync(actor, cancellationToken);
+
         return Results.Ok(new
         {
             account = AccountBody(overview.Account),
             // The tenant the *token* is scoped to (validated by ActorContextMiddleware), not the session's latest selection.
             activeTenant = new { tenantId = actor.TenantId.Value },
-            memberships = overview.MembershipTenantIds.Select(id => new { tenantId = id }).ToList()
+            memberships = overview.MembershipTenantIds.Select(id => new { tenantId = id }).ToList(),
+            // UX hints from the PDP; the backend authorises the action itself again when it is attempted.
+            capabilities = new { canInviteMembers = capabilities.CanInviteMembers }
         });
     }
 
@@ -266,7 +278,7 @@ public static class AuthEndpoints
         return Results.Ok(body);
     }
 
-    private static object AccountBody(AccountSummary account) =>
+    internal static object AccountBody(AccountSummary account) =>
         new { id = account.Id, email = account.Email, displayName = account.DisplayName, locale = account.Locale };
 
     private static Dictionary<string, string[]> ValidateLogin(LoginRequest? request)
@@ -286,7 +298,7 @@ public static class AuthEndpoints
         return errors;
     }
 
-    private static async Task<T?> TryReadJsonAsync<T>(HttpContext context, CancellationToken cancellationToken)
+    internal static async Task<T?> TryReadJsonAsync<T>(HttpContext context, CancellationToken cancellationToken)
         where T : class
     {
         try
@@ -300,7 +312,7 @@ public static class AuthEndpoints
     }
 
     /// <summary>Reuses a valid `X-Correlation-Id` or generates one, and echoes it back.</summary>
-    private static string CorrelationId(HttpContext context)
+    internal static string CorrelationId(HttpContext context)
     {
         var correlationId = Guid.TryParse(context.Request.Headers["X-Correlation-Id"].ToString(), out var supplied)
             ? supplied

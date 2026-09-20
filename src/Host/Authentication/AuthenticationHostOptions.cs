@@ -30,6 +30,23 @@ public sealed class AuthenticationHostOptions
 
     /// <summary>Rate limiting policy configurations (login, refresh, forgot, token, password, public).</summary>
     public required RateLimitingOptions RateLimiting { get; init; }
+
+    /// <summary>Public self-registration. Disabled by default; see <see cref="SelfRegistrationOptions"/>.</summary>
+    public SelfRegistrationOptions SelfRegistration { get; init; } = new();
+
+    /// <summary>Lifetimes of the single-use invitation / password-reset / password-setup tokens.</summary>
+    public TokenOptions Tokens { get; init; } = new();
+}
+
+/// <summary>Self-registration creates an identity and nothing else (no membership, role or tenant). It is
+/// off by default and its endpoint is not even mapped while off (404). E-mail ownership is not verified,
+/// so enabling it outside Development additionally requires <see cref="AcknowledgeUnverifiedEmail"/>.</summary>
+public sealed class SelfRegistrationOptions
+{
+    public bool Enabled { get; init; }
+
+    /// <summary>Explicit acknowledgement that addresses are not verified before the account exists.</summary>
+    public bool AcknowledgeUnverifiedEmail { get; init; }
 }
 
 /// <summary>Session-related authentication options, including Host-specific cookie configuration.</summary>
