@@ -1,3 +1,4 @@
+using Access.Application;
 using Access.Application.Authentication;
 using Access.Domain.Authentication;
 using Access.Domain.Identity;
@@ -57,6 +58,30 @@ internal static class AuthTestSetup
             .HandleAsync(new ProvisionPasswordAccountCommand(email, "Seeded User", password, Issuer, tenant));
         return (result.AccountId, result.Principal);
     }
+
+    /// <summary>A tenant administrator: Active member of <paramref name="tenant"/> holding the bootstrap
+    /// role (which grants every catalogued action, incl. `identity.membership.invite`).</summary>
+    public static async Task<(long AccountId, PrincipalRef Principal)> SeedTenantAdminAsync(PostgresFixture fixture, TenantId tenant)
+    {
+        await using (var seed = fixture.CreateAdminContext())
+            await AccessActionCatalogSeeder.EnsureSeededAsync(seed, AccessActionCatalog.All);
+
+        var (accountId, principal) = await SeedAccountAsync(fixture, NewEmail(), tenant: tenant);
+        await using var admin = fixture.CreateAdminContext();
+        await new BootstrapTenantAccessHandler(admin).HandleAsync(new BootstrapTenantAccessCommand(tenant, principal, Guid.NewGuid()));
+        return (accountId, principal);
+    }
+
+    public static CreateInvitationHandler Invitations(AccessDbContext context, FakeEmailSender mail, TimeProvider time, TokenOptions? options = null) =>
+        new(
+            context,
+            new AccessAuthorizer(context, new PrincipalResolver(context), new AccessActionCatalogService(context)),
+            Tokens(context, options),
+            mail,
+            new AuthEventWriter(context),
+            time);
+
+    public static ActorContext Actor(TenantId tenant, PrincipalRef principal) => new(tenant, principal, Guid.NewGuid());
 
     /// <summary>Inserts a token straight into the table (as the superuser) and returns the raw `<id>.<secret>` value.</summary>
     public static async Task<string> InsertTokenAsync(PostgresFixture fixture, Func<string, AccountToken> create)
