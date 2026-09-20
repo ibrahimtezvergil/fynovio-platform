@@ -78,7 +78,8 @@ export function useOpportunity(id: number) {
   return useQuery({
     ...READ_OPTIONS,
     queryKey: opportunityKeys.detail(tenantId, id),
-    enabled: tenantId !== null,
+    // A malformed route id must never reach the API as a request for /opportunities/0 or /opportunities/NaN.
+    enabled: tenantId !== null && Number.isInteger(id) && id > 0,
     queryFn: () => get(endpoints.opportunities.detail(id), opportunitySchema),
   })
 }

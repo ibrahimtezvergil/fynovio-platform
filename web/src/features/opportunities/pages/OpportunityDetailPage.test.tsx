@@ -348,8 +348,17 @@ describe('detail — read failures are states of the page, never a crash', () =>
     expect(await screen.findByText(t('detail.title', { id: 12 }))).toBeInTheDocument()
   })
 
-  it('a malformed id is treated like a record that does not exist', async () => {
+  it('a malformed id is treated like a record that does not exist, and never reaches the API', async () => {
+    const recorder = recordRequests()
+    server.use(
+      http.get(url('/opportunities/:id'), async ({ request }) => {
+        await recorder.record(request)
+        return HttpResponse.json(wireOpportunity())
+      }),
+    )
     renderRoutes([{ path: '/crm/opportunities/:id', element: <OpportunityDetailPage /> }], '/crm/opportunities/abc')
     expect(await screen.findByText(t('state.notFound.title'))).toBeInTheDocument()
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(recorder.seen).toHaveLength(0)
   })
 })
