@@ -178,10 +178,44 @@ Added in Revision 4 so an assignment answers "who granted this, how, and why" wi
 
 **Amendment (Revision 2 review):** `ix_opportunities_tenant_id_assigned_principal_subject` (CRM migration `20260914063206_InitialCrmSchema.cs`, line 285) indexes `(tenant_id, assigned_principal_subject)` — `assigned_principal_issuer` is missing. `PrincipalRef.cs`'s own doc comment states identity is the `(issuer, subject)` *pair*; an index on subject alone contradicts the primitive it indexes. Checked the other two principal-bearing tables in the same migration: `idempotency_records`' primary key is already the composite `(tenant_id, principal_issuer, principal_subject, operation, idempotency_key)` — issuer is already in the key, no gap. `evidence_records` has no principal-based index at all (only `correlation_id` and `tenant_id/aggregate_type/aggregate_id`) — no gap either. Only `opportunities` needs fixing; still outstanding, unrelated to this revision.
 
+### Revision 8 (2026-09-20) — Phase 2.5A Authentication Foundation
+**Backend password-based authentication, session management, and token rotation:**
+New tables in `identity` schema (not tenant-scoped, platform-global):
+- `account_credentials` — password credential, unique normalized login email, lockout state machine (failed attempts, locked-until timestamp)
+- `auth_sessions` — refresh token family session, account+active_tenant_id, revocation tracking (revoked_at, revoked_reason: logout|reuse_detected|password_reset|password_changed|expired|admin)
+- `auth_refresh_tokens` — rotating token within a session; token_hash UNIQUE (SHA-256); rotation state (rotated_at, replaced_by_id); single-use, issued at expiry (idle+absolute window)
+- `auth_events` — append-only audit log (event_type, outcome, account_id/tenant_id/session_id, correlation_id, ip_hash, detail jsonb with allow-listed keys); runtime role gets SELECT/INSERT only (no UPDATE/DELETE)
+
+**RLS policy — additive complement to existing `tenant_isolation`:**
+Added `membership_self_view` on `identity.tenant_memberships` (SELECT-only permissive):
+```sql
+USING (account_id = NULLIF(current_setting('app.account_id', true), '')::bigint)
+```
+Allows an authenticated account (via `SetAccountContextAsync` after credential/refresh validation) to list only its own `TenantMembership` rows across tenants before tenant selection. Uses the `app.account_id` GUC, set transaction-locally in server code only after authentication. No write path — never narrows or bypasses `tenant_isolation`, only supplements SELECT.
+
+**Contract & lifecycle:**
+- Login: normalize email (trim+NFC+lowercase) → credential lookup → lockout check → password verify (dummy-verify for unknown accounts) → create session+token → load active memberships via `SetAccountContextAsync` + `membership_self_view` policy → auto-select if exactly one, else return selection-required
+- Refresh: parse token, verify hash (constant-time), check expiry and revocation, detect reuse (rotated token outside grace window → revoke session family), rotate to new token, validate active membership still exists, return new access token
+- Logout: idempotent revocation
+- Tenant select: membership validation (identical error for unknown/non-member to prevent enumeration), set active_tenant_id, return new access token with new tid
+- Session validation: on every protected API request, check session not revoked and not expired (one indexed lookup)
+- Password/session reset on password change: all other sessions revoked, current kept, audit event
+
+**Tables are deliberately account-scoped/global, never tenant-scoped:**
+- Account identity and sign-in credential are pre-tenant concerns (authentication occurs before tenant selection)
+- Session/token state is account-owned, not tenant-owned (a session may span tenant selection/switching)
+- Audit events include pre-tenant events (login, forgot-password requests) that cannot use tenant-scoped `evidence_records`
+- Composite FKs to accounts; no tenant_id on these tables, no RLS policies (except the additive `membership_self_view` on the cross-referenced `tenant_memberships`)
+
+**Grants in `scripts/create-runtime-role.sql`:**
+- `fynovio_app` role gets SELECT/INSERT/UPDATE/DELETE on the new `account_credentials`, `auth_sessions`, `auth_refresh_tokens` tables (via default-privileges on `identity` schema + USAGE/SELECT on `auth_events_id_seq`)
+- `auth_events` table: runtime role can only INSERT and SELECT (REVOKE UPDATE, DELETE) — append-only audit log enforcement
+- Both enforced at the grant level (simpler than triggers; matches `evidence_records` pattern)
+
 ### Not yet designed here
-- Auth session/cookie table shape for the BFF pattern (decision file §3) — this document covers persistent identity/access data, not session state.
 - `delegations` and `sod_rules` tables (decision file §2) — named but not column-designed yet; DESIGN/FREEZE per the Phase 1.5 execution plan's scope lock, deferred until a concrete delegation/SoD scenario is scoped.
 - Sharing, Field Security, Restriction/forbid policy tables — DESIGN/FREEZE; the evaluators are logical Access subdomains (round 3 ownership matrix) but no schema exists yet.
 - Organization-node/Territory scope columns on `RoleAssignment` — added additively once a real fact provider exists (see the Revision 4 note above).
 - `ServicePrincipal`/`AgentIdentity`/`Group` principal types, `ActingFor`/impersonation chain on `ActorContext` — DESIGN/FREEZE, no schema or Contracts fields yet.
 - A `crm.opportunity.*` action vocabulary in `access.actions` — not seeded by this revision; Phase 2 registers it when CRM adds real command-level enforcement.
+- Password reset/invite tokens (`account_tokens` table) and email delivery (`IEmailSender`) — Phase 2.5A S3

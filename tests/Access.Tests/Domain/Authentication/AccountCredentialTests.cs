@@ -48,7 +48,10 @@ public sealed class AccountCredentialTests
     public void IsLocked_WithinLockoutWindow_ReturnsTrue()
     {
         var cred = AccountCredential.Create(1, "TEST@EXAMPLE.COM", "hash123");
-        cred.RecordFailedAttempt(5, 15, _now);
+
+        // Lock the account (5 attempts at threshold)
+        for (int i = 0; i < 5; i++)
+            cred.RecordFailedAttempt(5, 15, _now);
 
         var checkTime = _now.AddMinutes(10);
         Assert.True(cred.IsLocked(checkTime));
