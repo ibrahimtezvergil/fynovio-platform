@@ -36,14 +36,25 @@ public sealed class SelectTenantHandler
 
         var now = _timeProvider.GetUtcNow();
         var parts = command.CookieValue.Split('.');
-        if (parts.Length != 2 || !Guid.TryParse(parts[0], out var tokenId))
+        if (parts.Length != 2 || !Guid.TryParse(parts[0], out var tokenId) || string.IsNullOrEmpty(parts[1]))
             return new SelectTenantResult(TenantSelectionStatus.SessionInvalid);
+
+        var tokenSecret = parts[1];
+        var tokenHash = TokenSecrets.HashToken(tokenSecret);
 
         // Lookup token and session
         var token = await _context.RefreshTokens
             .FirstOrDefaultAsync(t => t.Id == tokenId, cancellationToken);
 
         if (token is null)
+            return new SelectTenantResult(TenantSelectionStatus.SessionInvalid);
+
+        // Verify secret with constant-time comparison
+        if (!TokenSecrets.HashesEqual(token.TokenHash, tokenHash))
+            return new SelectTenantResult(TenantSelectionStatus.SessionInvalid);
+
+        // Token must not be rotated (only active tokens are session credentials)
+        if (token.IsRotated)
             return new SelectTenantResult(TenantSelectionStatus.SessionInvalid);
 
         var session = await _context.AuthSessions

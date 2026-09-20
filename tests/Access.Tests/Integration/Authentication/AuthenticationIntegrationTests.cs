@@ -268,6 +268,30 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task LogoutHandler_WrongSecret_DoesNotLogout()
+    {
+        var (session, refreshCookie) = await CreateSession();
+
+        // Extract token ID and use wrong secret
+        var parts = refreshCookie.Split('.');
+        var tokenId = parts[0];
+        var wrongSecret = "wrong_secret_value";
+        var wrongCookie = $"{tokenId}.{wrongSecret}";
+
+        var handler = new LogoutHandler(
+            _context,
+            new AuthEventWriter(_context),
+            _fixture.TimeProvider);
+
+        // Try logout with wrong secret
+        await handler.HandleAsync(wrongCookie);
+
+        // Session should NOT be revoked
+        var sessionAfter = await _context.AuthSessions.FirstAsync(s => s.Id == session.Id);
+        Assert.False(sessionAfter.IsRevoked);
+    }
+
+    [Fact]
     public async Task LogoutHandler_IdempotentRevocation()
     {
         var (session, refreshCookie) = await CreateSession();
@@ -285,6 +309,90 @@ public sealed class AuthenticationIntegrationTests : IAsyncLifetime
 
         // Second logout (idempotent, no error)
         await handler.HandleAsync(refreshCookie); // Should not throw
+    }
+
+    [Fact]
+    public async Task SelectTenantHandler_WrongSecret_SessionInvalid()
+    {
+        var accountId = await ProvisionAccount("test@example.com", "ValidPassword123");
+        var (session, refreshCookie) = await CreateSession(accountId);
+        var tenantId = new TenantId(1);
+
+        // Create active membership
+        await using var tx = await _context.Database.BeginTransactionAsync();
+        await _context.SetTenantContextAsync(tenantId);
+        var membership = TenantMembership.Invite(tenantId, accountId);
+        membership.Activate();
+        _context.TenantMemberships.Add(membership);
+        await _context.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        // Extract token ID and use wrong secret
+        var parts = refreshCookie.Split('.');
+        var tokenId = parts[0];
+        var wrongSecret = "wrong_secret_value";
+        var wrongCookie = $"{tokenId}.{wrongSecret}";
+
+        var handler = new SelectTenantHandler(
+            _context,
+            new SessionOptions { PlatformIssuer = "https://platform.example.com" },
+            new AuthEventWriter(_context),
+            _fixture.TimeProvider);
+
+        var result = await handler.HandleAsync(
+            new SelectTenantCommand(wrongCookie, tenantId));
+
+        Assert.Equal(TenantSelectionStatus.SessionInvalid, result.Status);
+
+        // Session should NOT have tenant selected
+        var sessionAfter = await _context.AuthSessions.FirstAsync(s => s.Id == session.Id);
+        Assert.Null(sessionAfter.ActiveTenantId);
+    }
+
+    [Fact]
+    public async Task SelectTenantHandler_RotatedToken_SessionInvalid()
+    {
+        var accountId = await ProvisionAccount("test@example.com", "ValidPassword123");
+        var (session, refreshCookie) = await CreateSession(accountId);
+        var tenantId = new TenantId(1);
+
+        // Create active membership
+        await using var tx = await _context.Database.BeginTransactionAsync();
+        await _context.SetTenantContextAsync(tenantId);
+        var membership = TenantMembership.Invite(tenantId, accountId);
+        membership.Activate();
+        _context.TenantMemberships.Add(membership);
+        await _context.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        // Parse and rotate the token
+        var parts = refreshCookie.Split('.');
+        var tokenId = Guid.Parse(parts[0]);
+
+        await using (var ctx2 = PostgresFixture.CreateContext(await _fixture.RuntimeConnectionStringAsync()))
+        {
+            await ctx2.SetAccountContextAsync(accountId);
+            var now = _fixture.TimeProvider.GetUtcNow();
+
+            var affected = await ctx2.RefreshTokens
+                .Where(t => t.Id == tokenId && t.RotatedAt == null)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(t => t.RotatedAt, now)
+                    .SetProperty(t => t.ReplacedById, Guid.NewGuid()));
+
+            Assert.Equal(1, affected);
+        }
+
+        var handler = new SelectTenantHandler(
+            _context,
+            new SessionOptions { PlatformIssuer = "https://platform.example.com" },
+            new AuthEventWriter(_context),
+            _fixture.TimeProvider);
+
+        var result = await handler.HandleAsync(
+            new SelectTenantCommand(refreshCookie, tenantId));
+
+        Assert.Equal(TenantSelectionStatus.SessionInvalid, result.Status);
     }
 
     [Fact]
