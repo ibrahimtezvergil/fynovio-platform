@@ -25,8 +25,9 @@ npm run dev      # http://localhost:5173
 npm run build    # tsc -b && vite build
 ```
 
-Login is mocked: any valid e-mail and an 8+ character password signs you in.
-The form is pre-filled.
+Sign-in is real: start the API first (see the repository README, "Running the API locally") — the dev
+server proxies `/api/*` to `http://localhost:5208` — then sign in with a seeded account such as
+`single@fynovio.local`. Deals, calendar and the demo pages are still mocked (MSW).
 
 ## Folder layout
 
@@ -122,7 +123,7 @@ Dark theme keys off the `.dark` class on `<html>`, written by `applyTheme()` in
 1. Set `VITE_API_URL` (see `.env.example`).
 2. Replace the mock `queryFn` in `src/features/*/api.ts` with an `apiClient` call —
    `endpoints` in `src/api/endpoints.ts` already holds the paths.
-3. Swap the mock in `useAuthStore.login` for `POST /auth/login` and feed the real
-   token to `setAuthToken()`.
+3. Authentication needs no swap: `src/lib/auth/` already talks to `/auth/*` (memory-only access token,
+   HttpOnly refresh cookie).
 
 Nothing else in the tree needs to change.
