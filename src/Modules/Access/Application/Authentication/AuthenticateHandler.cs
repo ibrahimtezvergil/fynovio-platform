@@ -58,7 +58,7 @@ public sealed class AuthenticateHandler
                 "login_failed",
                 "unknown_user",
                 now,
-                correlationId: GetCorrelationId(),
+                correlationId: command.CorrelationId,
                 cancellationToken: cancellationToken);
             return new AuthenticateResult(AuthenticationStatus.InvalidCredentials);
         }
@@ -72,7 +72,7 @@ public sealed class AuthenticateHandler
                 "account_locked",
                 now,
                 credential.AccountId,
-                correlationId: GetCorrelationId(),
+                correlationId: command.CorrelationId,
                 cancellationToken: cancellationToken);
             return new AuthenticateResult(AuthenticationStatus.InvalidCredentials);
         }
@@ -92,7 +92,7 @@ public sealed class AuthenticateHandler
                 now,
                 credential.AccountId,
                 detail: new() { { "attemptCount", credential.FailedAttempts } },
-                correlationId: GetCorrelationId(),
+                correlationId: command.CorrelationId,
                 cancellationToken: cancellationToken);
 
             return new AuthenticateResult(AuthenticationStatus.InvalidCredentials);
@@ -177,7 +177,7 @@ public sealed class AuthenticateHandler
             now,
             account.Id,
             sessionId: session.Id,
-            correlationId: GetCorrelationId(),
+            correlationId: command.CorrelationId,
             cancellationToken: cancellationToken);
 
         var refreshCookieValue = $"{refreshToken.Id}.{tokenSecret}";
@@ -192,11 +192,5 @@ public sealed class AuthenticateHandler
             refreshCookieValue,
             session.Id,
             externalIdentity.Principal);
-    }
-
-    private static string? GetCorrelationId()
-    {
-        // TODO: Extract from HTTP context in Host
-        return null;
     }
 }

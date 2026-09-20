@@ -3,7 +3,7 @@ using Contracts;
 namespace Access.Application.Authentication;
 
 /// <summary>Refresh an authentication session using the refresh token cookie value.</summary>
-public sealed record RefreshSessionCommand(string CookieValue);
+public sealed record RefreshSessionCommand(string CookieValue, string? CorrelationId = null);
 
 public enum RefreshResult
 {

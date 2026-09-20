@@ -3,7 +3,7 @@ using Contracts;
 namespace Access.Application.Authentication;
 
 /// <summary>Select an active tenant for the session (via refresh cookie).</summary>
-public sealed record SelectTenantCommand(string CookieValue, TenantId TenantId);
+public sealed record SelectTenantCommand(string CookieValue, TenantId TenantId, string? CorrelationId = null);
 
 public enum TenantSelectionStatus
 {

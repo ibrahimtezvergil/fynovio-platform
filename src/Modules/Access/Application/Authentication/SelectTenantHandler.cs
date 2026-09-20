@@ -76,7 +76,7 @@ public sealed class SelectTenantHandler
                 now,
                 session.AccountId,
                 sessionId: session.Id,
-                correlationId: GetCorrelationId(),
+                correlationId: command.CorrelationId,
                 cancellationToken: cancellationToken);
 
             return new SelectTenantResult(TenantSelectionStatus.TenantNotPermitted);
@@ -100,7 +100,7 @@ public sealed class SelectTenantHandler
             session.AccountId,
             command.TenantId.Value,
             session.Id,
-            correlationId: GetCorrelationId(),
+            correlationId: command.CorrelationId,
             cancellationToken: cancellationToken);
 
         return new SelectTenantResult(
@@ -108,10 +108,5 @@ public sealed class SelectTenantHandler
             command.TenantId.Value,
             null, // AccessToken issued by Host
             session.Id);
-    }
-
-    private static string? GetCorrelationId()
-    {
-        return null;
     }
 }

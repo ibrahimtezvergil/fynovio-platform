@@ -18,7 +18,7 @@ public sealed class LogoutHandler
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
-    public async Task HandleAsync(string cookieValue, CancellationToken cancellationToken = default)
+    public async Task HandleAsync(string cookieValue, string? correlationId = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(cookieValue))
             return;
@@ -49,12 +49,7 @@ public sealed class LogoutHandler
             now,
             session.AccountId,
             sessionId: session.Id,
-            correlationId: GetCorrelationId(),
+            correlationId: correlationId,
             cancellationToken: cancellationToken);
-    }
-
-    private static string? GetCorrelationId()
-    {
-        return null;
     }
 }

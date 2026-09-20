@@ -93,7 +93,7 @@ public sealed class RefreshSessionHandler
                     now,
                     session.AccountId,
                     sessionId: session.Id,
-                    correlationId: GetCorrelationId(),
+                    correlationId: command.CorrelationId,
                     cancellationToken: cancellationToken);
 
                 return new RefreshSessionResult(RefreshResult.SessionInvalid);
@@ -186,7 +186,7 @@ public sealed class RefreshSessionHandler
             now,
             account.Id,
             sessionId: session.Id,
-            correlationId: GetCorrelationId(),
+            correlationId: command.CorrelationId,
             cancellationToken: cancellationToken);
 
         var newRefreshCookieValue = $"{newToken.Id}.{newTokenSecret}";
@@ -201,11 +201,5 @@ public sealed class RefreshSessionHandler
             newRefreshCookieValue,
             session.Id,
             externalIdentity.Principal);
-    }
-
-    private static string? GetCorrelationId()
-    {
-        // TODO: Extract from HTTP context
-        return null;
     }
 }
