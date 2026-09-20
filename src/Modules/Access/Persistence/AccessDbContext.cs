@@ -36,6 +36,7 @@ public sealed class AccessDbContext : DbContext
     public DbSet<RolePermissionSet> RolePermissionSets => Set<RolePermissionSet>();
     public DbSet<RoleAssignment> RoleAssignments => Set<RoleAssignment>();
     public DbSet<TenantAccessState> TenantAccessStates => Set<TenantAccessState>();
+    public DbSet<TenantModuleEnablement> TenantModuleEnablements => Set<TenantModuleEnablement>();
     public DbSet<Access.Outbox.OutboxMessage> OutboxMessages => Set<Access.Outbox.OutboxMessage>();
     public DbSet<Access.Evidence.EvidenceRecord> EvidenceRecords => Set<Access.Evidence.EvidenceRecord>();
     public DbSet<Access.Idempotency.IdempotencyRecord> IdempotencyRecords => Set<Access.Idempotency.IdempotencyRecord>();

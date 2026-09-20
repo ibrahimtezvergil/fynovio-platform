@@ -12,8 +12,10 @@ namespace Access.Application;
 /// authorization-gated (round 3's "no silent DB update" principle still applies).</summary>
 public sealed class BootstrapTenantAccessHandler(AccessDbContext context)
 {
-    private const string TenantAdministratorRoleKey = "tenant_administrator";
+    internal const string TenantAdministratorRoleKey = "tenant_administrator";
     private const string TenantAdministratorPermissionSetKey = "tenant_administration";
+    private const string AccessTemplateModuleKey = "access";
+    private const int AccessTemplateVersion = 1;
 
     public async Task HandleAsync(BootstrapTenantAccessCommand command, CancellationToken cancellationToken = default)
     {
@@ -29,12 +31,16 @@ public sealed class BootstrapTenantAccessHandler(AccessDbContext context)
             .SingleOrDefaultAsync(cancellationToken)
             ?? throw new InvalidOperationException("Tenant administrator principal must have a linked Account/ExternalIdentity before bootstrap.");
 
-        var permissionSet = PermissionSet.Create(command.TenantId, TenantAdministratorPermissionSetKey, "Tenant Administration", PermissionSet.OriginSystemTemplate);
+        var permissionSet = PermissionSet.Create(
+            command.TenantId, TenantAdministratorPermissionSetKey, "Tenant Administration", PermissionSet.OriginSystemTemplate,
+            AccessTemplateModuleKey, AccessTemplateVersion);
         foreach (var descriptor in AccessActionCatalog.All)
             permissionSet.Grant(descriptor.ActionKey);
         context.PermissionSets.Add(permissionSet);
 
-        var role = Role.Create(command.TenantId, TenantAdministratorRoleKey, "Tenant Administrator", Role.OriginSystemTemplate);
+        var role = Role.Create(
+            command.TenantId, TenantAdministratorRoleKey, "Tenant Administrator", Role.OriginSystemTemplate,
+            AccessTemplateModuleKey, AccessTemplateVersion);
         context.Roles.Add(role);
         await context.SaveChangesAsync(cancellationToken); // assigns Id to permissionSet/role before the join row
 

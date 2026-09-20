@@ -13,6 +13,7 @@ public sealed class RoleAssignment : IHasRowVersion
 {
     public const string SourceManual = "manual";
     public const string SourceBootstrap = "bootstrap";
+    public const string SourceModuleEnablement = "module_enablement";
 
     public long Id { get; private set; }
     public TenantId TenantId { get; private set; }
@@ -37,8 +38,8 @@ public sealed class RoleAssignment : IHasRowVersion
         string? reason = null,
         DateTimeOffset? validFrom = null)
     {
-        if (source is not (SourceManual or SourceBootstrap))
-            throw new ArgumentException("Source must be 'manual' or 'bootstrap'.", nameof(source));
+        if (source is not (SourceManual or SourceBootstrap or SourceModuleEnablement))
+            throw new ArgumentException("Source must be 'manual', 'bootstrap' or 'module_enablement'.", nameof(source));
 
         return new RoleAssignment
         {

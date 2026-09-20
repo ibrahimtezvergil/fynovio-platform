@@ -20,6 +20,7 @@ public sealed class PermissionSetConfiguration : IEntityTypeConfiguration<Permis
         builder.Property(p => p.Key).IsRequired();
         builder.Property(p => p.Name).IsRequired();
         builder.Property(p => p.Origin).HasMaxLength(20).IsRequired();
+        builder.Property(p => p.OriginModuleKey).HasMaxLength(64);
 
         // Composite FK target for permission_set_items and role_permission_sets.
         builder.HasIndex(p => new { p.TenantId, p.Id }).IsUnique();
@@ -34,5 +35,10 @@ public sealed class PermissionSetConfiguration : IEntityTypeConfiguration<Permis
         builder.ToTable(t => t.HasCheckConstraint(
             "ck_permission_sets_origin",
             "origin IN ('tenant','system_template')"));
+        builder.ToTable(t => t.HasCheckConstraint(
+            "ck_permission_sets_provenance",
+            "(origin_module_key IS NULL) = (origin_version IS NULL) "
+            + "AND (origin_module_key IS NULL OR origin = 'system_template') "
+            + "AND (origin_version IS NULL OR origin_version >= 1)"));
     }
 }
