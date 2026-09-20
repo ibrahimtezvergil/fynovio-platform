@@ -58,4 +58,5 @@ Only the gaps that close **without a new architecture decision**; one commit eac
 - [x] G3 P2a party creation endpoint + `crm.reference.party.create`
   → Commit: `939c1d9` "feat(crm,masterdata): register a customer over HTTP (crm.reference.party.create)"
   Note: MasterData gained `IPartyRegistration` (Contracts) as its write surface — CRM cannot reference MasterData. Field-length limits (name/surname 200, phone 50, e-mail 320) are enforced in the CRM handler, after authorization.
-- [ ] G4 docs: README, AGENTS status, final report (P1/P2 → closed), schema note
+- [x] G4 docs: README, AGENTS status, final report (P1/P2 → closed), schema note
+  → Commit: `75a43e0` "docs: Phase 2.6 gap closure — pipeline provisioning, party creation, party validation"
