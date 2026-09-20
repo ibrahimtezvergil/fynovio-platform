@@ -127,6 +127,45 @@ export ConnectionStrings__MasterData="Host=localhost;Database=fynovio_platform;U
 
 `ConnectionStrings__Crm`/`ConnectionStrings__MasterData` are what `Host` reads first; `FYNOVIO_CRM_CONNECTION_STRING`/`FYNOVIO_MASTERDATA_CONNECTION_STRING` are the fallbacks, and are also what `dotnet ef` uses — keep those on the `postgres` role, since migrations need it.
 
+## Running the API locally (and signing in)
+
+Requires the local PostgreSQL from above. Development only — none of this is a production procedure.
+
+```bash
+# 1. Migrations for every module, as the migration role (postgres)
+dotnet tool restore
+for module in CRM MasterData Access; do
+  dotnet ef database update \
+    --project src/Modules/$module/$module.csproj \
+    --startup-project src/Modules/$module/$module.csproj
+done
+
+# 2. Runtime role. appsettings.Development.json expects the password `runtime`
+sed "s/change-me/runtime/" scripts/create-runtime-role.sql \
+  | psql -h localhost -U postgres -d fynovio_platform
+
+# 3. Start the API (the launch profile also switches the development seed on)
+dotnet run --project src/Host --launch-profile http     # http://localhost:5208
+```
+
+On start the API seeds three sign-in identities (idempotent; Development only, and only via the `dotnet run` launch profiles — `DevSeed:Enabled` is `false` in `appsettings.Development.json` so test hosts are unaffected). The shared password is `DevSeed:Password` in `src/Host/appsettings.Development.json`.
+
+| Account | State it exercises |
+|---|---|
+| `admin@fynovio.local` | tenant administrator of tenants 1 and 2 → tenant selection, then full CRM access |
+| `single@fynovio.local` | member of tenant 1 only, no grants → signed in directly, CRM calls are `403` |
+| `nomember@fynovio.local` | no membership → the `no_membership` state |
+
+Quick check without the frontend (note the required CSRF header; the refresh cookie is `HttpOnly`):
+
+```bash
+curl -i -X POST http://localhost:5208/auth/login \
+  -H 'Content-Type: application/json' -H 'X-Requested-With: fynovio' \
+  -d '{"email":"single@fynovio.local","password":"<DevSeed:Password>"}'
+```
+
+Production has no seed and no default credential (the one-time bootstrap command arrives with Phase 2.5A slice S3). Authentication settings live under `Authentication:*` in `appsettings*.json`; the signing key, allowed origins and public base URL must be supplied per environment.
+
 ## Getting started
 
 ```bash

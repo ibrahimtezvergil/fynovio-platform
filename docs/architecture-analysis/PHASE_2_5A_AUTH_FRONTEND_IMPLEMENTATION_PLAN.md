@@ -226,7 +226,10 @@ Session store state machine; bootstrap refresh single-flight; interceptor 401→
 
 Checkboxes are ticked only after the corresponding commit exists (repo standard; see CLAUDE.md "Plan checkbox tracking").
 
-- [ ] **S1 — Backend auth core.** Migration + entities + password hashing + JWT issuer + login/refresh/logout/`/me`/tenant select + cookie + CSRF/Origin guard + CORS + rate limiting + lockout + auth events + `sid` revocation check + dev seed + production bootstrap command + backend tests (unit, integration, HTTP).
+- [x] **S1 — Backend auth core.** Migration + entities + password hashing + JWT issuer + login/refresh/logout/`/me`/tenant select + cookie + CSRF/Origin guard + CORS + rate limiting + lockout + auth events + `sid` revocation check + dev seed + production bootstrap command + backend tests (unit, integration, HTTP).
+  → Commits: `92549c9`…`d6ccfbf` (Access foundation, review fixes, tests), `b66bc87`…`a157940` (Host infrastructure), `8adc07a`…`289d502` (endpoints, rate limits, HTTP suite), dev seed (see `git log`).
+  Deviations from this plan, all deliberate: the production **bootstrap command moves to S3** (its one-time setup token needs `account_tokens`); `/auth/me` has **no `capabilities` yet** (needs the `identity.membership.invite` action, S3); `tenants/select` is authorised through the account self-view policy (`app.account_id`) instead of a tenant-scoped read; per-client IP rate limiting is in-memory and therefore **per instance** (multi-instance deployments need a shared store).
+  Verified at this point: Access.Tests 149, CRM.Tests 135, MasterData.Tests 30, Host.Tests 105 (incl. 7 dev-seed tests), `dotnet format` clean; mutation checks recorded per area in the commit history.
 - [ ] **S2 — Frontend auth core.** `lib/auth` session module, API client 401/403/refresh, guards, LoginPage/TenantSelector/TenantSwitcher/UserMenu logout, legacy storage purge, Vite proxy, MSW change, `NoAccessPage`, tests.
 - [ ] **S3 — Backend invitation & password lifecycle.** `account_tokens`, `IEmailSender` + dev mailbox, invitation create/validate/accept, forgot/reset/change, registration flag/endpoint, extra rate limits, tests.
 - [ ] **S4 — Frontend invitation & password lifecycle.** Accept-invite, forgot, reset, change-password, registration-disabled screens, tests.
