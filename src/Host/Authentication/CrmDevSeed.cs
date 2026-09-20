@@ -1,22 +1,20 @@
 using Access.Domain.Authorization;
 using Access.Persistence;
 using Contracts;
-using CRM.Application;
 using CRM.Domain;
 using CRM.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Host.Authentication;
 
-/// <summary>Development-only CRM data for the seeded identities. Without it no seeded user holds any
-/// `crm.*` grant (the tenant bootstrap grants only Access's own catalog) and no tenant has a pipeline,
-/// so the Opportunity API cannot be exercised from a browser. Called by <see cref="DevSeeder"/>, which
-/// already refuses to run outside Development. Idempotent: each piece is skipped once it exists.
-/// The production grant path is a separate, undecided question (Phase 2.5B plan, OD2).</summary>
+/// <summary>Development-only CRM data that has no production path yet: extra role assignments for the seeded
+/// identities and the sales pipeline. The CRM ROLES themselves are no longer seeded here — the dev seed
+/// enables the module through the same `EnableTenantModuleHandler` an operator uses in production
+/// (`enable-tenant-module`), so dev and production share one grant mechanism. A production tenant still has
+/// no pipeline provisioning (Phase 2.6 plan, P1). Called by <see cref="DevSeeder"/>, which already refuses to
+/// run outside Development. Idempotent: each piece is skipped once it exists.</summary>
 public static class CrmDevSeed
 {
-    public const string ManagerRoleKey = "crm_manager";
-    public const string ViewerRoleKey = "crm_viewer";
     public const string PipelineName = "Sales pipeline";
 
     private const string SeedReason = "Development seed";
@@ -26,79 +24,34 @@ public static class CrmDevSeed
     public static readonly IReadOnlyList<string> ActiveStageNames = ["Qualification", "Proposal", "Negotiation"];
     public const string RetiredStageName = "Legacy stage";
 
-    public static async Task EnsureRolesAsync(
+    /// <summary>Assigns an already-enabled template role to a dev identity. Uses the same `manual` assignment
+    /// source and revision bump as `GrantRoleAssignmentHandler`; skipped when the assignment exists.</summary>
+    public static async Task EnsureAssignmentAsync(
         AccessDbContext context,
         TenantId tenantId,
+        string roleKey,
+        long assigneeAccountId,
         long grantorAccountId,
-        long managerAccountId,
-        long? viewerAccountId,
         CancellationToken cancellationToken)
     {
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         await context.SetTenantContextAsync(tenantId, cancellationToken);
 
-        var revisionChanged = false;
-
-        var managerKeys = CrmActionCatalog.All.Select(a => a.ActionKey).ToList();
-        revisionChanged |= await EnsureRoleAsync(context, tenantId, ManagerRoleKey, "CRM Manager", managerKeys, managerAccountId, grantorAccountId, cancellationToken);
-
-        if (viewerAccountId is { } viewer)
-        {
-            string[] viewerKeys = ["crm.opportunity.read", "crm.opportunity.list"];
-            revisionChanged |= await EnsureRoleAsync(context, tenantId, ViewerRoleKey, "CRM Viewer", viewerKeys, viewer, grantorAccountId, cancellationToken);
-        }
-
-        if (revisionChanged)
-        {
-            var state = await context.TenantAccessStates.SingleAsync(s => s.TenantId == tenantId, cancellationToken);
-            state.BumpRevision();
-            await context.SaveChangesAsync(cancellationToken);
-        }
-
-        await transaction.CommitAsync(cancellationToken);
-    }
-
-    private static async Task<bool> EnsureRoleAsync(
-        AccessDbContext context,
-        TenantId tenantId,
-        string roleKey,
-        string roleName,
-        IReadOnlyList<string> actionKeys,
-        long assigneeAccountId,
-        long grantorAccountId,
-        CancellationToken cancellationToken)
-    {
         var role = await context.Roles.SingleOrDefaultAsync(r => r.TenantId == tenantId && r.Key == roleKey, cancellationToken);
-        var changed = false;
-
         if (role is null)
-        {
-            var permissionSet = PermissionSet.Create(tenantId, roleKey, roleName, PermissionSet.OriginTenant);
-            foreach (var actionKey in actionKeys)
-                permissionSet.Grant(actionKey);
-            context.PermissionSets.Add(permissionSet);
-
-            role = Role.Create(tenantId, roleKey, roleName, Role.OriginTenant);
-            context.Roles.Add(role);
-            await context.SaveChangesAsync(cancellationToken); // assigns ids for the join row
-
-            context.RolePermissionSets.Add(RolePermissionSet.Create(tenantId, role.Id, permissionSet.Id));
-            changed = true;
-        }
+            return; // module not enabled for this tenant (e.g. legacy dev database) — the caller already warned
 
         var alreadyAssigned = await context.RoleAssignments.AnyAsync(
             a => a.TenantId == tenantId && a.RoleId == role.Id && a.AccountId == assigneeAccountId, cancellationToken);
-        if (!alreadyAssigned)
-        {
-            context.RoleAssignments.Add(RoleAssignment.Grant(
-                tenantId, assigneeAccountId, role.Id, grantorAccountId, RoleAssignment.SourceManual, SeedReason));
-            changed = true;
-        }
+        if (alreadyAssigned)
+            return;
 
-        if (changed)
-            await context.SaveChangesAsync(cancellationToken);
-
-        return changed;
+        context.RoleAssignments.Add(RoleAssignment.Grant(
+            tenantId, assigneeAccountId, role.Id, grantorAccountId, RoleAssignment.SourceManual, SeedReason));
+        var state = await context.TenantAccessStates.SingleAsync(s => s.TenantId == tenantId, cancellationToken);
+        state.BumpRevision();
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     public static async Task EnsurePipelineAsync(CrmDbContext context, TenantId tenantId, CancellationToken cancellationToken)

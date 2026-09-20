@@ -28,7 +28,8 @@ Owner scope (2026-09-20): OD2 → OD1 → Party search (G2) → Product search (
 - P3 `AccessActionCatalogSeeder` deprecates keys missing from its manifest — the Host union is now built from one place and covered by a test.
 
 ## Steps (checkbox ticked only after its commit; see CLAUDE.md)
-- [ ] T1 Contracts manifest types + Access provenance columns + `tenant_module_enablements` (+RLS migration) + `EnableTenantModuleHandler` + bootstrap provenance; Access.Tests
+- [x] T1 Contracts manifest types + Access provenance columns + `tenant_module_enablements` (+RLS migration) + `EnableTenantModuleHandler` + bootstrap provenance; Access.Tests
+  → Commit: `e01c3b7` "feat(access): versioned module capability templates and explicit tenant module enablement"
 - [ ] T2 CRM manifest/`CrmActionKeys`, Host module composition (single union for the action seeder), operator command, DevSeeder switched to the general path (`CrmDevSeed` roles removed); tests
 - [ ] T3 OD1 directory + CRM assignable-principals query/endpoint + Reassign target validation; tests
 - [ ] T4 G2 party search (Contracts, MasterData, CRM handler, endpoint, dev parties); tests

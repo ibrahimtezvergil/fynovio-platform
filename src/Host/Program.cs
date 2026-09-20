@@ -10,6 +10,7 @@ using Host.Authentication;
 using Host.Bootstrap;
 using Host.Email;
 using Host.Endpoints;
+using Host.Modules;
 using MasterData.Application;
 using MasterData.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -138,6 +139,8 @@ builder.Services.AddScoped<SelectTenantHandler>();
 builder.Services.AddScoped<GetSessionOverviewHandler>();
 builder.Services.AddScoped<ProvisionPasswordAccountHandler>();
 builder.Services.AddScoped<BootstrapTenantAccessHandler>();
+builder.Services.AddSingleton(new ModuleCapabilityCatalog(PlatformModules.CapabilityManifests));
+builder.Services.AddScoped<EnableTenantModuleHandler>();
 
 // Invitations, password lifecycle, registration, bootstrap and capabilities
 builder.Services.AddScoped<AccountTokenService>();
@@ -291,14 +294,14 @@ if (!app.Environment.IsDevelopment())
 using (var scope = app.Services.CreateScope())
 {
     var accessDb = scope.ServiceProvider.GetRequiredService<AccessDbContext>();
-    var manifest = AccessActionCatalog.All
-        .Concat(CrmActionCatalog.All.Select(d => new ActionRegistryDescriptor(d.ActionKey, "CRM", d.ResourceType, d.RiskClass)));
-    await AccessActionCatalogSeeder.EnsureSeededAsync(accessDb, manifest);
+    await AccessActionCatalogSeeder.EnsureSeededAsync(accessDb, PlatformModules.ActionRegistry);
 }
 
 // Operator command: runs instead of the web server (never over HTTP), after the action registry is seeded.
 if (BootstrapCommand.IsRequested(args))
     return await BootstrapCommand.RunAsync(app.Services, app.Configuration, args, Console.Out, Console.Error);
+if (EnableModuleCommand.IsRequested(args))
+    return await EnableModuleCommand.RunAsync(app.Services, app.Configuration, args, Console.Out, Console.Error);
 
 if (!app.Environment.IsDevelopment() && !emailOptions.Smtp.Enabled)
     app.Logger.LogWarning("Email:Smtp:Enabled is false: invitation and password-reset e-mails will not be delivered.");

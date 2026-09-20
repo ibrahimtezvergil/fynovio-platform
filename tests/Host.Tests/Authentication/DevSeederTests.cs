@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using CRM.Application;
 using Host.Authentication;
 using Host.Tests.Fixtures;
 using Npgsql;
@@ -214,6 +215,24 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
         Assert.Empty(actions.GetProperty("allowedTargetStageIds").EnumerateArray());
     }
 
+    [Fact]
+    public async Task Sales_rep_works_opportunities_but_cannot_reassign()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+
+        var rep = await LoginAsync(client, DevSeeder.SalesRepEmail);
+        var repToken = rep.GetProperty("accessToken").GetString()!;
+        var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", repToken, new { partyId = 1003, currency = "EUR", estimatedAmount = 5 }));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var opportunityId = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("opportunityId").GetInt64();
+
+        var actions = await (await client.SendAsync(Authorized(HttpMethod.Get, $"/opportunities/{opportunityId}/actions", repToken))).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(actions.GetProperty("canOpen").GetBoolean());
+        Assert.True(actions.GetProperty("canLose").GetBoolean());
+        Assert.False(actions.GetProperty("canReassign").GetBoolean());
+    }
+
     private async Task<long> CountAsync(string sql)
     {
         await using var connection = new NpgsqlConnection(_fixture.AdminConnectionString);
@@ -234,8 +253,14 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
         Assert.Equal(1, await CredentialCountAsync(DevSeeder.NoMembershipEmail));
         Assert.Equal(1, await CredentialCountAsync(DevSeeder.ViewerEmail));
         Assert.Equal(2, await CountAsync("SELECT count(*) FROM crm.pipeline_definitions"));
-        Assert.Equal(2, await CountAsync($"SELECT count(*) FROM access.roles WHERE key = '{CrmDevSeed.ManagerRoleKey}'"));
-        Assert.Equal(1, await CountAsync($"SELECT count(*) FROM access.roles WHERE key = '{CrmDevSeed.ViewerRoleKey}'"));
+        Assert.Equal(1, await CredentialCountAsync(DevSeeder.SalesRepEmail));
+        // The CRM roles come from the production enablement path: one template copy per tenant, one assignment per
+        // administrator, and re-seeding neither duplicates a copy nor re-grants.
+        Assert.Equal(2, await CountAsync("SELECT count(*) FROM access.tenant_module_enablements WHERE module_key = 'crm'"));
+        foreach (var roleKey in new[] { CrmModuleCapabilities.ManagerRoleKey, CrmModuleCapabilities.ViewerRoleKey, CrmModuleCapabilities.SalesRepresentativeRoleKey })
+            Assert.Equal(2, await CountAsync($"SELECT count(*) FROM access.roles WHERE key = '{roleKey}' AND origin = 'system_template' AND origin_module_key = 'crm'"));
+        Assert.Equal(2, await CountAsync("SELECT count(*) FROM access.role_assignments WHERE source = 'module_enablement'"));
+        Assert.Equal(2, await CountAsync("SELECT count(*) FROM access.role_assignments WHERE source = 'manual' AND reason = 'Development seed'"));
         Assert.Equal("tenant_selection_required", (await LoginAsync(client, DevSeeder.AdminEmail)).GetProperty("status").GetString());
     }
 }

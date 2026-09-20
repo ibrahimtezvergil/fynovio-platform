@@ -1,3 +1,4 @@
+using Access.Application;
 using Access.Application.Authentication;
 using Contracts;
 using Host.Authentication;
@@ -9,7 +10,9 @@ namespace Host.Bootstrap;
 /// production path to a tenant's first administrator. It runs instead of the web server (never over HTTP),
 /// refuses unless `Bootstrap:Enabled=true` (env `Bootstrap__Enabled`) and refuses a tenant that is already
 /// bootstrapped. No default credential exists: the operator gets a single-use password-setup link, printed
-/// once to stdout and never logged, and hands it to the administrator.</summary>
+/// once to stdout and never logged, and hands it to the administrator.
+/// `--modules crm,...` additionally enables those business modules for the new tenant (see <see cref="EnableModuleCommand"/>):
+/// the modules are validated BEFORE anything is created, and enabled after the administrator exists.</summary>
 public static class BootstrapCommand
 {
     public const string Name = "bootstrap-tenant-admin";
@@ -35,16 +38,29 @@ public static class BootstrapCommand
             return NotPermitted;
         }
 
-        var options = ParseOptions(args.Skip(1).ToArray());
+        var options = CommandOptions.Parse(args.Skip(1).ToArray());
         if (!long.TryParse(options.GetValueOrDefault("tenant-id"), out var tenantId) || tenantId <= 0
             || string.IsNullOrWhiteSpace(options.GetValueOrDefault("email"))
             || string.IsNullOrWhiteSpace(options.GetValueOrDefault("display-name")))
         {
-            await error.WriteLineAsync($"Usage: {Name} --tenant-id <positive number> --email <address> --display-name <name>");
+            await error.WriteLineAsync($"Usage: {Name} --tenant-id <positive number> --email <address> --display-name <name> [--modules <key>[,<key>...]]");
             return BadArguments;
         }
 
+        var modules = options.GetValueOrDefault("modules")?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct()
+            .ToList() ?? [];
+
         await using var scope = services.CreateAsyncScope();
+        var catalog = scope.ServiceProvider.GetRequiredService<ModuleCapabilityCatalog>();
+        var unknown = modules.FirstOrDefault(m => catalog.Find(m) is null);
+        if (unknown is not null)
+        {
+            await error.WriteLineAsync($"Unknown module '{unknown}'. Known modules: {string.Join(", ", catalog.Modules.Select(m => m.ModuleKey))}.");
+            return BadArguments;
+        }
+
         var handler = scope.ServiceProvider.GetRequiredService<BootstrapTenantAdministratorHandler>();
         var result = await handler.HandleAsync(
             new BootstrapTenantAdministratorCommand(new TenantId(tenantId), options["email"], options["display-name"], Guid.NewGuid().ToString()),
@@ -60,7 +76,18 @@ public static class BootstrapCommand
                 await output.WriteLineAsync(baseUrl is null
                     ? $"  {EmailRenderer.PasswordResetPath}#token={Uri.EscapeDataString(token)}   (prefix with the application URL)"
                     : $"  {baseUrl.TrimEnd('/')}{EmailRenderer.PasswordResetPath}#token={Uri.EscapeDataString(token)}");
-                return Success;
+
+                // The link is already out: a module that fails to enable must not hide it, so the operator can
+                // fix the cause and run `enable-tenant-module` for the remainder.
+                var exitCode = Success;
+                foreach (var module in modules)
+                {
+                    var moduleCode = await EnableModuleCommand.EnableAsync(scope.ServiceProvider, new TenantId(tenantId), module, output, error, cancellationToken);
+                    if (moduleCode != Success && exitCode == Success)
+                        exitCode = moduleCode;
+                }
+
+                return exitCode;
 
             case BootstrapTenantAdministratorStatus.AlreadyBootstrapped:
                 await error.WriteLineAsync($"Refused: tenant {tenantId} is already bootstrapped.");
@@ -70,25 +97,5 @@ public static class BootstrapCommand
                 await error.WriteLineAsync("The e-mail address is not valid.");
                 return BadArguments;
         }
-    }
-
-    /// <summary>`--key value` and `--key=value`.</summary>
-    private static Dictionary<string, string> ParseOptions(string[] args)
-    {
-        var parsed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        for (var i = 0; i < args.Length; i++)
-        {
-            if (!args[i].StartsWith("--", StringComparison.Ordinal))
-                continue;
-
-            var key = args[i][2..];
-            var equals = key.IndexOf('=');
-            if (equals >= 0)
-                parsed[key[..equals]] = key[(equals + 1)..];
-            else if (i + 1 < args.Length && !args[i + 1].StartsWith("--", StringComparison.Ordinal))
-                parsed[key] = args[++i];
-        }
-
-        return parsed;
     }
 }
