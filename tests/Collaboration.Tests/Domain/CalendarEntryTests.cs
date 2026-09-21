@@ -42,29 +42,11 @@ public sealed class CalendarEntryCreationTests
         Assert.Equal(end, entry.EndDate);
     }
 
+    // PrincipalRef's constructor already rejects blanks; only default(PrincipalRef) can reach the aggregate with null parts.
     [Fact]
-    public void Create_rejects_blank_owner_issuer()
-    {
-        var owner = new PrincipalRef("", "subject");
+    public void Create_rejects_default_owner() =>
         Assert.Throws<ArgumentException>(() =>
-            CalendarEntry.Create(Tenant, owner, "Title", null, "#123456", false, UtcNow, null, null, null, null));
-    }
-
-    [Fact]
-    public void Create_rejects_blank_owner_subject()
-    {
-        var owner = new PrincipalRef("issuer", "");
-        Assert.Throws<ArgumentException>(() =>
-            CalendarEntry.Create(Tenant, owner, "Title", null, "#123456", false, UtcNow, null, null, null, null));
-    }
-
-    [Fact]
-    public void Create_rejects_whitespace_owner_issuer()
-    {
-        var owner = new PrincipalRef("   ", "subject");
-        Assert.Throws<ArgumentException>(() =>
-            CalendarEntry.Create(Tenant, owner, "Title", null, "#123456", false, UtcNow, null, null, null, null));
-    }
+            CalendarEntry.Create(Tenant, default, "Title", null, "#123456", false, UtcNow, null, null, null, null));
 
     [Theory]
     [InlineData("")]
