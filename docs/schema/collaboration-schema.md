@@ -142,6 +142,15 @@ outbox shape. Payloads are deliberately thin: entry id, owner principal, timing 
 link ref only; never title, notes, or a hydrated target label. `processed_at IS NULL`
 has a partial index. v1 has no Worker dispatcher.
 
+Event types (all `enterprise.collaboration.calendar-entry.<verb>.v1`, subject
+`calendar-entries/{id}`, source `/enterprise/collaboration`):
+
+- `created` and `updated` carry the payload above; `aggregate_version` is the entry's
+  `row_version` after the change.
+- `deleted` carries only entry id, owner principal and `version`; there is no
+  timing or link ref because the entry no longer exists. `aggregate_version` and
+  `version` are the version the deletion took (the superseded `row_version` + 1).
+
 ## RLS and runtime grants
 
 The generated initial migration creates the model. A generated otherwise-empty RLS
