@@ -5,6 +5,9 @@ import { fieldsAreOrdered } from './time'
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/
+// The server's title rule: no control character (C0, DEL, C1 incl. NEL) and neither Unicode line/paragraph separator.
+// eslint-disable-next-line no-control-regex
+const TITLE_FORBIDDEN = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/
 
 /**
  * The create/edit form, mirroring the server's validation so a mistake is caught before the request (the server still
@@ -22,7 +25,7 @@ export const entryFormSchema = (t: TFunction<'calendar'>) =>
             .string()
             .min(1, t('form.title.required'))
             .max(TITLE_MAX, t('form.title.tooLong', { max: TITLE_MAX }))
-            .refine((value) => !/[\r\n]/.test(value), t('form.title.singleLine')),
+            .refine((value) => !TITLE_FORBIDDEN.test(value), t('form.title.singleLine')),
         ),
       notes: z.string().max(NOTES_MAX, t('form.notes.tooLong', { max: NOTES_MAX })),
       color: z.string().regex(COLOR_PATTERN, t('form.color.invalid')),

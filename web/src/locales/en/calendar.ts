@@ -44,7 +44,7 @@ export default {
       label: 'Title',
       required: 'A title is required.',
       tooLong: 'The title can be at most {{max}} characters.',
-      singleLine: 'The title must be a single line.',
+      singleLine: 'The title must be a single line without control characters.',
     },
     allDay: 'All day',
     startDate: 'Start date',

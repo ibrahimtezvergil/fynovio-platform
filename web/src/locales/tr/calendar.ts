@@ -44,7 +44,7 @@ export default {
       label: 'Başlık',
       required: 'Başlık gerekli.',
       tooLong: 'Başlık en fazla {{max}} karakter olabilir.',
-      singleLine: 'Başlık tek satır olmalı.',
+      singleLine: 'Başlık tek satır olmalı ve kontrol karakteri içermemeli.',
     },
     allDay: 'Tüm gün',
     startDate: 'Başlangıç günü',

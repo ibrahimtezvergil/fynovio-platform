@@ -23,6 +23,26 @@ describe('entryFormSchema', () => {
     expect(issues({ title: 'a\nb' })[0][0]).toBe('title')
   })
 
+  it.each([
+    ['a tab', 'a\tb'],
+    ['a vertical tab', 'a\vb'],
+    ['a form feed', 'a\fb'],
+    ['NUL', 'a\u0000b'],
+    ['ESC', 'a\u001bb'],
+    ['DEL', 'a\u007fb'],
+    ['NEL', 'a\u0085b'],
+    ['a C1 control', 'a\u009fb'],
+    ['a line separator', 'a\u2028b'],
+    ['a paragraph separator', 'a\u2029b'],
+  ])('rejects a title containing %s, as the server does', (_name, title) => {
+    expect(issues({ title })).toEqual([['title', 'The title must be a single line without control characters.']])
+  })
+
+  it('still accepts non-Latin text, emoji and a no-break space in a title', () => {
+    expect(schema.safeParse({ ...valid, title: 'Toplantı — Şirket 会議 😀' }).success).toBe(true)
+    expect(schema.safeParse({ ...valid, title: 'a\u00a0b' }).success).toBe(true)
+  })
+
   it('caps notes at 4000 characters', () => {
     expect(schema.safeParse({ ...valid, notes: 'x'.repeat(4000) }).success).toBe(true)
     expect(issues({ notes: 'x'.repeat(4001) })[0][0]).toBe('notes')
