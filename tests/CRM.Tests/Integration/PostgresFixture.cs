@@ -1,4 +1,5 @@
 using Access.Persistence;
+using Collaboration.Persistence;
 using CRM.Persistence;
 using MasterData.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,9 @@ public sealed class PostgresFixture : IAsyncLifetime
                 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA access TO fynovio_app;
                 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA access TO fynovio_app;
                 REVOKE UPDATE, DELETE ON access.evidence_records FROM fynovio_app;
+                GRANT USAGE ON SCHEMA collaboration TO fynovio_app;
+                GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA collaboration TO fynovio_app;
+                GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA collaboration TO fynovio_app;
                 """);
         }
 
@@ -78,6 +82,8 @@ public sealed class PostgresFixture : IAsyncLifetime
         await crmContext.Database.MigrateAsync();
         await using var accessContext = CreateAccessContext();
         await accessContext.Database.MigrateAsync();
+        await using var collaborationContext = CreateCollaborationContext();
+        await collaborationContext.Database.MigrateAsync();
     }
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
@@ -128,5 +134,19 @@ public sealed class PostgresFixture : IAsyncLifetime
             .Options;
 
         return new MasterDataDbContext(options);
+    }
+
+    public CollaborationDbContext CreateCollaborationContext() => CreateCollaborationContext(AdminConnectionString);
+
+    public static CollaborationDbContext CreateCollaborationContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<CollaborationDbContext>()
+            .UseNpgsql(
+                connectionString,
+                npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", CollaborationDbContext.Schema))
+            .UseSnakeCaseNamingConvention()
+            .Options;
+
+        return new CollaborationDbContext(options);
     }
 }
