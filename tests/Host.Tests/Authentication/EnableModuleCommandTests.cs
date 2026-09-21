@@ -1,8 +1,10 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using Access.Persistence;
+using Collaboration.Application;
 using Contracts;
 using Host.Bootstrap;
 using Host.Tests.Fixtures;
@@ -206,6 +208,73 @@ public sealed class EnableModuleCommandTests : IClassFixture<AuthApiFixture>
         Assert.Contains("Unknown module 'warehouse'", refused.Error);
         // Nothing was created, so the tenant can still be bootstrapped.
         Assert.Equal(BootstrapCommand.Success, (await RunBootstrapAsync(host, tenant, AuthApiFixture.NewEmail())).Code);
+    }
+
+    private static async Task CreateCalendarEntryAsync(AuthApiHost host, long tenant, PrincipalRef principal)
+    {
+        await using var scope = host.Services.CreateAsyncScope();
+        var start = DateTimeOffset.UtcNow.AddHours(1);
+        await scope.ServiceProvider.GetRequiredService<CreateCalendarEntryHandler>().HandleAsync(new CreateCalendarEntryCommand(
+            new TenantId(tenant), principal, "Planning", null, "#3366cc", AllDay: false, start, start.AddHours(1),
+            null, null, null, Guid.NewGuid().ToString(), Guid.NewGuid()));
+    }
+
+    private static async Task<int> CountCalendarEntriesAsync(AuthApiHost host, long tenant, PrincipalRef principal)
+    {
+        await using var scope = host.Services.CreateAsyncScope();
+        var entries = await scope.ServiceProvider.GetRequiredService<ListCalendarEntriesHandler>().HandleAsync(new ListCalendarEntriesQuery(
+            new TenantId(tenant), principal, DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(2), Guid.NewGuid()));
+        return entries.Count;
+    }
+
+    private static PrincipalRef PrincipalOf(string bearer)
+    {
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(bearer);
+        return new PrincipalRef(jwt.Issuer, jwt.Subject);
+    }
+
+    /// <summary>The generic enablement path covers Collaboration too: nothing about it is CRM-specific. Before the
+    /// command the administrator holds no calendar grant; after it, the same administrator keeps a private calendar.</summary>
+    [Fact]
+    public async Task Enabling_collaboration_is_what_lets_a_bootstrapped_tenant_administrator_keep_a_calendar()
+    {
+        var tenant = AuthApiFixture.NewTenantId();
+        var email = AuthApiFixture.NewEmail();
+        using var host = await _fixture.StartHostAsync(Enabled);
+        using var client = host.CreateClient();
+        var bootstrap = await RunBootstrapAsync(host, tenant, email);
+        Assert.Equal(BootstrapCommand.Success, bootstrap.Code);
+        var principal = PrincipalOf(await SignInAsync(client, bootstrap.Output, email));
+
+        await Assert.ThrowsAsync<CalendarEntryAuthorizationDeniedException>(() => CreateCalendarEntryAsync(host, tenant, principal));
+
+        var (code, output, error) = await RunEnableAsync(host, "--tenant-id", tenant.ToString(), "--module", "collaboration");
+
+        Assert.Equal(EnableModuleCommand.Success, code);
+        Assert.Empty(error);
+        Assert.Contains("Module 'collaboration' enabled", output);
+        Assert.Contains("1 administrator role assignment", output);
+        await CreateCalendarEntryAsync(host, tenant, principal);
+        Assert.Equal(1, await CountCalendarEntriesAsync(host, tenant, principal));
+    }
+
+    [Fact]
+    public async Task Bootstrap_with_modules_can_enable_collaboration_alongside_crm()
+    {
+        var tenant = AuthApiFixture.NewTenantId();
+        var email = AuthApiFixture.NewEmail();
+        using var host = await _fixture.StartHostAsync(Enabled);
+        using var client = host.CreateClient();
+
+        var (code, output, error) = await RunBootstrapAsync(host, tenant, email, "--modules", "crm,collaboration");
+
+        Assert.Equal(BootstrapCommand.Success, code);
+        Assert.Empty(error);
+        Assert.Contains("Module 'crm' enabled", output);
+        Assert.Contains("Module 'collaboration' enabled", output);
+        var principal = PrincipalOf(await SignInAsync(client, output, email));
+        await CreateCalendarEntryAsync(host, tenant, principal);
+        Assert.Equal(1, await CountCalendarEntriesAsync(host, tenant, principal));
     }
 
     private static async Task<int> CountEnablementsAsync(AccessDbContext access, long tenant)

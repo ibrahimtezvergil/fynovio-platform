@@ -2,6 +2,7 @@ using Access.Application;
 using Access.Application.Authentication;
 using Access.Domain.Identity;
 using Access.Persistence;
+using Collaboration.Application;
 using Contracts;
 using CRM.Application;
 using CRM.Persistence;
@@ -21,7 +22,7 @@ public sealed class DevSeedOptions
 
 /// <summary>Idempotent local-development data: four sign-in identities that exercise every
 /// state the login flow can end in, plus the CRM roles and pipeline the Opportunity API needs
-/// (<see cref="CrmDevSeed"/>). Production has NO seed and no default credential — the
+/// (<see cref="CrmDevSeed"/>) and the Collaboration calendar role. Production has NO seed and no default credential — the
 /// one-time bootstrap command (Phase 2.5A slice S3) is the only production path.
 /// Uses the real Access handlers, so it goes through the same RLS-bound runtime role and the
 /// same password policy as any other account.</summary>
@@ -33,7 +34,7 @@ public static class DevSeeder
     /// <summary>Tenant administrator of both tenants → the tenant-selection state.</summary>
     public const string AdminEmail = "admin@fynovio.local";
 
-    /// <summary>Active member of tenant 1 only, no grants → auto-selected tenant, CRM calls are 403.</summary>
+    /// <summary>Active member of tenant 1 only, no grants → auto-selected tenant, CRM and Collaboration calls are 403.</summary>
     public const string SingleTenantEmail = "single@fynovio.local";
 
     /// <summary>Active member of tenant 1 only, read-only CRM grants (`crm.opportunity.read`/`list`) →
@@ -124,6 +125,7 @@ public static class DevSeeder
         }
 
         await SeedCrmAsync(scope.ServiceProvider, context, platformIssuer, logger, cancellationToken);
+        await SeedCollaborationAsync(scope.ServiceProvider, context, platformIssuer, logger, cancellationToken);
 
         logger.LogInformation("Dev seed applied ({Created} new accounts). Sign-in identities: {Admin}, {Single}, {Viewer}, {SalesRep}, {NoMembership}.",
             seeded, AdminEmail, SingleTenantEmail, ViewerEmail, SalesRepEmail, NoMembershipEmail);
@@ -142,14 +144,7 @@ public static class DevSeeder
         {
             // The production mechanism, not a dev shortcut: copies the CRM template and gives the tenant
             // administrator the manager role. Idempotent (a second run reports AlreadyEnabled).
-            var enabled = await enableModule.HandleAsync(
-                new EnableTenantModuleCommand(tenant, CrmModuleCapabilities.ModuleKey, seedOperator, Guid.NewGuid()), cancellationToken);
-            if (enabled.Status == EnableTenantModuleStatus.TemplateKeyConflict)
-            {
-                logger.LogWarning(
-                    "Tenant {Tenant} already has CRM roles from an older dev seed, so the CRM template was not applied. Reset the dev database to pick it up. {Detail}",
-                    tenant.Value, enabled.Detail);
-            }
+            await EnableModuleAsync(enableModule, tenant, CrmModuleCapabilities.ModuleKey, "CRM", seedOperator, logger, cancellationToken);
 
             // Viewer and sales representative belong to tenant 1 only (an assignment needs an active membership there).
             if (tenant == TenantOne)
@@ -160,6 +155,43 @@ public static class DevSeeder
 
             await CrmDevSeed.EnsurePipelineAsync(services.GetRequiredService<ProvisionPipelineHandler>(), tenant, cancellationToken);
             await PartyDevSeed.EnsurePartiesAsync(services.GetRequiredService<CreatePartyHandler>(), tenant, cancellationToken);
+        }
+    }
+
+    /// <summary>The calendar is personal, so every dev identity that works in tenant 1 (administrator, viewer, sales
+    /// representative) gets the `collaboration_user` role; the single-tenant account deliberately stays without grants
+    /// (its purpose is the 403 state). The administrator receives the role through the template's
+    /// `GrantToTenantAdministrators`; any other member needs an explicit assignment.</summary>
+    private static async Task SeedCollaborationAsync(
+        IServiceProvider services, AccessDbContext access, string platformIssuer, ILogger logger, CancellationToken cancellationToken)
+    {
+        var enableModule = services.GetRequiredService<EnableTenantModuleHandler>();
+        var adminAccountId = await AccountIdAsync(access, AdminEmail, cancellationToken);
+        var viewerAccountId = await AccountIdAsync(access, ViewerEmail, cancellationToken);
+        var salesRepAccountId = await AccountIdAsync(access, SalesRepEmail, cancellationToken);
+        var seedOperator = new PrincipalRef(platformIssuer, "operator:dev-seed");
+
+        foreach (var tenant in new[] { TenantOne, TenantTwo })
+        {
+            await EnableModuleAsync(enableModule, tenant, CollaborationModuleCapabilities.ModuleKey, "Collaboration", seedOperator, logger, cancellationToken);
+
+            if (tenant == TenantOne)
+            {
+                await CrmDevSeed.EnsureAssignmentAsync(access, tenant, CollaborationModuleCapabilities.UserRoleKey, viewerAccountId, adminAccountId, cancellationToken);
+                await CrmDevSeed.EnsureAssignmentAsync(access, tenant, CollaborationModuleCapabilities.UserRoleKey, salesRepAccountId, adminAccountId, cancellationToken);
+            }
+        }
+    }
+
+    private static async Task EnableModuleAsync(
+        EnableTenantModuleHandler handler, TenantId tenant, string moduleKey, string moduleName, PrincipalRef seedOperator, ILogger logger, CancellationToken cancellationToken)
+    {
+        var enabled = await handler.HandleAsync(new EnableTenantModuleCommand(tenant, moduleKey, seedOperator, Guid.NewGuid()), cancellationToken);
+        if (enabled.Status == EnableTenantModuleStatus.TemplateKeyConflict)
+        {
+            logger.LogWarning(
+                "Tenant {Tenant} already has {Module} roles from an older dev seed, so the {Module} template was not applied. Reset the dev database to pick it up. {Detail}",
+                tenant.Value, moduleName, moduleName, enabled.Detail);
         }
     }
 

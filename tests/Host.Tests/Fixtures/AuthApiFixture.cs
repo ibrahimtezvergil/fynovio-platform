@@ -117,7 +117,7 @@ internal sealed class AuthApiHost(WebApplicationFactory<Program> factory) : IDis
     public void Dispose() => factory.Dispose();
 }
 
-/// <summary>One PostgreSQL container (all three modules migrated, unprivileged runtime role) that
+/// <summary>One PostgreSQL container (every module migrated, unprivileged runtime role) that
 /// several host variants can be started against, plus seeding through the real Access handlers.</summary>
 public sealed class AuthApiFixture : IAsyncLifetime
 {
@@ -148,6 +148,8 @@ public sealed class AuthApiFixture : IAsyncLifetime
             await crm.Database.MigrateAsync();
         await using (var access = AuthTestFixture.CreateAccessContext(AdminConnectionString))
             await access.Database.MigrateAsync();
+        await using (var collaboration = AuthTestFixture.CreateCollaborationContext(AdminConnectionString))
+            await collaboration.Database.MigrateAsync();
 
         _runtimeConnectionString = await AuthTestFixture.CreateRuntimeRoleAsync(AdminConnectionString);
     }
@@ -169,6 +171,7 @@ public sealed class AuthApiFixture : IAsyncLifetime
         var effective = new Dictionary<string, string?>
         {
             ["ConnectionStrings__Crm"] = _runtimeConnectionString,
+            ["ConnectionStrings__Collaboration"] = _runtimeConnectionString,
             ["ConnectionStrings__Access"] = _runtimeConnectionString,
             ["ConnectionStrings__MasterData"] = _runtimeConnectionString,
             ["ASPNETCORE_ENVIRONMENT"] = "Development",
