@@ -1,4 +1,3 @@
-using CRM.Tests.Integration;
 using Xunit;
 
 namespace Collaboration.Tests.Integration;

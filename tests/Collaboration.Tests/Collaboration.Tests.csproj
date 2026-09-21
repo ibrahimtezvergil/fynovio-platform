@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Modules\Collaboration\Collaboration.csproj" />
-    <ProjectReference Include="..\CRM.Tests\CRM.Tests.csproj" />
   </ItemGroup>
 
 </Project>

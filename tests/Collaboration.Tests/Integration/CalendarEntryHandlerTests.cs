@@ -2,7 +2,6 @@ using Collaboration.Application;
 using Collaboration.Domain;
 using Collaboration.Persistence;
 using Contracts;
-using CRM.Tests.Integration;
 using Xunit;
 
 namespace Collaboration.Tests.Integration;
