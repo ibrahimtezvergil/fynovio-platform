@@ -8,7 +8,7 @@ import { queryClient } from '@/api/queryClient'
 import { useSessionStore } from '@/lib/auth'
 import { server } from '@/mocks/server'
 import { authenticated, problem, url } from '@/test/authHandlers'
-import { accessibleLink, wireAllDayEntry, wireEntry } from '@/test/calendar'
+import { accessibleLink, unavailableLink, wireAllDayEntry, wireEntry } from '@/test/calendar'
 import { resetSession } from '@/test/session'
 import { useCalendarEntries, useMoveCalendarEntry } from './api'
 
@@ -100,6 +100,19 @@ describe('drag / resize → PUT with expectedVersion', () => {
       expectedVersion: 3,
     })
     expect(puts[0].key).toMatch(/\S+/)
+  })
+
+  it('an entry whose link became unavailable moves like any other and sends its stored ref unchanged', async () => {
+    const store = { entries: [wireEntry({ link: unavailableLink() })] }
+    const { puts } = mockServer(store)
+    const { result } = setup()
+    await waitFor(() => expect(result.current.list.data).toHaveLength(1))
+
+    await act(async () => {
+      await result.current.move(42, { start: at('2026-09-22T07:00:00Z'), end: at('2026-09-22T08:30:00Z'), allDay: false })
+    })
+    expect(puts).toHaveLength(1)
+    expect(puts[0].body.link).toEqual({ boundedContext: 'crm', entityType: 'opportunity', id: 17 })
   })
 
   it('an all-day entry keeps its dates, with an exclusive end', async () => {

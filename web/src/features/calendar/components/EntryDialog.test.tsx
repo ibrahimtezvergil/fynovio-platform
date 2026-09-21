@@ -297,6 +297,18 @@ describe('edit', () => {
     expect(sent[0].body?.link).toBeNull()
   })
 
+  it('an unavailable link is kept as-is when the person only changes the title (the server does not re-validate an unchanged link)', async () => {
+    const sent = mockWrites()
+    renderHost({ entries: [] })
+    open(parse(wireEntry({ link: unavailableLink() })))
+    await dialog()
+    fireEvent.click(screen.getByRole('button', { name: t('edit') }))
+    fireEvent.change(screen.getByLabelText(t('form.title.label')), { target: { value: 'Renamed' } })
+    save()
+    await waitFor(() => expect(sent).toHaveLength(1))
+    expect(sent[0].body).toMatchObject({ title: 'Renamed', link: { boundedContext: 'crm', entityType: 'opportunity', id: 17 } })
+  })
+
   it('an all-day entry edits with an inclusive last day and saves the exclusive end again', async () => {
     const sent = mockWrites()
     renderHost()

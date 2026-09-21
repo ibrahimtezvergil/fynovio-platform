@@ -71,24 +71,17 @@ export function CalendarBoard({
 
   const fcEvents = useMemo<EventInput[]>(
     () =>
-      entries.map((entry) => {
-        // An entry whose linked record the caller can no longer see cannot be re-saved as-is (the API re-validates the
-        // link on every replace), so it is not draggable; the edit dialog offers removing the link.
-        const movable = entry.link?.state !== 'unavailable'
-        return {
-          id: String(entry.id),
-          title: entry.title,
-          start: (entry.allDay ? entry.startDate : entry.startAt) ?? undefined,
-          end: (entry.allDay ? entry.endDate : entry.endAt) ?? undefined,
-          allDay: entry.allDay,
-          startEditable: movable,
-          durationEditable: movable,
-          // The colour is the person's own `#rrggbb` (validated at the boundary); the text colour is computed from it
-          // (WCAG 1.4.3) rather than assumed from a theme token, since any hue can be chosen.
-          color: entry.color,
-          contrastColor: readableTextColor(entry.color),
-        }
-      }),
+      entries.map((entry) => ({
+        id: String(entry.id),
+        title: entry.title,
+        start: (entry.allDay ? entry.startDate : entry.startAt) ?? undefined,
+        end: (entry.allDay ? entry.endDate : entry.endAt) ?? undefined,
+        allDay: entry.allDay,
+        // The colour is the person's own `#rrggbb` (validated at the boundary); the text colour is computed from it
+        // (WCAG 1.4.3) rather than assumed from a theme token, since any hue can be chosen.
+        color: entry.color,
+        contrastColor: readableTextColor(entry.color),
+      })),
     [entries],
   )
 
