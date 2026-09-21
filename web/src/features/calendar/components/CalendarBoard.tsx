@@ -106,6 +106,14 @@ export function CalendarBoard({
         dayGridMonth: { eventDisplay: 'list-item', dayMaxEvents: 4 },
         listWeek: { listDayFormat: { weekday: 'long', day: 'numeric', month: 'long' } },
       }}
+      /* --- event chrome. The colour is the person's own, so a very light or very dark pick can vanish into the surface:
+         a hairline ring in the foreground colour keeps every dot and bar visible in both themes, and titles end in an
+         ellipsis instead of being cut mid-glyph. --- */
+      listItemEventBeforeClass="ring-foreground/30 ring-1"
+      listItemEventTitleClass="min-w-0 truncate"
+      rowEventClass="ring-foreground/25 ring-1 ring-inset"
+      rowEventTitleClass="min-w-0 truncate"
+      blockEventClass="ring-foreground/25 ring-1 ring-inset"
       /* --- time grid --- */
       nowIndicator
       slotMinTime="07:00:00"

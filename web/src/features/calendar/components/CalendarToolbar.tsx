@@ -82,7 +82,8 @@ export function CalendarToolbar({
         </h2>
       </div>
 
-      <div className="flex items-center gap-2.5">
+      {/* Wraps: at phone width the view tabs and the create button do not fit on one row, and the card clips overflow. */}
+      <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2.5">
         <SegmentedControl
           segments={viewSegments}
           value={view}

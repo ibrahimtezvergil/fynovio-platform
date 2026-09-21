@@ -205,4 +205,37 @@ test.describe('Calendar — real API', () => {
     await expect(dialog).toBeHidden()
     await expect(event).toBeFocused() // focus goes back to where it came from
   })
+
+  test('8: at phone width the toolbar wraps and no action is clipped by the card', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 })
+    await signInToCalendar(page)
+
+    const create = page.getByRole('button', { name: calendar.createEvent })
+    await expect(create).toBeVisible()
+    // The card that clips overflow is the button's nearest `overflow-hidden` ancestor.
+    const card = create.locator('xpath=ancestor::*[contains(@class, "overflow-hidden")][1]')
+    const buttonBox = await create.boundingBox()
+    const cardBox = await card.boundingBox()
+    expect(buttonBox).not.toBeNull()
+    expect(cardBox).not.toBeNull()
+    expect(buttonBox!.x).toBeGreaterThanOrEqual(cardBox!.x - 0.5)
+    expect(buttonBox!.x + buttonBox!.width).toBeLessThanOrEqual(cardBox!.x + cardBox!.width + 0.5)
+  })
+
+  test('9: an event dot keeps a visible ring for a near-invisible colour, and a long title ends in an ellipsis', async ({ page }) => {
+    const admin = await adminToken(1)
+    const title = `E2E ring ${Date.now().toString(36)} with a really long title that cannot fit in a month cell at all`
+    const noon = todayAtNoon()
+    expect((await createEntry(admin, { title, color: '#101010', startAt: noon.toISOString(), endAt: new Date(noon.getTime() + 3_600_000).toISOString() })).status).toBe(201)
+
+    await signInToCalendar(page)
+    const event = page.getByRole('button', { name: new RegExp(title.slice(0, 20)) }).first()
+    await expect(event).toBeVisible()
+
+    const dot = event.locator('> div').first()
+    expect(await dot.evaluate((node) => node.ownerDocument.defaultView?.getComputedStyle(node).boxShadow)).not.toBe('none')
+
+    const titleText = event.getByText(title)
+    expect(await titleText.evaluate((node) => node.ownerDocument.defaultView?.getComputedStyle(node).textOverflow)).toBe('ellipsis')
+  })
 })
