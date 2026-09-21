@@ -48,7 +48,7 @@ public static partial class CalendarEndpoints
             var actor = httpContext.GetActorContext();
             var body = await ReadBodyAsync<CalendarEntryRequest>(httpContext.Request, cancellationToken);
             var idempotencyKey = RequiredIdempotencyKey(httpContext.Request);
-            var fields = body.ToFields();
+            var fields = body.ToFields(actor.TenantId);
             var command = new CreateCalendarEntryCommand(
                 actor.TenantId, actor.Principal, fields.Title, fields.Notes, fields.Color, fields.AllDay, fields.StartAt, fields.EndAt,
                 fields.StartDate, fields.EndDate, fields.Link, idempotencyKey, actor.CorrelationId);
@@ -64,7 +64,7 @@ public static partial class CalendarEndpoints
             var expectedVersion = body.ExpectedVersion is >= 0 and var version
                 ? version
                 : throw new ArgumentException("expectedVersion is required and must be a non-negative integer.");
-            var fields = body.ToFields();
+            var fields = body.ToFields(actor.TenantId);
             var command = new UpdateCalendarEntryCommand(
                 actor.TenantId, id, actor.Principal, expectedVersion, fields.Title, fields.Notes, fields.Color, fields.AllDay,
                 fields.StartAt, fields.EndAt, fields.StartDate, fields.EndDate, fields.Link, idempotencyKey, actor.CorrelationId);
@@ -148,7 +148,7 @@ public static partial class CalendarEndpoints
         string Title, string? Notes, string Color, bool AllDay, DateTimeOffset? StartAt, DateTimeOffset? EndAt,
         DateOnly? StartDate, DateOnly? EndDate, EntityRef? Link);
 
-    private static EntryFields ToFields(this CalendarEntryRequest body)
+    private static EntryFields ToFields(this CalendarEntryRequest body, TenantId tenantId)
     {
         var title = body.Title ?? throw new ArgumentException("title is required.");
         var color = body.Color ?? throw new ArgumentException("color is required.");
@@ -158,12 +158,17 @@ public static partial class CalendarEndpoints
         var startDate = ParseDate(body.StartDate, "startDate");
         var endDate = ParseDate(body.EndDate, "endDate");
 
-        // S3 replaces this: until link targets are resolved and authorized on write, no link is ever persisted.
-        if (body.Link is not null)
-            throw new CalendarLinkTargetUnavailableException();
-
-        return new EntryFields(title, body.Notes, color, allDay, startAt, endAt, startDate, endDate, null);
+        return new EntryFields(title, body.Notes, color, allDay, startAt, endAt, startDate, endDate, body.Link?.ToReference(tenantId));
     }
+
+    /// <summary>The tenant is the caller's, never the body's. A malformed reference is a 400; whether its target exists or may
+    /// be seen is decided (and answered identically for every failure) by the handler through the link directory.</summary>
+    private static EntityRef ToReference(this CalendarLinkRequest link, TenantId tenantId) =>
+        new(
+            tenantId,
+            link.BoundedContext ?? throw new ArgumentException("link.boundedContext is required."),
+            link.EntityType ?? throw new ArgumentException("link.entityType is required."),
+            link.Id ?? throw new ArgumentException("link.id is required."));
 }
 
 /// <summary>Create / full-replace body. `ExpectedVersion` is required on PUT only; the tenant never comes from here.</summary>
@@ -189,11 +194,15 @@ public sealed record CalendarLinkResponse(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Label = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Subtitle = null)
 {
-    // S3 hydrates accessible links; until then a stored link (none can exist yet) is reported as unavailable.
-    public static CalendarLinkResponse? From(EntityRef? link) =>
-        link is { } target
-            ? new CalendarLinkResponse(new CalendarLinkRefResponse(target.BoundedContext, target.EntityType, target.Id), "unavailable")
-            : null;
+    // `label`/`subtitle` are only ever set for an accessible link (and then omitted from the JSON when null).
+    public static CalendarLinkResponse? From(CalendarEntryLinkDto? link) =>
+        link is null
+            ? null
+            : new CalendarLinkResponse(
+                new CalendarLinkRefResponse(link.Ref.BoundedContext, link.Ref.EntityType, link.Ref.Id),
+                link.Accessible ? "accessible" : "unavailable",
+                link.Accessible ? link.Label : null,
+                link.Accessible ? link.Subtitle : null);
 }
 
 public sealed record CalendarLinkRefResponse(string BoundedContext, string EntityType, long Id);

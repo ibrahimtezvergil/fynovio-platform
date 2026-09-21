@@ -38,7 +38,7 @@ public sealed class CalendarEntryHandlerTests(PostgresFixture fixture)
         Assert.Equal(start.AddHours(1), dto.EndAt);
         Assert.Null(dto.StartDate);
         Assert.Null(dto.EndDate);
-        Assert.Equal(link, dto.Link);
+        Assert.Equal(link, dto.Link!.Ref);
 
         await using var admin = fixture.CreateAdminContext();
         var row = await admin.CalendarEntries.SingleAsync(e => e.Id == created.Id);

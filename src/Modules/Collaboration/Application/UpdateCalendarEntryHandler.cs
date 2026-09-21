@@ -11,7 +11,7 @@ namespace Collaboration.Application;
 
 /// <summary>Full replace of one of the caller's own entries. The idempotency lookup runs before the entry is loaded so a
 /// retry of a call that already succeeded replays its result even when the entry has since changed.</summary>
-public sealed class UpdateCalendarEntryHandler(CollaborationDbContext context, IAuthorizer authorizer)
+public sealed class UpdateCalendarEntryHandler(CollaborationDbContext context, IAuthorizer authorizer, ILinkTargetDirectory links)
 {
     private const string Operation = "UpdateCalendarEntry";
     private const string ActionKeyValue = "collaboration.calendar_entry.update";
@@ -64,6 +64,11 @@ public sealed class UpdateCalendarEntryHandler(CollaborationDbContext context, I
             return await TryReplayAsync()
                 ?? throw new CalendarEntryConcurrencyConflictException(entry.Id, command.ExpectedVersion, entry.RowVersion);
         }
+
+        // Only a new or changed link is resolved. Re-sending the stored link discloses nothing (the caller already reads it
+        // back) and must not make an entry uneditable once its target has become unavailable.
+        if (command.Link is { } link && link != entry.Link)
+            await CalendarLinks.EnsureResolvableAsync(links, actor, link, cancellationToken);
 
         entry.Replace(
             command.Title, command.Notes, command.Color, command.AllDay, command.StartAt, command.EndAt,

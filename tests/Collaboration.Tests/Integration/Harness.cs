@@ -17,16 +17,16 @@ internal sealed class Harness(PostgresFixture fixture)
     public async Task<CollaborationDbContext> RuntimeContextAsync() =>
         PostgresFixture.CreateContext(await fixture.RuntimeConnectionStringAsync());
 
-    public async Task<CreateCalendarEntryResult> CreateAsync(CreateCalendarEntryCommand command, IAuthorizer? authorizer = null)
+    public async Task<CreateCalendarEntryResult> CreateAsync(CreateCalendarEntryCommand command, IAuthorizer? authorizer = null, ILinkTargetDirectory? links = null)
     {
         await using var context = await RuntimeContextAsync();
-        return await new CreateCalendarEntryHandler(context, authorizer ?? StubAuthorizer.AlwaysAllow).HandleAsync(command);
+        return await new CreateCalendarEntryHandler(context, authorizer ?? StubAuthorizer.AlwaysAllow, links ?? StubLinkDirectory.AllowAll()).HandleAsync(command);
     }
 
-    public async Task<UpdateCalendarEntryResult> UpdateAsync(UpdateCalendarEntryCommand command, IAuthorizer? authorizer = null)
+    public async Task<UpdateCalendarEntryResult> UpdateAsync(UpdateCalendarEntryCommand command, IAuthorizer? authorizer = null, ILinkTargetDirectory? links = null)
     {
         await using var context = await RuntimeContextAsync();
-        return await new UpdateCalendarEntryHandler(context, authorizer ?? StubAuthorizer.AlwaysAllow).HandleAsync(command);
+        return await new UpdateCalendarEntryHandler(context, authorizer ?? StubAuthorizer.AlwaysAllow, links ?? StubLinkDirectory.AllowAll()).HandleAsync(command);
     }
 
     public async Task<DeleteCalendarEntryResult> DeleteAsync(DeleteCalendarEntryCommand command, IAuthorizer? authorizer = null)
@@ -48,18 +48,18 @@ internal sealed class Harness(PostgresFixture fixture)
         return await context.OutboxMessages.AsNoTracking().Where(m => m.TenantId == tenant).OrderBy(m => m.Id).ToListAsync();
     }
 
-    public async Task<CalendarEntryDto?> GetAsync(TenantId tenant, long id, PrincipalRef principal, IAuthorizer? authorizer = null)
+    public async Task<CalendarEntryDto?> GetAsync(TenantId tenant, long id, PrincipalRef principal, IAuthorizer? authorizer = null, ILinkTargetDirectory? links = null)
     {
         await using var context = await RuntimeContextAsync();
-        return await new GetCalendarEntryHandler(context, authorizer ?? StubAuthorizer.AlwaysAllow)
+        return await new GetCalendarEntryHandler(context, authorizer ?? StubAuthorizer.AlwaysAllow, links ?? StubLinkDirectory.AllowAll())
             .HandleAsync(new GetCalendarEntryQuery(tenant, id, principal, Guid.NewGuid()));
     }
 
     public async Task<IReadOnlyList<CalendarEntryDto>> ListAsync(
-        TenantId tenant, PrincipalRef principal, DateTimeOffset from, DateTimeOffset to, IAuthorizer? authorizer = null)
+        TenantId tenant, PrincipalRef principal, DateTimeOffset from, DateTimeOffset to, IAuthorizer? authorizer = null, ILinkTargetDirectory? links = null)
     {
         await using var context = await RuntimeContextAsync();
-        return await new ListCalendarEntriesHandler(context, authorizer ?? StubAuthorizer.AlwaysAllow)
+        return await new ListCalendarEntriesHandler(context, authorizer ?? StubAuthorizer.AlwaysAllow, links ?? StubLinkDirectory.AllowAll())
             .HandleAsync(new ListCalendarEntriesQuery(tenant, principal, from, to, Guid.NewGuid()));
     }
 

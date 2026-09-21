@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Collaboration.Application;
 
-public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, IAuthorizer authorizer)
+public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, IAuthorizer authorizer, ILinkTargetDirectory links)
 {
     private const string Operation = "CreateCalendarEntry";
     private const string ActionKeyValue = "collaboration.calendar_entry.create";
@@ -44,6 +44,10 @@ public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, I
                 ?? throw new InvalidOperationException("Stored idempotency response is empty.");
             return new CreateCalendarEntryResult(stored.EntryId, stored.RowVersion, Replayed: true);
         }
+
+        // After the replay branch: a retry of a call that already succeeded never needs the target to still resolve.
+        if (command.Link is { } link)
+            await CalendarLinks.EnsureResolvableAsync(links, actor, link, cancellationToken);
 
         var entry = CalendarEntry.Create(
             command.TenantId, command.Principal, command.Title, command.Notes, command.Color,

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Collaboration.Application;
 
-public sealed class GetCalendarEntryHandler(CollaborationDbContext context, IAuthorizer authorizer)
+public sealed class GetCalendarEntryHandler(CollaborationDbContext context, IAuthorizer authorizer, ILinkTargetDirectory links)
 {
     private const string ActionKeyValue = "collaboration.calendar_entry.read";
 
@@ -36,10 +36,10 @@ public sealed class GetCalendarEntryHandler(CollaborationDbContext context, IAut
 
         // Record-level denial looks identical to not-found — never 403 for "exists, not yours"
         // (architecture plan §15, binding spec §12's tenant non-leak rule).
-        return decision.IsAllowed ? ToDto(entry) : null;
-    }
+        if (!decision.IsAllowed)
+            return null;
 
-    internal static CalendarEntryDto ToDto(CalendarEntry entry) =>
-        new(entry.Id, entry.RowVersion, entry.Title, entry.Notes, entry.Color, entry.AllDay,
-            entry.StartAt, entry.EndAt, entry.StartDate, entry.EndDate, entry.Link);
+        // Hydrated after the transaction closed, so no database connection is held while other modules are asked.
+        return (await CalendarLinks.ToDtosAsync(links, actor, [entry], cancellationToken))[0];
+    }
 }

@@ -347,18 +347,28 @@ public sealed class CalendarEndpointsTests(CalendarApiFixture api) : IClassFixtu
         await AssertProblemAsync(response, HttpStatusCode.Forbidden, "forbidden");
     }
 
-    public static IEnumerable<object?[]> Links =>
+    /// <summary>Well-formed references no caller can resolve here: nothing with these ids exists, and the type is unknown.</summary>
+    public static IEnumerable<object?[]> UnresolvableLinks =>
     [
-        [new { boundedContext = "crm", entityType = "opportunity", id = 17 }],
-        [new { boundedContext = "masterdata", entityType = "party", id = 3 }],
+        [new { boundedContext = "crm", entityType = "opportunity", id = 987_654 }],
+        [new { boundedContext = "masterdata", entityType = "party", id = 987_654 }],
         [new { boundedContext = "nope", entityType = "nothing", id = 1 }],
+        [new { boundedContext = "CRM", entityType = "Opportunity", id = 1 }],
+    ];
+
+    public static IEnumerable<object?[]> MalformedLinks =>
+    [
         [new { boundedContext = "crm", entityType = "opportunity", id = -5 }],
+        [new { boundedContext = "crm", entityType = "opportunity", id = 0 }],
+        [new { boundedContext = "crm", entityType = "opportunity" }],
+        [new { boundedContext = "crm", id = 3 }],
+        [new { entityType = "opportunity", id = 3 }],
         [new { }],
     ];
 
     [Theory]
-    [MemberData(nameof(Links))]
-    public async Task Any_link_is_a_422_link_target_unavailable_until_targets_are_validated_and_nothing_is_stored(object link)
+    [MemberData(nameof(UnresolvableLinks))]
+    public async Task An_unresolvable_link_is_a_422_link_target_unavailable_and_nothing_is_stored(object link)
     {
         var day = NextDay();
 
@@ -366,6 +376,18 @@ public sealed class CalendarEndpointsTests(CalendarApiFixture api) : IClassFixtu
 
         var problem = await AssertProblemAsync(response, HttpStatusCode.UnprocessableEntity, "link_target_unavailable");
         Assert.Equal("The link target is unavailable.", problem.GetProperty("title").GetString());
+        Assert.Empty((await ListAsync(Admin, Window(day))).GetProperty("items").EnumerateArray());
+    }
+
+    [Theory]
+    [MemberData(nameof(MalformedLinks))]
+    public async Task A_malformed_link_is_a_400_validation_error_and_nothing_is_stored(object link)
+    {
+        var day = NextDay();
+
+        var response = await SendAsync(HttpMethod.Post, Route, Admin, With(Timed(day), ("link", link)));
+
+        await AssertProblemAsync(response, HttpStatusCode.BadRequest, "validation_error");
         Assert.Empty((await ListAsync(Admin, Window(day))).GetProperty("items").EnumerateArray());
     }
 
@@ -653,8 +675,8 @@ public sealed class CalendarEndpointsTests(CalendarApiFixture api) : IClassFixtu
     }
 
     [Theory]
-    [MemberData(nameof(Links))]
-    public async Task Updating_with_any_link_is_a_422_link_target_unavailable_and_changes_nothing(object link)
+    [MemberData(nameof(UnresolvableLinks))]
+    public async Task Updating_with_an_unresolvable_link_is_a_422_link_target_unavailable_and_changes_nothing(object link)
     {
         var day = NextDay();
         var (id, version) = await CreateAsync(Admin, Timed(day));
@@ -662,6 +684,19 @@ public sealed class CalendarEndpointsTests(CalendarApiFixture api) : IClassFixtu
         var response = await SendAsync(HttpMethod.Put, $"{Route}/{id}", Admin, Versioned(With(Timed(day, "Linked"), ("link", link)), version));
 
         await AssertProblemAsync(response, HttpStatusCode.UnprocessableEntity, "link_target_unavailable");
+        await AssertUnchangedAsync(Admin, id, "Call with vendor", version);
+    }
+
+    [Theory]
+    [MemberData(nameof(MalformedLinks))]
+    public async Task Updating_with_a_malformed_link_is_a_400_validation_error_and_changes_nothing(object link)
+    {
+        var day = NextDay();
+        var (id, version) = await CreateAsync(Admin, Timed(day));
+
+        var response = await SendAsync(HttpMethod.Put, $"{Route}/{id}", Admin, Versioned(With(Timed(day, "Linked"), ("link", link)), version));
+
+        await AssertProblemAsync(response, HttpStatusCode.BadRequest, "validation_error");
         await AssertUnchangedAsync(Admin, id, "Call with vendor", version);
     }
 

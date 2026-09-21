@@ -323,7 +323,7 @@ public sealed class CalendarEntryUpdateTests(PostgresFixture fixture)
 
         await using (var failing = new CollaborationDbContext(options))
         {
-            var handler = new UpdateCalendarEntryHandler(failing, StubAuthorizer.AlwaysAllow);
+            var handler = new UpdateCalendarEntryHandler(failing, StubAuthorizer.AlwaysAllow, StubLinkDirectory.AllowAll());
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 handler.HandleAsync(Commands.Update(tenant, id, Harness.Alice, 1, "k-atomic", title: "Never")));
             Assert.Equal(FailAfterSave.Message, ex.Message);

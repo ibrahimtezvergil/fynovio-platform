@@ -42,7 +42,7 @@ public sealed class CalendarEntryLateReplayTests(PostgresFixture fixture)
         var winner = new BeforeEntryLoad(() => _harness.UpdateAsync(command with { CorrelationId = Guid.NewGuid() }));
         await using var context = await ContextWithAsync(winner);
 
-        var result = await new UpdateCalendarEntryHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command);
+        var result = await new UpdateCalendarEntryHandler(context, StubAuthorizer.AlwaysAllow, StubLinkDirectory.AllowAll()).HandleAsync(command);
 
         Assert.True(winner.Fired);
         Assert.True(result.Replayed);
@@ -78,7 +78,7 @@ public sealed class CalendarEntryLateReplayTests(PostgresFixture fixture)
         await using var context = await ContextWithAsync(winner);
 
         await Assert.ThrowsAsync<IdempotencyKeyReusedException>(() =>
-            new UpdateCalendarEntryHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command));
+            new UpdateCalendarEntryHandler(context, StubAuthorizer.AlwaysAllow, StubLinkDirectory.AllowAll()).HandleAsync(command));
 
         Assert.Equal("Someone else's body", (await _harness.ReadEntryAsync(tenant, id))!.Title);
     }
@@ -92,7 +92,7 @@ public sealed class CalendarEntryLateReplayTests(PostgresFixture fixture)
         await using var context = await ContextWithAsync(winner);
 
         await Assert.ThrowsAsync<CalendarEntryConcurrencyConflictException>(() =>
-            new UpdateCalendarEntryHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command));
+            new UpdateCalendarEntryHandler(context, StubAuthorizer.AlwaysAllow, StubLinkDirectory.AllowAll()).HandleAsync(command));
 
         Assert.Equal("Theirs", (await _harness.ReadEntryAsync(tenant, id))!.Title);
         Assert.Equal(2, await _harness.CountIdempotencyAsync(tenant));

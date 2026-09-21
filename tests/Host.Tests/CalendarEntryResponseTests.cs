@@ -11,14 +11,47 @@ public sealed class CalendarEntryResponseTests
 {
     private static readonly JsonSerializerOptions Web = new(JsonSerializerDefaults.Web);
 
-    private static CalendarEntryDto Dto(EntityRef? link) =>
+    private static CalendarEntryDto Dto(CalendarEntryLinkDto? link) =>
         new(7, 3, "Call", null, "#3b82f6", false,
             new DateTimeOffset(2026, 9, 21, 6, 0, 0, TimeSpan.Zero), null, null, null, link);
 
+    private static readonly EntityRef Opportunity = new(new TenantId(1), "crm", "opportunity", 17);
+
     [Fact]
-    public void A_stored_link_is_reported_unavailable_with_its_reference_and_no_label_or_subtitle_keys()
+    public void An_accessible_link_carries_its_label_and_subtitle()
     {
-        var response = CalendarEntryResponse.From(Dto(new EntityRef(new TenantId(1), "crm", "opportunity", 17)));
+        var response = CalendarEntryResponse.From(Dto(new CalendarEntryLinkDto(Opportunity, true, "OPP-17 — Acme", "Proposal")));
+
+        using var json = JsonDocument.Parse(JsonSerializer.Serialize(response, Web));
+        var link = json.RootElement.GetProperty("link");
+        Assert.Equal("accessible", link.GetProperty("state").GetString());
+        Assert.Equal("OPP-17 — Acme", link.GetProperty("label").GetString());
+        Assert.Equal("Proposal", link.GetProperty("subtitle").GetString());
+        Assert.Equal(["label", "ref", "state", "subtitle"], link.EnumerateObject().Select(p => p.Name).Order().ToArray());
+    }
+
+    [Fact]
+    public void An_accessible_link_without_a_subtitle_omits_the_key_rather_than_writing_null()
+    {
+        var response = CalendarEntryResponse.From(Dto(new CalendarEntryLinkDto(Opportunity, true, "OPP-17 — Acme")));
+
+        using var json = JsonDocument.Parse(JsonSerializer.Serialize(response, Web));
+        Assert.Equal(["label", "ref", "state"], json.RootElement.GetProperty("link").EnumerateObject().Select(p => p.Name).Order().ToArray());
+    }
+
+    [Fact]
+    public void An_unavailable_link_never_carries_a_label_or_subtitle_even_if_the_dto_holds_one()
+    {
+        var response = CalendarEntryResponse.From(Dto(new CalendarEntryLinkDto(Opportunity, false, "LEAK", "LEAK")));
+
+        var raw = JsonSerializer.Serialize(response, Web);
+        Assert.DoesNotContain("LEAK", raw);
+    }
+
+    [Fact]
+    public void An_unavailable_link_is_reported_with_its_reference_and_no_label_or_subtitle_keys()
+    {
+        var response = CalendarEntryResponse.From(Dto(new CalendarEntryLinkDto(Opportunity, false)));
 
         using var json = JsonDocument.Parse(JsonSerializer.Serialize(response, Web));
         var link = json.RootElement.GetProperty("link");

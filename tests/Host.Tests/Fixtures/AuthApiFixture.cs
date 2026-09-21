@@ -255,7 +255,7 @@ public sealed class AuthApiFixture : IAsyncLifetime
     /// <summary>Grants `actionKey` tenant-wide to the account (mirrors the legacy
     /// `OpportunityEndpointsTests.SeedGrantAsync`); the action itself is registered by the
     /// host's own start-up seeding.</summary>
-    public async Task GrantAsync(long accountId, long tenantId, string actionKey)
+    public async Task<long> GrantAsync(long accountId, long tenantId, string actionKey)
     {
         var tenant = new TenantId(tenantId);
         var suffix = "t" + Guid.NewGuid().ToString("N")[..7];
@@ -275,6 +275,19 @@ public sealed class AuthApiFixture : IAsyncLifetime
         if (!await access.TenantAccessStates.AnyAsync(s => s.TenantId == tenant))
             access.TenantAccessStates.Add(TenantAccessState.Initialize(tenant));
 
+        await access.SaveChangesAsync();
+        return role.Id;
+    }
+
+    /// <summary>Ends the account's assignment of a role a test granted (see <see cref="GrantAsync"/>), effective immediately.</summary>
+    public async Task RevokeAsync(long accountId, long tenantId, long roleId)
+    {
+        await using var access = CreateAdminAccessContext();
+        var assignments = await access.RoleAssignments
+            .Where(a => a.TenantId == new TenantId(tenantId) && a.AccountId == accountId && a.RoleId == roleId)
+            .ToListAsync();
+        foreach (var assignment in assignments)
+            assignment.Revoke();
         await access.SaveChangesAsync();
     }
 

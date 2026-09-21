@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Collaboration.Application;
 
-public sealed class ListCalendarEntriesHandler(CollaborationDbContext context, IAuthorizer authorizer)
+public sealed class ListCalendarEntriesHandler(CollaborationDbContext context, IAuthorizer authorizer, ILinkTargetDirectory links)
 {
     private const string ActionKeyValue = "collaboration.calendar_entry.list";
     private const int MaxRangeDays = 100;
@@ -67,6 +67,7 @@ public sealed class ListCalendarEntriesHandler(CollaborationDbContext context, I
 
         await transaction.CommitAsync(cancellationToken);
 
-        return entries.Select(e => GetCalendarEntryHandler.ToDto(e)).ToList();
+        // Hydrated after the transaction closed; one batched call for every link on the page.
+        return await CalendarLinks.ToDtosAsync(links, actor, entries, cancellationToken);
     }
 }

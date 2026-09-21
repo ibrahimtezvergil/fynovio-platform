@@ -173,7 +173,7 @@ public sealed class CalendarEntryIdempotencyTests(PostgresFixture fixture)
 
         await using (var failing = new CollaborationDbContext(options))
         {
-            var handler = new CreateCalendarEntryHandler(failing, StubAuthorizer.AlwaysAllow);
+            var handler = new CreateCalendarEntryHandler(failing, StubAuthorizer.AlwaysAllow, StubLinkDirectory.AllowAll());
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => handler.HandleAsync(command));
             Assert.Equal(FailOnSaveNumber.Message, ex.Message);
         }

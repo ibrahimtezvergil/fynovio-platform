@@ -47,6 +47,21 @@ public sealed class CalendarApiFixture : IAsyncLifetime
         NoRoleTenantOne = await TokenAsync(DevSeeder.SingleTenantEmail, tenantId: null);
     }
 
+    /// <summary>A fresh member of tenant 1 holding ONLY the given actions (each tenant-wide), logged in. Used to give a caller
+    /// the calendar capability without CRM access, or with exactly one CRM grant that a test can then take away.</summary>
+    internal async Task<CalendarMember> SeedMemberAsync(params string[] actionKeys)
+    {
+        var user = await _database.SeedUserAsync(tenantIds: DevSeeder.TenantOne.Value);
+        var roles = new Dictionary<string, long>();
+        foreach (var actionKey in actionKeys)
+            roles[actionKey] = await _database.GrantAsync(user.AccountId, DevSeeder.TenantOne.Value, actionKey);
+
+        return new CalendarMember(await TokenAsync(user.Email, tenantId: null, AuthApiFixture.Password), user.AccountId, roles);
+    }
+
+    internal Task RevokeAsync(CalendarMember member, string actionKey) =>
+        _database.RevokeAsync(member.AccountId, DevSeeder.TenantOne.Value, member.Roles[actionKey]);
+
     public async Task DisposeAsync()
     {
         Client?.Dispose();
@@ -54,9 +69,9 @@ public sealed class CalendarApiFixture : IAsyncLifetime
         await _database.DisposeAsync();
     }
 
-    private async Task<string> TokenAsync(string email, long? tenantId)
+    private async Task<string> TokenAsync(string email, long? tenantId, string password = SeedPassword)
     {
-        var login = new HttpRequestMessage(HttpMethod.Post, "/auth/login") { Content = JsonContent.Create(new { email, password = SeedPassword }) };
+        var login = new HttpRequestMessage(HttpMethod.Post, "/auth/login") { Content = JsonContent.Create(new { email, password }) };
         login.Headers.Add("X-Requested-With", "fynovio");
         var loginResponse = await Client.SendAsync(login);
         Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
@@ -73,3 +88,6 @@ public sealed class CalendarApiFixture : IAsyncLifetime
         return (await selectResponse.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString()!;
     }
 }
+
+/// <summary>A member seeded by a test: their access token, and the role each granted action came from (so it can be revoked).</summary>
+internal sealed record CalendarMember(string Token, long AccountId, IReadOnlyDictionary<string, long> Roles);

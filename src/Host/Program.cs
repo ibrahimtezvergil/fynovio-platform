@@ -194,6 +194,12 @@ builder.Services.AddSingleton(serviceProvider => new IdentifierRateLimiter(
     timeProvider: serviceProvider.GetRequiredService<TimeProvider>()));
 builder.Services.AddSingleton<ClientFingerprint>();
 
+// Link targets: Collaboration stores links and asks this directory who may see them; the owning modules answer.
+// Scoped — the resolvers use the request's CrmDbContext. `masterdata/party` is answered by CRM under L-3 (interim).
+builder.Services.AddScoped<ILinkTargetResolver, OpportunityLinkTargetResolver>();
+builder.Services.AddScoped<ILinkTargetResolver, PartyLinkTargetResolver>();
+builder.Services.AddScoped<ILinkTargetDirectory, LinkTargetDirectory>();
+
 // Register CRM handlers
 builder.Services.AddScoped<CreateCalendarEntryHandler>();
 builder.Services.AddScoped<GetCalendarEntryHandler>();
