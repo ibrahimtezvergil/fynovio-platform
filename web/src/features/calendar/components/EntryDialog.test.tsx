@@ -422,13 +422,17 @@ describe('delete', () => {
 })
 
 describe('link rendering states', () => {
-  it('uses the entry colour as the detail header fill instead of repeating its hex value in the body', async () => {
+  it('turns the entry colour into an elevated detail-header gradient instead of repeating its hex value in the body', async () => {
     renderHost()
     open(parse(wireEntry({ color: '#3c8cf0' })))
     const view = await dialog()
     const header = view.querySelector('[data-slot="dialog-header"]')
 
-    expect(header).toHaveStyle({ backgroundColor: '#3c8cf0', color: '#000000' })
+    expect(header).toHaveClass('calendar-entry-detail-header')
+    expect(header).toHaveStyle({ color: '#000000' })
+    expect(header).toHaveStyle({
+      backgroundImage: expect.stringContaining('linear-gradient(118deg, #60a6f3 0%, #3c8cf0 52%, #4592f1 100%)'),
+    })
     expect(view).not.toHaveTextContent(t('detail.color'))
     expect(view).not.toHaveTextContent('#3c8cf0')
     fireEvent.click(within(view).getAllByRole('button', { name: t('close') }).at(0) as HTMLElement)
@@ -525,6 +529,7 @@ describe('accessibility', () => {
     renderHost()
     open(parse(wireEntry()))
     const header = (await dialog()).querySelector('[data-slot="dialog-header"]')
-    expect(header).toHaveStyle({ backgroundColor: '#3b82f6', color: '#000000' })
+    expect(header).toHaveClass('calendar-entry-detail-header')
+    expect(header).toHaveStyle({ color: '#000000' })
   })
 })

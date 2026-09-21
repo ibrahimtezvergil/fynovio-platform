@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useOverlayClose } from '@/lib/overlay'
 import { calendarKeys, findCachedEntry, useCalendarIdentity, useDeleteEntry } from '../api'
-import { readableTextColor } from '../lib/contrast'
+import { calendarHeaderPalette } from '../lib/contrast'
 import { linkFallbackLabel, presentLink } from '../lib/links'
 import { useKeyedCommand } from '../lib/useKeyedCommand'
 import { formatWhen } from '../lib/time'
@@ -77,24 +77,27 @@ interface EntryDetailProps {
 function EntryDetail({ entry, onClose, onEdit, onDelete }: EntryDetailProps) {
   const { t, i18n } = useTranslation('calendar')
   const link = presentLink(entry.link, (ref) => linkFallbackLabel(t, ref))
-  const headerTextColor = readableTextColor(entry.color)
+  const headerPalette = calendarHeaderPalette(entry.color)
 
   return (
     <>
       <DialogHeader
-        className="-mx-5 -mt-5 rounded-t-2xl px-5 pt-5 pb-4 pr-12"
-        style={{ backgroundColor: entry.color, color: headerTextColor }}
+        className="calendar-entry-detail-header -mx-5 -mt-5 isolate relative overflow-hidden rounded-t-2xl px-5 pt-5 pb-4 pr-12"
+        style={{
+          backgroundImage: `radial-gradient(circle at 12% -35%, rgb(255 255 255 / 0.22), transparent 48%), linear-gradient(118deg, ${headerPalette.start} 0%, ${headerPalette.middle} 52%, ${headerPalette.end} 100%)`,
+          color: headerPalette.textColor,
+        }}
       >
-        <DialogTitle>{entry.title}</DialogTitle>
-        <DialogDescription className="text-current/80">{formatWhen(entry, i18n.language)}</DialogDescription>
+        <DialogTitle className="relative z-10">{entry.title}</DialogTitle>
+        <DialogDescription className="relative z-10 text-current/80">{formatWhen(entry, i18n.language)}</DialogDescription>
         <Button
           type="button"
           variant="ghost"
           size="icon-sm"
           aria-label={t('close')}
           onClick={onClose}
-          className="absolute top-3.5 right-3.5 hover:bg-black/10"
-          style={{ color: headerTextColor }}
+          className={`absolute top-3.5 right-3.5 z-10 ${headerPalette.textColor === '#ffffff' ? 'hover:bg-white/15' : 'hover:bg-black/10'}`}
+          style={{ color: headerPalette.textColor }}
         >
           <X aria-hidden />
         </Button>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { contrastRatio, readableTextColor, relativeLuminance } from './contrast'
+import { calendarHeaderPalette, contrastRatio, readableTextColor, relativeLuminance } from './contrast'
 
 describe('relativeLuminance', () => {
   it('is 0 for black and 1 for white', () => {
@@ -57,5 +57,27 @@ describe('readableTextColor', () => {
       expect(contrastRatio(swatch, chosen)).toBeGreaterThanOrEqual(contrastRatio(swatch, other))
       expect(contrastRatio(swatch, chosen)).toBeGreaterThanOrEqual(4.5)
     }
+  })
+})
+
+describe('calendarHeaderPalette', () => {
+  it('keeps the selected colour as the middle stop and uses the readable text colour throughout the tonal ramp', () => {
+    for (const color of ['#6355c7', '#3c8cf0', '#3cb4cd', '#28b478', '#f0af3c', '#e4693c', '#c0243a', '#8a90a6']) {
+      const palette = calendarHeaderPalette(color)
+
+      expect(palette.middle).toBe(color)
+      for (const stop of [palette.start, palette.middle, palette.end]) {
+        expect(contrastRatio(stop, palette.textColor)).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+  })
+
+  it('normalises the selected colour before producing CSS-ready stops', () => {
+    expect(calendarHeaderPalette('#3C8CF0')).toEqual({
+      start: '#5fa1f3',
+      middle: '#3c8cf0',
+      end: '#4692f1',
+      textColor: '#000000',
+    })
   })
 })
