@@ -8,8 +8,10 @@ namespace Contracts;
 ///
 /// Privacy contract: the answer is computed for the actor at read time, under the actor's own authorization, and is
 /// never cached across actors. A target that does not exist, belongs to another tenant, is denied to the actor, or
-/// cannot be resolved must yield <see cref="LinkTargetResolution.Unavailable"/> — never an exception, never a
-/// different shape. Batch-only: a list of N links costs one round-trip per resolver, not N.</summary>
+/// cannot be resolved must yield <see cref="LinkTargetResolution.Unavailable"/> (or be absent from the result, which
+/// callers treat the same) — never a different shape. An infrastructure fault may surface as an exception; the
+/// <see cref="ILinkTargetDirectory"/> turns that into `Unavailable` for the affected references. Batch-only: a list
+/// of N links costs one round-trip per resolver, not N.</summary>
 public interface ILinkTargetResolver
 {
     /// <summary>Lower-case identifier (`^[a-z][a-z0-9_]*$`), the same grammar the link columns are constrained to.</summary>
