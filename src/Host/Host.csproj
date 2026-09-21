@@ -11,6 +11,7 @@
     <ProjectReference Include="..\Modules\Organization\Organization.csproj" />
     <ProjectReference Include="..\Modules\MasterData\MasterData.csproj" />
     <ProjectReference Include="..\Modules\CRM\CRM.csproj" />
+    <ProjectReference Include="..\Modules\Collaboration\Collaboration.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

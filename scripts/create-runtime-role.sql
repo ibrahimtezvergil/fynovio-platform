@@ -30,6 +30,16 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA masterdata
 
 REVOKE UPDATE, DELETE ON masterdata.evidence_records FROM fynovio_app;
 
+-- Collaboration module.
+GRANT USAGE ON SCHEMA collaboration TO fynovio_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA collaboration TO fynovio_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA collaboration TO fynovio_app;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA collaboration
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO fynovio_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA collaboration
+    GRANT USAGE, SELECT ON SEQUENCES TO fynovio_app;
+
 -- Identity + Access modules (share one assembly/DbContext, two schemas).
 GRANT USAGE ON SCHEMA identity TO fynovio_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA identity TO fynovio_app;

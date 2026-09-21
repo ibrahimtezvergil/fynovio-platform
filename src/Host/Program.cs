@@ -6,6 +6,8 @@ using Access.Persistence;
 using Contracts;
 using CRM.Application;
 using CRM.Persistence;
+using Collaboration.Persistence;
+using Collaboration.Application;
 using Host.Authentication;
 using Host.Bootstrap;
 using Host.Email;
@@ -25,6 +27,12 @@ builder.Services.AddDbContext<CrmDbContext>(options => options
     .UseNpgsql(
         builder.Configuration.GetConnectionString("Crm") ?? CrmConnectionString.Resolve(),
         npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", CrmDbContext.Schema))
+    .UseSnakeCaseNamingConvention());
+
+builder.Services.AddDbContext<CollaborationDbContext>(options => options
+    .UseNpgsql(
+        builder.Configuration.GetConnectionString("Collaboration") ?? CollaborationConnectionString.Resolve(),
+        npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", CollaborationDbContext.Schema))
     .UseSnakeCaseNamingConvention());
 
 builder.Services.AddDbContext<MasterDataDbContext>(options => options
@@ -187,6 +195,9 @@ builder.Services.AddSingleton(serviceProvider => new IdentifierRateLimiter(
 builder.Services.AddSingleton<ClientFingerprint>();
 
 // Register CRM handlers
+builder.Services.AddScoped<CreateCalendarEntryHandler>();
+builder.Services.AddScoped<GetCalendarEntryHandler>();
+builder.Services.AddScoped<ListCalendarEntriesHandler>();
 builder.Services.AddScoped<CreateOpportunityHandler>();
 builder.Services.AddScoped<AddOpportunityLineHandler>();
 builder.Services.AddScoped<CancelOpportunityLineHandler>();

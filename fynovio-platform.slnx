@@ -7,6 +7,7 @@
   <Folder Name="/src/Modules/">
     <Project Path="src/Modules/Access/Access.csproj" />
     <Project Path="src/Modules/CRM/CRM.csproj" />
+    <Project Path="src/Modules/Collaboration/Collaboration.csproj" />
     <Project Path="src/Modules/MasterData/MasterData.csproj" />
     <Project Path="src/Modules/Organization/Organization.csproj" />
     <Project Path="src/Modules/TenantLifecycle/TenantLifecycle.csproj" />
@@ -14,6 +15,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Access.Tests/Access.Tests.csproj" />
     <Project Path="tests/CRM.Tests/CRM.Tests.csproj" />
+    <Project Path="tests/Collaboration.Tests/Collaboration.Tests.csproj" />
     <Project Path="tests/Host.Tests/Host.Tests.csproj" />
     <Project Path="tests/MasterData.Tests/MasterData.Tests.csproj" />
   </Folder>
