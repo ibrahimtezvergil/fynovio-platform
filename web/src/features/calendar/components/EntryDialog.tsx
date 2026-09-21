@@ -91,7 +91,7 @@ function EntryDetail({ entry, onClose, onEdit, onDelete }: EntryDetailProps) {
         </div>
         {/* The colour is the person's own tag, not a status: it is printed as its value too, so it never stands alone. */}
         <div className="flex items-center gap-2.5">
-          <span aria-hidden className="size-3.5 shrink-0 rounded-full border border-[var(--nx-hairline-strong)]" style={{ background: entry.color }} />
+          <span aria-hidden className="ring-foreground/30 size-3.5 shrink-0 rounded-full ring-1" style={{ background: entry.color }} />
           <span className="text-[13px]">
             {t('detail.color')}: <span className="font-mono text-[12px]">{entry.color}</span>
           </span>
