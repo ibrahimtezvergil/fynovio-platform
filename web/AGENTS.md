@@ -6,7 +6,7 @@ This repository is a single-package React 19 + TypeScript SPA built with Vite,
 Tailwind CSS v4, and shadcn/ui. Use npm and the existing package-lock.json.
 Ancestor Laravel/PHP commands do not apply here: use the frontend checks below.
 This frontend lives in the `fynovio-platform` monorepo (`web/`) next to the .NET API. Authentication is
-real (the API's `/auth/*`); the feature data that has no backend yet (deals, calendar, demo pages) is still
+real (the API's `/auth/*`); the feature data that has no backend yet (deals, demo pages) is still
 mocked with MSW.
 
 - `src/features/<name>/` owns feature pages, components, API hooks, schemas, and stores.
