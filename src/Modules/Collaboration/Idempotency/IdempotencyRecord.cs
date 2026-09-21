@@ -20,8 +20,15 @@ public sealed class IdempotencyRecord
     public static IdempotencyRecord Create(TenantId tenantId, PrincipalRef principal, string operation, string key, string hash, int status, string response, TimeSpan retention) =>
         new()
         {
-            TenantId = tenantId, PrincipalIssuer = principal.Issuer, PrincipalSubject = principal.Subject,
-            Operation = operation, IdempotencyKey = key, RequestHash = hash, ResponseStatus = status,
-            ResponsePayload = response, CreatedAt = DateTimeOffset.UtcNow, ExpiresAt = DateTimeOffset.UtcNow.Add(retention)
+            TenantId = tenantId,
+            PrincipalIssuer = principal.Issuer,
+            PrincipalSubject = principal.Subject,
+            Operation = operation,
+            IdempotencyKey = key,
+            RequestHash = hash,
+            ResponseStatus = status,
+            ResponsePayload = response,
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.Add(retention)
         };
 }

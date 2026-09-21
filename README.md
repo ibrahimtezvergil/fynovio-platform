@@ -109,11 +109,14 @@ dotnet ef database update \
 dotnet ef database update \
   --project src/Modules/MasterData/MasterData.csproj \
   --startup-project src/Modules/MasterData/MasterData.csproj
+dotnet ef database update \
+  --project src/Modules/Collaboration/Collaboration.csproj \
+  --startup-project src/Modules/Collaboration/Collaboration.csproj
 ```
 
 ### Runtime role (Row-Level Security)
 
-Migrations run as `postgres`, a superuser — and superusers bypass Row-Level Security entirely. **An application connected as `postgres` gets no tenant isolation from the database.** After applying migrations, create the unprivileged runtime role once (edit the password in the script first) — `scripts/create-runtime-role.sql` grants it access to both the `crm` and `masterdata` schemas:
+Migrations run as `postgres`, a superuser — and superusers bypass Row-Level Security entirely. **An application connected as `postgres` gets no tenant isolation from the database.** After applying migrations, create the unprivileged runtime role once (edit the password in the script first) — `scripts/create-runtime-role.sql` grants it access to the `crm`, `masterdata` and `collaboration` schemas (and the identity/access ones):
 
 ```bash
 psql -h localhost -U postgres -d fynovio_platform -f scripts/create-runtime-role.sql
@@ -124,9 +127,10 @@ Then point the application at that role:
 ```bash
 export ConnectionStrings__Crm="Host=localhost;Database=fynovio_platform;Username=fynovio_app;Password=<password>"
 export ConnectionStrings__MasterData="Host=localhost;Database=fynovio_platform;Username=fynovio_app;Password=<password>"
+export ConnectionStrings__Collaboration="Host=localhost;Database=fynovio_platform;Username=fynovio_app;Password=<password>"
 ```
 
-`ConnectionStrings__Crm`/`ConnectionStrings__MasterData` are what `Host` reads first; `FYNOVIO_CRM_CONNECTION_STRING`/`FYNOVIO_MASTERDATA_CONNECTION_STRING` are the fallbacks, and are also what `dotnet ef` uses — keep those on the `postgres` role, since migrations need it.
+`ConnectionStrings__Crm`/`ConnectionStrings__MasterData`/`ConnectionStrings__Collaboration` are what `Host` reads first; `FYNOVIO_CRM_CONNECTION_STRING`/`FYNOVIO_MASTERDATA_CONNECTION_STRING`/`FYNOVIO_COLLABORATION_CONNECTION_STRING` are the fallbacks, and are also what `dotnet ef` uses — keep those on the `postgres` role, since migrations need it.
 
 ## Running locally: API, web and signing in
 
