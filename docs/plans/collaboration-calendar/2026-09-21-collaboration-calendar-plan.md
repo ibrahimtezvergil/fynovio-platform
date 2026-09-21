@@ -55,7 +55,7 @@ only after the corresponding commit exists.
 - [ ] S5 — Closure: run format/build/test/migration/frontend checks, native review,
   browser flow and isolation verification; refresh Graphify; update `AGENTS.md` status;
   commit derived graph files and complete merge/worktree hygiene after owner review.
-  Progress (not yet closed — Graphify refresh, `AGENTS.md` status line, hygiene and the owner review remain):
+  Progress (not yet closed — only the owner review, the merge and worktree hygiene remain; `AGENTS.md` status `8dbf39e` "docs: record the Collaboration module and calendar status in AGENTS.md" and Graphify refresh `eab8c92` "chore(graphify): refresh graph after Collaboration module and calendar" are done):
   the independent review (Critical: none) and the Playwright visual walkthrough (both themes, tr/en, 390 px) are
   done and their findings fixed — `f532085` "fix(collaboration): reject a trailing newline in color and identifiers",
   `bd9eff0` "fix(collaboration): authorize the list request before validating its range", `ac566e2` "fix(collaboration):
