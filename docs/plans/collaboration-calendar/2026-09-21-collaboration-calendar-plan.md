@@ -12,13 +12,23 @@ only after the corresponding commit exists.
   stop for owner approval before generating model code or migrations.
   → Commit: `f3fbcbb` "docs(collaboration): define calendar boundary and schema"
 
-- [ ] S1 — Backend core: create the `Collaboration` module and test project; add the
+- [x] S1 — Backend core: create the `Collaboration` module and test project; add the
   aggregate, context, configurations, generated schema/RLS migrations, runtime-role
   grants, capability manifest/catalog, Host composition, create/get/list handlers,
   and domain/persistence/RLS/architecture tests.
+  → Commit: `ffa2111` "chore(collaboration): format module and wire it into e2e, playwright env and README"
+  (follow-up fix: `a3eb6cf` "fix(collaboration): close S1 review findings" — control characters in
+  title/notes, microsecond truncation of instants, Record-stage denial without an entry id, schema-doc
+  `row_version` default, dead `IHasRowVersion`)
 
-- [ ] S2 — Mutations and HTTP: implement full-replace update and hard delete with
+- [x] S2 — Mutations and HTTP: implement full-replace update and hard delete with
   owner scoping, concurrency/idempotency/race handling, Host endpoints, and HTTP tests.
+  → Commit: `4cab5db` "test(host): calendar HTTP contract tests"
+  (handlers `4892bcc`, endpoints `a46f307`, handler tests `208847e`, frozen contract `107d785`;
+  follow-up fix: `57a7e78` "fix(collaboration): replay when the key owner commits between lookup and entry load")
+  Deviation: until S3 validates link targets on write, any non-null `link` in a request is
+  `422 link_target_unavailable` (endpoint layer, marked `// S3 replaces this`); stored links, if any, read
+  back as `state: "unavailable"` without label.
 
 - [ ] S3 — Links: add Contracts link-directory abstractions, CRM opportunity/party
   resolvers, Host composition, authenticated write validation and read hydration,
