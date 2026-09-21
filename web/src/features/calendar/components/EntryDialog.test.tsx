@@ -46,7 +46,10 @@ function renderHost(store: { entries: unknown[] } = { entries: [] }) {
 
 const open = (entry?: CalendarEntry, prefill?: EntryPrefill) =>
   act(() => {
-    void openDialog({ content: <EntryDialog entry={entry} prefill={prefill} />, className: 'sm:max-w-[560px]' })
+    void openDialog({
+      content: <EntryDialog entry={entry} prefill={prefill} />,
+      className: entry ? 'sm:max-w-[560px] [&_[data-slot=dialog-close]]:hidden' : 'sm:max-w-[560px]',
+    })
   })
 
 const dialog = () => screen.findByRole('dialog')
@@ -419,6 +422,19 @@ describe('delete', () => {
 })
 
 describe('link rendering states', () => {
+  it('uses the entry colour as the detail header fill instead of repeating its hex value in the body', async () => {
+    renderHost()
+    open(parse(wireEntry({ color: '#3c8cf0' })))
+    const view = await dialog()
+    const header = view.querySelector('[data-slot="dialog-header"]')
+
+    expect(header).toHaveStyle({ backgroundColor: '#3c8cf0', color: '#000000' })
+    expect(view).not.toHaveTextContent(t('detail.color'))
+    expect(view).not.toHaveTextContent('#3c8cf0')
+    fireEvent.click(within(view).getAllByRole('button', { name: t('close') }).at(0) as HTMLElement)
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+
   it('accessible crm/opportunity: a real link to /crm/opportunities/:id that navigates and closes the dialog', async () => {
     renderHost()
     open(parse(wireEntry({ link: accessibleLink() })))
@@ -505,9 +521,10 @@ describe('accessibility', () => {
     expect(alert).toHaveTextContent(t('problem.unavailable.title'))
   })
 
-  it('the colour of an entry is also printed as text in the details', async () => {
+  it('the entry colour is expressed by the detail header and its text remains readable', async () => {
     renderHost()
     open(parse(wireEntry()))
-    expect(await within(await dialog()).findByText('#3b82f6')).toBeInTheDocument()
+    const header = (await dialog()).querySelector('[data-slot="dialog-header"]')
+    expect(header).toHaveStyle({ backgroundColor: '#3b82f6', color: '#000000' })
   })
 })

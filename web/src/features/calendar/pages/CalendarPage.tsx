@@ -25,7 +25,10 @@ const NO_ENTRIES: CalendarEntry[] = []
 const DIALOG_CLASS = 'sm:max-w-[560px]'
 
 function openEntryDialog(entry?: CalendarEntry, prefill?: EntryPrefill) {
-  void openDialog({ content: <EntryDialog entry={entry} prefill={prefill} />, className: DIALOG_CLASS })
+  void openDialog({
+    content: <EntryDialog entry={entry} prefill={prefill} />,
+    className: entry ? `${DIALOG_CLASS} [&_[data-slot=dialog-close]]:hidden` : DIALOG_CLASS,
+  })
 }
 
 export default function CalendarPage() {
