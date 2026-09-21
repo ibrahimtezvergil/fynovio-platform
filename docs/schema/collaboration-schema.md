@@ -82,7 +82,10 @@ of the owner; no foreign key crosses into Identity/Access.
 
 `title` is a trimmed, single-line 1--200-character plain-text value. It has
 `CHECK (title = btrim(title) AND char_length(title) BETWEEN 1 AND 200 AND
-position(E'\\n' IN title) = 0 AND position(E'\\r' IN title) = 0)`. `notes` is nullable,
+title !~ '[\u0001-\u001f\u007f-\u009f\u2028\u2029]')`: no control character (C0, DEL, C1 including
+NEL) and neither Unicode line nor paragraph separator; NUL cannot be stored in `text` at all. The domain rejects
+the same set (and any surrounding Unicode whitespace), so a database error never stands in for a validation
+error. `notes` is nullable,
 plain text, and at most 4,000 characters. Neither may be logged or placed in an
 outbox payload. `color` is normalized to lowercase by the domain and has
 `CHECK (color ~ '^#[0-9a-f]{6}$')`.

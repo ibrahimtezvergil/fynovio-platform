@@ -51,7 +51,7 @@ namespace Collaboration.Persistence.Migrations
                     table.CheckConstraint("ck_calendar_entries_link", "(link_bounded_context IS NULL AND link_entity_type IS NULL AND link_entity_id IS NULL) OR (link_bounded_context IS NOT NULL AND link_entity_type IS NOT NULL AND link_entity_id IS NOT NULL AND link_entity_id > 0)");
                     table.CheckConstraint("ck_calendar_entries_link_identifiers", "(link_bounded_context IS NULL OR link_bounded_context ~ '^[a-z][a-z0-9_]*$') AND (link_entity_type IS NULL OR link_entity_type ~ '^[a-z][a-z0-9_]*$')");
                     table.CheckConstraint("ck_calendar_entries_notes", "notes IS NULL OR char_length(notes) <= 4000");
-                    table.CheckConstraint("ck_calendar_entries_title", "title = btrim(title) AND char_length(title) BETWEEN 1 AND 200 AND position(E'\\n' IN title) = 0 AND position(E'\\r' IN title) = 0");
+                    table.CheckConstraint("ck_calendar_entries_title", "title = btrim(title) AND char_length(title) BETWEEN 1 AND 200 AND title !~ '[\\u0001-\\u001f\\u007f-\\u009f\\u2028\\u2029]'");
                 });
 
             migrationBuilder.CreateTable(

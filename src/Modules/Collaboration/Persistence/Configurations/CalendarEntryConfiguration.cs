@@ -11,7 +11,9 @@ public sealed class CalendarEntryConfiguration : IEntityTypeConfiguration<Calend
     {
         builder.ToTable("calendar_entries", table =>
         {
-            table.HasCheckConstraint("ck_calendar_entries_title", "title = btrim(title) AND char_length(title) BETWEEN 1 AND 200 AND position(E'\\n' IN title) = 0 AND position(E'\\r' IN title) = 0");
+            // Mirrors the domain: a single line without any control character (C0, DEL, C1 incl. NEL) or the Unicode
+            // line/paragraph separators. NUL cannot be stored in text at all, so the class starts at U+0001.
+            table.HasCheckConstraint("ck_calendar_entries_title", @"title = btrim(title) AND char_length(title) BETWEEN 1 AND 200 AND title !~ '[\u0001-\u001f\u007f-\u009f\u2028\u2029]'");
             table.HasCheckConstraint("ck_calendar_entries_notes", "notes IS NULL OR char_length(notes) <= 4000");
             table.HasCheckConstraint("ck_calendar_entries_color", "color ~ '^#[0-9a-f]{6}$'");
             table.HasCheckConstraint("ck_calendar_entries_all_day_timing", "(all_day AND start_date IS NOT NULL AND end_date IS NOT NULL AND start_at IS NULL AND end_at IS NULL) OR (NOT all_day AND start_at IS NOT NULL AND start_date IS NULL AND end_date IS NULL)");

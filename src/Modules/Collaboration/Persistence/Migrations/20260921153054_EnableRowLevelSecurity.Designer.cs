@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Collaboration.Persistence.Migrations
 {
     [DbContext(typeof(CollaborationDbContext))]
-    [Migration("20260921092637_InitialCollaborationSchema")]
-    partial class InitialCollaborationSchema
+    [Migration("20260921153054_EnableRowLevelSecurity")]
+    partial class EnableRowLevelSecurity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -142,7 +142,7 @@ namespace Collaboration.Persistence.Migrations
 
                             t.HasCheckConstraint("ck_calendar_entries_notes", "notes IS NULL OR char_length(notes) <= 4000");
 
-                            t.HasCheckConstraint("ck_calendar_entries_title", "title = btrim(title) AND char_length(title) BETWEEN 1 AND 200 AND position(E'\\n' IN title) = 0 AND position(E'\\r' IN title) = 0");
+                            t.HasCheckConstraint("ck_calendar_entries_title", "title = btrim(title) AND char_length(title) BETWEEN 1 AND 200 AND title !~ '[\\u0001-\\u001f\\u007f-\\u009f\\u2028\\u2029]'");
                         });
                 });
 
