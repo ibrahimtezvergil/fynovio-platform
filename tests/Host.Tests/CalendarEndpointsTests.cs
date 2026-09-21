@@ -509,6 +509,15 @@ public sealed class CalendarEndpointsTests(CalendarApiFixture api) : IClassFixtu
         await AssertProblemAsync(response, HttpStatusCode.Forbidden, "forbidden");
     }
 
+    [Fact]
+    public async Task List_by_a_member_without_the_role_is_403_even_for_a_reversed_or_oversized_range()
+    {
+        var from = new DateTimeOffset(2029, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
+        await AssertProblemAsync(await GetAsync($"{Route}{Query((from.AddDays(1), from))}", NoRole), HttpStatusCode.Forbidden, "forbidden");
+        await AssertProblemAsync(await GetAsync($"{Route}{Query((from, from.AddDays(101)))}", NoRole), HttpStatusCode.Forbidden, "forbidden");
+    }
+
     // ---- PUT ----------------------------------------------------------------------------------------------------------
 
     [Fact]

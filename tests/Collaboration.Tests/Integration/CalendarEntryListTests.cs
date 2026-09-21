@@ -158,6 +158,17 @@ public sealed class CalendarEntryListTests(PostgresFixture fixture)
     }
 
     [Fact]
+    public async Task A_denied_caller_gets_the_denial_and_not_a_range_error()
+    {
+        var tenant = TestData.NextTenant();
+
+        await Assert.ThrowsAsync<CalendarEntryAuthorizationDeniedException>(() =>
+            _harness.ListAsync(tenant, Harness.Alice, To, From, StubAuthorizer.AlwaysDeny));
+        await Assert.ThrowsAsync<CalendarEntryAuthorizationDeniedException>(() =>
+            _harness.ListAsync(tenant, Harness.Alice, From, From.AddDays(101), StubAuthorizer.AlwaysDeny));
+    }
+
+    [Fact]
     public async Task A_range_of_exactly_100_days_is_accepted_and_longer_is_too_large()
     {
         var tenant = TestData.NextTenant();

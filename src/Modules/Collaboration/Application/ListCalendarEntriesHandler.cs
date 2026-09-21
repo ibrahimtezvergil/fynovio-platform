@@ -13,13 +13,6 @@ public sealed class ListCalendarEntriesHandler(CollaborationDbContext context, I
 
     public async Task<IReadOnlyList<CalendarEntryDto>> HandleAsync(ListCalendarEntriesQuery query, CancellationToken cancellationToken = default)
     {
-        // Validate range before opening transaction.
-        if (query.To <= query.From)
-            throw new ArgumentException("Calendar range must have To > From.", nameof(query));
-
-        if (query.To - query.From > TimeSpan.FromDays(MaxRangeDays))
-            throw new CalendarRangeTooLargeException("Range exceeds 100 days.");
-
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         await context.SetTenantContextAsync(query.TenantId, cancellationToken);
 
@@ -29,6 +22,13 @@ public sealed class ListCalendarEntriesHandler(CollaborationDbContext context, I
             new AuthorizationRequest(actor, new ActionKey(ActionKeyValue), resource), cancellationToken);
         if (!decision.IsAllowed)
             throw new CalendarEntryAuthorizationDeniedException(ActionKeyValue, decision.ReasonCode, AuthorizationDenialStage.Coarse);
+
+        // After authorization, so a caller without the capability learns nothing about the query rules.
+        if (query.To <= query.From)
+            throw new ArgumentException("Calendar range must have To > From.", nameof(query));
+
+        if (query.To - query.From > TimeSpan.FromDays(MaxRangeDays))
+            throw new CalendarRangeTooLargeException("Range exceeds 100 days.");
 
         // Convert query bounds to UTC for Npgsql (non-UTC DateTimeOffset parameters cause binding errors).
         var fromUtc = query.From.ToUniversalTime();
