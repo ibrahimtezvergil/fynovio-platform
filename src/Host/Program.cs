@@ -216,6 +216,7 @@ builder.Services.AddScoped<GetPipelineStagesHandler>();
 builder.Services.AddScoped<GetOpportunityAvailableActionsHandler>();
 
 builder.Services.AddExceptionHandler<CrmProblemDetailsExceptionHandler>();
+builder.Services.AddExceptionHandler<CollaborationProblemDetailsExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 // Configure CORS: explicit origins only, no wildcard
