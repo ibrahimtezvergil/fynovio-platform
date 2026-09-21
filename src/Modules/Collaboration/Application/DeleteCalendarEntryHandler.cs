@@ -30,28 +30,41 @@ public sealed class DeleteCalendarEntryHandler(CollaborationDbContext context, I
         await AuthorizeAsync(actor, new ResourceDescriptor(nameof(CalendarEntry), null, command.Principal), null, cancellationToken);
 
         var requestHash = HashRequest(command);
-        var existing = await IdempotencySupport.FindAsync(
-            context, command.TenantId, command.Principal, Operation, command.IdempotencyKey, cancellationToken);
-        if (existing is not null)
+
+        // The request that owns this key may commit at any point up to our own save, and after it commits the entry is gone
+        // (or changed) as far as we can tell. So the key is looked up first, and again before either verdict is given.
+        async Task<DeleteCalendarEntryResult?> TryReplayAsync()
         {
-            if (existing.RequestHash != requestHash)
+            var record = await IdempotencySupport.FindAsync(
+                context, command.TenantId, command.Principal, Operation, command.IdempotencyKey, cancellationToken);
+            if (record is null)
+                return null;
+            if (record.RequestHash != requestHash)
                 throw new IdempotencyKeyReusedException(Operation, command.IdempotencyKey);
 
             await transaction.CommitAsync(cancellationToken);
             return new DeleteCalendarEntryResult(Replayed: true);
         }
 
+        if (await TryReplayAsync() is { } replayed)
+            return replayed;
+
         var entry = await context.CalendarEntries.SingleOrDefaultAsync(
             e => e.TenantId == command.TenantId
                 && e.Id == command.EntryId
                 && e.OwnerPrincipalIssuer == command.Principal.Issuer
                 && e.OwnerPrincipalSubject == command.Principal.Subject,
-            cancellationToken) ?? throw new CalendarEntryNotFoundException(command.EntryId);
+            cancellationToken);
+        if (entry is null)
+            return await TryReplayAsync() ?? throw new CalendarEntryNotFoundException(command.EntryId);
 
         await AuthorizeAsync(actor, new ResourceDescriptor(nameof(CalendarEntry), entry.Id, entry.Owner), entry.Id, cancellationToken);
 
         if (entry.RowVersion != command.ExpectedVersion)
-            throw new CalendarEntryConcurrencyConflictException(entry.Id, command.ExpectedVersion, entry.RowVersion);
+        {
+            return await TryReplayAsync()
+                ?? throw new CalendarEntryConcurrencyConflictException(entry.Id, command.ExpectedVersion, entry.RowVersion);
+        }
 
         // The deletion is the next fact about this aggregate, so it takes the next version.
         var deletedAtVersion = entry.RowVersion + 1;

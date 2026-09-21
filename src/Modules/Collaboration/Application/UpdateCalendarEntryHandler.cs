@@ -29,28 +29,41 @@ public sealed class UpdateCalendarEntryHandler(CollaborationDbContext context, I
         await AuthorizeAsync(actor, new ResourceDescriptor(nameof(CalendarEntry), null, command.Principal), null, cancellationToken);
 
         var requestHash = HashRequest(command);
-        var existing = await IdempotencySupport.FindAsync(
-            context, command.TenantId, command.Principal, Operation, command.IdempotencyKey, cancellationToken);
-        if (existing is not null)
+
+        // The request that owns this key may commit at any point up to our own save, and after it commits the entry looks
+        // changed (new version) to us. So the key is looked up first, and again before either "changed" verdict is given.
+        async Task<UpdateCalendarEntryResult?> TryReplayAsync()
         {
-            if (existing.RequestHash != requestHash)
+            var record = await IdempotencySupport.FindAsync(
+                context, command.TenantId, command.Principal, Operation, command.IdempotencyKey, cancellationToken);
+            if (record is null)
+                return null;
+            if (record.RequestHash != requestHash)
                 throw new IdempotencyKeyReusedException(Operation, command.IdempotencyKey);
 
             await transaction.CommitAsync(cancellationToken);
-            return Replay(existing);
+            return Replay(record);
         }
+
+        if (await TryReplayAsync() is { } replayed)
+            return replayed;
 
         var entry = await context.CalendarEntries.SingleOrDefaultAsync(
             e => e.TenantId == command.TenantId
                 && e.Id == command.EntryId
                 && e.OwnerPrincipalIssuer == command.Principal.Issuer
                 && e.OwnerPrincipalSubject == command.Principal.Subject,
-            cancellationToken) ?? throw new CalendarEntryNotFoundException(command.EntryId);
+            cancellationToken);
+        if (entry is null)
+            return await TryReplayAsync() ?? throw new CalendarEntryNotFoundException(command.EntryId);
 
         await AuthorizeAsync(actor, new ResourceDescriptor(nameof(CalendarEntry), entry.Id, entry.Owner), entry.Id, cancellationToken);
 
         if (entry.RowVersion != command.ExpectedVersion)
-            throw new CalendarEntryConcurrencyConflictException(entry.Id, command.ExpectedVersion, entry.RowVersion);
+        {
+            return await TryReplayAsync()
+                ?? throw new CalendarEntryConcurrencyConflictException(entry.Id, command.ExpectedVersion, entry.RowVersion);
+        }
 
         entry.Replace(
             command.Title, command.Notes, command.Color, command.AllDay, command.StartAt, command.EndAt,
