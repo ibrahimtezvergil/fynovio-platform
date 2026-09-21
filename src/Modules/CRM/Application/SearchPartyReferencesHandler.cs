@@ -39,8 +39,5 @@ public sealed class SearchPartyReferencesHandler(IAuthorizer authorizer, IPartyS
     }
 
     private static PartyReferenceDto ToDto(PartyDirectoryEntry entry) =>
-        new(entry.PartyRef.PartyId, entry.PartyType.ToString(), DisplayName(entry), entry.Email);
-
-    private static string DisplayName(PartyDirectoryEntry entry) =>
-        string.IsNullOrWhiteSpace(entry.Surname) ? entry.Name : $"{entry.Name} {entry.Surname}";
+        new(entry.PartyRef.PartyId, entry.PartyType.ToString(), PartyDisplay.Name(entry), entry.Email);
 }

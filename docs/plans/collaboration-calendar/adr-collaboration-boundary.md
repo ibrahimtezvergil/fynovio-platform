@@ -54,6 +54,17 @@ only to its owner without making Calendar a shadow owner of CRM dates or records
   required by the current enforcement scope; this is an explicit NOT APPLICABLE state,
   not an omitted control.
 
+### Link resolvers live in CRM (interim, L-3)
+
+Collaboration stores links as `EntityRef`-shaped values and resolves their display data at read time through
+`Contracts.ILinkTargetDirectory`, a pure composition over `ILinkTargetResolver`s that Host registers; Collaboration
+never learns which module answers. CRM implements `crm/opportunity` (each record authorized with the very request the
+opportunity read handler sends, from one shared helper, so the two cannot decide differently) and `masterdata/party`.
+MasterData has no authorization layer of its own (AGENTS.md L-3), so
+the party resolver is gated by `crm.reference.party.search`, exactly like CRM's party lookup, and a merged party is shown
+as its survivor. When MasterData gains its own PDP the party resolver moves there. Every reason a target is not shown
+(missing, other tenant, denied, no survivor, resolver failure) yields the same `Unavailable` result.
+
 ## Non-goals
 
 No completion state (Human Tasks owns that), reminders, attendees/invites/sharing,
