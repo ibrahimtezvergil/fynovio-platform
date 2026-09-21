@@ -26,13 +26,18 @@ only after the corresponding commit exists.
   → Commit: `4cab5db` "test(host): calendar HTTP contract tests"
   (handlers `4892bcc`, endpoints `a46f307`, handler tests `208847e`, frozen contract `107d785`;
   follow-up fix: `57a7e78` "fix(collaboration): replay when the key owner commits between lookup and entry load")
-  Deviation: until S3 validates link targets on write, any non-null `link` in a request is
-  `422 link_target_unavailable` (endpoint layer, marked `// S3 replaces this`); stored links, if any, read
-  back as `state: "unavailable"` without label.
+  Deviation (closed by S3): until S3 validated link targets on write, any non-null `link` in a request was
+  `422 link_target_unavailable` (endpoint layer); that interim rule is removed in `65a88c5`.
 
-- [ ] S3 — Links: add Contracts link-directory abstractions, CRM opportunity/party
+- [x] S3 — Links: add Contracts link-directory abstractions, CRM opportunity/party
   resolvers, Host composition, authenticated write validation and read hydration,
   together with authorization-agreement and privacy tests.
+  → Commit: `65a88c5` "feat(collaboration): validate links on write and hydrate them on read"
+  (S3a on `feat/calendar-links-crm`: Contracts directory `aa9ff72`, resolvers `914f702`, tests `18786e6`,
+  head `2f2f6bf`, merged as `0d7ca82`; docs `2a60059`)
+  Deviation from the plan text: on `PUT` a link identical to the stored one is not re-validated (owner decision,
+  keeps an entry editable after its target became unavailable); only a new or changed link is resolved.
+  The interim `masterdata/party` resolver lives in CRM under L-3.
 
 - [ ] S4 — Frontend: replace calendar mocks with real range-aware React Query APIs;
   add Zod contracts, dialog/create/edit/delete flows, `ColorInput`, contrast helper,
