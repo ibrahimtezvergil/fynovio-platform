@@ -269,6 +269,9 @@ namespace Collaboration.Persistence.Migrations
                         .HasDatabaseName("ix_outbox_messages_processed_at")
                         .HasFilter("processed_at IS NULL");
 
+                    b.HasIndex("TenantId", "AggregateType", "AggregateId")
+                        .HasDatabaseName("ix_outbox_messages_tenant_id_aggregate_type_aggregate_id");
+
                     b.ToTable("outbox_messages", "collaboration");
                 });
 #pragma warning restore 612, 618

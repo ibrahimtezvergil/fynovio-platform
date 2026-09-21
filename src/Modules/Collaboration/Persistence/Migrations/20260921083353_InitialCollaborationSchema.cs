@@ -137,6 +137,12 @@ namespace Collaboration.Persistence.Migrations
                 table: "outbox_messages",
                 column: "processed_at",
                 filter: "processed_at IS NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_outbox_messages_tenant_id_aggregate_type_aggregate_id",
+                schema: "collaboration",
+                table: "outbox_messages",
+                columns: new[] { "tenant_id", "aggregate_type", "aggregate_id" });
         }
 
         /// <inheritdoc />

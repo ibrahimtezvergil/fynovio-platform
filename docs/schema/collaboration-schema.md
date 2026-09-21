@@ -32,9 +32,9 @@ erDiagram
         char_7 color "NOT NULL, lowercase #rrggbb CHECK"
         boolean all_day "NOT NULL"
         timestamptz start_at "timed entry only"
-        timestamptz end_at "timed entry only, nullable and exclusive"
+        timestamptz end_at "timed entry only, nullable, exclusive if present"
         date start_date "all-day entry only"
-        date end_date "all-day entry only, nullable and exclusive"
+        date end_date "all-day entry only, NOT NULL exclusive"
         text link_bounded_context "nullable, all-or-none link"
         text link_entity_type "nullable, all-or-none link"
         bigint link_entity_id "nullable, > 0"
@@ -98,7 +98,7 @@ its all-day overlap predicate.
 
 Constraints:
 
-- `all_day` requires `start_date IS NOT NULL`, `start_at IS NULL`, and `end_at IS NULL`.
+- `all_day` requires `start_date IS NOT NULL`, `end_date IS NOT NULL`, `start_at IS NULL`, and `end_at IS NULL`.
 - `NOT all_day` requires `start_at IS NOT NULL`, `start_date IS NULL`, and `end_date IS NULL`.
 - `end_at IS NULL OR end_at > start_at`.
 - `end_date IS NULL OR end_date > start_date`.
@@ -118,7 +118,8 @@ Indexes:
 - `(tenant_id, owner_principal_issuer, owner_principal_subject, start_date)` for
   all-day range reads;
 - `(tenant_id, owner_principal_issuer, owner_principal_subject, id)` supports
-  owner-scoped get/update/delete.
+  owner-scoped get/update/delete;
+- `(tenant_id, aggregate_type, aggregate_id)` on outbox_messages for dispatcher scans.
 
 `row_version bigint NOT NULL DEFAULT 1` is the aggregate concurrency token. The
 aggregate advances it before persistence, so the previous value participates in EF

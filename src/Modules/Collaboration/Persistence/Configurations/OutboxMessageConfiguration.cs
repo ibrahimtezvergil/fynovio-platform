@@ -15,5 +15,6 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
         builder.Property(message => message.Payload).HasColumnType("jsonb");
         builder.HasIndex(message => message.EventId).IsUnique();
         builder.HasIndex(message => message.ProcessedAt).HasFilter("processed_at IS NULL");
+        builder.HasIndex(message => new { message.TenantId, message.AggregateType, message.AggregateId });
     }
 }

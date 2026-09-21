@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Collaboration.Persistence.Migrations
 {
     [DbContext(typeof(CollaborationDbContext))]
-    [Migration("20260921073818_InitialCollaborationSchema")]
-    partial class InitialCollaborationSchema
+    [Migration("20260921083358_EnableRowLevelSecurity")]
+    partial class EnableRowLevelSecurity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -271,6 +271,9 @@ namespace Collaboration.Persistence.Migrations
                     b.HasIndex("ProcessedAt")
                         .HasDatabaseName("ix_outbox_messages_processed_at")
                         .HasFilter("processed_at IS NULL");
+
+                    b.HasIndex("TenantId", "AggregateType", "AggregateId")
+                        .HasDatabaseName("ix_outbox_messages_tenant_id_aggregate_type_aggregate_id");
 
                     b.ToTable("outbox_messages", "collaboration");
                 });

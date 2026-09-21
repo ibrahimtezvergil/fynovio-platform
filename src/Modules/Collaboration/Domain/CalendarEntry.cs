@@ -34,41 +34,74 @@ public sealed partial class CalendarEntry : IHasRowVersion
         bool allDay, DateTimeOffset? startAt, DateTimeOffset? endAt,
         DateOnly? startDate, DateOnly? endDate, EntityRef? link)
     {
-        var entry = new CalendarEntry { TenantId = tenantId, OwnerPrincipalIssuer = owner.Issuer, OwnerPrincipalSubject = owner.Subject };
-        entry.Apply(title, notes, color, allDay, startAt, endAt, startDate, endDate, link);
+        if (string.IsNullOrWhiteSpace(owner.Issuer) || string.IsNullOrWhiteSpace(owner.Subject))
+            throw new ArgumentException("Owner principal issuer and subject must be non-blank.", nameof(owner));
+
+        var normalizedTitle = NormalizeTitle(title);
+        var normalizedNotes = ValidateNotes(notes);
+        var normalizedColor = NormalizeColor(color);
+        var normalizedStartAt = NormalizeTimestamp(startAt);
+        var normalizedEndAt = NormalizeTimestamp(endAt);
+        ValidateTiming(allDay, normalizedStartAt, normalizedEndAt, startDate, endDate);
+        if (link is { } value && value.TenantId != tenantId)
+            throw new ArgumentException("Link tenant must match the calendar entry tenant.", nameof(link));
+
         var now = DateTimeOffset.UtcNow;
-        entry.CreatedAt = now;
-        entry.UpdatedAt = now;
-        return entry;
+        return new CalendarEntry
+        {
+            TenantId = tenantId,
+            OwnerPrincipalIssuer = owner.Issuer,
+            OwnerPrincipalSubject = owner.Subject,
+            Title = normalizedTitle,
+            Notes = normalizedNotes,
+            Color = normalizedColor,
+            AllDay = allDay,
+            StartAt = normalizedStartAt,
+            EndAt = normalizedEndAt,
+            StartDate = startDate,
+            EndDate = endDate,
+            LinkBoundedContext = link?.BoundedContext,
+            LinkEntityType = link?.EntityType,
+            LinkEntityId = link?.Id,
+            RowVersion = 1,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
     }
 
     public void Replace(
         string title, string? notes, string color, bool allDay, DateTimeOffset? startAt,
         DateTimeOffset? endAt, DateOnly? startDate, DateOnly? endDate, EntityRef? link)
     {
-        Apply(title, notes, color, allDay, startAt, endAt, startDate, endDate, link);
-        UpdatedAt = DateTimeOffset.UtcNow;
-        RowVersion++;
-    }
-
-    private void Apply(
-        string title, string? notes, string color, bool allDay, DateTimeOffset? startAt,
-        DateTimeOffset? endAt, DateOnly? startDate, DateOnly? endDate, EntityRef? link)
-    {
+        var normalizedTitle = NormalizeTitle(title);
+        var normalizedNotes = ValidateNotes(notes);
+        var normalizedColor = NormalizeColor(color);
+        var normalizedStartAt = NormalizeTimestamp(startAt);
+        var normalizedEndAt = NormalizeTimestamp(endAt);
+        ValidateTiming(allDay, normalizedStartAt, normalizedEndAt, startDate, endDate);
         if (link is { } value && value.TenantId != TenantId)
             throw new ArgumentException("Link tenant must match the calendar entry tenant.", nameof(link));
-        Title = NormalizeTitle(title);
-        Notes = ValidateNotes(notes);
-        Color = NormalizeColor(color);
-        ValidateTiming(allDay, startAt, endAt, startDate, endDate);
+
+        Title = normalizedTitle;
+        Notes = normalizedNotes;
+        Color = normalizedColor;
         AllDay = allDay;
-        StartAt = startAt;
-        EndAt = endAt;
+        StartAt = normalizedStartAt;
+        EndAt = normalizedEndAt;
         StartDate = startDate;
         EndDate = endDate;
         LinkBoundedContext = link?.BoundedContext;
         LinkEntityType = link?.EntityType;
         LinkEntityId = link?.Id;
+        Touch();
+    }
+
+    private static DateTimeOffset? NormalizeTimestamp(DateTimeOffset? dt) => dt?.ToUniversalTime();
+
+    private void Touch()
+    {
+        UpdatedAt = DateTimeOffset.UtcNow;
+        RowVersion++;
     }
 
     private static string NormalizeTitle(string title)
