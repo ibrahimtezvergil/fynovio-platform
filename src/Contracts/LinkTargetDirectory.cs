@@ -70,6 +70,6 @@ public sealed partial class LinkTargetDirectory : ILinkTargetDirectory
 
     private static bool IsIdentifier(string value) => !string.IsNullOrEmpty(value) && IdentifierPattern().IsMatch(value);
 
-    [GeneratedRegex("^[a-z][a-z0-9_]*$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^[a-z][a-z0-9_]*\z", RegexOptions.CultureInvariant)]
     private static partial Regex IdentifierPattern();
 }

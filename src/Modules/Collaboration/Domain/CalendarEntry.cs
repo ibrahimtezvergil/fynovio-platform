@@ -152,6 +152,8 @@ public sealed partial class CalendarEntry
             throw new ArgumentException("Timed entries require a start instant and an exclusive end after it.");
     }
 
-    [GeneratedRegex("^#[0-9a-f]{6}$", RegexOptions.CultureInvariant)]
+    // \z, not $: in .NET `$` also matches before a final newline, and a value like "#aabbcc\n" would pass here and then
+    // fail the column (22001) and ck_calendar_entries_color as an unhandled 500.
+    [GeneratedRegex(@"^#[0-9a-f]{6}\z", RegexOptions.CultureInvariant)]
     private static partial Regex ColorPattern();
 }

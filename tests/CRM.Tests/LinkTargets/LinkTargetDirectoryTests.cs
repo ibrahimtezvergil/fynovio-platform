@@ -123,6 +123,8 @@ public sealed class LinkTargetDirectoryTests
     [InlineData("1crm", "opportunity")]
     [InlineData("crm", "opp-ortunity")]
     [InlineData("crm", "")]
+    [InlineData("crm\n", "opportunity")]
+    [InlineData("crm", "opportunity\n")]
     public void Resolver_keys_must_match_the_identifier_grammar(string context, string type) =>
         Assert.Throws<ArgumentException>(() => new LinkTargetDirectory([new FakeResolver(context, type, _ => null)]));
 

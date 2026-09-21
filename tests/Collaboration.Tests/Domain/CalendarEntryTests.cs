@@ -148,6 +148,10 @@ public sealed class CalendarEntryCreationTests
     [InlineData("123456")]
     [InlineData("#GGGGGG")]
     [InlineData("")]
+    [InlineData("#aabbcc\n")]
+    [InlineData("#aabbcc\r\n")]
+    [InlineData("\n#aabbcc")]
+    [InlineData(" #aabbcc")]
     public void Create_rejects_invalid_color_format(string color)
     {
         Assert.Throws<ArgumentException>(() =>

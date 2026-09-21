@@ -150,6 +150,8 @@ public sealed class CalendarEndpointsTests(CalendarApiFixture api) : IClassFixtu
         ["color", "red"],
         ["color", "#12345"],
         ["color", "#12345g"],
+        ["color", "#aabbcc\n"],
+        ["startAt", "2030-01-01T09:00:00Z\n"],
         ["allDay", null],
         ["allDay", "yes"],
         ["startAt", null],
