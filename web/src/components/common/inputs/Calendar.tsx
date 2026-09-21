@@ -1,5 +1,6 @@
-import { tr } from 'date-fns/locale'
+import { enUS, tr } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { DayPicker, type DayPickerProps } from 'react-day-picker'
 import { cn } from '@/lib/utils'
 
@@ -18,13 +19,15 @@ const DAY_BUTTON = [
 
 /**
  * The month grid, wearing the app's material. Only the class map is ours —
- * keyboard navigation, range logic, week structure and the Turkish month and
- * weekday names all come from the library and its `date-fns` locale.
+ * keyboard navigation, range logic, week structure and the month and weekday
+ * names (Turkish or English, following the UI language) all come from the
+ * library and its `date-fns` locale.
  */
 export function Calendar({ className, classNames, ...props }: DayPickerProps) {
+  const { i18n } = useTranslation()
   return (
     <DayPicker
-      locale={tr}
+      locale={i18n.language.toLowerCase().startsWith('en') ? enUS : tr}
       showOutsideDays
       className={cn('relative', className)}
       components={{

@@ -37,6 +37,8 @@ export function ColorInput({
   id,
   ...aria
 }: ColorInputProps) {
+  const customColorSelected = !swatches.some((swatch) => swatch.toLowerCase() === value.toLowerCase())
+
   return (
     <div
       role="group"
@@ -72,6 +74,7 @@ export function ColorInput({
           'ml-1 flex h-7 cursor-pointer items-center gap-2 rounded-sm border border-[var(--nx-hairline)]',
           'bg-[var(--nx-fill)] px-2.5 text-[12px] font-[550] text-muted-foreground',
           'transition-colors duration-[250ms] ease-fluid hover:border-[var(--nx-hairline-strong)]',
+          customColorSelected && 'ring-2 ring-ring ring-offset-2 ring-offset-[var(--nx-canvas)]',
         )}
       >
         <span
@@ -79,6 +82,7 @@ export function ColorInput({
           className="size-3.5 rounded-full border border-[var(--nx-hairline-strong)]"
           style={{ background: value }}
         />
+        {customColorSelected && <Check aria-hidden className="size-3.5" strokeWidth={3} />}
         <span className="tnum uppercase">{value}</span>
         <input
           id={id}

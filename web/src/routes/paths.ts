@@ -22,6 +22,9 @@ export const paths = {
   crmOpportunityPattern: '/crm/opportunities/:id',
   crmOpportunity: (id: number) => `/crm/opportunities/${id}`,
   calendar: '/calendar',
+  /** Opens the calendar's create dialog with a record already linked (`crm/opportunity/17`). Only `CalendarPage` reads it. */
+  calendarWithLink: (boundedContext: string, entityType: string, id: number) =>
+    `/calendar?link=${encodeURIComponent(`${boundedContext}/${entityType}/${id}`)}`,
   reports: '/reports',
   files: '/files',
   feedback: '/feedback',

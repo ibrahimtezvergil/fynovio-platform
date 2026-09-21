@@ -52,7 +52,8 @@ export const endpoints = {
     deals: '/pipeline/deals',
   },
   calendar: {
-    events: '/calendar/events',
+    entries: '/calendar/entries',
+    entry: (id: number) => `/calendar/entries/${id}`,
   },
   demoTables: {
     employees: '/demo-tables/employees',

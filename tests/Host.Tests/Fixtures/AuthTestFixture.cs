@@ -1,4 +1,5 @@
 using Access.Persistence;
+using Collaboration.Persistence;
 using CRM.Persistence;
 using MasterData.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,18 @@ internal static class AuthTestFixture
         return new CrmDbContext(options);
     }
 
+    public static CollaborationDbContext CreateCollaborationContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<CollaborationDbContext>()
+            .UseNpgsql(
+                connectionString,
+                npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", CollaborationDbContext.Schema))
+            .UseSnakeCaseNamingConvention()
+            .Options;
+
+        return new CollaborationDbContext(options);
+    }
+
     public static AccessDbContext CreateAccessContext(string connectionString)
     {
         var options = new DbContextOptionsBuilder<AccessDbContext>()
@@ -63,6 +76,10 @@ internal static class AuthTestFixture
             GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA masterdata TO fynovio_app;
             GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA masterdata TO fynovio_app;
             REVOKE UPDATE, DELETE ON masterdata.evidence_records FROM fynovio_app;
+
+            GRANT USAGE ON SCHEMA collaboration TO fynovio_app;
+            GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA collaboration TO fynovio_app;
+            GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA collaboration TO fynovio_app;
 
             GRANT USAGE ON SCHEMA identity TO fynovio_app;
             GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA identity TO fynovio_app;

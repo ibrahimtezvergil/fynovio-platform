@@ -1,10 +1,10 @@
-import { RefreshCw } from 'lucide-react'
+import { CalendarPlus, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '@/components/common/PageHeader'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { paths } from '@/routes/paths'
 import { useAvailableActions, useOpportunity, useReloadOpportunity } from '../api'
@@ -67,6 +67,12 @@ export default function OpportunityDetailPage() {
           <>
             <ApiModeChip />
             <OpportunityStatusBadge status={data.status} />
+            {/* The link travels as a URL parameter: features cannot import each other, and the calendar owns its dialog. */}
+            {/* A plain anchor: `Button render={<Link/>}` would announce this navigation as role="button". */}
+            <Link to={paths.calendarWithLink('crm', 'opportunity', data.id)} className={buttonVariants({ variant: 'outline' })}>
+              <CalendarPlus aria-hidden />
+              {t('detail.addToCalendar')}
+            </Link>
             {opportunity.isFetching && <RefreshCw aria-label={t('detail.refreshing')} className="text-muted-foreground size-4 animate-spin" />}
             {actions?.canOpen && <Button onClick={() => setDialog('open')}>{t('open.action')}</Button>}
             {actions?.canWin && <Button onClick={() => setDialog('win')}>{t('win.action')}</Button>}

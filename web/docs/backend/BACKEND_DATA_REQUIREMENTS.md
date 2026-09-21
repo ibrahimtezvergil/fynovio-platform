@@ -17,7 +17,7 @@ here.
 | Table | Fields | Endpoint | Consumer |
 | --- | --- | --- | --- |
 | `users` | id, name, email, role (`admin｜manager｜viewer`), initials | `/auth/login`, `/auth/me` (`src/types/schemas.ts` `userSchema`) | Auth, topbar user menu |
-| `calendar_events` | id, title, start, end, allDay, kind (`meeting｜call｜task｜deadline｜away`), owner, location?, account?, notes? | `/calendar/events` (`src/features/calendar/schema.ts`) | Calendar page |
+| `calendar_entries` | **Implemented** (Collaboration module, not mocked). id, rowVersion, title, notes?, color (`#rrggbb`), allDay, startAt?/endAt? (offset-bearing instants, timed entries), startDate?/endDate? (`YYYY-MM-DD`, exclusive end, all-day entries), link? `{ ref { boundedContext, entityType, id }, state (`accessible｜unavailable`), label?, subtitle? }` | `GET /calendar/entries?from&to`, `GET·PUT·DELETE /calendar/entries/{id}`, `POST /calendar/entries` (`src/features/calendar/schema.ts`; contract: `docs/plans/collaboration-calendar/api-contract.md`) | Calendar page, opportunity "Add to calendar" |
 | `home_attention_items` | id, type, severity, title, description?, entityType?, entityId?, entityLabel?, documentNumber?, amount?, priority, timestamp, owner?, action `{ label, url }` | `/home/attention` (`src/features/home/schema.ts`) | Home "Your Focus" |
 | `home_recent_work` | id, entityType (`quote｜order｜customer`), entityId, title, subtitle?, reference?, route, **lastAccessedAt** | `/home/recent-work` | Home "Continue Working" |
 | `home_team_activity` | id, user, avatarInitials, status?, action, entityType?, entityId?, entityLabel?, timestamp, route? | `/home/team-activity` | Home "What's Happening" |

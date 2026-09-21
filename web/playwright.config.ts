@@ -47,6 +47,7 @@ export default defineConfig({
         Authentication__PublicAppBaseUrl: APP_URL,
         ConnectionStrings__Access: RUNTIME_CONNECTION,
         ConnectionStrings__Crm: RUNTIME_CONNECTION,
+        ConnectionStrings__Collaboration: RUNTIME_CONNECTION,
         ConnectionStrings__MasterData: RUNTIME_CONNECTION,
         DevSeed__Enabled: 'true',
         DevSeed__Password: SEED_PASSWORD,

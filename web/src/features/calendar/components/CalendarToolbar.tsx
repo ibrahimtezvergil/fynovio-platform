@@ -1,11 +1,11 @@
 import type { CalendarController } from '@fullcalendar/react'
 import { format } from 'date-fns'
-import { tr } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SegmentedControl, type Segment } from '@/components/common/SegmentedControl'
 import { Button } from '@/components/ui/button'
+import { dateLocale } from '@/features/calendar/lib/time'
 import type { CalendarView } from '@/features/calendar/types'
 
 interface CalendarToolbarProps {
@@ -27,7 +27,7 @@ export function CalendarToolbar({
   onViewChange,
   onCreate,
 }: CalendarToolbarProps) {
-  const { t } = useTranslation('calendar')
+  const { t, i18n } = useTranslation('calendar')
   const viewSegments: readonly Segment<CalendarView>[] = useMemo(
     () => [
       { value: 'dayGridMonth', label: t('view.month') },
@@ -39,7 +39,7 @@ export function CalendarToolbar({
   )
   // Empty until the calendar's first `datesSet`; the fallback keeps the header
   // from rendering a blank line on the very first paint.
-  const title = controller.view?.title ?? format(new Date(), 'LLLL yyyy', { locale: tr })
+  const title = controller.view?.title ?? format(new Date(), 'LLLL yyyy', { locale: dateLocale(i18n.language) })
 
   const changeView = (next: CalendarView) => {
     onViewChange(next)
@@ -82,7 +82,8 @@ export function CalendarToolbar({
         </h2>
       </div>
 
-      <div className="flex items-center gap-2.5">
+      {/* Wraps: at phone width the view tabs and the create button do not fit on one row, and the card clips overflow. */}
+      <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2.5">
         <SegmentedControl
           segments={viewSegments}
           value={view}

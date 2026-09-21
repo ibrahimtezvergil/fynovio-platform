@@ -1,8 +1,12 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Collaboration.Application;
+using Contracts;
 using CRM.Application;
+using Microsoft.Extensions.DependencyInjection;
 using Host.Authentication;
 using Host.Tests.Fixtures;
 using Npgsql;
@@ -249,6 +253,89 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
         return (long)(await command.ExecuteScalarAsync())!;
     }
 
+    private Task<long> AssignmentCountAsync(string source, string moduleKey) => CountAsync(
+        "SELECT count(*) FROM access.role_assignments a JOIN access.roles r ON r.id = a.role_id AND r.tenant_id = a.tenant_id "
+        + $"WHERE a.source = '{source}' AND r.origin_module_key = '{moduleKey}'"
+        + (source == "manual" ? " AND a.reason = 'Development seed'" : string.Empty));
+
+    /// <summary>The principal (issuer + subject) behind a seeded account's access token.</summary>
+    private static async Task<PrincipalRef> PrincipalOfAsync(HttpClient client, string email)
+    {
+        var token = (await LoginAsync(client, email)).GetProperty("accessToken").GetString()!;
+        return PrincipalOf(token);
+    }
+
+    private static PrincipalRef PrincipalOf(string accessToken)
+    {
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+        return new PrincipalRef(jwt.Issuer, jwt.Subject);
+    }
+
+    private static readonly DateTimeOffset EntryStart = DateTimeOffset.UtcNow.AddHours(1);
+
+    private static async Task CreateEntryAsync(AuthApiHost host, TenantId tenant, PrincipalRef principal, string title)
+    {
+        await using var scope = host.Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<CreateCalendarEntryHandler>().HandleAsync(
+            new CreateCalendarEntryCommand(
+                tenant, principal, title, null, "#3366cc", AllDay: false, EntryStart, EntryStart.AddHours(1),
+                null, null, null, Guid.NewGuid().ToString(), Guid.NewGuid()));
+    }
+
+    private static async Task<IReadOnlyList<string>> ListTitlesAsync(AuthApiHost host, TenantId tenant, PrincipalRef principal)
+    {
+        await using var scope = host.Services.CreateAsyncScope();
+        var entries = await scope.ServiceProvider.GetRequiredService<ListCalendarEntriesHandler>().HandleAsync(
+            new ListCalendarEntriesQuery(tenant, principal, DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(2), Guid.NewGuid()));
+        return entries.Select(e => e.Title).ToList();
+    }
+
+    [Fact]
+    public async Task Collaboration_calendar_is_personal_for_every_seeded_role_holder()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+        var tenantOne = DevSeeder.TenantOne;
+
+        var viewer = await PrincipalOfAsync(client, DevSeeder.ViewerEmail);
+        var rep = await PrincipalOfAsync(client, DevSeeder.SalesRepEmail);
+        var admin = PrincipalOf(await AdminTokenAsync(client, 1));
+
+        await CreateEntryAsync(host, tenantOne, viewer, "viewer-note");
+        await CreateEntryAsync(host, tenantOne, rep, "rep-note");
+        await CreateEntryAsync(host, tenantOne, admin, "admin-note");
+
+        // Real PDP + RLS: everyone sees exactly their own entry, never another account's.
+        Assert.Equal(["viewer-note"], await ListTitlesAsync(host, tenantOne, viewer));
+        Assert.Equal(["rep-note"], await ListTitlesAsync(host, tenantOne, rep));
+        Assert.Equal(["admin-note"], await ListTitlesAsync(host, tenantOne, admin));
+    }
+
+    [Fact]
+    public async Task The_administrator_holds_the_calendar_role_in_both_tenants()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+        var adminOne = PrincipalOf(await AdminTokenAsync(client, 1));
+        var adminTwo = PrincipalOf(await AdminTokenAsync(client, 2));
+
+        await CreateEntryAsync(host, DevSeeder.TenantTwo, adminTwo, "tenant-two-note");
+
+        Assert.Equal(["tenant-two-note"], await ListTitlesAsync(host, DevSeeder.TenantTwo, adminTwo));
+        Assert.DoesNotContain("tenant-two-note", await ListTitlesAsync(host, DevSeeder.TenantOne, adminOne));
+    }
+
+    [Fact]
+    public async Task The_single_tenant_account_has_no_calendar_grant()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+        var single = await PrincipalOfAsync(client, DevSeeder.SingleTenantEmail);
+
+        await Assert.ThrowsAsync<CalendarEntryAuthorizationDeniedException>(() => CreateEntryAsync(host, DevSeeder.TenantOne, single, "nope"));
+        await Assert.ThrowsAsync<CalendarEntryAuthorizationDeniedException>(() => ListTitlesAsync(host, DevSeeder.TenantOne, single));
+    }
+
     [Fact]
     public async Task Seeding_twice_is_idempotent()
     {
@@ -267,8 +354,14 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
         Assert.Equal(2, await CountAsync("SELECT count(*) FROM access.tenant_module_enablements WHERE module_key = 'crm'"));
         foreach (var roleKey in new[] { CrmModuleCapabilities.ManagerRoleKey, CrmModuleCapabilities.ViewerRoleKey, CrmModuleCapabilities.SalesRepresentativeRoleKey })
             Assert.Equal(2, await CountAsync($"SELECT count(*) FROM access.roles WHERE key = '{roleKey}' AND origin = 'system_template' AND origin_module_key = 'crm'"));
-        Assert.Equal(2, await CountAsync("SELECT count(*) FROM access.role_assignments WHERE source = 'module_enablement'"));
-        Assert.Equal(2, await CountAsync("SELECT count(*) FROM access.role_assignments WHERE source = 'manual' AND reason = 'Development seed'"));
+        Assert.Equal(2, await AssignmentCountAsync("module_enablement", "crm"));
+        Assert.Equal(2, await AssignmentCountAsync("manual", "crm"));
+        // Collaboration follows the same path: one template copy per tenant, the administrator through the
+        // enablement, and the viewer and sales representative (tenant 1) through one manual assignment each.
+        Assert.Equal(2, await CountAsync("SELECT count(*) FROM access.tenant_module_enablements WHERE module_key = 'collaboration'"));
+        Assert.Equal(2, await CountAsync($"SELECT count(*) FROM access.roles WHERE key = '{CollaborationModuleCapabilities.UserRoleKey}' AND origin = 'system_template' AND origin_module_key = 'collaboration'"));
+        Assert.Equal(2, await AssignmentCountAsync("module_enablement", "collaboration"));
+        Assert.Equal(2, await AssignmentCountAsync("manual", "collaboration"));
         Assert.Equal("tenant_selection_required", (await LoginAsync(client, DevSeeder.AdminEmail)).GetProperty("status").GetString());
     }
 }

@@ -109,11 +109,14 @@ dotnet ef database update \
 dotnet ef database update \
   --project src/Modules/MasterData/MasterData.csproj \
   --startup-project src/Modules/MasterData/MasterData.csproj
+dotnet ef database update \
+  --project src/Modules/Collaboration/Collaboration.csproj \
+  --startup-project src/Modules/Collaboration/Collaboration.csproj
 ```
 
 ### Runtime role (Row-Level Security)
 
-Migrations run as `postgres`, a superuser — and superusers bypass Row-Level Security entirely. **An application connected as `postgres` gets no tenant isolation from the database.** After applying migrations, create the unprivileged runtime role once (edit the password in the script first) — `scripts/create-runtime-role.sql` grants it access to both the `crm` and `masterdata` schemas:
+Migrations run as `postgres`, a superuser — and superusers bypass Row-Level Security entirely. **An application connected as `postgres` gets no tenant isolation from the database.** After applying migrations, create the unprivileged runtime role once (edit the password in the script first) — `scripts/create-runtime-role.sql` grants it access to the `crm`, `masterdata` and `collaboration` schemas (and the identity/access ones):
 
 ```bash
 psql -h localhost -U postgres -d fynovio_platform -f scripts/create-runtime-role.sql
@@ -124,9 +127,10 @@ Then point the application at that role:
 ```bash
 export ConnectionStrings__Crm="Host=localhost;Database=fynovio_platform;Username=fynovio_app;Password=<password>"
 export ConnectionStrings__MasterData="Host=localhost;Database=fynovio_platform;Username=fynovio_app;Password=<password>"
+export ConnectionStrings__Collaboration="Host=localhost;Database=fynovio_platform;Username=fynovio_app;Password=<password>"
 ```
 
-`ConnectionStrings__Crm`/`ConnectionStrings__MasterData` are what `Host` reads first; `FYNOVIO_CRM_CONNECTION_STRING`/`FYNOVIO_MASTERDATA_CONNECTION_STRING` are the fallbacks, and are also what `dotnet ef` uses — keep those on the `postgres` role, since migrations need it.
+`ConnectionStrings__Crm`/`ConnectionStrings__MasterData`/`ConnectionStrings__Collaboration` are what `Host` reads first; `FYNOVIO_CRM_CONNECTION_STRING`/`FYNOVIO_MASTERDATA_CONNECTION_STRING`/`FYNOVIO_COLLABORATION_CONNECTION_STRING` are the fallbacks, and are also what `dotnet ef` uses — keep those on the `postgres` role, since migrations need it.
 
 ## Running locally: API, web and signing in
 
@@ -227,17 +231,17 @@ Bootstrap__Enabled=true dotnet Host.dll bootstrap-tenant-admin \
 
 It refuses unless `Bootstrap:Enabled=true`, refuses a tenant that is already bootstrapped, and prints a **single-use password-setup link** (valid `PasswordSetupHours`) once to stdout — never to the logs. The operator hands it to the administrator, who sets a password through `/reset-password`; every further member arrives by invitation. Exit codes: `0` ok, `2` not enabled, `3` already bootstrapped, `64` bad arguments.
 
-Add `--modules crm` (comma-separated module keys) to enable business modules in the same run: the keys are validated **before** anything is created, and the modules are enabled after the administrator exists (a module that fails to enable does not hide the setup link — fix the cause and run `enable-tenant-module` for the remainder).
+Add `--modules crm,collaboration` (comma-separated module keys) to enable business modules in the same run: the keys are validated **before** anything is created, and the modules are enabled after the administrator exists (a module that fails to enable does not hide the setup link — fix the cause and run `enable-tenant-module` for the remainder).
 
 ### Enabling a business module for a tenant (production)
 
-A tenant administrator's grants are Access's own catalog only. Business modules (CRM first; Sales/Inventory later, same mechanism) arrive through their **versioned capability template**: each module publishes a manifest (permission sets of explicit action keys — never a `crm.*` wildcard — and system roles built from them) and the operator enables it for a tenant:
+A tenant administrator's grants are Access's own catalog only. Business modules (CRM and Collaboration today; Sales/Inventory later, through the same mechanism) arrive through their **versioned capability template**: each module publishes a manifest (permission sets of explicit action keys — never a wildcard — and system roles built from them) and the operator enables it for a tenant:
 
 ```bash
-Bootstrap__Enabled=true dotnet Host.dll enable-tenant-module --tenant-id 1 --module crm
+Bootstrap__Enabled=true dotnet Host.dll enable-tenant-module --tenant-id 1 --module collaboration
 ```
 
-Enablement copies the module's **current** template version into ordinary tenant-local `Role`/`PermissionSet` rows (provenance: `origin_module_key`, `origin_version`), assigns the roles marked for administrators (CRM: `crm_manager`) to the tenant's current administrators, bumps `TenantAccessRevision` and writes evidence + outbox in one transaction. It is idempotent by state: re-running reports `AlreadyEnabled` (exit `0`) and changes nothing, **even if the template has since moved to a newer version** — there is deliberately no reconciler and no silent propagation (Phase 1.5 decision); an upgrade path would be a new decision. It never adopts a role or permission set with a colliding key that a tenant authored itself (`TemplateKeyConflict`, exit `5`). Exit codes: `0` enabled/already enabled, `2` not enabled by configuration, `4` tenant not bootstrapped, `5` template key conflict, `64` bad arguments or unknown module. Module keys come from `Host.Modules.PlatformModules` — adding a module there is what makes it enable-able and registers its actions.
+Enablement copies the module's **current** template version into ordinary tenant-local `Role`/`PermissionSet` rows (provenance: `origin_module_key`, `origin_version`), assigns the roles marked for administrators (CRM: `crm_manager`; Collaboration: `collaboration_user`) to the tenant's current administrators, bumps `TenantAccessRevision` and writes evidence + outbox in one transaction. It is idempotent by state: re-running reports `AlreadyEnabled` (exit `0`) and changes nothing, **even if the template has since moved to a newer version** — there is deliberately no reconciler and no silent propagation (Phase 1.5 decision); an upgrade path would be a new decision. It never adopts a role or permission set with a colliding key that a tenant authored itself (`TemplateKeyConflict`, exit `5`). Exit codes: `0` enabled/already enabled, `2` not enabled by configuration, `4` tenant not bootstrapped, `5` template key conflict, `64` bad arguments or unknown module. Module keys come from `Host.Modules.PlatformModules` — adding a module there is what makes it enable-able and registers its actions.
 
 ### Giving a tenant its first sales pipeline (production)
 

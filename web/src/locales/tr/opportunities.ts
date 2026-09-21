@@ -118,6 +118,7 @@ export default {
     title: 'Fırsat #{{id}}',
     loading: 'Fırsat yükleniyor',
     refreshing: 'Yenileniyor',
+    addToCalendar: 'Takvime ekle',
     actionsUnavailable: {
       title: 'Kullanılabilir işlemler yüklenemedi',
       description: 'Ne yapabileceğinize sunucu karar verdiği için, yüklenene kadar hiçbir işlem sunulmaz.',

@@ -9,20 +9,30 @@ import { Calendar } from './Calendar'
 import { CONTROL_SHELL, POPUP } from './styles'
 import type { FieldControlProps } from './types'
 
-const LONG_DATE = new Intl.DateTimeFormat('tr-TR', {
-  day: '2-digit',
-  month: 'long',
-  year: 'numeric',
-})
+const DATE_STYLES = {
+  long: { day: '2-digit', month: 'long', year: 'numeric' },
+  short: { day: '2-digit', month: '2-digit', year: 'numeric' },
+} satisfies Record<string, Intl.DateTimeFormatOptions>
 
-const SHORT_DATE = new Intl.DateTimeFormat('tr-TR', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-})
+const formatters = new Map<string, Intl.DateTimeFormat>()
 
-export const formatDate = (date: Date) => LONG_DATE.format(date)
-export const formatDateShort = (date: Date) => SHORT_DATE.format(date)
+/** The UI languages are Turkish (the default) and English; anything else reads as Turkish, like the rest of the app. */
+const intlLocale = (language: string) => (language.toLowerCase().startsWith('en') ? 'en-US' : 'tr-TR')
+
+function formatWith(style: keyof typeof DATE_STYLES, date: Date, language: string) {
+  const locale = intlLocale(language)
+  const key = `${locale}:${style}`
+  let formatter = formatters.get(key)
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, DATE_STYLES[style])
+    formatters.set(key, formatter)
+  }
+  return formatter.format(date)
+}
+
+/** `language` is the active i18n language; it defaults to Turkish so callers outside a component keep their output. */
+export const formatDate = (date: Date, language = 'tr') => formatWith('long', date, language)
+export const formatDateShort = (date: Date, language = 'tr') => formatWith('short', date, language)
 
 const TRIGGER = [
   'cursor-pointer items-center gap-2.5 px-[13px] text-left text-[13.5px] outline-none',
@@ -60,7 +70,7 @@ export function DatePicker({
   id,
   ...aria
 }: DatePickerProps) {
-  const { t } = useTranslation('common')
+  const { t, i18n } = useTranslation('common')
   const resolvedPlaceholder = placeholder ?? t('datePicker.placeholder')
   const [open, setOpen] = useState(false)
 
@@ -79,7 +89,7 @@ export function DatePicker({
             strokeWidth={1.75}
           />
           <span className={cn('truncate', !value && 'text-[var(--nx-label-3)]')}>
-            {value ? formatDate(value) : resolvedPlaceholder}
+            {value ? formatDate(value, i18n.language) : resolvedPlaceholder}
           </span>
         </Popover.Trigger>
 
@@ -176,15 +186,15 @@ export function DateRangePicker({
   id,
   ...aria
 }: DateRangePickerProps) {
-  const { t } = useTranslation('common')
+  const { t, i18n } = useTranslation('common')
   const resolvedPlaceholder = placeholder ?? t('datePicker.rangePlaceholder')
   const resolvedPresets = presets ?? rangePresets(t)
   const [open, setOpen] = useState(false)
 
   const label = value?.from
     ? value.to
-      ? `${formatDateShort(value.from)} – ${formatDateShort(value.to)}`
-      : `${formatDateShort(value.from)} – …`
+      ? `${formatDateShort(value.from, i18n.language)} – ${formatDateShort(value.to, i18n.language)}`
+      : `${formatDateShort(value.from, i18n.language)} – …`
     : null
 
   return (

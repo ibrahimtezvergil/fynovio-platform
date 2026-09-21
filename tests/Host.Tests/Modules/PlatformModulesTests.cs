@@ -1,5 +1,6 @@
 using Access.Application;
 using Access.Persistence;
+using Collaboration.Application;
 using CRM.Application;
 using Host.Modules;
 using Host.Tests.Fixtures;
@@ -20,15 +21,17 @@ public sealed class PlatformModulesTests : IClassFixture<AuthApiFixture>
     public PlatformModulesTests(AuthApiFixture fixture) => _fixture = fixture;
 
     [Fact]
-    public void The_registry_is_the_union_of_access_and_crm_with_no_duplicates()
+    public void The_registry_is_the_union_of_access_crm_and_collaboration_with_no_duplicates()
     {
         var keys = PlatformModules.ActionRegistry.Select(d => d.ActionKey).ToList();
 
         Assert.Equal(keys.Distinct().Count(), keys.Count);
         Assert.Superset(AccessActionCatalog.All.Select(d => d.ActionKey).ToHashSet(), keys.ToHashSet());
         Assert.Superset(CrmActionCatalog.All.Select(d => d.ActionKey).ToHashSet(), keys.ToHashSet());
-        Assert.Equal(AccessActionCatalog.All.Count + CrmActionCatalog.All.Count, keys.Count);
+        Assert.Superset(CollaborationActionCatalog.All.Select(d => d.ActionKey).ToHashSet(), keys.ToHashSet());
+        Assert.Equal(AccessActionCatalog.All.Count + CrmActionCatalog.All.Count + CollaborationActionCatalog.All.Count, keys.Count);
         Assert.All(PlatformModules.ActionRegistry.Where(d => d.ActionKey.StartsWith("crm.", StringComparison.Ordinal)), d => Assert.Equal("CRM", d.OwnerModule));
+        Assert.All(PlatformModules.ActionRegistry.Where(d => d.ActionKey.StartsWith("collaboration.", StringComparison.Ordinal)), d => Assert.Equal("Collaboration", d.OwnerModule));
     }
 
     [Fact]
@@ -39,7 +42,9 @@ public sealed class PlatformModulesTests : IClassFixture<AuthApiFixture>
         foreach (var manifest in PlatformModules.CapabilityManifests)
             Assert.Subset(registered, manifest.ActionKeys().ToHashSet());
 
-        Assert.NotNull(new ModuleCapabilityCatalog(PlatformModules.CapabilityManifests).Find("crm"));
+        var catalog = new ModuleCapabilityCatalog(PlatformModules.CapabilityManifests);
+        Assert.NotNull(catalog.Find("crm"));
+        Assert.NotNull(catalog.Find("collaboration"));
     }
 
     [Fact]

@@ -6,6 +6,8 @@ using Access.Persistence;
 using Contracts;
 using CRM.Application;
 using CRM.Persistence;
+using Collaboration.Persistence;
+using Collaboration.Application;
 using Host.Authentication;
 using Host.Bootstrap;
 using Host.Email;
@@ -25,6 +27,12 @@ builder.Services.AddDbContext<CrmDbContext>(options => options
     .UseNpgsql(
         builder.Configuration.GetConnectionString("Crm") ?? CrmConnectionString.Resolve(),
         npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", CrmDbContext.Schema))
+    .UseSnakeCaseNamingConvention());
+
+builder.Services.AddDbContext<CollaborationDbContext>(options => options
+    .UseNpgsql(
+        builder.Configuration.GetConnectionString("Collaboration") ?? CollaborationConnectionString.Resolve(),
+        npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", CollaborationDbContext.Schema))
     .UseSnakeCaseNamingConvention());
 
 builder.Services.AddDbContext<MasterDataDbContext>(options => options
@@ -186,7 +194,18 @@ builder.Services.AddSingleton(serviceProvider => new IdentifierRateLimiter(
     timeProvider: serviceProvider.GetRequiredService<TimeProvider>()));
 builder.Services.AddSingleton<ClientFingerprint>();
 
+// Link targets: Collaboration stores links and asks this directory who may see them; the owning modules answer.
+// Scoped — the resolvers use the request's CrmDbContext. `masterdata/party` is answered by CRM under L-3 (interim).
+builder.Services.AddScoped<ILinkTargetResolver, OpportunityLinkTargetResolver>();
+builder.Services.AddScoped<ILinkTargetResolver, PartyLinkTargetResolver>();
+builder.Services.AddScoped<ILinkTargetDirectory, LinkTargetDirectory>();
+
 // Register CRM handlers
+builder.Services.AddScoped<CreateCalendarEntryHandler>();
+builder.Services.AddScoped<GetCalendarEntryHandler>();
+builder.Services.AddScoped<ListCalendarEntriesHandler>();
+builder.Services.AddScoped<UpdateCalendarEntryHandler>();
+builder.Services.AddScoped<DeleteCalendarEntryHandler>();
 builder.Services.AddScoped<CreateOpportunityHandler>();
 builder.Services.AddScoped<AddOpportunityLineHandler>();
 builder.Services.AddScoped<CancelOpportunityLineHandler>();
@@ -205,6 +224,7 @@ builder.Services.AddScoped<GetPipelineStagesHandler>();
 builder.Services.AddScoped<GetOpportunityAvailableActionsHandler>();
 
 builder.Services.AddExceptionHandler<CrmProblemDetailsExceptionHandler>();
+builder.Services.AddExceptionHandler<CollaborationProblemDetailsExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 // Configure CORS: explicit origins only, no wildcard
@@ -337,6 +357,7 @@ app.UseExceptionHandler();
 app.MapAuthEndpoints();
 app.MapAccountLifecycleEndpoints(authOptions.SelfRegistration.Enabled);
 app.MapOpportunityEndpoints();
+app.MapCalendarEndpoints();
 if (app.Environment.IsDevelopment())
     app.MapDevEndpoints();
 

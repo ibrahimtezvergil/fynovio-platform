@@ -118,6 +118,7 @@ export default {
     title: 'Opportunity #{{id}}',
     loading: 'Loading opportunity',
     refreshing: 'Refreshing',
+    addToCalendar: 'Add to calendar',
     actionsUnavailable: {
       title: 'Available actions could not be loaded',
       description: 'No actions are offered until they load, because the server decides what you may do.',
