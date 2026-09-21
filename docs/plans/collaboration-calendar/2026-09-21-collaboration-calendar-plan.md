@@ -62,8 +62,8 @@ only after the corresponding commit exists.
   make the title CHECK match the domain's control-character rule" (initial migration regenerated, it had never
   shipped), `ea8c1b1` (client title rule), `8d70fdb` (freshest cached copy on drag), `a9dce2c` (toolbar wraps on
   phones, ring and ellipsis on event chrome), `1ae5c5c` (date fields and month grid follow the UI language).
-  Not done: calendar nav / "Add to calendar" gating by capability — the frontend `useCapability` is still a mock
-  (`mockTenantCapabilities`) and nav contributions have no gating field, so no established pattern exists to apply.
+  Owner decision: the calendar navigation and "Add to calendar" affordance remain open to every authenticated tenant
+  member; there is deliberately no frontend capability gate. API action authorization remains the enforcement boundary.
 
 ## Acceptance matrix
 
