@@ -7,8 +7,6 @@ namespace CRM.Application;
 
 public sealed class GetOpportunityHandler(CrmDbContext context, IAuthorizer authorizer)
 {
-    private const string ActionKeyValue = "crm.opportunity.read";
-
     public async Task<OpportunityDto?> HandleAsync(GetOpportunityQuery query, CancellationToken cancellationToken = default)
     {
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
@@ -23,9 +21,7 @@ public sealed class GetOpportunityHandler(CrmDbContext context, IAuthorizer auth
         }
 
         var actor = new ActorContext(query.TenantId, query.Principal, query.CorrelationId);
-        var resource = new ResourceDescriptor(nameof(Opportunity), opportunity.Id, opportunity.AssignedPrincipal);
-        var decision = await authorizer.AuthorizeAsync(
-            new AuthorizationRequest(actor, new ActionKey(ActionKeyValue), resource), cancellationToken);
+        var decision = await authorizer.AuthorizeAsync(OpportunityReadAuthorization.Request(actor, opportunity), cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
 
