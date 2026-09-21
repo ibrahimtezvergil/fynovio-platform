@@ -45,9 +45,9 @@ public static partial class CalendarEndpoints
 
         group.MapPost("/", async (HttpContext httpContext, CreateCalendarEntryHandler handler, CancellationToken cancellationToken) =>
         {
-            var actor = httpContext.GetActorContext();
             var body = await ReadBodyAsync<CalendarEntryRequest>(httpContext.Request, cancellationToken);
             var idempotencyKey = RequiredIdempotencyKey(httpContext.Request);
+            var actor = httpContext.GetActorContext();
             var fields = body.ToFields(actor.TenantId);
             var command = new CreateCalendarEntryCommand(
                 actor.TenantId, actor.Principal, fields.Title, fields.Notes, fields.Color, fields.AllDay, fields.StartAt, fields.EndAt,
@@ -58,12 +58,12 @@ public static partial class CalendarEndpoints
 
         group.MapPut("/{id:long}", async (long id, HttpContext httpContext, UpdateCalendarEntryHandler handler, CancellationToken cancellationToken) =>
         {
-            var actor = httpContext.GetActorContext();
             var body = await ReadBodyAsync<CalendarEntryRequest>(httpContext.Request, cancellationToken);
             var idempotencyKey = RequiredIdempotencyKey(httpContext.Request);
             var expectedVersion = body.ExpectedVersion is >= 0 and var version
                 ? version
                 : throw new ArgumentException("expectedVersion is required and must be a non-negative integer.");
+            var actor = httpContext.GetActorContext();
             var fields = body.ToFields(actor.TenantId);
             var command = new UpdateCalendarEntryCommand(
                 actor.TenantId, id, actor.Principal, expectedVersion, fields.Title, fields.Notes, fields.Color, fields.AllDay,
@@ -90,7 +90,18 @@ public static partial class CalendarEndpoints
 
         try
         {
-            return await JsonSerializer.DeserializeAsync<T>(request.Body, BodyOptions, cancellationToken)
+            await using var buffer = new MemoryStream();
+            var chunk = new byte[4096];
+            int read;
+            while ((read = await request.Body.ReadAsync(chunk, cancellationToken)) != 0)
+            {
+                if (buffer.Length + read > MaxBodyBytes)
+                    throw new ArgumentException("The request body is too large.");
+
+                await buffer.WriteAsync(chunk.AsMemory(0, read), cancellationToken);
+            }
+
+            return JsonSerializer.Deserialize<T>(buffer.GetBuffer().AsSpan(0, checked((int)buffer.Length)), BodyOptions)
                 ?? throw new ArgumentException("A JSON request body is required.");
         }
         catch (JsonException)

@@ -227,6 +227,26 @@ public sealed class CalendarEndpointsTests(CalendarApiFixture api) : IClassFixtu
     }
 
     [Fact]
+    public async Task A_chunked_body_over_the_limit_is_a_400_validation_error_and_writes_nothing()
+    {
+        var day = NextDay();
+        var body = JsonSerializer.Serialize(With(Timed(day), ("notes", new string('n', 64 * 1024))));
+        var request = new HttpRequestMessage(HttpMethod.Post, Route)
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Admin);
+        request.Headers.TryAddWithoutValidation("Idempotency-Key", Guid.NewGuid().ToString());
+        request.Content.Headers.ContentLength = null;
+        request.Headers.TransferEncodingChunked = true;
+
+        var response = await Client.SendAsync(request);
+
+        await AssertProblemAsync(response, HttpStatusCode.BadRequest, "validation_error");
+        Assert.Empty((await ListAsync(Admin, Window(day))).GetProperty("items").EnumerateArray());
+    }
+
+    [Fact]
     public async Task A_validation_failure_never_echoes_the_offending_text_back()
     {
         var marker = $"ECHO-{Guid.NewGuid():N}";
@@ -347,6 +367,14 @@ public sealed class CalendarEndpointsTests(CalendarApiFixture api) : IClassFixtu
         var response = await SendAsync(HttpMethod.Post, Route, NoRole, Timed(day));
 
         await AssertProblemAsync(response, HttpStatusCode.Forbidden, "forbidden");
+    }
+
+    [Fact]
+    public async Task Create_with_a_malformed_body_is_a_400_before_authorization_is_evaluated()
+    {
+        var response = await SendAsync(HttpMethod.Post, Route, NoRole, "{\"title\":");
+
+        await AssertProblemAsync(response, HttpStatusCode.BadRequest, "validation_error");
     }
 
     /// <summary>Well-formed references no caller can resolve here: nothing with these ids exists, and the type is unknown.</summary>
@@ -662,6 +690,14 @@ public sealed class CalendarEndpointsTests(CalendarApiFixture api) : IClassFixtu
         await AssertProblemAsync(await SendAsync(HttpMethod.Put, $"{Route}/{id}", NoRole, body), HttpStatusCode.Forbidden, "forbidden");
         await AssertProblemAsync(await SendAsync(HttpMethod.Put, $"{Route}/{id + 1_000_000}", NoRole, body), HttpStatusCode.Forbidden, "forbidden");
         await AssertUnchangedAsync(Admin, id, "Call with vendor", version);
+    }
+
+    [Fact]
+    public async Task Update_with_a_malformed_body_is_a_400_before_authorization_is_evaluated()
+    {
+        var response = await SendAsync(HttpMethod.Put, $"{Route}/1", NoRole, "{\"title\":");
+
+        await AssertProblemAsync(response, HttpStatusCode.BadRequest, "validation_error");
     }
 
     [Fact]
