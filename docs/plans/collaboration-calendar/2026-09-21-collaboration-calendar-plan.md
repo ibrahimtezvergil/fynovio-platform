@@ -65,6 +65,11 @@ only after the corresponding commit exists.
   Owner decision: the calendar navigation and "Add to calendar" affordance remain open to every authenticated tenant
   member; there is deliberately no frontend capability gate. API action authorization remains the enforcement boundary.
 
+  Deferred platform decision: module-local idempotency records have `expires_at`, but no platform-wide retention
+  policy or Worker cleanup job exists yet. This affects Collaboration, CRM and Access alike; decide the retention
+  duration, cleanup ownership/schedule and operational observability once for the platform rather than adding a
+  calendar-only deletion path.
+
 ## Acceptance matrix
 
 | Concern | Evidence before closure |
