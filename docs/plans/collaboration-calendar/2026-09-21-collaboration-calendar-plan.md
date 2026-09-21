@@ -55,6 +55,15 @@ only after the corresponding commit exists.
 - [ ] S5 — Closure: run format/build/test/migration/frontend checks, native review,
   browser flow and isolation verification; refresh Graphify; update `AGENTS.md` status;
   commit derived graph files and complete merge/worktree hygiene after owner review.
+  Progress (not yet closed — Graphify refresh, `AGENTS.md` status line, hygiene and the owner review remain):
+  the independent review (Critical: none) and the Playwright visual walkthrough (both themes, tr/en, 390 px) are
+  done and their findings fixed — `f532085` "fix(collaboration): reject a trailing newline in color and identifiers",
+  `bd9eff0` "fix(collaboration): authorize the list request before validating its range", `ac566e2` "fix(collaboration):
+  make the title CHECK match the domain's control-character rule" (initial migration regenerated, it had never
+  shipped), `ea8c1b1` (client title rule), `8d70fdb` (freshest cached copy on drag), `a9dce2c` (toolbar wraps on
+  phones, ring and ellipsis on event chrome), `1ae5c5c` (date fields and month grid follow the UI language).
+  Not done: calendar nav / "Add to calendar" gating by capability — the frontend `useCapability` is still a mock
+  (`mockTenantCapabilities`) and nav contributions have no gating field, so no established pattern exists to apply.
 
 ## Acceptance matrix
 
