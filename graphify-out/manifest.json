@@ -372,9 +372,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1789983779.7278988,
-    "seen": 1790007570.060073,
-    "ast_hash": "0f6c9568055c4f7c572264695a408c4d",
+    "mtime": 1790022360.1984682,
+    "seen": 1790022393.433454,
+    "ast_hash": "a795a73fcab6dde8b15a5e5f7fcb4147",
     "semantic_hash": ""
   },
   "src/Contracts/IHasRowVersion.cs": {
@@ -7092,9 +7092,9 @@
     "semantic_hash": ""
   },
   "docs/plans/collaboration-calendar/2026-09-21-collaboration-calendar-plan.md": {
-    "mtime": 1790007215.560234,
-    "seen": 1790007570.0607948,
-    "ast_hash": "26d133a596e9d6f67c95100c89c486fe",
+    "mtime": 1790007580.355612,
+    "seen": 1790022393.4338481,
+    "ast_hash": "0a4952a15f6cc07c5865b2920586933b",
     "semantic_hash": ""
   },
   "docs/plans/collaboration-calendar/adr-collaboration-boundary.md": {
@@ -7134,9 +7134,9 @@
     "semantic_hash": ""
   },
   "src/Host/Endpoints/CalendarEndpoints.cs": {
-    "mtime": 1790004130.5399475,
-    "seen": 1790007570.019613,
-    "ast_hash": "7e79bcbff6cc855cf639abff3484d089",
+    "mtime": 1790021572.0527809,
+    "seen": 1790022393.406364,
+    "ast_hash": "99667c13b740d7e16c9b7405372d8a56",
     "semantic_hash": ""
   },
   "src/Host/Endpoints/CollaborationProblemDetailsExceptionHandler.cs": {
@@ -7584,9 +7584,9 @@
     "semantic_hash": ""
   },
   "tests/Host.Tests/CalendarEndpointsTests.cs": {
-    "mtime": 1790004229.9302979,
-    "seen": 1790007570.035009,
-    "ast_hash": "d1b5d45823db9deed166b6dc88bc429d",
+    "mtime": 1790021629.964716,
+    "seen": 1790022393.417634,
+    "ast_hash": "89939664d4bc1b1c42511f83b2b2b745",
     "semantic_hash": ""
   },
   "tests/Host.Tests/CalendarEntryResponseTests.cs": {
