@@ -111,6 +111,17 @@ The link is `EntityRef`-shaped: its tenant is this row's `tenant_id`; the bounde
 context, entity type, and id are stored without an FK because the target is owned by
 another module. Target labels are resolved at read time under current authorization.
 
+Links are validated on write and hydrated on read through Contracts' `ILinkTargetDirectory`
+(the owning module answers under the caller's own authorization; Collaboration never references it).
+A create, or an update that adds or changes the link, resolves it before anything is persisted; a link
+that cannot be resolved (unknown type, missing, other tenant, denied, directory failure) is one and the
+same `422 link_target_unavailable`. An update that re-sends the stored link does not resolve it, so an
+entry whose target has since become unavailable stays editable, and an idempotent replay never resolves
+anything. Reads resolve all links of the page in one batched directory call, after the transaction has
+closed; an unresolvable link reads as `state: "unavailable"` without label or subtitle. The label and
+subtitle are computed per reader at read time and are never stored — not in `calendar_entries`, not in
+the outbox payload, not in the idempotency response.
+
 Indexes:
 
 - `(tenant_id, owner_principal_issuer, owner_principal_subject, start_at)` for timed

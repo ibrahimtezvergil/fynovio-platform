@@ -73,7 +73,9 @@ authenticated actor, **never** from the request body or query.
   `color`: `#rrggbb` (case-insensitive on input).
 - `link` (optional): `{ boundedContext, entityType, id }`. v1 supported targets: `crm/opportunity`, `masterdata/party`.
   Unknown type, non-existent target, other-tenant target and unauthorized target all return the SAME
-  `422 link_target_unavailable` (no existence oracle).
+  `422 link_target_unavailable` (no existence oracle). On `PUT`, a `link` identical to the entry's stored link (same
+  `boundedContext`, `entityType` and `id`) is not re-validated, so an entry whose link target has become unavailable
+  stays editable; only a new or changed link is validated.
 
 ## Errors
 
