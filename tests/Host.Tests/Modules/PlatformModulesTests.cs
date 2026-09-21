@@ -42,7 +42,9 @@ public sealed class PlatformModulesTests : IClassFixture<AuthApiFixture>
         foreach (var manifest in PlatformModules.CapabilityManifests)
             Assert.Subset(registered, manifest.ActionKeys().ToHashSet());
 
-        Assert.NotNull(new ModuleCapabilityCatalog(PlatformModules.CapabilityManifests).Find("crm"));
+        var catalog = new ModuleCapabilityCatalog(PlatformModules.CapabilityManifests);
+        Assert.NotNull(catalog.Find("crm"));
+        Assert.NotNull(catalog.Find("collaboration"));
     }
 
     [Fact]
