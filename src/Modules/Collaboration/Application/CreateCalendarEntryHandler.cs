@@ -76,10 +76,10 @@ public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, I
             entry.OwnerPrincipalIssuer,
             entry.OwnerPrincipalSubject,
             entry.AllDay,
-            entry.StartAt?.ToUniversalTime().ToString("O"),
-            entry.EndAt?.ToUniversalTime().ToString("O"),
-            entry.StartDate?.ToString("yyyy-MM-dd"),
-            entry.EndDate?.ToString("yyyy-MM-dd"),
+            entry.StartAt?.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+            entry.EndAt?.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+            entry.StartDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            entry.EndDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             entry.LinkBoundedContext,
             entry.LinkEntityType,
             entry.LinkEntityId);
@@ -141,7 +141,8 @@ public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, I
     private static string HashRequest(CreateCalendarEntryCommand command)
     {
         // Canonical, unambiguous serialization for idempotency keying: JSON with explicit field order,
-        // timestamps in UTC ISO format, dates as yyyy-MM-dd.
+        // timestamps in UTC ISO format, dates as yyyy-MM-dd. Every user-supplied field participates; colour is
+        // lower-cased because the aggregate normalizes it, so "#AABBCC" and "#aabbcc" are the same request.
         var payload = new
         {
             operation = Operation,
@@ -149,11 +150,13 @@ public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, I
             principalIssuer = command.Principal.Issuer,
             principalSubject = command.Principal.Subject,
             title = command.Title,
+            notes = command.Notes,
+            color = command.Color?.ToLowerInvariant(),
             allDay = command.AllDay,
-            startAt = command.StartAt?.ToUniversalTime().ToString("O"),
-            endAt = command.EndAt?.ToUniversalTime().ToString("O"),
-            startDate = command.StartDate?.ToString("yyyy-MM-dd"),
-            endDate = command.EndDate?.ToString("yyyy-MM-dd"),
+            startAt = command.StartAt?.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+            endAt = command.EndAt?.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+            startDate = command.StartDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            endDate = command.EndDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             linkBoundedContext = command.Link?.BoundedContext,
             linkEntityType = command.Link?.EntityType,
             linkEntityId = command.Link?.Id

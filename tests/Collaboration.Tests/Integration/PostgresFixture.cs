@@ -20,34 +20,44 @@ public sealed class PostgresFixture : IAsyncLifetime
         .WithPassword("postgres")
         .Build();
 
+    private readonly SemaphoreSlim _runtimeRoleGate = new(1, 1);
     private string? _runtimeConnectionString;
 
     public string AdminConnectionString => _container.GetConnectionString();
 
     /// <summary>Migration-running superuser (bypasses RLS). Use CreateAdminContext() for admin work.
     /// Runtime role: separate, unprivileged, subject to RLS (FF03). Use RuntimeConnectionStringAsync()
-    /// to get the connection string for isolation tests.</summary>
+    /// to get the connection string for isolation tests. The role is created once; concurrent first
+    /// callers wait on the gate instead of each running the script (CREATE ROLE is not idempotent).</summary>
     public async Task<string> RuntimeConnectionStringAsync()
     {
-        if (_runtimeConnectionString is not null)
+        await _runtimeRoleGate.WaitAsync();
+        try
+        {
+            if (_runtimeConnectionString is not null)
+                return _runtimeConnectionString;
+
+            var scriptContent = LoadAndExtractCollaborationScript();
+            var password = ExtractRuntimePassword(scriptContent);
+
+            await using (var context = CreateAdminContext())
+            {
+                await context.Database.ExecuteSqlRawAsync(scriptContent);
+            }
+
+            var builder = new NpgsqlConnectionStringBuilder(AdminConnectionString)
+            {
+                Username = "fynovio_app",
+                Password = password
+            };
+
+            _runtimeConnectionString = builder.ConnectionString;
             return _runtimeConnectionString;
-
-        var scriptContent = LoadAndExtractCollaborationScript();
-        var password = ExtractRuntimePassword(scriptContent);
-
-        await using (var context = CreateAdminContext())
-        {
-            await context.Database.ExecuteSqlRawAsync(scriptContent);
         }
-
-        var builder = new NpgsqlConnectionStringBuilder(AdminConnectionString)
+        finally
         {
-            Username = "fynovio_app",
-            Password = password
-        };
-
-        _runtimeConnectionString = builder.ConnectionString;
-        return _runtimeConnectionString;
+            _runtimeRoleGate.Release();
+        }
     }
 
     public async Task InitializeAsync()
