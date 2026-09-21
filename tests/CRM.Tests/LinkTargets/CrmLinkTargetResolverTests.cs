@@ -14,6 +14,7 @@ using MasterData.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace CRM.Tests.LinkTargets;
 
@@ -27,7 +28,13 @@ public sealed class CrmLinkTargetResolverTests
 
     private readonly PostgresFixture _fixture;
 
-    public CrmLinkTargetResolverTests(PostgresFixture fixture) => _fixture = fixture;
+    private readonly ITestOutputHelper _output;
+
+    public CrmLinkTargetResolverTests(PostgresFixture fixture, ITestOutputHelper output)
+    {
+        _fixture = fixture;
+        _output = output;
+    }
 
     // ---- opportunity resolver: authorization agreement -------------------------------------------------------
 
@@ -197,6 +204,39 @@ public sealed class CrmLinkTargetResolverTests
 
         Assert.Equal(one.Count, many.Count);
         Assert.InRange(many.Count, 1, 4); // set_config + opportunities (+ stages when any is assigned)
+    }
+
+    /// <summary>The authorization cost is deliberately per record (the exact decision the read handler makes), so the
+    /// Access side is linear in the number of opportunities — this pins that it is linear and constant per record, not
+    /// something worse, and records the figures.</summary>
+    [Fact]
+    public async Task Pdp_cost_is_constant_per_authorized_record_and_linear_in_the_batch()
+    {
+        var me = Fresh("me");
+        var tenant = TestData.NextTenant();
+        var ids = new List<long>();
+        for (var i = 0; i < 25; i++)
+            ids.Add((await SeedOpportunityInAsync(tenant, me, $"Party {i}")).Id);
+        await GrantAsync(tenant, me, null, (OpportunityRead, nameof(Opportunity)), (PartySearch, "PartyReference"));
+        var actor = new ActorContext(tenant, me, Guid.NewGuid());
+
+        async Task<int> AccessCommandsAsync(int take)
+        {
+            var counter = new CommandCounter();
+            await using var h = await Harness.CreateAsync(_fixture, accessInterceptor: counter);
+            var result = await h.OpportunityResolver.ResolveAsync(actor, ids.Take(take).ToList());
+            Assert.Equal(take, result.Count);
+            return counter.Count;
+        }
+
+        var one = await AccessCommandsAsync(1);
+        var two = await AccessCommandsAsync(2);
+        var twentyFive = await AccessCommandsAsync(25);
+        var perRecord = two - one;
+        _output.WriteLine($"Access commands: 1 record={one}, 2 records={two}, 25 records={twentyFive}, per extra record={perRecord}");
+
+        Assert.True(perRecord > 0);
+        Assert.Equal(one + 24 * perRecord, twentyFive);
     }
 
     // ---- opportunity resolver: request identity, degradation ----------------------------------------------------
@@ -509,7 +549,8 @@ public sealed class CrmLinkTargetResolverTests
         public required PartyLinkTargetResolver PartyResolver { get; init; }
         public required LinkTargetDirectory Directory { get; init; }
 
-        public static async Task<Harness> CreateAsync(PostgresFixture fixture, DbCommandInterceptor? crmInterceptor = null)
+        public static async Task<Harness> CreateAsync(
+            PostgresFixture fixture, DbCommandInterceptor? crmInterceptor = null, DbCommandInterceptor? accessInterceptor = null)
         {
             var connectionString = await fixture.RuntimeConnectionStringAsync();
 
@@ -520,7 +561,13 @@ public sealed class CrmLinkTargetResolverTests
                 crmOptions.AddInterceptors(crmInterceptor);
 
             var crm = new CrmDbContext(crmOptions.Options);
-            var access = PostgresFixture.CreateAccessContext(connectionString);
+            var accessOptions = new DbContextOptionsBuilder<AccessDbContext>()
+                .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", AccessDbContext.AccessSchema))
+                .UseSnakeCaseNamingConvention()
+                .AddInterceptors(new RowVersionInterceptor());
+            if (accessInterceptor is not null)
+                accessOptions.AddInterceptors(accessInterceptor);
+            var access = new AccessDbContext(accessOptions.Options);
             var masterData = PostgresFixture.CreateMasterDataContext(connectionString);
 
             var authorizer = new AccessAuthorizer(access, new PrincipalResolver(access), new AccessActionCatalogService(access));
