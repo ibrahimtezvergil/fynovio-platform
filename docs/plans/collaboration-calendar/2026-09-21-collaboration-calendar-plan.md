@@ -39,9 +39,18 @@ only after the corresponding commit exists.
   keeps an entry editable after its target became unavailable); only a new or changed link is resolved.
   The interim `masterdata/party` resolver lives in CRM under L-3.
 
-- [ ] S4 — Frontend: replace calendar mocks with real range-aware React Query APIs;
+- [x] S4 — Frontend: replace calendar mocks with real range-aware React Query APIs;
   add Zod contracts, dialog/create/edit/delete flows, `ColorInput`, contrast helper,
   drag/resize rollback, link navigation, i18n/tests and mock guard updates.
+  → Commit: `5bb7014` "feat(web): calendar on the real API — dialogs, drag/resize, links, no mock"
+  (on `feat/calendar-web`: overlay hook + contrast helper `56ab8af`, unit/component tests `d558d31`, merged as
+  `e3255a1`; follow-ups on this branch: `cd46f99` "fix(web): keep entries with an unavailable link draggable and
+  editable", `7d0e855` "test(web): real-API calendar E2E — all-day, real-grid drag, keyboard and focus trap")
+  Deviations: `56ab8af` also carries the mock-era deletions and does not compile on its own (the branch tip does).
+  "Add to calendar" is a `/calendar?link=crm/opportunity/:id` URL parameter consumed by the calendar page (features
+  cannot import each other); only the opportunity detail page has the entry point (the grid has no row menu). An entry
+  whose link is unavailable is draggable/editable and re-sent with its stored ref (follows the S3 unchanged-link rule).
+  The calendar E2E does not cover "link became unavailable after save" (no API revokes a grant); Host.Tests and vitest do.
 
 - [ ] S5 — Closure: run format/build/test/migration/frontend checks, native review,
   browser flow and isolation verification; refresh Graphify; update `AGENTS.md` status;
