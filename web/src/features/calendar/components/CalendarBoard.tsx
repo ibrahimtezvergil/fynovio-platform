@@ -9,7 +9,7 @@ import { CalendarDays } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useResolvedTheme } from '@/store/useAppStore'
-import { readableTextColor } from '../lib/contrast'
+import { calendarHeaderPalette } from '../lib/contrast'
 import type { DraggedRange } from '../lib/time'
 import type { CalendarEntry } from '../schema'
 import type { CalendarView } from '../types'
@@ -71,17 +71,21 @@ export function CalendarBoard({
 
   const fcEvents = useMemo<EventInput[]>(
     () =>
-      entries.map((entry) => ({
-        id: String(entry.id),
-        title: entry.title,
-        start: (entry.allDay ? entry.startDate : entry.startAt) ?? undefined,
-        end: (entry.allDay ? entry.endDate : entry.endAt) ?? undefined,
-        allDay: entry.allDay,
-        // The colour is the person's own `#rrggbb` (validated at the boundary); the text colour is computed from it
-        // (WCAG 1.4.3) rather than assumed from a theme token, since any hue can be chosen.
-        color: entry.color,
-        contrastColor: readableTextColor(entry.color),
-      })),
+      entries.map((entry) => {
+        const palette = calendarHeaderPalette(entry.color)
+
+        return {
+          id: String(entry.id),
+          title: entry.title,
+          start: (entry.allDay ? entry.startDate : entry.startAt) ?? undefined,
+          end: (entry.allDay ? entry.endDate : entry.endAt) ?? undefined,
+          allDay: entry.allDay,
+          // Coloured event cards and their detail headers use one rule: white text. Light user-picked colours are
+          // darkened only as far as needed for AA contrast, so the calendar stays consistent without losing the hue.
+          color: palette.middle,
+          contrastColor: palette.textColor,
+        }
+      }),
     [entries],
   )
 
@@ -106,7 +110,7 @@ export function CalendarBoard({
         dayGridMonth: { eventDisplay: 'list-item', dayMaxEvents: 4 },
         listWeek: { listDayFormat: { weekday: 'long', day: 'numeric', month: 'long' } },
       }}
-      /* --- event chrome. The colour is the person's own, so a very light or very dark pick can vanish into the surface:
+      /* --- event chrome. The colour is user-selected, so a very light or very dark pick can vanish into the surface:
          a hairline ring in the foreground colour keeps every dot and bar visible in both themes, and titles end in an
          ellipsis instead of being cut mid-glyph. --- */
       listItemEventBeforeClass="ring-foreground/30 ring-1"

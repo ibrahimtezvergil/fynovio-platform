@@ -86,12 +86,13 @@ describe('CalendarPage against the real API contract', () => {
     expect(screen.getByText(t('page.recordCount', { count: 2 }))).toBeInTheDocument()
   })
 
-  it('paints each entry with its own colour and a computed black/white text colour', async () => {
+  it('paints each coloured entry with white text, darkening a light user-selected hue only when needed', async () => {
     server.use(http.get(url(endpoints.calendar.entries), () => HttpResponse.json({ items: [wireEntry({ startAt: '2026-09-22T06:00:00+00:00', endAt: '2026-09-22T07:00:00+00:00', color: '#ffff00' })] })))
     render()
     const title = await screen.findByText('Call with vendor')
     const styled = title.closest<HTMLElement>('[style]')
-    expect(styled?.outerHTML).toMatch(/#ffff00|rgb\(255, 255, 0\)/i)
+    expect(styled?.style.getPropertyValue('--fc-event-contrast-color')).toBe('#ffffff')
+    expect(styled?.outerHTML).not.toMatch(/#ffff00|rgb\(255, 255, 0\)/i)
   })
 
   it('a rejected range is an inline, translated notice — not a crashed page', async () => {
