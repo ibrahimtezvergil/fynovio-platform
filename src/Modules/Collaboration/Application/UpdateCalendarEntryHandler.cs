@@ -93,7 +93,9 @@ public sealed class UpdateCalendarEntryHandler(CollaborationDbContext context, I
         var decision = await authorizer.AuthorizeAsync(
             new AuthorizationRequest(actor, new ActionKey(ActionKeyValue), resource), cancellationToken);
         if (!decision.IsAllowed)
-            throw new CalendarEntryAuthorizationDeniedException(ActionKeyValue, decision.ReasonCode, decision.DenialStage, entryId);
+            // Without an entry this is the capability gate, whatever stage the authorizer reports.
+            throw new CalendarEntryAuthorizationDeniedException(
+                ActionKeyValue, decision.ReasonCode, entryId is null ? AuthorizationDenialStage.Coarse : decision.DenialStage, entryId);
     }
 
     /// <summary>Rolls the failed attempt back and looks for the request that beat it, in a fresh transaction (the failed one

@@ -121,9 +121,9 @@ Indexes:
   owner-scoped get/update/delete;
 - `(tenant_id, aggregate_type, aggregate_id)` on outbox_messages for dispatcher scans.
 
-`row_version bigint NOT NULL DEFAULT 1` is the aggregate concurrency token. The
-aggregate advances it before persistence, so the previous value participates in EF
-Core's update predicate.
+`row_version bigint NOT NULL` is the aggregate concurrency token. It has no database
+default: the domain always sets it (1 on create) and advances it before persistence,
+so the previous value participates in EF Core's update predicate.
 
 ### `idempotency_records`
 

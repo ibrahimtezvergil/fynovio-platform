@@ -28,7 +28,7 @@ public sealed class ListCalendarEntriesHandler(CollaborationDbContext context, I
         var decision = await authorizer.AuthorizeAsync(
             new AuthorizationRequest(actor, new ActionKey(ActionKeyValue), resource), cancellationToken);
         if (!decision.IsAllowed)
-            throw new CalendarEntryAuthorizationDeniedException(ActionKeyValue, decision.ReasonCode, decision.DenialStage);
+            throw new CalendarEntryAuthorizationDeniedException(ActionKeyValue, decision.ReasonCode, AuthorizationDenialStage.Coarse);
 
         // Convert query bounds to UTC for Npgsql (non-UTC DateTimeOffset parameters cause binding errors).
         var fromUtc = query.From.ToUniversalTime();

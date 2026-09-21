@@ -1,4 +1,6 @@
 using Collaboration.Application;
+using Collaboration.Domain;
+using Collaboration.Outbox;
 using Collaboration.Persistence;
 using Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +21,31 @@ internal sealed class Harness(PostgresFixture fixture)
     {
         await using var context = await RuntimeContextAsync();
         return await new CreateCalendarEntryHandler(context, authorizer ?? StubAuthorizer.AlwaysAllow).HandleAsync(command);
+    }
+
+    public async Task<UpdateCalendarEntryResult> UpdateAsync(UpdateCalendarEntryCommand command, IAuthorizer? authorizer = null)
+    {
+        await using var context = await RuntimeContextAsync();
+        return await new UpdateCalendarEntryHandler(context, authorizer ?? StubAuthorizer.AlwaysAllow).HandleAsync(command);
+    }
+
+    public async Task<DeleteCalendarEntryResult> DeleteAsync(DeleteCalendarEntryCommand command, IAuthorizer? authorizer = null)
+    {
+        await using var context = await RuntimeContextAsync();
+        return await new DeleteCalendarEntryHandler(context, authorizer ?? StubAuthorizer.AlwaysAllow).HandleAsync(command);
+    }
+
+    /// <summary>The stored entry as the admin role sees it (bypasses RLS), or null.</summary>
+    public async Task<CalendarEntry?> ReadEntryAsync(TenantId tenant, long id)
+    {
+        await using var context = fixture.CreateAdminContext();
+        return await context.CalendarEntries.AsNoTracking().SingleOrDefaultAsync(e => e.TenantId == tenant && e.Id == id);
+    }
+
+    public async Task<IReadOnlyList<OutboxMessage>> ReadOutboxAsync(TenantId tenant)
+    {
+        await using var context = fixture.CreateAdminContext();
+        return await context.OutboxMessages.AsNoTracking().Where(m => m.TenantId == tenant).OrderBy(m => m.Id).ToListAsync();
     }
 
     public async Task<CalendarEntryDto?> GetAsync(TenantId tenant, long id, PrincipalRef principal, IAuthorizer? authorizer = null)
@@ -64,6 +91,15 @@ internal static class Commands
         string color = "#336699", DateTimeOffset? start = null, DateTimeOffset? end = null, EntityRef? link = null,
         Guid? correlationId = null) =>
         new(tenant, owner, title, notes, color, false, start ?? Noon, end, null, null, link, key, correlationId ?? Guid.NewGuid());
+
+    public static UpdateCalendarEntryCommand Update(
+        TenantId tenant, long id, PrincipalRef owner, long expectedVersion, string key, string title = "Updated",
+        string? notes = null, string color = "#112233", DateTimeOffset? start = null, DateTimeOffset? end = null,
+        EntityRef? link = null) =>
+        new(tenant, id, owner, expectedVersion, title, notes, color, false, start ?? Noon, end, null, null, link, key, Guid.NewGuid());
+
+    public static DeleteCalendarEntryCommand Delete(TenantId tenant, long id, PrincipalRef owner, long expectedVersion, string key) =>
+        new(tenant, id, owner, expectedVersion, key, Guid.NewGuid());
 
     public static CreateCalendarEntryCommand AllDay(
         TenantId tenant, PrincipalRef owner, string key, DateOnly start, DateOnly end, string title = "All day") =>

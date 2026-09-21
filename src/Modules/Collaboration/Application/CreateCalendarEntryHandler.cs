@@ -28,7 +28,7 @@ public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, I
         var decision = await authorizer.AuthorizeAsync(
             new AuthorizationRequest(actor, new ActionKey(ActionKeyValue), resource), cancellationToken);
         if (!decision.IsAllowed)
-            throw new CalendarEntryAuthorizationDeniedException(ActionKeyValue, decision.ReasonCode, decision.DenialStage);
+            throw new CalendarEntryAuthorizationDeniedException(ActionKeyValue, decision.ReasonCode, AuthorizationDenialStage.Coarse);
 
         var requestHash = HashRequest(command);
         var existing = await IdempotencySupport.FindAsync(

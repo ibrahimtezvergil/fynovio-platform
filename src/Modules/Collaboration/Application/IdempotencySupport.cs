@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Collaboration.Domain;
 using Collaboration.Idempotency;
 using Collaboration.Persistence;
 using Contracts;
@@ -37,7 +38,8 @@ internal static class IdempotencySupport
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json)));
     }
 
-    public static string? Instant(DateTimeOffset? value) => value?.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
+    public static string? Instant(DateTimeOffset? value) =>
+        value is { } instant ? TimestampPrecision.Truncate(instant).ToString("O", CultureInfo.InvariantCulture) : null;
 
     public static string? Date(DateOnly? value) => value?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 

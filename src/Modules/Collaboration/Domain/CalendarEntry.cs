@@ -3,7 +3,7 @@ using Contracts;
 
 namespace Collaboration.Domain;
 
-public sealed partial class CalendarEntry : IHasRowVersion
+public sealed partial class CalendarEntry
 {
     public long Id { get; private set; }
     public TenantId TenantId { get; private set; }
@@ -96,7 +96,9 @@ public sealed partial class CalendarEntry : IHasRowVersion
         Touch();
     }
 
-    private static DateTimeOffset? NormalizeTimestamp(DateTimeOffset? dt) => dt?.ToUniversalTime();
+    /// <summary>UTC, at the microsecond precision PostgreSQL stores. Truncating before validation keeps an end that differs from
+    /// its start by less than a microsecond from passing here and then colliding with `ck_calendar_entries_end_at`.</summary>
+    private static DateTimeOffset? NormalizeTimestamp(DateTimeOffset? dt) => dt is { } value ? TimestampPrecision.Truncate(value) : null;
 
     private void Touch()
     {
@@ -107,8 +109,8 @@ public sealed partial class CalendarEntry : IHasRowVersion
     private static string NormalizeTitle(string title)
     {
         ArgumentNullException.ThrowIfNull(title);
-        if (title != title.Trim() || title.Length is < 1 or > 200 || title.Contains('\n') || title.Contains('\r'))
-            throw new ArgumentException("Title must be a trimmed single line of 1 to 200 characters.", nameof(title));
+        if (title != title.Trim() || title.Length is < 1 or > 200 || title.Any(IsForbiddenInTitle))
+            throw new ArgumentException("Title must be a trimmed single line of 1 to 200 characters without control characters.", nameof(title));
         return title;
     }
 
@@ -116,8 +118,18 @@ public sealed partial class CalendarEntry : IHasRowVersion
     {
         if (notes?.Length > 4000)
             throw new ArgumentException("Notes cannot exceed 4000 characters.", nameof(notes));
+        if (notes is not null && notes.Any(IsForbiddenInNotes))
+            throw new ArgumentException("Notes cannot contain control characters other than tab and line breaks.", nameof(notes));
         return notes;
     }
+
+    // A title is a single line: every control character (which covers NUL, tab, vertical tab, form feed, CR, LF, DEL and
+    // NEL) and the Unicode line/paragraph separators are out. PostgreSQL text cannot hold NUL at all (22021), so letting one
+    // through would surface as a database error instead of a validation error.
+    private static bool IsForbiddenInTitle(char c) => char.IsControl(c) || c is '\u2028' or '\u2029';
+
+    // Notes may be multi-line and indented, so tab, LF and CR stay; the rest of the C0 range (NUL included) does not.
+    private static bool IsForbiddenInNotes(char c) => c < ' ' && c is not ('\t' or '\n' or '\r');
 
     private static string NormalizeColor(string color)
     {
@@ -139,8 +151,6 @@ public sealed partial class CalendarEntry : IHasRowVersion
         if (startAt is null || startDate is not null || endDate is not null || (endAt is not null && endAt <= startAt))
             throw new ArgumentException("Timed entries require a start instant and an exclusive end after it.");
     }
-
-    void IHasRowVersion.IncrementRowVersion() => RowVersion++;
 
     [GeneratedRegex("^#[0-9a-f]{6}$", RegexOptions.CultureInvariant)]
     private static partial Regex ColorPattern();
