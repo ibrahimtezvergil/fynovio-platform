@@ -104,6 +104,8 @@ public sealed class CollaborationModuleCapabilitiesTests
     [InlineData(typeof(CreateCalendarEntryHandler), CollaborationActionKeys.CalendarEntryCreate)]
     [InlineData(typeof(GetCalendarEntryHandler), CollaborationActionKeys.CalendarEntryRead)]
     [InlineData(typeof(ListCalendarEntriesHandler), CollaborationActionKeys.CalendarEntryList)]
+    [InlineData(typeof(UpdateCalendarEntryHandler), CollaborationActionKeys.CalendarEntryUpdate)]
+    [InlineData(typeof(DeleteCalendarEntryHandler), CollaborationActionKeys.CalendarEntryDelete)]
     public void A_handlers_private_action_key_constant_equals_the_catalog_key(Type handler, string expected)
     {
         var field = handler.GetField("ActionKeyValue", BindingFlags.NonPublic | BindingFlags.Static);
