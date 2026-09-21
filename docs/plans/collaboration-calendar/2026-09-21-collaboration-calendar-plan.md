@@ -8,8 +8,9 @@ only after the corresponding commit exists.
   execution prompt.
   → Commit: `3298776` "docs(plans): add collaboration calendar execution prompt"
 
-- [ ] S0 — Decision gate: add the Collaboration physical schema, ADR and this plan;
+- [x] S0 — Decision gate: add the Collaboration physical schema, ADR and this plan;
   stop for owner approval before generating model code or migrations.
+  → Commit: `f3fbcbb` "docs(collaboration): define calendar boundary and schema"
 
 - [ ] S1 — Backend core: create the `Collaboration` module and test project; add the
   aggregate, context, configurations, generated schema/RLS migrations, runtime-role

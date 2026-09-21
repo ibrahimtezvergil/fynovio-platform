@@ -7108,5 +7108,23 @@
     "seen": 1789949128.993726,
     "ast_hash": "e711bda96a52e3671967d2eb52085b6e",
     "semantic_hash": ""
+  },
+  "docs/plans/collaboration-calendar/2026-09-21-collaboration-calendar-plan.md": {
+    "mtime": 1789949369.329155,
+    "seen": 1789949391.03524,
+    "ast_hash": "cb9d691a299bf79b0a4d3b773dce0c7d",
+    "semantic_hash": ""
+  },
+  "docs/plans/collaboration-calendar/adr-collaboration-boundary.md": {
+    "mtime": 1789949274.7183962,
+    "seen": 1789949391.035264,
+    "ast_hash": "f7f20bc4e04d136a91c7a288020f726d",
+    "semantic_hash": ""
+  },
+  "docs/schema/collaboration-schema.md": {
+    "mtime": 1789949274.6730871,
+    "seen": 1789949391.0355752,
+    "ast_hash": "14fec335d78b96f415584be1f532e2ef",
+    "semantic_hash": ""
   }
 }
