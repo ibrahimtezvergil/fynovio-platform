@@ -65,14 +65,31 @@ public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, I
         context.CalendarEntries.Add(entry);
         await context.SaveChangesAsync(cancellationToken); // assigns entry.Id
 
-        var payload = new CreatedPayload(entry.Id, entry.RowVersion);
-        var payloadJson = JsonSerializer.Serialize(payload);
+        // Idempotency response: just the entry id and row version (for idempotency table).
+        var idempotencyPayload = new CreatedPayload(entry.Id, entry.RowVersion);
+        var idempotencyPayloadJson = JsonSerializer.Serialize(idempotencyPayload);
+
+        // Outbox payload: thin envelope with entry id, owner principal, timing and link ref only (schema doc).
+        // No title, notes, or hydrated target label.
+        var outboxPayload = new OutboxPayload(
+            entry.Id,
+            entry.OwnerPrincipalIssuer,
+            entry.OwnerPrincipalSubject,
+            entry.AllDay,
+            entry.StartAt?.ToUniversalTime().ToString("O"),
+            entry.EndAt?.ToUniversalTime().ToString("O"),
+            entry.StartDate?.ToString("yyyy-MM-dd"),
+            entry.EndDate?.ToString("yyyy-MM-dd"),
+            entry.LinkBoundedContext,
+            entry.LinkEntityType,
+            entry.LinkEntityId);
+        var outboxPayloadJson = JsonSerializer.Serialize(outboxPayload);
 
         context.OutboxMessages.Add(OutboxMessage.Create(
             command.TenantId, nameof(CalendarEntry), entry.Id, entry.RowVersion,
-            EventType, EventSource, $"calendar-entries/{entry.Id}", command.CorrelationId, payloadJson));
+            EventType, EventSource, $"calendar-entries/{entry.Id}", command.CorrelationId, outboxPayloadJson));
         context.IdempotencyRecords.Add(IdempotencyRecord.Create(
-            command.TenantId, command.Principal, Operation, command.IdempotencyKey, requestHash, SucceededStatus, payloadJson, IdempotencyRetention));
+            command.TenantId, command.Principal, Operation, command.IdempotencyKey, requestHash, SucceededStatus, idempotencyPayloadJson, IdempotencyRetention));
 
         try
         {
@@ -123,11 +140,42 @@ public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, I
 
     private static string HashRequest(CreateCalendarEntryCommand command)
     {
-        var canonical = string.Create(
-            CultureInfo.InvariantCulture,
-            $"{Operation}|{command.TenantId.Value}|{command.Principal}|{command.Title}|{command.Notes}|{command.Color}|{command.AllDay}|{command.StartAt:O}|{command.EndAt:O}|{command.StartDate}|{command.EndDate}|{command.Link}");
-        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
+        // Canonical, unambiguous serialization for idempotency keying: JSON with explicit field order,
+        // timestamps in UTC ISO format, dates as yyyy-MM-dd.
+        var payload = new
+        {
+            operation = Operation,
+            tenantId = command.TenantId.Value,
+            principalIssuer = command.Principal.Issuer,
+            principalSubject = command.Principal.Subject,
+            title = command.Title,
+            allDay = command.AllDay,
+            startAt = command.StartAt?.ToUniversalTime().ToString("O"),
+            endAt = command.EndAt?.ToUniversalTime().ToString("O"),
+            startDate = command.StartDate?.ToString("yyyy-MM-dd"),
+            endDate = command.EndDate?.ToString("yyyy-MM-dd"),
+            linkBoundedContext = command.Link?.BoundedContext,
+            linkEntityType = command.Link?.EntityType,
+            linkEntityId = command.Link?.Id
+        };
+        var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { PropertyNameCaseInsensitive = false });
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json)));
     }
 
+    /// <summary>Idempotency response shape: just the entry id and row version.</summary>
     private sealed record CreatedPayload(long EntryId, long RowVersion);
+
+    /// <summary>Outbox payload shape: thin envelope per schema doc, no title/notes/labels.</summary>
+    private sealed record OutboxPayload(
+        long EntryId,
+        string OwnerPrincipalIssuer,
+        string OwnerPrincipalSubject,
+        bool AllDay,
+        string? StartAt,
+        string? EndAt,
+        string? StartDate,
+        string? EndDate,
+        string? LinkBoundedContext,
+        string? LinkEntityType,
+        long? LinkEntityId);
 }

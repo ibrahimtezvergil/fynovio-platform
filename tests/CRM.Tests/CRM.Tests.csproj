@@ -25,7 +25,6 @@
     <ProjectReference Include="..\..\src\Modules\CRM\CRM.csproj" />
     <ProjectReference Include="..\..\src\Modules\MasterData\MasterData.csproj" />
     <ProjectReference Include="..\..\src\Modules\Access\Access.csproj" />
-    <ProjectReference Include="..\..\src\Modules\Collaboration\Collaboration.csproj" />
   </ItemGroup>
 
 </Project>

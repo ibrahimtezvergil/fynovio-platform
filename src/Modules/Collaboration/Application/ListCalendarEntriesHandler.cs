@@ -30,9 +30,13 @@ public sealed class ListCalendarEntriesHandler(CollaborationDbContext context, I
         if (!decision.IsAllowed)
             throw new CalendarEntryAuthorizationDeniedException(ActionKeyValue, decision.ReasonCode, decision.DenialStage);
 
+        // Convert query bounds to UTC for Npgsql (non-UTC DateTimeOffset parameters cause binding errors).
+        var fromUtc = query.From.ToUniversalTime();
+        var toUtc = query.To.ToUniversalTime();
+
         // Widen all-day range by one day on each side to match FullCalendar semantics.
-        var fromDate = DateOnly.FromDateTime(query.From.UtcDateTime).AddDays(-1);
-        var toDate = DateOnly.FromDateTime(query.To.UtcDateTime).AddDays(1);
+        var fromDate = DateOnly.FromDateTime(fromUtc.UtcDateTime).AddDays(-1);
+        var toDate = DateOnly.FromDateTime(toUtc.UtcDateTime).AddDays(1);
 
         // Fetch MaxResults + 1 to detect if there are more results than allowed.
         var entries = await context.CalendarEntries
@@ -43,10 +47,10 @@ public sealed class ListCalendarEntriesHandler(CollaborationDbContext context, I
                 && e.OwnerPrincipalSubject == query.Principal.Subject
                 && (
                     // Timed entries with null end: include only if StartAt is within the range.
-                    (!e.AllDay && e.EndAt == null && e.StartAt >= query.From && e.StartAt < query.To)
+                    (!e.AllDay && e.EndAt == null && e.StartAt >= fromUtc && e.StartAt < toUtc)
                     ||
                     // Timed entries with end: standard overlap check (StartAt < To && EndAt > From).
-                    (!e.AllDay && e.EndAt != null && e.StartAt < query.To && e.EndAt > query.From)
+                    (!e.AllDay && e.EndAt != null && e.StartAt < toUtc && e.EndAt > fromUtc)
                     ||
                     // All-day entries: overlap check with widened range.
                     (e.AllDay && e.StartDate < toDate && e.EndDate > fromDate)
