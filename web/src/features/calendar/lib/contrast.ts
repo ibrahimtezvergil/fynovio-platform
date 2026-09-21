@@ -50,21 +50,27 @@ export function readableTextColor(background: string): ReadableTextColor {
 }
 
 /**
- * A tonal ramp for the event-detail header. It only moves away from the base colour in the direction that improves
- * the selected text colour's contrast, so a user-selected colour remains both recognisable and AA-readable across
- * the whole gradient.
+ * A tonal ramp for a coloured event-detail header. Coloured headers always use white text; a light user-picked
+ * colour is darkened only as far as necessary to make that treatment AA-readable across the whole gradient.
  */
 export function calendarHeaderPalette(color: string): CalendarHeaderPalette {
   if (!HEX_COLOR.test(color)) throw new Error(`Expected a #rrggbb colour, got "${color}".`)
 
-  const middle = color.toLowerCase()
-  const textColor = readableTextColor(middle)
-  const accent = textColor === '#000000' ? '#ffffff' : '#000000'
+  const selected = color.toLowerCase()
+  let low = 0
+  let high = 1
+  for (let iteration = 0; iteration < 12; iteration += 1) {
+    const amount = (low + high) / 2
+    if (contrastRatio(mixHexColors(selected, '#000000', amount), '#ffffff') >= 4.5) high = amount
+    else low = amount
+  }
+
+  const middle = mixHexColors(selected, '#000000', high)
 
   return {
-    start: mixHexColors(middle, accent, 0.18),
+    start: mixHexColors(middle, '#000000', 0.05),
     middle,
-    end: mixHexColors(middle, accent, 0.05),
-    textColor,
+    end: mixHexColors(middle, '#000000', 0.18),
+    textColor: '#ffffff',
   }
 }

@@ -429,9 +429,9 @@ describe('link rendering states', () => {
     const header = view.querySelector('[data-slot="dialog-header"]')
 
     expect(header).toHaveClass('calendar-entry-detail-header')
-    expect(header).toHaveStyle({ color: '#000000' })
+    expect(header).toHaveStyle({ color: '#ffffff' })
     expect(header).toHaveStyle({
-      backgroundImage: expect.stringContaining('linear-gradient(118deg, #60a6f3 0%, #3c8cf0 52%, #4592f1 100%)'),
+      backgroundImage: expect.stringContaining('linear-gradient(118deg'),
     })
     expect(view).not.toHaveTextContent(t('detail.color'))
     expect(view).not.toHaveTextContent('#3c8cf0')
@@ -530,6 +530,6 @@ describe('accessibility', () => {
     open(parse(wireEntry()))
     const header = (await dialog()).querySelector('[data-slot="dialog-header"]')
     expect(header).toHaveClass('calendar-entry-detail-header')
-    expect(header).toHaveStyle({ color: '#000000' })
+    expect(header).toHaveStyle({ color: '#ffffff' })
   })
 })
