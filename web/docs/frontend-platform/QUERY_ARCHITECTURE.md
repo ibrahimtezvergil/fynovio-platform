@@ -54,9 +54,12 @@ Two patterns, chosen by whether the mutation's result is already the full next s
 
 - **Direct `setQueryData`** — when the mutation handler already computes the exact next cache
   value (a client-side patch, a local move), write it directly instead of invalidating and
-  refetching. `useUpdateDeals`, `useRemoveDeals` (`pipeline/api.ts`) and `useMoveCalendarEvent`
-  (`calendar/api.ts`) all do this: `onSuccess` (or the handler itself, for the non-mutation
-  calendar case) calls `queryClient.setQueryData<T>(xKeys.leaf(), updater)`.
+  refetching. `useUpdateDeals`, `useRemoveDeals` (`pipeline/api.ts`) do this: `onSuccess` calls
+  `queryClient.setQueryData<T>(xKeys.leaf(), updater)`. The calendar's drag/resize
+  (`useMoveCalendarEntry`, `calendar/api.ts`) is the optimistic variant against the real API: it writes
+  the cache first, serializes requests per entry, rolls back and refetches on failure — see its doc
+  comment. Calendar keys are rooted in tenant **and** principal (`calendarKeys`), because entries are
+  personal data.
 - **`invalidateQueries`** — once a mutation talks to a real backend and the server may have
   changed more than the fields the client sent (computed fields, side effects on other rows),
   invalidate the affected key(s) instead of hand-rolling the merge. Prefer the narrowest key that

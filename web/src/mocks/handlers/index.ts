@@ -1,4 +1,3 @@
-import { calendarHandlers } from '@/mocks/handlers/calendar'
 import { dashboardHandlers } from '@/mocks/handlers/dashboard'
 import { demoFormsHandlers } from '@/mocks/handlers/demo-forms'
 import { demoTableHandlers } from '@/mocks/handlers/demo-tables'
@@ -10,7 +9,6 @@ export const handlers = [
   ...homeHandlers,
   ...dashboardHandlers,
   ...pipelineHandlers,
-  ...calendarHandlers,
   ...demoTableHandlers,
   ...demoFormsHandlers,
 ]
