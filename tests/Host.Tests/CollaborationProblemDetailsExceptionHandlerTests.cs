@@ -68,6 +68,16 @@ public sealed class CollaborationProblemDetailsExceptionHandlerTests
     }
 
     [Fact]
+    public async Task An_unavailable_link_maps_to_422_and_says_nothing_about_why()
+    {
+        var response = await HandleAsync(_handler, new CalendarLinkTargetUnavailableException());
+
+        Assert.Equal(StatusCodes.Status422UnprocessableEntity, response.Status);
+        Assert.Equal("link_target_unavailable", response.Type);
+        Assert.Equal("The link target is unavailable.", response.Title);
+    }
+
+    [Fact]
     public async Task Collaboration_does_not_claim_validation_errors_or_crm_exceptions()
     {
         Assert.False(await TryHandleAsync(_handler, new ArgumentException("title is required")));
@@ -84,6 +94,7 @@ public sealed class CollaborationProblemDetailsExceptionHandlerTests
         Assert.False(await TryHandleAsync(_crmHandler, new CalendarEntryConcurrencyConflictException(1, 1, 2)));
         Assert.False(await TryHandleAsync(_crmHandler, new Collaboration.Application.IdempotencyKeyReusedException("CreateCalendarEntry", "key-1")));
         Assert.False(await TryHandleAsync(_crmHandler, new CalendarRangeTooLargeException("too many")));
+        Assert.False(await TryHandleAsync(_crmHandler, new CalendarLinkTargetUnavailableException()));
     }
 
     [Fact]
