@@ -624,9 +624,9 @@
     "semantic_hash": ""
   },
   "scripts/create-runtime-role.sql": {
-    "mtime": 1789913055.6375813,
-    "seen": 1789944424.6516259,
-    "ast_hash": "",
+    "mtime": 1790023782.9396791,
+    "seen": 1790031106.7731981,
+    "ast_hash": "c264ddf3bd5175e20106362ea4a057b6",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/IdempotencyKeyReusedException.cs": {
