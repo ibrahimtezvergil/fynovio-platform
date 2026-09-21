@@ -48,7 +48,7 @@ namespace Collaboration.Persistence.Migrations
                     table.CheckConstraint("ck_calendar_entries_color", "color ~ '^#[0-9a-f]{6}$'");
                     table.CheckConstraint("ck_calendar_entries_end_at", "end_at IS NULL OR end_at > start_at");
                     table.CheckConstraint("ck_calendar_entries_end_date", "end_date IS NULL OR end_date > start_date");
-                    table.CheckConstraint("ck_calendar_entries_link", "(link_bounded_context IS NULL AND link_entity_type IS NULL AND link_entity_id IS NULL) OR (link_bounded_context IS NOT NULL AND link_entity_type IS NOT NULL AND link_entity_id > 0)");
+                    table.CheckConstraint("ck_calendar_entries_link", "(link_bounded_context IS NULL AND link_entity_type IS NULL AND link_entity_id IS NULL) OR (link_bounded_context IS NOT NULL AND link_entity_type IS NOT NULL AND link_entity_id IS NOT NULL AND link_entity_id > 0)");
                     table.CheckConstraint("ck_calendar_entries_link_identifiers", "(link_bounded_context IS NULL OR link_bounded_context ~ '^[a-z][a-z0-9_]*$') AND (link_entity_type IS NULL OR link_entity_type ~ '^[a-z][a-z0-9_]*$')");
                     table.CheckConstraint("ck_calendar_entries_notes", "notes IS NULL OR char_length(notes) <= 4000");
                     table.CheckConstraint("ck_calendar_entries_title", "title = btrim(title) AND char_length(title) BETWEEN 1 AND 200 AND position(E'\\n' IN title) = 0 AND position(E'\\r' IN title) = 0");

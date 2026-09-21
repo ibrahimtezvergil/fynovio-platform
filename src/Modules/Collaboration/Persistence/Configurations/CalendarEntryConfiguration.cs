@@ -17,7 +17,7 @@ public sealed class CalendarEntryConfiguration : IEntityTypeConfiguration<Calend
             table.HasCheckConstraint("ck_calendar_entries_all_day_timing", "(all_day AND start_date IS NOT NULL AND end_date IS NOT NULL AND start_at IS NULL AND end_at IS NULL) OR (NOT all_day AND start_at IS NOT NULL AND start_date IS NULL AND end_date IS NULL)");
             table.HasCheckConstraint("ck_calendar_entries_end_at", "end_at IS NULL OR end_at > start_at");
             table.HasCheckConstraint("ck_calendar_entries_end_date", "end_date IS NULL OR end_date > start_date");
-            table.HasCheckConstraint("ck_calendar_entries_link", "(link_bounded_context IS NULL AND link_entity_type IS NULL AND link_entity_id IS NULL) OR (link_bounded_context IS NOT NULL AND link_entity_type IS NOT NULL AND link_entity_id > 0)");
+            table.HasCheckConstraint("ck_calendar_entries_link", "(link_bounded_context IS NULL AND link_entity_type IS NULL AND link_entity_id IS NULL) OR (link_bounded_context IS NOT NULL AND link_entity_type IS NOT NULL AND link_entity_id IS NOT NULL AND link_entity_id > 0)");
             table.HasCheckConstraint("ck_calendar_entries_link_identifiers", "(link_bounded_context IS NULL OR link_bounded_context ~ '^[a-z][a-z0-9_]*$') AND (link_entity_type IS NULL OR link_entity_type ~ '^[a-z][a-z0-9_]*$')");
         });
         builder.HasKey(entry => entry.Id);

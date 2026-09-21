@@ -1,374 +1,204 @@
 using Collaboration.Application;
 using Collaboration.Domain;
-using Collaboration.Persistence;
 using Contracts;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Collaboration.Tests.Integration;
 
+/// <summary>Create/get behavior through the unprivileged runtime role (so RLS is in force).</summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class CalendarEntryHandlerTests(PostgresFixture fixture)
 {
+    private readonly Harness _harness = new(fixture);
+
     [Fact]
-    public async Task CreateAndGet_HappyPath()
+    public async Task A_timed_entry_round_trips_every_field_and_stores_the_owner()
     {
-        // Setup
-        var context = fixture.CreateCollaborationContext();
-        await using var _ = context;
-        var runtimeConnectionString = await fixture.RuntimeConnectionStringAsync();
-        var runtimeContext = PostgresFixture.CreateCollaborationContext(runtimeConnectionString);
-        await using var __ = runtimeContext;
+        var tenant = TestData.NextTenant();
+        var link = new EntityRef(tenant, "crm", "opportunity", 42);
+        var start = new DateTimeOffset(2026, 3, 10, 9, 30, 0, TimeSpan.Zero);
+        var command = Commands.Timed(tenant, Harness.Alice, "k-1", title: "Kickoff", notes: "Bring slides",
+            color: "#AABBCC", start: start, end: start.AddHours(1), link: link);
 
-        var tenantId = new TenantId(1);
-        var principal = new PrincipalRef("test-issuer", "test-subject");
-        var command = new CreateCalendarEntryCommand(
-            tenantId, principal, "Test Entry", "Some notes", "#000000",
-            false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddHours(1),
-            null, null, null,
-            "idempotency-key-1", Guid.NewGuid());
+        var created = await _harness.CreateAsync(command);
+        var dto = await _harness.GetAsync(tenant, created.Id, Harness.Alice);
 
-        var authorizer = StubAuthorizer.AlwaysAllow;
-        var handler = new CreateCalendarEntryHandler(context, authorizer);
+        Assert.False(created.Replayed);
+        Assert.True(created.Id > 0);
+        Assert.Equal(1, created.RowVersion);
+        Assert.NotNull(dto);
+        Assert.Equal(created.Id, dto.Id);
+        Assert.Equal(1, dto.RowVersion);
+        Assert.Equal("Kickoff", dto.Title);
+        Assert.Equal("Bring slides", dto.Notes);
+        Assert.Equal("#aabbcc", dto.Color);
+        Assert.False(dto.AllDay);
+        Assert.Equal(start, dto.StartAt);
+        Assert.Equal(start.AddHours(1), dto.EndAt);
+        Assert.Null(dto.StartDate);
+        Assert.Null(dto.EndDate);
+        Assert.Equal(link, dto.Link);
 
-        // Act: Create
-        var result = await handler.HandleAsync(command);
-
-        // Assert
-        Assert.False(result.Replayed);
-        Assert.True(result.Id > 0);
-        Assert.Equal(1, result.RowVersion);
-
-        // Act: Get
-        var getQuery = new GetCalendarEntryQuery(tenantId, result.Id, principal, Guid.NewGuid());
-        var getHandler = new GetCalendarEntryHandler(runtimeContext, authorizer);
-        var getResult = await getHandler.HandleAsync(getQuery);
-
-        // Assert
-        Assert.NotNull(getResult);
-        Assert.Equal(result.Id, getResult.Id);
-        Assert.Equal("Test Entry", getResult.Title);
-        Assert.Equal("Some notes", getResult.Notes);
-        Assert.False(getResult.AllDay);
+        await using var admin = fixture.CreateAdminContext();
+        var row = await admin.CalendarEntries.SingleAsync(e => e.Id == created.Id);
+        Assert.Equal(tenant, row.TenantId);
+        Assert.Equal(Harness.Alice, row.Owner);
     }
 
     [Fact]
-    public async Task Create_IdempotentOnReplay()
+    public async Task An_all_day_entry_round_trips_as_dates_only()
     {
-        var context = fixture.CreateCollaborationContext();
-        await using var _ = context;
+        var tenant = TestData.NextTenant();
+        var created = await _harness.CreateAsync(
+            Commands.AllDay(tenant, Harness.Alice, "k-ad", new DateOnly(2026, 3, 10), new DateOnly(2026, 3, 12)));
 
-        var tenantId = new TenantId(1);
-        var principal = new PrincipalRef("test-issuer", "test-subject");
-        var correlationId = Guid.NewGuid();
-        var command = new CreateCalendarEntryCommand(
-            tenantId, principal, "Test Entry", "Notes", "#000000",
-            false, DateTimeOffset.UtcNow, null,
-            null, null, null,
-            "idempotency-key-2", correlationId);
+        var dto = await _harness.GetAsync(tenant, created.Id, Harness.Alice);
 
-        var authorizer = StubAuthorizer.AlwaysAllow;
-        var handler = new CreateCalendarEntryHandler(context, authorizer);
-
-        // First attempt
-        var result1 = await handler.HandleAsync(command);
-        Assert.False(result1.Replayed);
-
-        // Replay with same key
-        var result2 = await handler.HandleAsync(command);
-        Assert.True(result2.Replayed);
-        Assert.Equal(result1.Id, result2.Id);
-        Assert.Equal(result1.RowVersion, result2.RowVersion);
+        Assert.NotNull(dto);
+        Assert.True(dto.AllDay);
+        Assert.Equal(new DateOnly(2026, 3, 10), dto.StartDate);
+        Assert.Equal(new DateOnly(2026, 3, 12), dto.EndDate);
+        Assert.Null(dto.StartAt);
+        Assert.Null(dto.EndAt);
+        Assert.Null(dto.Link);
     }
 
     [Fact]
-    public async Task Create_ThrowsOnIdempotencyKeyReuse()
+    public async Task Times_written_with_an_offset_persist_the_same_instant_in_utc()
     {
-        var context = fixture.CreateCollaborationContext();
-        await using var _ = context;
+        var tenant = TestData.NextTenant();
+        var start = new DateTimeOffset(2026, 3, 10, 13, 0, 0, TimeSpan.FromHours(3));
+        var end = new DateTimeOffset(2026, 3, 10, 15, 0, 0, TimeSpan.FromHours(3));
 
-        var tenantId = new TenantId(1);
-        var principal = new PrincipalRef("test-issuer", "test-subject");
-        var command1 = new CreateCalendarEntryCommand(
-            tenantId, principal, "Entry 1", null, "#000000",
-            false, DateTimeOffset.UtcNow, null,
-            null, null, null,
-            "idempotency-key-3", Guid.NewGuid());
+        var created = await _harness.CreateAsync(Commands.Timed(tenant, Harness.Alice, "k-off", start: start, end: end));
+        var dto = await _harness.GetAsync(tenant, created.Id, Harness.Alice);
 
-        var command2 = new CreateCalendarEntryCommand(
-            tenantId, principal, "Entry 2", null, "#ff0000",  // Different entry
-            false, DateTimeOffset.UtcNow, null,
-            null, null, null,
-            "idempotency-key-3", Guid.NewGuid());  // Same key!
-
-        var authorizer = StubAuthorizer.AlwaysAllow;
-        var handler = new CreateCalendarEntryHandler(context, authorizer);
-
-        await handler.HandleAsync(command1);
-
-        // Attempt to create different entry with same key should throw
-        var ex = await Assert.ThrowsAsync<IdempotencyKeyReusedException>(
-            () => handler.HandleAsync(command2));
-        Assert.Contains("idempotency-key-3", ex.Message);
+        Assert.NotNull(dto);
+        Assert.Equal(new DateTimeOffset(2026, 3, 10, 10, 0, 0, TimeSpan.Zero), dto.StartAt);
+        Assert.Equal(new DateTimeOffset(2026, 3, 10, 12, 0, 0, TimeSpan.Zero), dto.EndAt);
+        Assert.Equal(TimeSpan.Zero, dto.StartAt!.Value.Offset);
+        Assert.Equal(TimeSpan.Zero, dto.EndAt!.Value.Offset);
     }
 
     [Fact]
-    public async Task Create_ThrowsOnInvalidIdempotencyKey()
+    public async Task An_invalid_request_writes_nothing_and_leaves_the_key_reusable()
     {
-        var context = fixture.CreateCollaborationContext();
-        await using var _ = context;
+        var tenant = TestData.NextTenant();
+        var invalid = Commands.Timed(tenant, Harness.Alice, "k-invalid", color: "not-a-colour");
 
-        var tenantId = new TenantId(1);
-        var principal = new PrincipalRef("test-issuer", "test-subject");
+        await Assert.ThrowsAsync<ArgumentException>(() => _harness.CreateAsync(invalid));
 
-        var authorizer = StubAuthorizer.AlwaysAllow;
-        var handler = new CreateCalendarEntryHandler(context, authorizer);
+        Assert.Equal(0, await _harness.CountEntriesAsync(tenant));
+        Assert.Equal(0, await _harness.CountOutboxAsync(tenant));
+        Assert.Equal(0, await _harness.CountIdempotencyAsync(tenant));
 
-        // Blank key
-        var command1 = new CreateCalendarEntryCommand(
-            tenantId, principal, "Entry", null, "#000000",
-            false, DateTimeOffset.UtcNow, null,
-            null, null, null,
-            "   ", Guid.NewGuid());
-
-        await Assert.ThrowsAsync<ArgumentException>(
-            () => handler.HandleAsync(command1));
-
-        // Key > 128 chars
-        var command2 = new CreateCalendarEntryCommand(
-            tenantId, principal, "Entry", null, "#000000",
-            false, DateTimeOffset.UtcNow, null,
-            null, null, null,
-            new string('x', 129), Guid.NewGuid());
-
-        await Assert.ThrowsAsync<ArgumentException>(
-            () => handler.HandleAsync(command2));
+        var corrected = await _harness.CreateAsync(invalid with { Color = "#123456" });
+        Assert.False(corrected.Replayed);
     }
 
     [Fact]
-    public async Task Create_ThrowsOnAuthorizationDenial()
+    public async Task A_link_from_another_tenant_is_rejected_and_nothing_is_written()
     {
-        var context = fixture.CreateCollaborationContext();
-        await using var _ = context;
+        var tenant = TestData.NextTenant();
+        var foreignLink = new EntityRef(TestData.NextTenant(), "crm", "opportunity", 1);
 
-        var tenantId = new TenantId(1);
-        var principal = new PrincipalRef("test-issuer", "test-subject");
-        var command = new CreateCalendarEntryCommand(
-            tenantId, principal, "Entry", null, "#000000",
-            false, DateTimeOffset.UtcNow, null,
-            null, null, null,
-            "idempotency-key-4", Guid.NewGuid());
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            _harness.CreateAsync(Commands.Timed(tenant, Harness.Alice, "k-foreign", link: foreignLink)));
 
-        var authorizer = StubAuthorizer.AlwaysDeny;
-        var handler = new CreateCalendarEntryHandler(context, authorizer);
+        Assert.Equal(0, await _harness.CountEntriesAsync(tenant));
+    }
 
-        var ex = await Assert.ThrowsAsync<CalendarEntryAuthorizationDeniedException>(
-            () => handler.HandleAsync(command));
+    [Fact]
+    public async Task A_denied_create_throws_the_typed_exception_and_writes_nothing()
+    {
+        var tenant = TestData.NextTenant();
+
+        var ex = await Assert.ThrowsAsync<CalendarEntryAuthorizationDeniedException>(() =>
+            _harness.CreateAsync(Commands.Timed(tenant, Harness.Alice, "k-deny"), StubAuthorizer.AlwaysDeny));
+
         Assert.Equal("collaboration.calendar_entry.create", ex.ActionKey);
         Assert.Equal(AuthorizationDenialStage.Coarse, ex.DenialStage);
+        Assert.Equal(0, await _harness.CountEntriesAsync(tenant));
+        Assert.Equal(0, await _harness.CountIdempotencyAsync(tenant));
     }
 
     [Fact]
-    public async Task Get_ReturnsNullForNonOwner()
+    public async Task Get_of_an_unknown_id_is_null()
     {
-        var context = fixture.CreateCollaborationContext();
-        await using var _ = context;
-        var runtimeConnectionString = await fixture.RuntimeConnectionStringAsync();
-        var runtimeContext = PostgresFixture.CreateCollaborationContext(runtimeConnectionString);
-        await using var __ = runtimeContext;
+        var tenant = TestData.NextTenant();
 
-        var tenantId = new TenantId(1);
-        var owner = new PrincipalRef("test-issuer", "owner-subject");
-        var nonOwner = new PrincipalRef("test-issuer", "other-subject");
-
-        // Create as owner
-        var command = new CreateCalendarEntryCommand(
-            tenantId, owner, "Entry", null, "#000000",
-            false, DateTimeOffset.UtcNow, null,
-            null, null, null,
-            "idempotency-key-5", Guid.NewGuid());
-
-        var authorizer = StubAuthorizer.AlwaysAllow;
-        var createHandler = new CreateCalendarEntryHandler(context, authorizer);
-        var result = await createHandler.HandleAsync(command);
-
-        // Try to get as non-owner
-        var getQuery = new GetCalendarEntryQuery(tenantId, result.Id, nonOwner, Guid.NewGuid());
-        var getHandler = new GetCalendarEntryHandler(runtimeContext, authorizer);
-        var getResult = await getHandler.HandleAsync(getQuery);
-
-        // Should return null (not found to avoid leaking existence)
-        Assert.Null(getResult);
+        Assert.Null(await _harness.GetAsync(tenant, long.MaxValue, Harness.Alice));
     }
 
     [Fact]
-    public async Task Get_ReturnsNullWhenAuthorizationDenied()
+    public async Task Get_by_another_principal_in_the_same_tenant_is_null_even_though_the_row_exists()
     {
-        var context = fixture.CreateCollaborationContext();
-        await using var _ = context;
-        var runtimeConnectionString = await fixture.RuntimeConnectionStringAsync();
-        var runtimeContext = PostgresFixture.CreateCollaborationContext(runtimeConnectionString);
-        await using var __ = runtimeContext;
+        var tenant = TestData.NextTenant();
+        var created = await _harness.CreateAsync(Commands.Timed(tenant, Harness.Alice, "k-own"));
 
-        var tenantId = new TenantId(1);
-        var principal = new PrincipalRef("test-issuer", "test-subject");
-
-        // Create entry
-        var command = new CreateCalendarEntryCommand(
-            tenantId, principal, "Entry", null, "#000000",
-            false, DateTimeOffset.UtcNow, null,
-            null, null, null,
-            "idempotency-key-6", Guid.NewGuid());
-
-        var allowAuthorizer = StubAuthorizer.AlwaysAllow;
-        var createHandler = new CreateCalendarEntryHandler(context, allowAuthorizer);
-        var result = await createHandler.HandleAsync(command);
-
-        // Try to get with record-level denial
-        var getQuery = new GetCalendarEntryQuery(tenantId, result.Id, principal, Guid.NewGuid());
-        var getHandler = new GetCalendarEntryHandler(runtimeContext, StubAuthorizer.RecordDenied);
-        var getResult = await getHandler.HandleAsync(getQuery);
-
-        // Should return null (not found)
-        Assert.Null(getResult);
+        Assert.Null(await _harness.GetAsync(tenant, created.Id, Harness.Bob));
+        Assert.Equal(1, await _harness.CountEntriesAsync(tenant));
+        Assert.NotNull(await _harness.GetAsync(tenant, created.Id, Harness.Alice));
     }
 
     [Fact]
-    public async Task List_WithinRange_Timed()
+    public async Task Get_from_another_tenant_is_null_even_for_the_same_principal()
     {
-        var context = fixture.CreateCollaborationContext();
-        await using var _ = context;
-        var runtimeConnectionString = await fixture.RuntimeConnectionStringAsync();
-        var runtimeContext = PostgresFixture.CreateCollaborationContext(runtimeConnectionString);
-        await using var __ = runtimeContext;
+        var tenant = TestData.NextTenant();
+        var created = await _harness.CreateAsync(Commands.Timed(tenant, Harness.Alice, "k-tenant"));
 
-        var tenantId = new TenantId(1001);  // Use unique tenant to avoid cross-test pollution
-        var principal = new PrincipalRef("test-issuer", "list-timed-subject");
-        var baseTime = DateTimeOffset.UtcNow;
+        Assert.Null(await _harness.GetAsync(TestData.NextTenant(), created.Id, Harness.Alice));
+    }
 
-        var entries = new[]
+    [Fact]
+    public async Task Get_with_a_record_level_denial_is_indistinguishable_from_not_found()
+    {
+        var tenant = TestData.NextTenant();
+        var created = await _harness.CreateAsync(Commands.Timed(tenant, Harness.Alice, "k-rec"));
+
+        Assert.Null(await _harness.GetAsync(tenant, created.Id, Harness.Alice, StubAuthorizer.RecordDenied));
+        Assert.Null(await _harness.GetAsync(tenant, created.Id, Harness.Alice, StubAuthorizer.AlwaysDeny));
+    }
+
+    [Fact]
+    public async Task Get_authorizes_with_the_entry_owner_as_the_resource_owner()
+    {
+        var tenant = TestData.NextTenant();
+        var created = await _harness.CreateAsync(Commands.Timed(tenant, Harness.Alice, "k-res"));
+        var authorizer = new RecordingAuthorizer();
+
+        await _harness.GetAsync(tenant, created.Id, Harness.Alice, authorizer);
+
+        var request = Assert.Single(authorizer.Requests);
+        Assert.Equal("collaboration.calendar_entry.read", request.Action.Value);
+        Assert.Equal(created.Id, request.Resource.Id);
+        Assert.Equal(Harness.Alice, request.Resource.OwnerPrincipal);
+        Assert.Equal(Harness.Alice, request.Actor.Principal);
+    }
+
+    [Fact]
+    public async Task Create_authorizes_with_a_create_shaped_resource_owned_by_the_actor()
+    {
+        var tenant = TestData.NextTenant();
+        var authorizer = new RecordingAuthorizer();
+
+        await _harness.CreateAsync(Commands.Timed(tenant, Harness.Alice, "k-cr"), authorizer);
+
+        var request = Assert.Single(authorizer.Requests);
+        Assert.Equal("collaboration.calendar_entry.create", request.Action.Value);
+        Assert.Null(request.Resource.Id);
+        Assert.Equal(Harness.Alice, request.Resource.OwnerPrincipal);
+    }
+
+    private sealed class RecordingAuthorizer : IAuthorizer
+    {
+        public List<AuthorizationRequest> Requests { get; } = [];
+
+        public Task<AuthorizationDecision> AuthorizeAsync(AuthorizationRequest request, CancellationToken cancellationToken = default)
         {
-            // Entry that starts inside the range
-            new CreateCalendarEntryCommand(
-                tenantId, principal, "Entry 1", null, "#000000",
-                false, baseTime.AddHours(1), baseTime.AddHours(2),
-                null, null, null,
-                "key-list-1", Guid.NewGuid()),
-            // Entry that ends inside the range
-            new CreateCalendarEntryCommand(
-                tenantId, principal, "Entry 2", null, "#000000",
-                false, baseTime.AddHours(-2), baseTime.AddHours(-1),
-                null, null, null,
-                "key-list-2", Guid.NewGuid()),
-            // Entry that spans the range
-            new CreateCalendarEntryCommand(
-                tenantId, principal, "Entry 3", null, "#000000",
-                false, baseTime.AddHours(-1), baseTime.AddHours(1),
-                null, null, null,
-                "key-list-3", Guid.NewGuid()),
-        };
-
-        var authorizer = StubAuthorizer.AlwaysAllow;
-        var createHandler = new CreateCalendarEntryHandler(context, authorizer);
-
-        foreach (var entry in entries)
-        {
-            await createHandler.HandleAsync(entry);
+            Requests.Add(request);
+            return StubAuthorizer.AlwaysAllow.AuthorizeAsync(request, cancellationToken);
         }
-
-        // List entries within the range (baseTime to baseTime + 3 hours)
-        var listQuery = new ListCalendarEntriesQuery(
-            tenantId, principal, baseTime, baseTime.AddHours(3), Guid.NewGuid());
-
-        var listHandler = new ListCalendarEntriesHandler(runtimeContext, authorizer);
-        var results = await listHandler.HandleAsync(listQuery);
-
-        // Entry 1: starts at baseTime+1h, ends at baseTime+2h → should be included
-        // Entry 2: ends at baseTime-1h → should NOT be included (ends before range starts)
-        // Entry 3: starts at baseTime-1h, ends at baseTime+1h → should be included (spans range)
-        Assert.Equal(2, results.Count);
-        Assert.Contains(results, r => r.Title == "Entry 1");
-        Assert.Contains(results, r => r.Title == "Entry 3");
-        Assert.DoesNotContain(results, r => r.Title == "Entry 2");
-    }
-
-    [Fact]
-    public async Task List_RangeValidation()
-    {
-        var context = fixture.CreateCollaborationContext();
-        await using var _ = context;
-
-        var tenantId = new TenantId(1);
-        var principal = new PrincipalRef("test-issuer", "test-subject");
-        var baseTime = DateTimeOffset.UtcNow;
-
-        var authorizer = StubAuthorizer.AlwaysAllow;
-        var listHandler = new ListCalendarEntriesHandler(context, authorizer);
-
-        // Range with To <= From
-        var badQuery1 = new ListCalendarEntriesQuery(
-            tenantId, principal, baseTime, baseTime, Guid.NewGuid());
-        await Assert.ThrowsAsync<ArgumentException>(
-            () => listHandler.HandleAsync(badQuery1));
-
-        // Range > 100 days
-        var badQuery2 = new ListCalendarEntriesQuery(
-            tenantId, principal, baseTime, baseTime.AddDays(101), Guid.NewGuid());
-        await Assert.ThrowsAsync<CalendarRangeTooLargeException>(
-            () => listHandler.HandleAsync(badQuery2));
-    }
-
-    [Fact]
-    public async Task List_ThrowsOnTooManyResults()
-    {
-        var context = fixture.CreateCollaborationContext();
-        await using var _ = context;
-        var runtimeConnectionString = await fixture.RuntimeConnectionStringAsync();
-        var runtimeContext = PostgresFixture.CreateCollaborationContext(runtimeConnectionString);
-        await using var __ = runtimeContext;
-
-        var tenantId = new TenantId(1002);  // Use unique tenant
-        var principal = new PrincipalRef("test-issuer", "list-overflow-subject");
-        var baseTime = DateTimeOffset.UtcNow;
-
-        // Create 501 entries
-        var authorizer = StubAuthorizer.AlwaysAllow;
-        var createHandler = new CreateCalendarEntryHandler(context, authorizer);
-
-        for (int i = 0; i <= 500; i++)
-        {
-            var command = new CreateCalendarEntryCommand(
-                tenantId, principal, $"Entry {i}", null, "#000000",
-                false, baseTime.AddHours(i * 0.1), baseTime.AddHours(i * 0.1 + 0.05),
-                null, null, null,
-                $"key-overflow-{i}", Guid.NewGuid());
-            await createHandler.HandleAsync(command);
-        }
-
-        // List should throw because we have 501 results
-        var listQuery = new ListCalendarEntriesQuery(
-            tenantId, principal, baseTime, baseTime.AddDays(5), Guid.NewGuid());
-
-        var listHandler = new ListCalendarEntriesHandler(runtimeContext, authorizer);
-        await Assert.ThrowsAsync<CalendarRangeTooLargeException>(
-            () => listHandler.HandleAsync(listQuery));
-    }
-
-    [Fact]
-    public async Task List_ThrowsOnAuthorizationDenial()
-    {
-        var context = fixture.CreateCollaborationContext();
-        await using var _ = context;
-
-        var tenantId = new TenantId(1);
-        var principal = new PrincipalRef("test-issuer", "test-subject");
-        var baseTime = DateTimeOffset.UtcNow;
-
-        var listQuery = new ListCalendarEntriesQuery(
-            tenantId, principal, baseTime, baseTime.AddHours(1), Guid.NewGuid());
-
-        var listHandler = new ListCalendarEntriesHandler(context, StubAuthorizer.AlwaysDeny);
-        var ex = await Assert.ThrowsAsync<CalendarEntryAuthorizationDeniedException>(
-            () => listHandler.HandleAsync(listQuery));
-        Assert.Equal("collaboration.calendar_entry.list", ex.ActionKey);
     }
 }

@@ -1,4 +1,3 @@
-using Collaboration.Domain;
 using Collaboration.Persistence;
 using Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -7,31 +6,43 @@ using Xunit;
 
 namespace Collaboration.Tests.Integration;
 
-/// <summary>FF03 (doc 12) enforcement for Collaboration's tenant-scoped tables.
-/// All three tables (calendar_entries, idempotency_records, outbox_messages) must:
-/// - Have RLS enabled and forced
-/// - Have a tenant_isolation policy
-/// - Reject cross-tenant reads as zero rows
-/// - Reject cross-tenant writes with WITH CHECK violation (SQLSTATE 42501)
-/// - Fail safely when no tenant context is set (pooled connection without SET)
-/// </summary>
+/// <summary>FF03 (doc 12) enforcement for Collaboration's tenant-scoped tables, exercised as the unprivileged
+/// runtime role (`fynovio_app`, created from the real scripts/create-runtime-role.sql). For every table:
+/// RLS is enabled and forced, another tenant's rows are invisible and immutable, a write for another tenant is
+/// rejected by WITH CHECK (SQLSTATE 42501), and an unset tenant context fails closed — including on a connection
+/// that previously ran a tenant transaction (where the GUC is '' rather than NULL and the policy's NULLIF matters).</summary>
 [Collection(nameof(PostgresCollection))]
-public sealed class RowLevelSecurityTests
+public sealed class RowLevelSecurityTests(PostgresFixture fixture)
 {
-    private readonly PostgresFixture _fixture;
+    private const string InsufficientPrivilege = "42501";
 
-    public RowLevelSecurityTests(PostgresFixture fixture) => _fixture = fixture;
+    public static TheoryData<string> Tables => new() { "calendar_entries", "idempotency_records", "outbox_messages" };
 
-    /// <summary>Fitness function: every table in collaboration schema has RLS enabled,
-    /// forced, and a policy defined. This catches future tables that slip through without
-    /// RLS (happened with the pipeline tables).</summary>
+    /// <summary>One valid INSERT per table, parameterised on `@t` (tenant) and `@k` (a unique key).</summary>
+    private static readonly Dictionary<string, string> InsertSql = new()
+    {
+        ["calendar_entries"] = """
+            INSERT INTO collaboration.calendar_entries
+                (tenant_id, owner_principal_issuer, owner_principal_subject, title, color, all_day, start_at, row_version, created_at, updated_at)
+            VALUES (@t, 'issuer', 'subject', 'Title', '#336699', false, now(), 1, now(), now())
+            """,
+        ["idempotency_records"] = """
+            INSERT INTO collaboration.idempotency_records
+                (tenant_id, principal_issuer, principal_subject, operation, idempotency_key, request_hash, response_status, response_payload, created_at, expires_at)
+            VALUES (@t, 'issuer', 'subject', 'Op', @k, 'hash', 201, '{}'::jsonb, now(), now() + interval '1 day')
+            """,
+        ["outbox_messages"] = """
+            INSERT INTO collaboration.outbox_messages
+                (tenant_id, aggregate_type, aggregate_id, aggregate_version, event_id, event_type, source, subject, correlation_id, payload, occurred_at)
+            VALUES (@t, 'CalendarEntry', 1, 1, gen_random_uuid(), 'type', '/source', 'subject/1', gen_random_uuid(), '{}'::jsonb, now())
+            """
+    };
+
     [Fact]
     public async Task Every_collaboration_table_has_row_level_security_enabled_forced_and_policied()
     {
-        await using var context = _fixture.CreateAdminContext();
-        await using var connection = new NpgsqlConnection(context.Database.GetConnectionString());
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
         await connection.OpenAsync();
-
         await using var command = connection.CreateCommand();
         command.CommandText = """
             SELECT c.relname,
@@ -39,108 +50,223 @@ public sealed class RowLevelSecurityTests
                    c.relforcerowsecurity,
                    EXISTS (
                        SELECT 1 FROM pg_policies p
-                       WHERE p.schemaname = 'collaboration' AND p.tablename = c.relname
+                       WHERE p.schemaname = 'collaboration' AND p.tablename = c.relname AND p.policyname = 'tenant_isolation'
+                         AND p.qual LIKE '%NULLIF%' AND p.with_check LIKE '%NULLIF%'
                    ) AS has_policy
             FROM pg_class c
             JOIN pg_namespace n ON n.oid = c.relnamespace
-            WHERE n.nspname = 'collaboration' AND c.relkind = 'r'
-                AND c.relname <> '__ef_migrations_history';
+            WHERE n.nspname = 'collaboration' AND c.relkind = 'r' AND c.relname <> '__ef_migrations_history';
             """;
 
+        var tables = new List<string>();
         var uncovered = new List<string>();
         await using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
-            var table = reader.GetString(0);
-            var enabled = reader.GetBoolean(1);
-            var forced = reader.GetBoolean(2);
-            var policied = reader.GetBoolean(3);
-            if (!enabled || !forced || !policied)
-                uncovered.Add($"{table} (enabled={enabled}, forced={forced}, policied={policied})");
+            tables.Add(reader.GetString(0));
+            if (!reader.GetBoolean(1) || !reader.GetBoolean(2) || !reader.GetBoolean(3))
+                uncovered.Add($"{reader.GetString(0)} (enabled={reader.GetBoolean(1)}, forced={reader.GetBoolean(2)}, policied={reader.GetBoolean(3)})");
         }
 
+        Assert.Equal(new[] { "calendar_entries", "idempotency_records", "outbox_messages" }, tables.Order());
         Assert.True(uncovered.Count == 0, $"Tables missing full RLS coverage: {string.Join(", ", uncovered)}");
     }
 
+    [Fact]
+    public async Task The_runtime_role_is_not_a_superuser_and_does_not_bypass_rls()
+    {
+        await using var connection = await OpenRuntimeAsync();
+        await using var command = new NpgsqlCommand(
+            "SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user", connection);
+        await using var reader = await command.ExecuteReaderAsync();
+
+        Assert.True(await reader.ReadAsync());
+        Assert.False(reader.GetBoolean(0));
+        Assert.False(reader.GetBoolean(1));
+    }
+
+    [Theory]
+    [MemberData(nameof(Tables))]
+    public async Task Rows_of_another_tenant_are_invisible(string table)
+    {
+        var tenantA = TestData.NextTenant();
+        var tenantB = TestData.NextTenant();
+        await InsertAsAdminAsync(table, tenantA);
+
+        Assert.Equal(1, await CountUnderTenantAsync(table, sessionTenant: tenantA, rowTenant: tenantA));
+        Assert.Equal(0, await CountUnderTenantAsync(table, sessionTenant: tenantB, rowTenant: tenantA));
+    }
+
+    [Theory]
+    [MemberData(nameof(Tables))]
+    public async Task A_write_for_another_tenant_is_rejected_by_with_check(string table)
+    {
+        var sessionTenant = TestData.NextTenant();
+        var foreignTenant = TestData.NextTenant();
+        await using var connection = await OpenRuntimeAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+        await SetTenantAsync(connection, transaction, sessionTenant);
+
+        var ex = await Assert.ThrowsAsync<PostgresException>(() => InsertAsync(connection, transaction, table, foreignTenant));
+
+        Assert.Equal(InsufficientPrivilege, ex.SqlState);
+    }
+
+    [Theory]
+    [MemberData(nameof(Tables))]
+    public async Task A_write_for_the_session_tenant_succeeds_so_the_rejection_above_is_about_the_tenant(string table)
+    {
+        var tenant = TestData.NextTenant();
+        await using var connection = await OpenRuntimeAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+        await SetTenantAsync(connection, transaction, tenant);
+
+        await InsertAsync(connection, transaction, table, tenant);
+        await transaction.CommitAsync();
+
+        Assert.Equal(1, await CountUnderTenantAsync(table, tenant, tenant));
+    }
+
+    [Theory]
+    [MemberData(nameof(Tables))]
+    public async Task Another_tenants_rows_cannot_be_updated_or_deleted(string table)
+    {
+        var tenantA = TestData.NextTenant();
+        var tenantB = TestData.NextTenant();
+        await InsertAsAdminAsync(table, tenantA);
+        await using var connection = await OpenRuntimeAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+        await SetTenantAsync(connection, transaction, tenantB);
+
+        await using var update = new NpgsqlCommand($"UPDATE collaboration.{table} SET tenant_id = tenant_id WHERE tenant_id = @t", connection, transaction);
+        update.Parameters.AddWithValue("t", tenantA.Value);
+        await using var delete = new NpgsqlCommand($"DELETE FROM collaboration.{table} WHERE tenant_id = @t", connection, transaction);
+        delete.Parameters.AddWithValue("t", tenantA.Value);
+
+        Assert.Equal(0, await update.ExecuteNonQueryAsync());
+        Assert.Equal(0, await delete.ExecuteNonQueryAsync());
+        await transaction.RollbackAsync();
+        Assert.Equal(1, await CountUnderTenantAsync(table, tenantA, tenantA));
+    }
+
+    [Theory]
+    [MemberData(nameof(Tables))]
+    public async Task A_connection_with_no_tenant_context_sees_nothing_and_cannot_write(string table)
+    {
+        var tenant = TestData.NextTenant();
+        await InsertAsAdminAsync(table, tenant);
+        await using var connection = await OpenRuntimeAsync();
+
+        await using (var transaction = await connection.BeginTransactionAsync())
+        {
+            Assert.Equal(0, await CountAsync(connection, transaction, table));
+            var ex = await Assert.ThrowsAsync<PostgresException>(() => InsertAsync(connection, transaction, table, tenant));
+            Assert.Equal(InsufficientPrivilege, ex.SqlState);
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Tables))]
+    public async Task A_connection_that_previously_ran_a_tenant_transaction_fails_closed_without_a_cast_error(string table)
+    {
+        var tenant = TestData.NextTenant();
+        await InsertAsAdminAsync(table, tenant);
+        await using var connection = await OpenRuntimeAsync();
+
+        await using (var first = await connection.BeginTransactionAsync())
+        {
+            await SetTenantAsync(connection, first, tenant);
+            Assert.Equal(1, await CountAsync(connection, first, table));
+            await first.CommitAsync();
+        }
+
+        // The same physical connection now reports '' (not NULL) for the transaction-local GUC.
+        await using var probe = new NpgsqlCommand("SELECT current_setting('app.tenant_id', true)", connection);
+        Assert.Equal(string.Empty, (string?)await probe.ExecuteScalarAsync());
+
+        await using var second = await connection.BeginTransactionAsync();
+        Assert.Equal(0, await CountAsync(connection, second, table)); // ''::bigint would have raised 22P02
+    }
 
     [Fact]
-    public async Task Pooled_connection_with_no_tenant_context_returns_empty_results_not_cast_error()
+    public async Task SetTenantContextAsync_outside_a_transaction_throws()
     {
-        await SeedCalendarEntryAsync();
+        await using var context = PostgresFixture.CreateContext(await fixture.RuntimeConnectionStringAsync());
 
-        // Use a runtime context without setting tenant context - simulates a pooled connection
-        // that was previously used by a different tenant and context not cleared.
-        await using var context1 = PostgresFixture.CreateCollaborationContext(await _fixture.RuntimeConnectionStringAsync());
-        await using var transaction1 = await context1.Database.BeginTransactionAsync();
-        await context1.SetTenantContextAsync(TestData.NextTenant());
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => context.SetTenantContextAsync(TestData.NextTenant()));
 
-        // Create another context on the same connection pool, but don't set tenant context
-        await using var context2 = PostgresFixture.CreateCollaborationContext(await _fixture.RuntimeConnectionStringAsync());
-        await using var transaction2 = await context2.Database.BeginTransactionAsync();
-        // Don't call SetTenantContextAsync - simulates GUC not being set
-
-        // Should return zero rows (NULLIF(...,'') evaluates to NULL which fails the RLS check),
-        // not throw a cast error.
-        var entries = await context2.CalendarEntries.AsNoTracking().ToListAsync();
-
-        Assert.Empty(entries);
+        Assert.Contains("transaction", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public async Task SetTenantContextAsync_outside_transaction_throws_InvalidOperationException()
-    {
-        await using var context = PostgresFixture.CreateCollaborationContext(await _fixture.RuntimeConnectionStringAsync());
-        var tenantId = TestData.NextTenant();
-
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => context.SetTenantContextAsync(tenantId));
-
-        Assert.Contains("transaction", exception.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private async Task<(Contracts.TenantId TenantId, long EntryId)> SeedCalendarEntryAsync()
+    public async Task SetTenantContextAsync_inside_a_transaction_scopes_the_tenant_to_that_transaction_only()
     {
         var tenant = TestData.NextTenant();
-        var principal = new PrincipalRef("test-issuer", "test-subject");
+        await using var context = PostgresFixture.CreateContext(await fixture.RuntimeConnectionStringAsync());
+        await context.Database.OpenConnectionAsync();
 
-        await using var context = _fixture.CreateAdminContext();
-        var entry = CalendarEntry.Create(
-            tenant, principal, $"Entry {Guid.NewGuid()}", null, "#000000",
-            false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddHours(1),
-            null, null, null);
-        context.CalendarEntries.Add(entry);
-        await context.SaveChangesAsync();
-        return (tenant, entry.Id);
+        await using (var transaction = await context.Database.BeginTransactionAsync())
+        {
+            await context.SetTenantContextAsync(tenant);
+            Assert.Equal(tenant.Value.ToString(), await CurrentSettingAsync(context));
+            await transaction.CommitAsync();
+        }
+
+        Assert.Equal(string.Empty, await CurrentSettingAsync(context));
     }
 
-    private async Task<(Contracts.TenantId TenantId, PrincipalRef Principal)> SeedIdempotencyRecordAsync()
+    private static async Task<string?> CurrentSettingAsync(CollaborationDbContext context)
     {
-        var tenant = TestData.NextTenant();
-        var principal = new PrincipalRef("test-issuer", "test-subject");
-
-        await using var context = _fixture.CreateAdminContext();
-        var record = Idempotency.IdempotencyRecord.Create(
-            tenant, principal, "TestOp", $"key-{Guid.NewGuid()}", "hash-1", 200,
-            "{\"test\": true}", TimeSpan.FromDays(7));
-        context.IdempotencyRecords.Add(record);
-        await context.SaveChangesAsync();
-        return (tenant, principal);
+        var connection = (NpgsqlConnection)context.Database.GetDbConnection();
+        await using var command = new NpgsqlCommand("SELECT current_setting('app.tenant_id', true)", connection);
+        return (string?)await command.ExecuteScalarAsync();
     }
 
-    private async Task<(Contracts.TenantId TenantId, long OutboxId)> SeedOutboxMessageAsync()
+    private async Task<NpgsqlConnection> OpenRuntimeAsync()
     {
-        var tenant = TestData.NextTenant();
+        var connection = new NpgsqlConnection(await fixture.RuntimeConnectionStringAsync());
+        await connection.OpenAsync();
+        return connection;
+    }
 
-        await using var context = _fixture.CreateAdminContext();
-        var message = Outbox.OutboxMessage.Create(
-            tenant, "CalendarEntry", 123, 1,
-            "enterprise.collaboration.calendar-entry.created.v1",
-            "/enterprise/collaboration",
-            "calendar-entries/123",
-            Guid.NewGuid(),
-            "{\"test\": true}");
-        context.OutboxMessages.Add(message);
-        await context.SaveChangesAsync();
-        return (tenant, message.Id);
+    private static async Task SetTenantAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, TenantId tenant)
+    {
+        await using var command = new NpgsqlCommand("SELECT set_config('app.tenant_id', @t, true)", connection, transaction);
+        command.Parameters.AddWithValue("t", tenant.Value.ToString());
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private static async Task InsertAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string table, TenantId tenant)
+    {
+        await using var command = new NpgsqlCommand(InsertSql[table], connection, transaction);
+        command.Parameters.AddWithValue("t", tenant.Value);
+        if (InsertSql[table].Contains("@k"))
+            command.Parameters.AddWithValue("k", Guid.NewGuid().ToString());
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private async Task InsertAsAdminAsync(string table, TenantId tenant)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+        await InsertAsync(connection, transaction, table, tenant);
+        await transaction.CommitAsync();
+    }
+
+    private static async Task<long> CountAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string table)
+    {
+        await using var command = new NpgsqlCommand($"SELECT count(*) FROM collaboration.{table}", connection, transaction);
+        return (long)(await command.ExecuteScalarAsync())!;
+    }
+
+    private async Task<long> CountUnderTenantAsync(string table, TenantId sessionTenant, TenantId rowTenant)
+    {
+        await using var connection = await OpenRuntimeAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+        await SetTenantAsync(connection, transaction, sessionTenant);
+        await using var command = new NpgsqlCommand($"SELECT count(*) FROM collaboration.{table} WHERE tenant_id = @t", connection, transaction);
+        command.Parameters.AddWithValue("t", rowTenant.Value);
+        return (long)(await command.ExecuteScalarAsync())!;
     }
 }

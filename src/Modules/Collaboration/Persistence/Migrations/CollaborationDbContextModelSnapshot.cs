@@ -133,7 +133,7 @@ namespace Collaboration.Persistence.Migrations
 
                             t.HasCheckConstraint("ck_calendar_entries_end_date", "end_date IS NULL OR end_date > start_date");
 
-                            t.HasCheckConstraint("ck_calendar_entries_link", "(link_bounded_context IS NULL AND link_entity_type IS NULL AND link_entity_id IS NULL) OR (link_bounded_context IS NOT NULL AND link_entity_type IS NOT NULL AND link_entity_id > 0)");
+                            t.HasCheckConstraint("ck_calendar_entries_link", "(link_bounded_context IS NULL AND link_entity_type IS NULL AND link_entity_id IS NULL) OR (link_bounded_context IS NOT NULL AND link_entity_type IS NOT NULL AND link_entity_id IS NOT NULL AND link_entity_id > 0)");
 
                             t.HasCheckConstraint("ck_calendar_entries_link_identifiers", "(link_bounded_context IS NULL OR link_bounded_context ~ '^[a-z][a-z0-9_]*$') AND (link_entity_type IS NULL OR link_entity_type ~ '^[a-z][a-z0-9_]*$')");
 
