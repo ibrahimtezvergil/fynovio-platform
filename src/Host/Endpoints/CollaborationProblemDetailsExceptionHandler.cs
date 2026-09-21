@@ -24,6 +24,9 @@ public sealed class CollaborationProblemDetailsExceptionHandler : IExceptionHand
             CalendarEntryConcurrencyConflictException => (StatusCodes.Status409Conflict, "concurrency_conflict", exception.Message),
             IdempotencyKeyReusedException => (StatusCodes.Status409Conflict, "idempotency_key_reused", exception.Message),
             CalendarRangeTooLargeException => (StatusCodes.Status422UnprocessableEntity, "range_too_large", exception.Message),
+            // One failure for every reason a link cannot be resolved (unknown type, missing, other tenant, denied): the
+            // message never says which, so the response cannot be used to probe for records.
+            CalendarLinkTargetUnavailableException => (StatusCodes.Status422UnprocessableEntity, "link_target_unavailable", exception.Message),
             _ => (0, (string?)null, (string?)null)
         };
 

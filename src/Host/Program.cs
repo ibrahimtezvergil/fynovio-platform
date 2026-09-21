@@ -198,6 +198,8 @@ builder.Services.AddSingleton<ClientFingerprint>();
 builder.Services.AddScoped<CreateCalendarEntryHandler>();
 builder.Services.AddScoped<GetCalendarEntryHandler>();
 builder.Services.AddScoped<ListCalendarEntriesHandler>();
+builder.Services.AddScoped<UpdateCalendarEntryHandler>();
+builder.Services.AddScoped<DeleteCalendarEntryHandler>();
 builder.Services.AddScoped<CreateOpportunityHandler>();
 builder.Services.AddScoped<AddOpportunityLineHandler>();
 builder.Services.AddScoped<CancelOpportunityLineHandler>();
@@ -349,6 +351,7 @@ app.UseExceptionHandler();
 app.MapAuthEndpoints();
 app.MapAccountLifecycleEndpoints(authOptions.SelfRegistration.Enabled);
 app.MapOpportunityEndpoints();
+app.MapCalendarEndpoints();
 if (app.Environment.IsDevelopment())
     app.MapDevEndpoints();
 
