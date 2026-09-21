@@ -14,8 +14,9 @@ record's display name.
 
 Every table below is tenant-scoped, has `tenant_id`, and must have PostgreSQL RLS
 enabled and forced. Runtime access uses transaction-local `app.tenant_id`; policy
-`tenant_isolation` is `USING (tenant_id = current_setting('app.tenant_id', true)::bigint)`
-with the same expression in `WITH CHECK`.
+`tenant_isolation` is `USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::bigint)`
+with the same expression in `WITH CHECK`; `NULLIF` makes an absent tenant setting
+fail closed rather than raising a cast error.
 
 ## Tables
 
@@ -26,7 +27,7 @@ erDiagram
         bigint tenant_id "NOT NULL, UNIQUE(tenant_id,id), RLS"
         text owner_principal_issuer "NOT NULL"
         text owner_principal_subject "NOT NULL"
-        varchar_200 title "NOT NULL, trimmed, CHECK length 1..200"
+        varchar_200 title "NOT NULL, trimmed single-line, CHECK length 1..200"
         text notes "nullable, CHECK length <= 4000"
         char_7 color "NOT NULL, lowercase #rrggbb CHECK"
         boolean all_day "NOT NULL"
@@ -79,13 +80,17 @@ erDiagram
 `owner_principal_issuer` and `owner_principal_subject` are the immutable `PrincipalRef`
 of the owner; no foreign key crosses into Identity/Access.
 
-`title` is a trimmed 1--200-character plain-text value. `notes` is nullable,
+`title` is a trimmed, single-line 1--200-character plain-text value. It has
+`CHECK (title = btrim(title) AND char_length(title) BETWEEN 1 AND 200 AND
+position(E'\\n' IN title) = 0 AND position(E'\\r' IN title) = 0)`. `notes` is nullable,
 plain text, and at most 4,000 characters. Neither may be logged or placed in an
 outbox payload. `color` is normalized to lowercase by the domain and has
 `CHECK (color ~ '^#[0-9a-f]{6}$')`.
 
 Timed entries use `start_at timestamptz` and nullable `end_at timestamptz`. The API
 accepts and returns offset-bearing ISO 8601 and PostgreSQL stores the instant in UTC.
+An offset-less timed value is rejected as a `400 validation_error`; API tests cover
+both `startAt` and `endAt` so server-local timezone cannot enter the contract.
 All-day entries use timezone-free `start_date date` and nullable `end_date date`.
 An end is exclusive in both forms, matching FullCalendar. The API range is timed;
 the list query derives dates from the range and widens each side by one day before
@@ -99,6 +104,8 @@ Constraints:
 - `end_date IS NULL OR end_date > start_date`.
 - `link_bounded_context`, `link_entity_type`, and `link_entity_id` are either all
   null or all non-null; `link_entity_id > 0` when present.
+- `link_bounded_context` and `link_entity_type` match the lower-case identifier
+  grammar `^[a-z][a-z0-9_]*$` whenever present.
 
 The link is `EntityRef`-shaped: its tenant is this row's `tenant_id`; the bounded
 context, entity type, and id are stored without an FK because the target is owned by
@@ -123,7 +130,8 @@ Module-local duplicate of the platform pattern. Its natural key is
 `(tenant_id, principal_issuer, principal_subject, operation, idempotency_key)`;
 the request hash rejects reuse with a changed normalized request. Responses have a
 bounded retention period. Create, update, and delete write this row in the same
-transaction as their state/outbox effect.
+transaction as their state/outbox effect. An `expires_at` index supports bounded-
+retention cleanup without a full table scan.
 
 ### `outbox_messages`
 

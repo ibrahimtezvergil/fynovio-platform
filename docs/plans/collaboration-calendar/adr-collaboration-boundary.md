@@ -18,10 +18,12 @@ only to its owner without making Calendar a shadow owner of CRM dates or records
 2. **Enablement:** ship module capability manifest `collaboration` v1, with the
    `collaboration_user` role and explicit owner-relation actions:
    `collaboration.calendar_entry.create`, `.read`, `.list`, `.update`, and `.delete`.
-   No wildcard or `All` grant. Module templates are copied once when enabled; existing
-   tenants are never reconciled automatically, so future template changes need a new
-   explicit upgrade decision. Development provisioning enables Collaboration alongside
-   CRM.
+   No wildcard or `All` grant. Bootstrap grants this role to the tenant administrator;
+   an authorized tenant administrator explicitly assigns it to each regular user who
+   needs a personal calendar (the development seed does the same for its dev user).
+   Module templates are copied once when enabled; existing tenants are never reconciled
+   automatically, so future template changes need a new explicit upgrade decision.
+   Development provisioning enables Collaboration alongside CRM.
 3. **Durable intent:** every create/update/delete saves entry state, a module-local
    idempotency record, and a thin CloudEvents-shaped outbox record in one transaction.
    v1 adds no Worker dispatcher. Outbox payloads exclude title, notes and target labels.

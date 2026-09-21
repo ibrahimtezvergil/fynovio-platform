@@ -107321,7 +107321,7 @@
       "node_kind": "heading",
       "norm_label": "`calendar_entries`",
       "source_file": "docs/schema/collaboration-schema.md",
-      "source_location": "L76"
+      "source_location": "L77"
     },
     {
       "id": "docs_schema_collaboration_schema_collaboration_schema_collaboration",
@@ -107345,7 +107345,7 @@
       "node_kind": "heading",
       "norm_label": "deliberate exclusions",
       "source_file": "docs/schema/collaboration-schema.md",
-      "source_location": "L148"
+      "source_location": "L156"
     },
     {
       "id": "docs_schema_collaboration_schema_idempotency_records",
@@ -107357,7 +107357,7 @@
       "node_kind": "heading",
       "norm_label": "`idempotency_records`",
       "source_file": "docs/schema/collaboration-schema.md",
-      "source_location": "L120"
+      "source_location": "L127"
     },
     {
       "id": "docs_schema_collaboration_schema_outbox_messages",
@@ -107369,7 +107369,7 @@
       "node_kind": "heading",
       "norm_label": "`outbox_messages`",
       "source_file": "docs/schema/collaboration-schema.md",
-      "source_location": "L128"
+      "source_location": "L136"
     },
     {
       "id": "docs_schema_collaboration_schema_ownership_and_boundaries",
@@ -107393,7 +107393,7 @@
       "node_kind": "heading",
       "norm_label": "rls and runtime grants",
       "source_file": "docs/schema/collaboration-schema.md",
-      "source_location": "L136"
+      "source_location": "L144"
     },
     {
       "id": "docs_schema_collaboration_schema_tables",
@@ -107405,7 +107405,7 @@
       "node_kind": "heading",
       "norm_label": "tables",
       "source_file": "docs/schema/collaboration-schema.md",
-      "source_location": "L20"
+      "source_location": "L21"
     },
     {
       "id": "src_modules_access_application_authentication_createinvitationcommand",
@@ -108085,7 +108085,7 @@
       "node_kind": "heading",
       "norm_label": "consequences",
       "source_file": "docs/plans/collaboration-calendar/adr-collaboration-boundary.md",
-      "source_location": "L43"
+      "source_location": "L45"
     },
     {
       "id": "docs_plans_collaboration_calendar_adr_collaboration_boundary_context",
@@ -108121,7 +108121,7 @@
       "node_kind": "heading",
       "norm_label": "non-goals",
       "source_file": "docs/plans/collaboration-calendar/adr-collaboration-boundary.md",
-      "source_location": "L55"
+      "source_location": "L57"
     },
     {
       "id": "web_src_lib_importexport_exportcsv",
@@ -319301,7 +319301,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/collaboration-calendar/adr-collaboration-boundary.md",
-      "source_location": "L43",
+      "source_location": "L45",
       "weight": 1.0
     },
     {
@@ -319323,7 +319323,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/plans/collaboration-calendar/adr-collaboration-boundary.md",
-      "source_location": "L55",
+      "source_location": "L57",
       "weight": 1.0
     },
     {
@@ -322073,7 +322073,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/schema/collaboration-schema.md",
-      "source_location": "L136",
+      "source_location": "L144",
       "weight": 1.0
     },
     {
@@ -322084,7 +322084,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/schema/collaboration-schema.md",
-      "source_location": "L148",
+      "source_location": "L156",
       "weight": 1.0
     },
     {
@@ -322095,7 +322095,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/schema/collaboration-schema.md",
-      "source_location": "L20",
+      "source_location": "L21",
       "weight": 1.0
     },
     {
@@ -322117,7 +322117,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/schema/collaboration-schema.md",
-      "source_location": "L120",
+      "source_location": "L127",
       "weight": 1.0
     },
     {
@@ -322128,7 +322128,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/schema/collaboration-schema.md",
-      "source_location": "L128",
+      "source_location": "L136",
       "weight": 1.0
     },
     {
@@ -322139,7 +322139,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/schema/collaboration-schema.md",
-      "source_location": "L76",
+      "source_location": "L77",
       "weight": 1.0
     },
     {
@@ -397477,5 +397477,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f3fbcbbcbe14e89a893a5b83a2941985c281adb1"
+  "built_at_commit": "02aec720806073315e85f85ec08a1ba2a6f9d4ed"
 }

@@ -37,7 +37,7 @@ only after the corresponding commit exists.
 | Concern | Evidence before closure |
 |---|---|
 | Isolation | Runtime-role RLS read and `WITH CHECK` write tests for all Collaboration tables; owner-scoped 404 tests. |
-| Correct writes | Domain constraints, database CHECK tests, optimistic concurrency, idempotency replay/key-reuse/concurrent-race tests, and state+outbox atomicity. |
+| Correct writes | Domain constraints, database CHECK tests (including trimmed single-line titles), optimistic concurrency, idempotency replay/key-reuse/concurrent-race tests, and state+outbox atomicity. |
 | Links | Resolver/PDP agreement; indistinguishable unavailable-target behavior; no hydrated label after access is unavailable. |
-| API | 401/400/404/409/422 mappings, bounded range, UTC/offset and exclusive all-day contracts. |
+| API | 401/400/404/409/422 mappings, bounded range, offset-less timed values rejected as 400, and UTC/offset plus exclusive all-day contracts. |
 | UI | Zod/color/date/contrast/query-key tests, both-locale parity, drag rollback, accessible/unavailable/no-route link states, and browser verification in both themes. |

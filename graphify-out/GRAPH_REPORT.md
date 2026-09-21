@@ -1,7 +1,7 @@
 # Graph Report - fynovio-platform-calendar  (2026-09-21)
 
 ## Corpus Check
-- 1165 files · ~569,858 words
+- 1165 files · ~569,992 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f3fbcbbc`
+- Built from commit: `02aec720`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
