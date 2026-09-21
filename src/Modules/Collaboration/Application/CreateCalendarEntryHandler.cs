@@ -1,6 +1,3 @@
-using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using Collaboration.Domain;
 using Collaboration.Idempotency;
@@ -8,7 +5,6 @@ using Collaboration.Outbox;
 using Collaboration.Persistence;
 using Contracts;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 namespace Collaboration.Application;
 
@@ -16,15 +12,12 @@ public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, I
 {
     private const string Operation = "CreateCalendarEntry";
     private const string ActionKeyValue = "collaboration.calendar_entry.create";
-    private const string EventType = "enterprise.collaboration.calendar-entry.created.v1";
-    private const string EventSource = "/enterprise/collaboration";
     private const int SucceededStatus = 201;
-    private static readonly TimeSpan IdempotencyRetention = TimeSpan.FromDays(7);
 
     public async Task<CreateCalendarEntryResult> HandleAsync(CreateCalendarEntryCommand command, CancellationToken cancellationToken = default)
     {
         // Validate idempotency key early, before opening any transaction.
-        ValidateIdempotencyKey(command.IdempotencyKey);
+        IdempotencySupport.ValidateKey(command.IdempotencyKey);
 
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         await context.SetTenantContextAsync(command.TenantId, cancellationToken);
@@ -38,15 +31,8 @@ public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, I
             throw new CalendarEntryAuthorizationDeniedException(ActionKeyValue, decision.ReasonCode, decision.DenialStage);
 
         var requestHash = HashRequest(command);
-        var existing = await context.IdempotencyRecords
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                r => r.TenantId == command.TenantId
-                    && r.PrincipalIssuer == command.Principal.Issuer
-                    && r.PrincipalSubject == command.Principal.Subject
-                    && r.Operation == Operation
-                    && r.IdempotencyKey == command.IdempotencyKey,
-                cancellationToken);
+        var existing = await IdempotencySupport.FindAsync(
+            context, command.TenantId, command.Principal, Operation, command.IdempotencyKey, cancellationToken);
 
         if (existing is not null)
         {
@@ -69,33 +55,18 @@ public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, I
         var idempotencyPayload = new CreatedPayload(entry.Id, entry.RowVersion);
         var idempotencyPayloadJson = JsonSerializer.Serialize(idempotencyPayload);
 
-        // Outbox payload: thin envelope with entry id, owner principal, timing and link ref only (schema doc).
-        // No title, notes, or hydrated target label.
-        var outboxPayload = new OutboxPayload(
-            entry.Id,
-            entry.OwnerPrincipalIssuer,
-            entry.OwnerPrincipalSubject,
-            entry.AllDay,
-            entry.StartAt?.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
-            entry.EndAt?.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
-            entry.StartDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-            entry.EndDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-            entry.LinkBoundedContext,
-            entry.LinkEntityType,
-            entry.LinkEntityId);
-        var outboxPayloadJson = JsonSerializer.Serialize(outboxPayload);
-
         context.OutboxMessages.Add(OutboxMessage.Create(
             command.TenantId, nameof(CalendarEntry), entry.Id, entry.RowVersion,
-            EventType, EventSource, $"calendar-entries/{entry.Id}", command.CorrelationId, outboxPayloadJson));
+            CalendarEntryOutbox.CreatedEventType, CalendarEntryOutbox.EventSource, CalendarEntryOutbox.Subject(entry.Id),
+            command.CorrelationId, CalendarEntryOutbox.EntryPayload(entry)));
         context.IdempotencyRecords.Add(IdempotencyRecord.Create(
-            command.TenantId, command.Principal, Operation, command.IdempotencyKey, requestHash, SucceededStatus, idempotencyPayloadJson, IdempotencyRetention));
+            command.TenantId, command.Principal, Operation, command.IdempotencyKey, requestHash, SucceededStatus, idempotencyPayloadJson, IdempotencySupport.Retention));
 
         try
         {
             await context.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        catch (DbUpdateException ex) when (IdempotencySupport.IsUniqueViolation(ex))
         {
             // Another request with the same idempotency key committed first between our
             // lookup and our SaveChanges — replay its result instead of inventing an
@@ -105,13 +76,10 @@ public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, I
 
             await using var replayTransaction = await context.Database.BeginTransactionAsync(cancellationToken);
             await context.SetTenantContextAsync(command.TenantId, cancellationToken);
-            var winner = await context.IdempotencyRecords.AsNoTracking().SingleAsync(
-                record => record.TenantId == command.TenantId
-                    && record.PrincipalIssuer == command.Principal.Issuer
-                    && record.PrincipalSubject == command.Principal.Subject
-                    && record.Operation == Operation
-                    && record.IdempotencyKey == command.IdempotencyKey,
-                cancellationToken);
+            var winner = await IdempotencySupport.FindAsync(
+                context, command.TenantId, command.Principal, Operation, command.IdempotencyKey, cancellationToken);
+            if (winner is null)
+                throw;
             if (winner.RequestHash != requestHash)
                 throw new IdempotencyKeyReusedException(Operation, command.IdempotencyKey);
             var stored = JsonSerializer.Deserialize<CreatedPayload>(winner.ResponsePayload)
@@ -124,26 +92,10 @@ public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, I
         return new CreateCalendarEntryResult(entry.Id, entry.RowVersion, Replayed: false);
     }
 
-    // PostgreSQL error code 23505 = unique_violation (Npgsql exposes SqlState as this raw
-    // string, not a named constant — verify against the installed Npgsql version's
-    // PostgresException.SqlState docs before relying on this if it's ever unclear).
-    private const string UniqueViolationSqlState = "23505";
-
-    private static bool IsUniqueViolation(DbUpdateException ex) =>
-        ex.InnerException is PostgresException { SqlState: UniqueViolationSqlState };
-
-    private static void ValidateIdempotencyKey(string key)
-    {
-        if (string.IsNullOrWhiteSpace(key) || key.Length > 128)
-            throw new ArgumentException("Idempotency key must be non-blank and at most 128 characters.", nameof(key));
-    }
-
-    private static string HashRequest(CreateCalendarEntryCommand command)
-    {
-        // Canonical, unambiguous serialization for idempotency keying: JSON with explicit field order,
-        // timestamps in UTC ISO format, dates as yyyy-MM-dd. Every user-supplied field participates; colour is
-        // lower-cased because the aggregate normalizes it, so "#AABBCC" and "#aabbcc" are the same request.
-        var payload = new
+    private static string HashRequest(CreateCalendarEntryCommand command) =>
+        // Every user-supplied field participates; colour is lower-cased because the aggregate normalizes it, so
+        // "#AABBCC" and "#aabbcc" are the same request. Instants are compared as UTC, dates as ISO.
+        IdempotencySupport.Hash(new
         {
             operation = Operation,
             tenantId = command.TenantId.Value,
@@ -153,32 +105,15 @@ public sealed class CreateCalendarEntryHandler(CollaborationDbContext context, I
             notes = command.Notes,
             color = command.Color?.ToLowerInvariant(),
             allDay = command.AllDay,
-            startAt = command.StartAt?.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
-            endAt = command.EndAt?.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
-            startDate = command.StartDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-            endDate = command.EndDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            startAt = IdempotencySupport.Instant(command.StartAt),
+            endAt = IdempotencySupport.Instant(command.EndAt),
+            startDate = IdempotencySupport.Date(command.StartDate),
+            endDate = IdempotencySupport.Date(command.EndDate),
             linkBoundedContext = command.Link?.BoundedContext,
             linkEntityType = command.Link?.EntityType,
             linkEntityId = command.Link?.Id
-        };
-        var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { PropertyNameCaseInsensitive = false });
-        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json)));
-    }
+        });
 
     /// <summary>Idempotency response shape: just the entry id and row version.</summary>
     private sealed record CreatedPayload(long EntryId, long RowVersion);
-
-    /// <summary>Outbox payload shape: thin envelope per schema doc, no title/notes/labels.</summary>
-    private sealed record OutboxPayload(
-        long EntryId,
-        string OwnerPrincipalIssuer,
-        string OwnerPrincipalSubject,
-        bool AllDay,
-        string? StartAt,
-        string? EndAt,
-        string? StartDate,
-        string? EndDate,
-        string? LinkBoundedContext,
-        string? LinkEntityType,
-        long? LinkEntityId);
 }
