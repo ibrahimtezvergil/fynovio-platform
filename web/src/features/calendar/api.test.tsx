@@ -12,8 +12,8 @@ import { authenticated, problem, url } from '@/test/authHandlers'
 import { wireEntry } from '@/test/calendar'
 import { resetSession } from '@/test/session'
 import type { ApiError } from '@/types'
-import { calendarKeys, toVisibleRange, useCalendarEntries, useCreateEntry, useDeleteEntry, useReplaceEntry } from './api'
-import type { CalendarEntryBody } from './schema'
+import { calendarKeys, findCachedEntry, toVisibleRange, useCalendarEntries, useCreateEntry, useDeleteEntry, useReplaceEntry } from './api'
+import { calendarEntrySchema, type CalendarEntryBody } from './schema'
 
 const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 
@@ -46,6 +46,27 @@ describe('calendar query keys — tenant AND principal isolation', () => {
     const prefix = calendarKeys.entries(1, '7')
     expect(mine.slice(0, prefix.length)).toEqual(prefix)
     expect(theirs.slice(0, prefix.length)).not.toEqual(prefix)
+  })
+})
+
+describe('findCachedEntry', () => {
+  const cached = (rowVersion: number, title: string) => calendarEntrySchema.parse(wireEntry({ rowVersion, title }))
+
+  it.each([
+    ['the newer copy sits in the window that was cached last', [2, 3]],
+    ['the newer copy sits in the window that was cached first', [3, 2]],
+  ])('returns the copy with the highest rowVersion when %s', (_name, versions) => {
+    const entriesKey = calendarKeys.entries(1, '7')
+    queryClient.setQueryData(calendarKeys.range(1, '7', RANGE), [cached(versions[0], `v${versions[0]}`)])
+    queryClient.setQueryData(calendarKeys.range(1, '7', OTHER_RANGE), [cached(versions[1], `v${versions[1]}`)])
+
+    expect(findCachedEntry(queryClient, entriesKey, 42)?.rowVersion).toBe(3)
+  })
+
+  it('returns undefined when no window holds the entry, and ignores another identity’s windows', () => {
+    queryClient.setQueryData(calendarKeys.range(1, '8', RANGE), [cached(9, 'theirs')])
+
+    expect(findCachedEntry(queryClient, calendarKeys.entries(1, '7'), 42)).toBeUndefined()
   })
 })
 

@@ -46,12 +46,17 @@ export function useCalendarIdentity() {
   return { tenantId, principalId }
 }
 
-/** An entry from whichever cached window holds it (windows overlap, so any hit is as good as another). */
+/**
+ * An entry from whichever cached window holds it. Windows overlap and only the active ones are refetched after a
+ * write, so an inactive window can hold an older copy: the highest `rowVersion` is the freshest, and it is the one a
+ * drag must send as `expectedVersion`.
+ */
 export function findCachedEntry(queryClient: QueryClient, entriesKey: QueryKey, id: number): CalendarEntry | undefined {
   return queryClient
     .getQueriesData<CalendarEntry[]>({ queryKey: entriesKey })
     .flatMap(([, entries]) => entries ?? [])
-    .find((entry) => entry.id === id)
+    .filter((entry) => entry.id === id)
+    .reduce<CalendarEntry | undefined>((freshest, entry) => (freshest && freshest.rowVersion >= entry.rowVersion ? freshest : entry), undefined)
 }
 
 /** Only a transient failure is worth an automatic retry; a 4xx (403, 422 range_too_large…) is an answer, not an incident. */
