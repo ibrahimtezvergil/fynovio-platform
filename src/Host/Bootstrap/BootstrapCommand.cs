@@ -52,6 +52,8 @@ public static class BootstrapCommand
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Distinct()
             .ToList() ?? [];
+        if (!modules.Contains(TenantLifecycleModuleCapabilities.ModuleKey, StringComparer.Ordinal))
+            modules.Insert(0, TenantLifecycleModuleCapabilities.ModuleKey);
 
         await using var scope = services.CreateAsyncScope();
         var catalog = scope.ServiceProvider.GetRequiredService<ModuleCapabilityCatalog>();

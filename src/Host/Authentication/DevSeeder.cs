@@ -128,6 +128,7 @@ public static class DevSeeder
         await SeedCrmAsync(scope.ServiceProvider, context, platformIssuer, logger, cancellationToken);
         await SeedCollaborationAsync(scope.ServiceProvider, context, platformIssuer, logger, cancellationToken);
         await SeedTenantProfilesAsync(scope.ServiceProvider, cancellationToken);
+        await SeedTenantLifecycleModuleAsync(scope.ServiceProvider, platformIssuer, logger, cancellationToken);
 
         logger.LogInformation("Dev seed applied ({Created} new accounts). Sign-in identities: {Admin}, {Single}, {Viewer}, {SalesRep}, {NoMembership}.",
             seeded, AdminEmail, SingleTenantEmail, ViewerEmail, SalesRepEmail, NoMembershipEmail);
@@ -190,6 +191,14 @@ public static class DevSeeder
         var provision = services.GetRequiredService<ProvisionTenantProfileHandler>();
         await provision.HandleAsync(new ProvisionTenantProfileCommand(TenantOne, "Fynovio Development 1", Guid.NewGuid()), cancellationToken);
         await provision.HandleAsync(new ProvisionTenantProfileCommand(TenantTwo, "Fynovio Development 2", Guid.NewGuid()), cancellationToken);
+    }
+
+    private static async Task SeedTenantLifecycleModuleAsync(IServiceProvider services, string platformIssuer, ILogger logger, CancellationToken cancellationToken)
+    {
+        var enableModule = services.GetRequiredService<EnableTenantModuleHandler>();
+        var seedOperator = new PrincipalRef(platformIssuer, "operator:dev-seed");
+        foreach (var tenant in new[] { TenantOne, TenantTwo })
+            await EnableModuleAsync(enableModule, tenant, TenantLifecycleModuleCapabilities.ModuleKey, "Tenant Lifecycle", seedOperator, logger, cancellationToken);
     }
 
     private static async Task EnableModuleAsync(
