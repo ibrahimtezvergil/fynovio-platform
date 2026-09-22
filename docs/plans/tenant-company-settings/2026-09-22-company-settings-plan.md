@@ -8,7 +8,7 @@
 - **Module owner:** `TenantLifecycle`. The first requirement is the tenant's own display and
   operating profile, exactly the deferred tenant-display-name capability. Legal-entity hierarchy
   remains outside this slice in the future `Organization` module.
-- **Initial scope:** profile/legal identity/contact/default locale only. Logo/file storage,
+- **Initial scope:** profile/legal identity/contact/timezone/currency only. Logo/file storage,
   invoice numbering, banking data, working calendars, hierarchy, SSO and SCIM are explicitly out
   of scope; each has a separate ownership and risk model.
 - **Authorization:** `tenant.settings.view` and `tenant.settings.update`. The v1 tenant-admin
@@ -18,6 +18,9 @@
 
 1. Replace the `TenantLifecycle` scaffold with Domain, Application, Persistence, outbox and
    idempotency layers; add `TenantProfile` with a natural `TenantId` identity.
+   `ProvisionTenant` becomes the authoritative, independently retriable lifecycle command: it
+   creates the profile with defaults after Access bootstrap. Module enablement remains a separate,
+   retriable Host orchestration step — never a cross-module transaction.
 2. Generate the EF Core schema migration and the otherwise-empty RLS migration. Register the
    module DbContext in Host and grant the runtime role in `create-runtime-role.sql`.
 3. Add `GetCompanySettings` and idempotent/concurrency-protected `UpdateCompanySettings` handlers.
@@ -28,7 +31,8 @@
 ## S2 — authorization and HTTP
 
 1. Add the two action keys, action catalog entries and `TenantLifecycle` module capability
-   manifest. Compose them from `Host.Modules.PlatformModules`.
+   manifest. Compose them from `Host.Modules.PlatformModules`; provisioning enables this required
+   module after Access bootstrap so the initial tenant administrator receives both grants.
 2. Map authenticated `GET`/`PUT /company/settings` endpoints. Bodies have a bounded streaming
    parser, malformed inputs are 400, authorization is 403, stale versions are 409, and an absent
    profile is 404.
