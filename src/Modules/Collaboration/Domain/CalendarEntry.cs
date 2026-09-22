@@ -37,12 +37,7 @@ public sealed partial class CalendarEntry
         if (string.IsNullOrWhiteSpace(owner.Issuer) || string.IsNullOrWhiteSpace(owner.Subject))
             throw new ArgumentException("Owner principal issuer and subject must be non-blank.", nameof(owner));
 
-        var normalizedTitle = NormalizeTitle(title);
-        var normalizedNotes = ValidateNotes(notes);
-        var normalizedColor = NormalizeColor(color);
-        var normalizedStartAt = NormalizeTimestamp(startAt);
-        var normalizedEndAt = NormalizeTimestamp(endAt);
-        ValidateTiming(allDay, normalizedStartAt, normalizedEndAt, startDate, endDate);
+        var normalized = NormalizeEntry(title, notes, color, allDay, startAt, endAt, startDate, endDate);
         if (link is { } value && value.TenantId != tenantId)
             throw new ArgumentException("Link tenant must match the calendar entry tenant.", nameof(link));
 
@@ -52,12 +47,12 @@ public sealed partial class CalendarEntry
             TenantId = tenantId,
             OwnerPrincipalIssuer = owner.Issuer,
             OwnerPrincipalSubject = owner.Subject,
-            Title = normalizedTitle,
-            Notes = normalizedNotes,
-            Color = normalizedColor,
+            Title = normalized.Title,
+            Notes = normalized.Notes,
+            Color = normalized.Color,
             AllDay = allDay,
-            StartAt = normalizedStartAt,
-            EndAt = normalizedEndAt,
+            StartAt = normalized.StartAt,
+            EndAt = normalized.EndAt,
             StartDate = startDate,
             EndDate = endDate,
             LinkBoundedContext = link?.BoundedContext,
@@ -73,21 +68,16 @@ public sealed partial class CalendarEntry
         string title, string? notes, string color, bool allDay, DateTimeOffset? startAt,
         DateTimeOffset? endAt, DateOnly? startDate, DateOnly? endDate, EntityRef? link)
     {
-        var normalizedTitle = NormalizeTitle(title);
-        var normalizedNotes = ValidateNotes(notes);
-        var normalizedColor = NormalizeColor(color);
-        var normalizedStartAt = NormalizeTimestamp(startAt);
-        var normalizedEndAt = NormalizeTimestamp(endAt);
-        ValidateTiming(allDay, normalizedStartAt, normalizedEndAt, startDate, endDate);
+        var normalized = NormalizeEntry(title, notes, color, allDay, startAt, endAt, startDate, endDate);
         if (link is { } value && value.TenantId != TenantId)
             throw new ArgumentException("Link tenant must match the calendar entry tenant.", nameof(link));
 
-        Title = normalizedTitle;
-        Notes = normalizedNotes;
-        Color = normalizedColor;
+        Title = normalized.Title;
+        Notes = normalized.Notes;
+        Color = normalized.Color;
         AllDay = allDay;
-        StartAt = normalizedStartAt;
-        EndAt = normalizedEndAt;
+        StartAt = normalized.StartAt;
+        EndAt = normalized.EndAt;
         StartDate = startDate;
         EndDate = endDate;
         LinkBoundedContext = link?.BoundedContext;
@@ -99,6 +89,20 @@ public sealed partial class CalendarEntry
     /// <summary>UTC, at the microsecond precision PostgreSQL stores. Truncating before validation keeps an end that differs from
     /// its start by less than a microsecond from passing here and then colliding with `ck_calendar_entries_end_at`.</summary>
     private static DateTimeOffset? NormalizeTimestamp(DateTimeOffset? dt) => dt is { } value ? TimestampPrecision.Truncate(value) : null;
+
+    private static NormalizedEntry NormalizeEntry(
+        string title, string? notes, string color, bool allDay, DateTimeOffset? startAt,
+        DateTimeOffset? endAt, DateOnly? startDate, DateOnly? endDate)
+    {
+        var normalized = new NormalizedEntry(
+            NormalizeTitle(title),
+            ValidateNotes(notes),
+            NormalizeColor(color),
+            NormalizeTimestamp(startAt),
+            NormalizeTimestamp(endAt));
+        ValidateTiming(allDay, normalized.StartAt, normalized.EndAt, startDate, endDate);
+        return normalized;
+    }
 
     private void Touch()
     {
@@ -156,4 +160,7 @@ public sealed partial class CalendarEntry
     // fail the column (22001) and ck_calendar_entries_color as an unhandled 500.
     [GeneratedRegex(@"^#[0-9a-f]{6}\z", RegexOptions.CultureInvariant)]
     private static partial Regex ColorPattern();
+
+    private sealed record NormalizedEntry(
+        string Title, string? Notes, string Color, DateTimeOffset? StartAt, DateTimeOffset? EndAt);
 }
