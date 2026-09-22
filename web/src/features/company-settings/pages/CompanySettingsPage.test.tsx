@@ -14,6 +14,13 @@ const settings = {
   displayName: 'Acme Logistics', legalName: null, taxNumber: null, taxOffice: null, email: 'hello@acme.test', phone: null,
   address: null, timezone: 'Europe/Istanbul', currencyCode: 'TRY', rowVersion: 3,
 } as const
+const accessOverview = {
+  members: [{
+    principalIssuer: 'https://id.fynovio.local', principalSubject: 'account-1', displayName: 'Ada Yılmaz', email: 'ada@acme.test', status: 'active',
+    assignments: [{ assignmentId: 9, roleKey: 'crm_manager', roleName: 'CRM Manager' }],
+  }],
+  roles: [{ key: 'crm_manager', name: 'CRM Manager', origin: 'system_template', actionKeys: ['crm.opportunity.read'] }],
+} as const
 
 beforeAll(() => {
   globalThis.IntersectionObserver ??= class {
@@ -59,5 +66,23 @@ describe('CompanySettingsPage', () => {
     server.use(http.get(url(endpoints.companySettings.profile), () => problem(403, 'authorization_denied')))
     renderPage(<CompanySettingsPage />)
     expect(await screen.findByText(t('problem.forbiddenTitle'))).toBeInTheDocument()
+  })
+
+  it('manages members and roles from the same grouped company settings page', async () => {
+    let invitation: Record<string, unknown> | undefined
+    server.use(
+      http.get(url(endpoints.companySettings.profile), () => HttpResponse.json(settings)),
+      http.get(url(endpoints.companySettings.access), () => HttpResponse.json(accessOverview)),
+      http.post(url(endpoints.companySettings.invitations), async ({ request }) => {
+        invitation = await request.json() as Record<string, unknown>
+        return HttpResponse.json({ status: 'accepted' }, { status: 202 })
+      }),
+    )
+    renderPage(<CompanySettingsPage />)
+    expect(await screen.findByText('Ada Yılmaz')).toBeInTheDocument()
+    expect(screen.getAllByText('CRM Manager')).toHaveLength(2)
+    fireEvent.change(screen.getByLabelText(t('members.email')), { target: { value: 'new@acme.test' } })
+    fireEvent.click(screen.getByRole('button', { name: t('members.invite') }))
+    await waitFor(() => expect(invitation).toMatchObject({ email: 'new@acme.test' }))
   })
 })

@@ -7,6 +7,8 @@ export default {
     sectionIdentity: 'Şirket kimliği',
     sectionLegal: 'Vergi bilgileri',
     sectionContact: 'İletişim ve varsayılanlar',
+    sectionMembers: 'Kullanıcılar',
+    sectionRoles: 'Roller ve izinler',
   },
   identity: {
     title: 'Şirket kimliği',
@@ -29,6 +31,27 @@ export default {
     address: 'Adres',
     timezone: 'Zaman dilimi',
     currency: 'Para birimi',
+  },
+  members: {
+    title: 'Kullanıcılar',
+    description: 'Çalışma alanına kullanıcı davet edin ve mevcut üyelere rol atayın.',
+    email: 'E-posta adresi',
+    displayName: 'Ad soyad',
+    invite: 'Davet gönder',
+    selectRole: 'Rol seçin',
+    assignRole: 'Rol ata',
+    removeRole: '{{role}} rolünü kaldır',
+    empty: 'Henüz aktif kullanıcı yok.',
+  },
+  roles: {
+    title: 'Roller ve izinler',
+    description: 'Çalışma alanında etkin olan rollerin izin kapsamı.',
+    noPermissions: 'İzin yok',
+    empty: 'Henüz rol yok.',
+  },
+  accessProblem: {
+    title: 'Kullanıcı ve erişim bilgileri yüklenemedi',
+    description: 'Bu alanı görüntülemek için çalışma alanı yöneticisiyle görüşün.',
   },
   timezone: {
     'Europe/Istanbul': '(GMT+03:00) İstanbul',
