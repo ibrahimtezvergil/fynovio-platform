@@ -2886,8 +2886,8 @@
     "semantic_hash": ""
   },
   "web/public/mockServiceWorker.js": {
-    "mtime": 1790069187.4961052,
-    "seen": 1790073310.045042,
+    "mtime": 1790076382.9499052,
+    "seen": 1790081446.124798,
     "ast_hash": "c8f0dfa140ec246071c4cc5a03df5c9d",
     "semantic_hash": ""
   },
@@ -7326,9 +7326,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Collaboration/Domain/CalendarEntry.cs": {
-    "mtime": 1790023782.9741044,
-    "seen": 1790024389.329192,
-    "ast_hash": "d14446e4a3a17422ad631ae4ab2f64f6",
+    "mtime": 1790081176.6844604,
+    "seen": 1790081446.124606,
+    "ast_hash": "1f1bd8f05abcfffacc8608354a715b0f",
     "semantic_hash": ""
   },
   "src/Modules/Collaboration/Domain/TimestampPrecision.cs": {
@@ -8139,6 +8139,12 @@
     "mtime": 1790068913.2320294,
     "seen": 1790073310.04549,
     "ast_hash": "9dd486f59736e513193606c631907e13",
+    "semantic_hash": ""
+  },
+  "docs/plans/collaboration-calendar/tech-debt.md": {
+    "mtime": 1790081194.5980122,
+    "seen": 1790081446.125272,
+    "ast_hash": "b3a4b6ee25662d63497177fca63e8688",
     "semantic_hash": ""
   }
 }
