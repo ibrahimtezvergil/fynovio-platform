@@ -236,6 +236,7 @@ builder.Services.AddScoped<GetOpportunityAvailableActionsHandler>();
 
 builder.Services.AddExceptionHandler<CrmProblemDetailsExceptionHandler>();
 builder.Services.AddExceptionHandler<CollaborationProblemDetailsExceptionHandler>();
+builder.Services.AddExceptionHandler<TenantLifecycleProblemDetailsExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 // Configure CORS: explicit origins only, no wildcard
@@ -369,6 +370,7 @@ app.MapAuthEndpoints();
 app.MapAccountLifecycleEndpoints(authOptions.SelfRegistration.Enabled);
 app.MapOpportunityEndpoints();
 app.MapCalendarEndpoints();
+app.MapCompanySettingsEndpoints();
 if (app.Environment.IsDevelopment())
     app.MapDevEndpoints();
 
