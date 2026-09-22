@@ -27,16 +27,25 @@ natural primary key: there is no separate profile identifier to leak into comman
 | `created_at` | `timestamptz` | `NOT NULL` |
 | `updated_at` | `timestamptz` | `NOT NULL` |
 
-`display_name`, `legal_name`, `tax_number`, and `tax_office` carry the PostgreSQL single-line
-check `btrim(value) = value AND value !~ '[\\r\\n]'`; database checks protect the invariant even
-when a future transport bypasses today's API.
+The generated migration names every row invariant explicitly: `ck_tenant_profiles_tenant_id`,
+`ck_tenant_profiles_display_name`, `ck_tenant_profiles_legal_name`,
+`ck_tenant_profiles_tax_number`, `ck_tenant_profiles_tax_office`,
+`ck_tenant_profiles_email`, `ck_tenant_profiles_phone`, `ck_tenant_profiles_address`,
+`ck_tenant_profiles_timezone`, and `ck_tenant_profiles_currency_code`. Single-line values require
+`btrim(value) = value` and reject all PostgreSQL control and Unicode line-separator characters;
+`address` permits CR/LF only. `email` must already be lower-case and trimmed. `timezone` is
+trimmed, single-line and is then validated by the command with the runtime IANA time-zone
+database; `currency_code` matches `^[A-Z]{3}$`. Each named check has a persistence test.
 
 ### Supporting records
 
 `outbox_messages` and `idempotency_records` follow the module-local shape already used by CRM,
 Access, and Collaboration. Both carry `tenant_id`; `idempotency_records` has an index on
 `expires_at`. A profile update commits the profile row, one past-tense outbox fact, and its
-idempotency row in the same `SaveChanges()` call.
+idempotency row in the same `SaveChanges()` call. The event is
+`enterprise.tenant-lifecycle.tenant-profile.updated.v1`, with source
+`/enterprise/tenant-lifecycle`, subject `tenant-profiles/{tenantId}`, and a payload limited to
+`tenantId`, `rowVersion`, and `updatedAt` (no contact or legal-identity data).
 
 ### Isolation
 
@@ -59,5 +68,7 @@ not the migration owner.
 
 There is deliberately no tenant id in a body, URL, or query string. The Host derives it from the
 authenticated actor. `GET` returns 404 when provisioning has not created the tenant profile;
-`PUT` returns 409 on stale version and replays a completed request by idempotency key.
-
+`PUT` returns 409 on stale version and replays a completed request by idempotency key. It is a
+full replacement: every field is required in the JSON shape; nullable fields use JSON `null` to
+clear a value and omitted fields are a 400. The Host validates and canonicalizes that complete
+shape before calculating the idempotency request hash.

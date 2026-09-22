@@ -42,7 +42,7 @@ public sealed class TenantProfile
         Email = NormalizeEmail(details.Email);
         Phone = OptionalSingleLine(details.Phone, 32, nameof(details.Phone));
         Address = OptionalText(details.Address, 500, nameof(details.Address));
-        Timezone = RequiredSingleLine(details.Timezone, 1, 64, nameof(details.Timezone));
+        Timezone = ValidateTimezone(details.Timezone);
         CurrencyCode = NormalizeCurrency(details.CurrencyCode);
 
         if (touch)
@@ -89,16 +89,23 @@ public sealed class TenantProfile
         return value;
     }
 
+    private static string ValidateTimezone(string value)
+    {
+        var timezone = RequiredSingleLine(value, 1, 64, nameof(value));
+        try
+        {
+            _ = TimeZoneInfo.FindSystemTimeZoneById(timezone);
+            return timezone;
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            throw new ArgumentException("Timezone must be an IANA identifier known to the runtime.", nameof(value));
+        }
+        catch (InvalidTimeZoneException)
+        {
+            throw new ArgumentException("Timezone must be an IANA identifier known to the runtime.", nameof(value));
+        }
+    }
+
     private static bool IsLineBreak(char value) => value is '\r' or '\n' or '\u2028' or '\u2029' || char.IsControl(value);
 }
-
-public sealed record TenantProfileDetails(
-    string DisplayName,
-    string? LegalName,
-    string? TaxNumber,
-    string? TaxOffice,
-    string? Email,
-    string? Phone,
-    string? Address,
-    string Timezone,
-    string CurrencyCode);

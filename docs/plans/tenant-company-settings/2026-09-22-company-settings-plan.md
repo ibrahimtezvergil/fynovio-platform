@@ -19,8 +19,10 @@
 1. Replace the `TenantLifecycle` scaffold with Domain, Application, Persistence, outbox and
    idempotency layers; add `TenantProfile` with a natural `TenantId` identity.
    `ProvisionTenant` becomes the authoritative, independently retriable lifecycle command: it
-   creates the profile with defaults after Access bootstrap. Module enablement remains a separate,
-   retriable Host orchestration step — never a cross-module transaction.
+   creates the profile with defaults after Access bootstrap. The Host's tenant-administrator
+   bootstrap explicitly orchestrates this command and then required-module enablement as two
+   independently retriable steps; a profile is not inferred from an Access row. Module enablement
+   remains a separate, retriable Host orchestration step — never a cross-module transaction.
 2. Generate the EF Core schema migration and the otherwise-empty RLS migration. Register the
    module DbContext in Host and grant the runtime role in `create-runtime-role.sql`.
 3. Add `GetCompanySettings` and idempotent/concurrency-protected `UpdateCompanySettings` handlers.

@@ -40,6 +40,16 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA collaboration
 ALTER DEFAULT PRIVILEGES IN SCHEMA collaboration
     GRANT USAGE, SELECT ON SEQUENCES TO fynovio_app;
 
+-- TenantLifecycle module.
+GRANT USAGE ON SCHEMA tenant_lifecycle TO fynovio_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA tenant_lifecycle TO fynovio_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA tenant_lifecycle TO fynovio_app;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA tenant_lifecycle
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO fynovio_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA tenant_lifecycle
+    GRANT USAGE, SELECT ON SEQUENCES TO fynovio_app;
+
 -- Identity + Access modules (share one assembly/DbContext, two schemas).
 GRANT USAGE ON SCHEMA identity TO fynovio_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA identity TO fynovio_app;
