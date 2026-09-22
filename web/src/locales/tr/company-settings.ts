@@ -3,6 +3,10 @@ export default {
     eyebrow: 'Çalışma alanı yönetimi',
     title: 'Şirket ayarları',
     description: 'Şirket kimliğini ve çalışma varsayılanlarını yönetin.',
+    sectionNavLabel: 'Şirket ayarları bölümleri',
+    sectionIdentity: 'Şirket kimliği',
+    sectionLegal: 'Vergi bilgileri',
+    sectionContact: 'İletişim ve varsayılanlar',
   },
   identity: {
     title: 'Şirket kimliği',

@@ -3,6 +3,10 @@ export default {
     eyebrow: 'Workspace administration',
     title: 'Company settings',
     description: 'Manage company identity and operating defaults.',
+    sectionNavLabel: 'Company settings sections',
+    sectionIdentity: 'Company identity',
+    sectionLegal: 'Tax details',
+    sectionContact: 'Contact and defaults',
   },
   identity: {
     title: 'Company identity',

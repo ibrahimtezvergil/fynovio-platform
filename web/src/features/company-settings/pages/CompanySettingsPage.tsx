@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Building2, Check, Landmark, LoaderCircle, Mail, Phone, RotateCcw } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/common/PageHeader'
 import { Field } from '@/components/common/Field'
+import { SectionNav, type NavSection } from '@/components/common/SectionNav'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -22,16 +23,12 @@ import {
   type CompanySettingsFormValues,
 } from '../schema'
 
-function SectionHeading({ icon: Icon, title, description }: { icon: typeof Building2; title: string; description: string }) {
+/** Matches the personal settings cards: their grouping is conveyed by the page navigation, not repeated icons. */
+function SectionHeading({ title, description }: { title: string; description: string }) {
   return (
-    <div className="flex items-start gap-3">
-      <span className="nx-material flex size-9 shrink-0 items-center justify-center rounded-[12px] text-muted-foreground">
-        <Icon aria-hidden className="size-4" strokeWidth={1.8} />
-      </span>
-      <div>
-        <h2 className="text-[15.5px] font-[620] tracking-[-0.018em]">{title}</h2>
-        <p className="text-muted-foreground mt-0.5 text-[12.5px] leading-5">{description}</p>
-      </div>
+    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <h2 className="font-heading text-[17px] leading-tight font-[620] tracking-[-0.024em]">{title}</h2>
+      <p className="text-muted-foreground text-[12.5px]">{description}</p>
     </div>
   )
 }
@@ -40,8 +37,8 @@ function ProfileFields() {
   const { t } = useTranslation('company-settings')
   const { register, formState: { errors } } = useFormContext<CompanySettingsFormValues>()
   return (
-    <Card className="gap-5 px-6 pt-[22px] pb-6">
-      <SectionHeading icon={Building2} title={t('identity.title')} description={t('identity.description')} />
+    <Card id="sirket-kimligi" className="scroll-mt-24 gap-5 px-6 pt-[22px] pb-6">
+      <SectionHeading title={t('identity.title')} description={t('identity.description')} />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label={t('identity.displayName')} error={errors.displayName?.message}>
           {(props) => <Input {...props} autoComplete="organization" {...register('displayName')} />}
@@ -58,8 +55,8 @@ function LegalFields() {
   const { t } = useTranslation('company-settings')
   const { register, formState: { errors } } = useFormContext<CompanySettingsFormValues>()
   return (
-    <Card className="gap-5 px-6 pt-[22px] pb-6">
-      <SectionHeading icon={Landmark} title={t('legal.title')} description={t('legal.description')} />
+    <Card id="vergi-bilgileri" className="scroll-mt-24 gap-5 px-6 pt-[22px] pb-6">
+      <SectionHeading title={t('legal.title')} description={t('legal.description')} />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label={t('legal.taxNumber')} error={errors.taxNumber?.message}>
           {(props) => <Input {...props} {...register('taxNumber', { setValueAs: emptyToNull })} />}
@@ -76,8 +73,8 @@ function ContactFields() {
   const { t } = useTranslation('company-settings')
   const { register, formState: { errors } } = useFormContext<CompanySettingsFormValues>()
   return (
-    <Card className="gap-5 px-6 pt-[22px] pb-6">
-      <SectionHeading icon={Mail} title={t('contact.title')} description={t('contact.description')} />
+    <Card id="iletisim-ve-varsayilanlar" className="scroll-mt-24 gap-5 px-6 pt-[22px] pb-6">
+      <SectionHeading title={t('contact.title')} description={t('contact.description')} />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label={t('contact.email')} error={errors.email?.message}>
           {(props) => <Input {...props} type="email" autoComplete="email" {...register('email', { setValueAs: emptyToNull })} />}
@@ -141,6 +138,14 @@ export default function CompanySettingsPage() {
   const update = useUpdateCompanySettings()
   const keys = useAttemptKeys()
   const form = useForm<CompanySettingsFormValues>({ resolver: zodResolver(companySettingsFormSchema), mode: 'onBlur' })
+  const sections: readonly NavSection[] = useMemo(
+    () => [
+      { id: 'sirket-kimligi', label: t('page.sectionIdentity'), icon: Building2 },
+      { id: 'vergi-bilgileri', label: t('page.sectionLegal'), icon: Landmark },
+      { id: 'iletisim-ve-varsayilanlar', label: t('page.sectionContact'), icon: Mail },
+    ],
+    [t],
+  )
 
   useEffect(() => {
     if (profile.data) form.reset(settingsToFormValues(profile.data))
@@ -164,12 +169,12 @@ export default function CompanySettingsPage() {
   }
 
   if (profile.isPending) {
-    return <div className="mx-auto w-full max-w-[960px] animate-pulse space-y-5"><div className="h-16 w-80 rounded-[var(--nx-r-card)] bg-muted" /><div className="h-72 rounded-[var(--nx-r-card)] bg-muted" /></div>
+    return <div className="mx-auto w-full max-w-[1320px] animate-pulse space-y-5"><div className="h-16 w-80 rounded-[var(--nx-r-card)] bg-muted" /><div className="h-72 rounded-[var(--nx-r-card)] bg-muted" /></div>
   }
   if (profile.isError) {
     const message = companyProblem(profile.error as unknown as ApiError, t)
     return (
-      <div className="mx-auto flex w-full max-w-[960px] flex-col gap-5">
+      <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-5">
         <PageHeader title={t('page.title')} description={t('page.description')} />
         <Alert variant="destructive"><Phone aria-hidden /><AlertTitle>{message.title}</AlertTitle><AlertDescription>{message.description}</AlertDescription></Alert>
       </div>
@@ -177,17 +182,20 @@ export default function CompanySettingsPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[960px] flex-col gap-5">
+    <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-5">
       <PageHeader title={t('page.title')} description={t('page.description')} eyebrow={t('page.eyebrow')} />
-      <FormProvider {...form}>
-        <div className="flex flex-col gap-4">
-          <ProfileFields />
-          <LegalFields />
-          <ContactFields />
-          {form.formState.errors.root?.message && <Alert variant="destructive"><AlertTitle>{t('problem.conflictTitle')}</AlertTitle><AlertDescription>{form.formState.errors.root.message}</AlertDescription></Alert>}
-          <SaveBar onSave={save} isUpdating={update.isPending} />
-        </div>
-      </FormProvider>
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[236px_minmax(0,1fr)]">
+        <SectionNav sections={sections} label={t('page.sectionNavLabel')} />
+        <FormProvider {...form}>
+          <div className="flex flex-col gap-4">
+            <ProfileFields />
+            <LegalFields />
+            <ContactFields />
+            {form.formState.errors.root?.message && <Alert variant="destructive"><AlertTitle>{t('problem.conflictTitle')}</AlertTitle><AlertDescription>{form.formState.errors.root.message}</AlertDescription></Alert>}
+            <SaveBar onSave={save} isUpdating={update.isPending} />
+          </div>
+        </FormProvider>
+      </div>
     </div>
   )
 }
