@@ -69,16 +69,19 @@ public sealed class GetTenantAccessOverviewHandler(AccessDbContext context, IAut
 
         await transaction.CommitAsync(cancellationToken);
 
+        var assignmentsByAccount = assignments.ToLookup(assignment => assignment.AccountId);
+        var actionKeysByRole = roleActionKeys.ToLookup(item => item.RoleId, item => item.ActionKey);
+
         return new TenantAccessOverview(
             members.Select(member => new TenantMemberSummary(
                 member.Issuer, member.Subject, member.DisplayName, member.Email, ToWireStatus(member.Status),
-                assignments.Where(assignment => assignment.AccountId == member.AccountId)
+                assignmentsByAccount[member.AccountId]
                     .Select(assignment => new TenantRoleAssignmentSummary(assignment.Id, assignment.Key, assignment.Name))
                     .OrderBy(assignment => assignment.RoleName)
                     .ToArray())).ToArray(),
             roles.Select(role => new TenantRoleSummary(
                 role.Key, role.Name, role.Origin,
-                roleActionKeys.Where(item => item.RoleId == role.Id).Select(item => item.ActionKey).Order().ToArray())).ToArray());
+                actionKeysByRole[role.Id].Order().ToArray())).ToArray());
     }
 
     private static string ToWireStatus(MembershipStatus status) => status switch
