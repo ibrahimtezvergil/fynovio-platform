@@ -7,6 +7,8 @@ export default {
     sectionIdentity: 'Company identity',
     sectionLegal: 'Tax details',
     sectionContact: 'Contact and defaults',
+    sectionMembers: 'Members',
+    sectionRoles: 'Roles and permissions',
   },
   identity: {
     title: 'Company identity',
@@ -29,6 +31,27 @@ export default {
     address: 'Address',
     timezone: 'Timezone',
     currency: 'Currency',
+  },
+  members: {
+    title: 'Members',
+    description: 'Invite people to the workspace and assign roles to existing members.',
+    email: 'Email address',
+    displayName: 'Full name',
+    invite: 'Send invitation',
+    selectRole: 'Select a role',
+    assignRole: 'Assign role',
+    removeRole: 'Remove {{role}} role',
+    empty: 'There are no active members yet.',
+  },
+  roles: {
+    title: 'Roles and permissions',
+    description: 'Permission scope for roles enabled in this workspace.',
+    noPermissions: 'No permissions',
+    empty: 'There are no roles yet.',
+  },
+  accessProblem: {
+    title: 'Could not load members and access',
+    description: 'Contact a workspace administrator to view this area.',
   },
   timezone: {
     'Europe/Istanbul': '(GMT+03:00) Istanbul',

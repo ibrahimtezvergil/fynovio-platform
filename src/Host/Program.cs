@@ -217,6 +217,9 @@ builder.Services.AddScoped<DeleteCalendarEntryHandler>();
 builder.Services.AddScoped<ProvisionTenantProfileHandler>();
 builder.Services.AddScoped<GetCompanySettingsHandler>();
 builder.Services.AddScoped<UpdateCompanySettingsHandler>();
+builder.Services.AddScoped<GetTenantAccessOverviewHandler>();
+builder.Services.AddScoped<GrantRoleAssignmentHandler>();
+builder.Services.AddScoped<RevokeRoleAssignmentHandler>();
 builder.Services.AddScoped<CreateOpportunityHandler>();
 builder.Services.AddScoped<AddOpportunityLineHandler>();
 builder.Services.AddScoped<CancelOpportunityLineHandler>();
@@ -234,6 +237,7 @@ builder.Services.AddScoped<ListOpportunitiesHandler>();
 builder.Services.AddScoped<GetPipelineStagesHandler>();
 builder.Services.AddScoped<GetOpportunityAvailableActionsHandler>();
 
+builder.Services.AddExceptionHandler<AccessProblemDetailsExceptionHandler>();
 builder.Services.AddExceptionHandler<CrmProblemDetailsExceptionHandler>();
 builder.Services.AddExceptionHandler<CollaborationProblemDetailsExceptionHandler>();
 builder.Services.AddExceptionHandler<TenantLifecycleProblemDetailsExceptionHandler>();

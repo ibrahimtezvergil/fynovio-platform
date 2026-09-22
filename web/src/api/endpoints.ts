@@ -57,6 +57,10 @@ export const endpoints = {
   },
   companySettings: {
     profile: '/company/settings',
+    access: '/company/settings/access',
+    invitations: '/company/settings/invitations',
+    roleAssignments: '/company/settings/role-assignments',
+    roleAssignment: (id: number) => `/company/settings/role-assignments/${id}`,
   },
   demoTables: {
     employees: '/demo-tables/employees',

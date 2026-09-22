@@ -54,3 +54,28 @@ export function settingsToFormValues(settings: CompanySettings): CompanySettings
   const { rowVersion: _rowVersion, ...values } = settings
   return values
 }
+
+const roleAssignmentSchema = z.object({
+  assignmentId: z.number().int().positive(),
+  roleKey: z.string().min(1),
+  roleName: z.string().min(1),
+})
+
+export const companyAccessOverviewSchema = z.object({
+  members: z.array(z.object({
+    principalIssuer: z.string().min(1),
+    principalSubject: z.string().min(1),
+    displayName: z.string().min(1),
+    email: z.string().email(),
+    status: z.enum(['invited', 'active', 'disabled']),
+    assignments: z.array(roleAssignmentSchema),
+  })),
+  roles: z.array(z.object({
+    key: z.string().min(1),
+    name: z.string().min(1),
+    origin: z.enum(['tenant', 'system_template']),
+    actionKeys: z.array(z.string().min(1)),
+  })),
+})
+
+export type CompanyAccessOverview = z.output<typeof companyAccessOverviewSchema>
