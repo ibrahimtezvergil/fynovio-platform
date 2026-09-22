@@ -17,8 +17,8 @@ public static class TenantLifecycleModuleCapabilities
         [
             new PermissionSetTemplate(SettingsSetKey, "Tenant settings administration",
             [
-                new(TenantProfileActionKeys.SettingsView, "all"),
-                new(TenantProfileActionKeys.SettingsUpdate, "all")
+                new(TenantProfileActionKeys.SettingsView),
+                new(TenantProfileActionKeys.SettingsUpdate)
             ])
         ],
         Roles: [new RoleTemplate(AdministratorRoleKey, "Tenant Settings Administrator", [SettingsSetKey], GrantToTenantAdministrators: true)]);
