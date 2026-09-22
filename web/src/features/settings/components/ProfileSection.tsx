@@ -4,22 +4,12 @@ import { Field } from '@/components/common/Field'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { SectionHeading } from '@/features/settings/components/SectionHeading'
-import {
-  CURRENCY_VALUES,
-  TIMEZONE_VALUES,
-  useCurrencyLabels,
-  useTimezoneLabels,
-  type SettingsValues,
-} from '@/features/settings/schema'
+import type { SettingsValues } from '@/features/settings/schema'
 import { initialsOf } from '@/lib/utils'
 
 export function ProfileSection() {
   const { t } = useTranslation('settings')
-  const timezoneLabels = useTimezoneLabels()
-  const currencyLabels = useCurrencyLabels()
   const {
     register,
     control,
@@ -68,39 +58,7 @@ export function ProfileSection() {
             <Input {...props} type="tel" autoComplete="tel" className="tnum" {...register('phone')} />
           )}
         </Field>
-        <Field label={t('profile.timezone')} error={errors.timezone?.message}>
-          {(props) => (
-            <Select {...props} {...register('timezone')}>
-              {TIMEZONE_VALUES.map((zone) => (
-                <option key={zone} value={zone}>
-                  {timezoneLabels[zone]}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-        <Field label={t('profile.currency')} error={errors.currency?.message}>
-          {(props) => (
-            <Select {...props} {...register('currency')}>
-              {CURRENCY_VALUES.map((currency) => (
-                <option key={currency} value={currency}>
-                  {currencyLabels[currency]}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
       </div>
-
-      <Field
-        label={t('profile.signature')}
-        hint={t('profile.signatureHint')}
-        error={errors.signature?.message}
-      >
-        {(props) => (
-          <Textarea {...props} placeholder={t('profile.signaturePlaceholder')} {...register('signature')} />
-        )}
-      </Field>
     </Card>
   )
 }

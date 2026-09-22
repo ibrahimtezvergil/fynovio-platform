@@ -1,12 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Bell, ShieldCheck, TriangleAlert, UserRound } from 'lucide-react'
+import { Bell, ShieldCheck, UserRound } from 'lucide-react'
 import { useMemo } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/common/PageHeader'
 import { SectionNav, type NavSection } from '@/components/common/SectionNav'
-import { DangerZone } from '@/features/settings/components/DangerZone'
 import { NotificationsSection } from '@/features/settings/components/NotificationsSection'
 import { ProfileSection } from '@/features/settings/components/ProfileSection'
 import { SaveBar } from '@/features/settings/components/SaveBar'
@@ -18,7 +17,7 @@ import { useSettingsStore } from '@/features/settings/store/useSettingsStore'
  * One form spanning several cards: the sections read it through
  * `FormProvider`, so the save bar can count and commit changes without any
  * section knowing about it. The `<form>` element itself lives in the save bar
- * — the security and danger cards carry their own, and forms cannot nest.
+ * — the security card carries its own, and forms cannot nest.
  */
 export default function SettingsPage() {
   const { t } = useTranslation('settings')
@@ -31,7 +30,6 @@ export default function SettingsPage() {
       { id: 'profil', label: t('page.sectionProfile'), icon: UserRound },
       { id: 'bildirimler', label: t('page.sectionNotifications'), icon: Bell },
       { id: 'guvenlik', label: t('page.sectionSecurity'), icon: ShieldCheck },
-      { id: 'tehlikeli-bolge', label: t('page.sectionDangerZone'), icon: TriangleAlert },
     ],
     [t],
   )
@@ -62,7 +60,6 @@ export default function SettingsPage() {
             <ProfileSection />
             <NotificationsSection />
             <SecuritySection />
-            <DangerZone />
             <SaveBar onSubmit={onSubmit} />
           </FormProvider>
         </div>

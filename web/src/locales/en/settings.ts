@@ -6,7 +6,6 @@ export default {
     sectionProfile: 'Profile',
     sectionNotifications: 'Notifications',
     sectionSecurity: 'Security',
-    sectionDangerZone: 'Danger zone',
     saved: 'Settings saved',
   },
   profile: {
@@ -61,15 +60,6 @@ export default {
     signOutOtherDevices: 'Sign out of all other devices when the password changes',
     updatePassword: 'Update password',
     noBackendYet: 'Changing your password requires a server connection — not wired up yet.',
-  },
-  dangerZone: {
-    title: 'Delete workspace',
-    description: '{{workspace}} and all its deals will be permanently removed. This cannot be undone.',
-    typeToConfirm: 'Type "{{workspace}}" to confirm',
-    deletePermanently: 'Delete permanently',
-    cancel: 'Cancel',
-    noBackendYet: 'Deleting requires a server connection — not wired up yet.',
-    nameMismatch: 'Workspace name does not match.',
   },
   saveBar: {
     allSaved: 'All changes saved',

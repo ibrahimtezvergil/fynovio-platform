@@ -6,7 +6,6 @@ export default {
     sectionProfile: 'Profil',
     sectionNotifications: 'Bildirimler',
     sectionSecurity: 'Güvenlik',
-    sectionDangerZone: 'Tehlikeli bölge',
     saved: 'Ayarlar kaydedildi',
   },
   profile: {
@@ -61,15 +60,6 @@ export default {
     signOutOtherDevices: 'Parola değişince diğer tüm cihazlardan çıkış yap',
     updatePassword: 'Parolayı güncelle',
     noBackendYet: 'Parola değişikliği bir sunucu bağlantısı gerektiriyor — henüz bağlı değil.',
-  },
-  dangerZone: {
-    title: 'Çalışma alanını sil',
-    description: '{{workspace}} ve tüm fırsatları kalıcı olarak kaldırılır. Bu işlem geri alınamaz.',
-    typeToConfirm: 'Onaylamak için “{{workspace}}” yazın',
-    deletePermanently: 'Kalıcı olarak sil',
-    cancel: 'Vazgeç',
-    noBackendYet: 'Silme işlemi bir sunucu bağlantısı gerektiriyor — henüz bağlı değil.',
-    nameMismatch: 'Çalışma alanı adı eşleşmiyor.',
   },
   saveBar: {
     allSaved: 'Tüm değişiklikler kaydedildi',
