@@ -12,9 +12,9 @@
     "semantic_hash": ""
   },
   "fynovio-platform.slnx": {
-    "mtime": 1790023782.7622545,
-    "seen": 1790024389.328968,
-    "ast_hash": "c6b0f183f2d333fc44952c39e4304a11",
+    "mtime": 1790068913.232504,
+    "seen": 1790073310.044645,
+    "ast_hash": "f1e71737961905bd2bfa672049921693",
     "semantic_hash": ""
   },
   "src/Contracts/Contracts.csproj": {
@@ -54,9 +54,9 @@
     "semantic_hash": ""
   },
   "src/Host/Program.cs": {
-    "mtime": 1790023782.9515285,
-    "seen": 1790024389.3290172,
-    "ast_hash": "133b4edad934907d8eca8a2113143310",
+    "mtime": 1790072703.00362,
+    "seen": 1790073310.044697,
+    "ast_hash": "df68ad08544c359add8288e800ad5147",
     "semantic_hash": ""
   },
   "src/Host/Properties/launchSettings.json": {
@@ -233,17 +233,11 @@
     "ast_hash": "8caf9fa4a38a94b3d1839a6d67c8ade5",
     "semantic_hash": "8caf9fa4a38a94b3d1839a6d67c8ade5"
   },
-  "src/Modules/TenantLifecycle/Class1.cs": {
-    "mtime": 1789547419.243671,
-    "seen": 1790024389.329227,
-    "ast_hash": "7825c9f93ced9de7ed22212f0e78f376",
-    "semantic_hash": ""
-  },
   "src/Modules/TenantLifecycle/TenantLifecycle.csproj": {
-    "mtime": 1789251506.8636427,
-    "seen": 1790024389.329227,
-    "ast_hash": "8caf9fa4a38a94b3d1839a6d67c8ade5",
-    "semantic_hash": "8caf9fa4a38a94b3d1839a6d67c8ade5"
+    "mtime": 1790068913.243648,
+    "seen": 1790073310.044922,
+    "ast_hash": "aac6384a713570daaaf4db8d37950514",
+    "semantic_hash": ""
   },
   "src/Worker/Program.cs": {
     "mtime": 1789857212.8514295,
@@ -624,9 +618,9 @@
     "semantic_hash": ""
   },
   "scripts/create-runtime-role.sql": {
-    "mtime": 1790023782.9396791,
-    "seen": 1790031106.7731981,
-    "ast_hash": "c264ddf3bd5175e20106362ea4a057b6",
+    "mtime": 1790068913.23267,
+    "seen": 1790073310.0446458,
+    "ast_hash": "0afa5f46927ac5123a799c75b1f501f7",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/IdempotencyKeyReusedException.cs": {
@@ -2166,9 +2160,9 @@
     "semantic_hash": ""
   },
   "scripts/e2e.sh": {
-    "mtime": 1790023782.9399588,
-    "seen": 1790024389.328969,
-    "ast_hash": "a26d3953fb5c81d4b126945525d42137",
+    "mtime": 1790068913.2329004,
+    "seen": 1790073310.044647,
+    "ast_hash": "b42ccfca8dd73f00eb9b98671c6e3b4f",
     "semantic_hash": ""
   },
   "src/Host/Authentication/AccessTokenIssuer.cs": {
@@ -2202,9 +2196,9 @@
     "semantic_hash": ""
   },
   "src/Host/Authentication/DevSeeder.cs": {
-    "mtime": 1790023782.9439936,
-    "seen": 1790024389.329001,
-    "ast_hash": "c9a825b03ad39ba3352982d8558d42ae",
+    "mtime": 1790068913.233426,
+    "seen": 1790073310.044678,
+    "ast_hash": "364fa1a7df8549bd7d84c720bfcdcd3c",
     "semantic_hash": ""
   },
   "src/Host/Authentication/IdentifierRateLimiter.cs": {
@@ -2220,9 +2214,9 @@
     "semantic_hash": ""
   },
   "src/Host/Bootstrap/BootstrapCommand.cs": {
-    "mtime": 1789933845.2437706,
-    "seen": 1790024389.329004,
-    "ast_hash": "1eea2876cfae544c5497cc8ebebd5966",
+    "mtime": 1790068913.2338953,
+    "seen": 1790073310.044682,
+    "ast_hash": "3996a1d11d076a69d2c7e73a152403ca",
     "semantic_hash": ""
   },
   "src/Host/Email/DevMailbox.cs": {
@@ -2790,15 +2784,15 @@
     "semantic_hash": ""
   },
   "tests/Host.Tests/Fixtures/AuthApiFixture.cs": {
-    "mtime": 1790023783.0148034,
-    "seen": 1790024389.32931,
-    "ast_hash": "05d2e53fc35ab565c39eec134d91b06c",
+    "mtime": 1790068913.2443423,
+    "seen": 1790073310.0450099,
+    "ast_hash": "1823fece4bfc825a955eb5f3fe36cc4e",
     "semantic_hash": ""
   },
   "tests/Host.Tests/Fixtures/AuthTestFixture.cs": {
-    "mtime": 1790023783.0153165,
-    "seen": 1790024389.32931,
-    "ast_hash": "979094f677c76d1024bb46ef0c7d461b",
+    "mtime": 1790068913.2446713,
+    "seen": 1790073310.045011,
+    "ast_hash": "03f33a396e4436ad43472cc6f1164247",
     "semantic_hash": ""
   },
   "web/.claude/.bootstrap-manifest.json": {
@@ -2886,14 +2880,14 @@
     "semantic_hash": ""
   },
   "web/playwright.config.ts": {
-    "mtime": 1790023783.0234416,
-    "seen": 1790024389.329334,
-    "ast_hash": "1b6c459738757ff8cbb17a2b98e2b379",
+    "mtime": 1790068913.2480164,
+    "seen": 1790073310.0450408,
+    "ast_hash": "01142f516074bbd4785fc24ee30b47eb",
     "semantic_hash": ""
   },
   "web/public/mockServiceWorker.js": {
-    "mtime": 1790015958.968134,
-    "seen": 1790024389.329335,
+    "mtime": 1790069187.4961052,
+    "seen": 1790073310.045042,
     "ast_hash": "c8f0dfa140ec246071c4cc5a03df5c9d",
     "semantic_hash": ""
   },
@@ -2916,9 +2910,9 @@
     "semantic_hash": ""
   },
   "web/src/api/endpoints.ts": {
-    "mtime": 1790023783.0245028,
-    "seen": 1790024389.3293371,
-    "ast_hash": "dd200274b59db6c0d57de72c2b70f82e",
+    "mtime": 1790072703.0039582,
+    "seen": 1790073310.045045,
+    "ast_hash": "0cd93b3c0a375a75b6249269e39ff4a1",
     "semantic_hash": ""
   },
   "web/src/api/queryClient.ts": {
@@ -5244,21 +5238,21 @@
     "semantic_hash": ""
   },
   "web/src/lib/applications/icons.ts": {
-    "mtime": 1789861433.2946923,
-    "seen": 1790024389.329655,
-    "ast_hash": "66d8848edacfd77c349c1f2b579120b1",
+    "mtime": 1790068913.2497144,
+    "seen": 1790073310.045363,
+    "ast_hash": "65822af374ee87338757cb9661b0dc75",
     "semantic_hash": ""
   },
   "web/src/lib/applications/registry.ts": {
-    "mtime": 1789945932.4549298,
-    "seen": 1790024389.3296561,
-    "ast_hash": "1f2186b79f78b0f08743cf66da3cb297",
+    "mtime": 1790068913.2501926,
+    "seen": 1790073310.045364,
+    "ast_hash": "6046017965c479b224c264c59cfeb170",
     "semantic_hash": ""
   },
   "web/src/lib/applications/types.ts": {
-    "mtime": 1789861433.2949219,
-    "seen": 1790024389.3296561,
-    "ast_hash": "1e14ca7d96df24cf735f751e8582bc51",
+    "mtime": 1790068913.2503376,
+    "seen": 1790073310.045364,
+    "ast_hash": "6235771d56efd0e47e4c6e2c7f51a2f6",
     "semantic_hash": ""
   },
   "web/src/lib/auth/SessionGate.tsx": {
@@ -5400,9 +5394,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/i18n.ts": {
-    "mtime": 1789922489.902369,
-    "seen": 1790024389.329671,
-    "ast_hash": "ba441ce177113873eba4b82015d79017",
+    "mtime": 1790068913.2506456,
+    "seen": 1790073310.0453792,
+    "ast_hash": "22e3afeb47f68fa1524211c799675846",
     "semantic_hash": ""
   },
   "web/src/lib/importExport/exportCsv.test.ts": {
@@ -5634,9 +5628,9 @@
     "semantic_hash": ""
   },
   "web/src/locales/en/home.ts": {
-    "mtime": 1789861433.3020647,
-    "seen": 1790024389.329698,
-    "ast_hash": "5f2d7b814e9d322054cbc04756e76ee3",
+    "mtime": 1790068913.2511032,
+    "seen": 1790073310.045408,
+    "ast_hash": "a5608ed2372a8128ed0bd541c94a0f9e",
     "semantic_hash": ""
   },
   "web/src/locales/en/nav.ts": {
@@ -5772,9 +5766,9 @@
     "semantic_hash": ""
   },
   "web/src/locales/tr/home.ts": {
-    "mtime": 1789861433.3049376,
-    "seen": 1790024389.3297122,
-    "ast_hash": "09951b7ffdd78c6cc856424450a70a46",
+    "mtime": 1790068913.251511,
+    "seen": 1790073310.045423,
+    "ast_hash": "38728b7584050d7217caead02df00b26",
     "semantic_hash": ""
   },
   "web/src/locales/tr/nav.ts": {
@@ -5922,15 +5916,15 @@
     "semantic_hash": ""
   },
   "web/src/routes/index.tsx": {
-    "mtime": 1789946220.1010633,
-    "seen": 1790024389.329728,
-    "ast_hash": "3318e75e451207e33a29c000ad29b2ac",
+    "mtime": 1790068913.251965,
+    "seen": 1790073310.045441,
+    "ast_hash": "06800a7d9fd1a2afadf17a5a83d54f48",
     "semantic_hash": ""
   },
   "web/src/routes/paths.ts": {
-    "mtime": 1790023783.053954,
-    "seen": 1790024389.329729,
-    "ast_hash": "8b478d3a0c8addbf1a16c941efb96bca",
+    "mtime": 1790068913.252181,
+    "seen": 1790073310.045441,
+    "ast_hash": "dabc253f95b4a68ab89b767373f974c8",
     "semantic_hash": ""
   },
   "web/src/store/useAppStore.ts": {
@@ -6624,9 +6618,9 @@
     "semantic_hash": ""
   },
   "src/Host/Modules/PlatformModules.cs": {
-    "mtime": 1790023782.949005,
-    "seen": 1790024389.329016,
-    "ast_hash": "a10ef5d5cb780d0c51ccad913b61f5dc",
+    "mtime": 1790068913.2347395,
+    "seen": 1790073310.044696,
+    "ast_hash": "1cbee3854037e75d5b05aae76ac9e8e9",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/EnableTenantModuleCommand.cs": {
@@ -6732,9 +6726,9 @@
     "semantic_hash": ""
   },
   "tests/Host.Tests/Modules/PlatformModulesTests.cs": {
-    "mtime": 1790023783.0167863,
-    "seen": 1790024389.329313,
-    "ast_hash": "d09cac990ddc801084c167e357b4348c",
+    "mtime": 1790068913.2449186,
+    "seen": 1790073310.045013,
+    "ast_hash": "fcccf5c7654f9341806d00b2a3b5fc8a",
     "semantic_hash": ""
   },
   "src/Contracts/IAuthorizedPrincipalDirectory.cs": {
@@ -7785,6 +7779,366 @@
     "mtime": 1790023783.0272918,
     "seen": 1790024389.3293571,
     "ast_hash": "b0666c579eba2daa2513215e632b7084",
+    "semantic_hash": ""
+  },
+  "src/Host/Endpoints/AccessProblemDetailsExceptionHandler.cs": {
+    "mtime": 1790072703.0029175,
+    "seen": 1790073310.044688,
+    "ast_hash": "c5fa904fba37b6ea36c6b1d9b563b2a3",
+    "semantic_hash": ""
+  },
+  "src/Host/Endpoints/CompanySettingsEndpoints.cs": {
+    "mtime": 1790072703.0032663,
+    "seen": 1790073310.044692,
+    "ast_hash": "a1136aeaa5345ac1b50fd8dfbcc6abb1",
+    "semantic_hash": ""
+  },
+  "src/Host/Endpoints/TenantLifecycleProblemDetailsExceptionHandler.cs": {
+    "mtime": 1790068913.234357,
+    "seen": 1790073310.0446951,
+    "ast_hash": "477ff2763424f81cdc28fc72635f56f5",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Application/GetTenantAccessOverviewQuery.cs": {
+    "mtime": 1790073937.400482,
+    "seen": 1790074270.976147,
+    "ast_hash": "a34a3c7d4848dba4eea3f6db4e1e2877",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/CompanySettings.cs": {
+    "mtime": 1790068913.2353206,
+    "seen": 1790073310.0449028,
+    "ast_hash": "23cac01cbb2244589a15f0207782e1d4",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/CompanySettingsAuthorizationDeniedException.cs": {
+    "mtime": 1790068913.2355535,
+    "seen": 1790073310.0449028,
+    "ast_hash": "60d300fd587490eaeae1335e0caa8808",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/CompanySettingsConcurrencyConflictException.cs": {
+    "mtime": 1790068913.2359116,
+    "seen": 1790073310.044904,
+    "ast_hash": "f0c0afa1721857c00dc9e86affea6b4f",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/CompanySettingsNotFoundException.cs": {
+    "mtime": 1790068913.2361653,
+    "seen": 1790073310.044905,
+    "ast_hash": "1a457b35d28954b274f42b67288ea2ff",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/GetCompanySettingsHandler.cs": {
+    "mtime": 1790068913.2363105,
+    "seen": 1790073310.044905,
+    "ast_hash": "9bc0529800059ff3b2a5ce2d5404e1b1",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/GetCompanySettingsQuery.cs": {
+    "mtime": 1790068913.236438,
+    "seen": 1790073310.044906,
+    "ast_hash": "731bc5fbbb36f5dc768cc0a375d80b08",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/IdempotencyKeyReusedException.cs": {
+    "mtime": 1790068913.2365994,
+    "seen": 1790073310.044906,
+    "ast_hash": "4942b41e120e177ab6d89ef5ab4ef1d8",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/IdempotencySupport.cs": {
+    "mtime": 1790068913.2369537,
+    "seen": 1790073310.044907,
+    "ast_hash": "5e1f0db7dd929f69eb0dd6941dbf42db",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/ProvisionTenantProfileCommand.cs": {
+    "mtime": 1790068913.237503,
+    "seen": 1790073310.044908,
+    "ast_hash": "dc2f9010ca91d8b3f61fc15c1c1c3baf",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/ProvisionTenantProfileHandler.cs": {
+    "mtime": 1790068913.2376235,
+    "seen": 1790073310.044908,
+    "ast_hash": "b4059e48c9b663cad46af810cf7ddd51",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/ProvisionTenantProfileResult.cs": {
+    "mtime": 1790068913.237942,
+    "seen": 1790073310.044909,
+    "ast_hash": "51a3aa6439febf4eb9c31d932a1a4458",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/TenantLifecycleActionCatalog.cs": {
+    "mtime": 1790068913.2381597,
+    "seen": 1790073310.044909,
+    "ast_hash": "153e4f3fd3c155802d9748e6a2006847",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/TenantLifecycleModuleCapabilities.cs": {
+    "mtime": 1790068913.2385302,
+    "seen": 1790073310.0449102,
+    "ast_hash": "01720d261f89b8c660fdea854f2aec2f",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/TenantProfileActionKeys.cs": {
+    "mtime": 1790068913.2386847,
+    "seen": 1790073310.0449102,
+    "ast_hash": "c897c154f2a087443959fc1b938f59c4",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/TenantProfileOutbox.cs": {
+    "mtime": 1790068913.238829,
+    "seen": 1790073310.0449111,
+    "ast_hash": "54455759f2a03c26415974de54af84c1",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/UpdateCompanySettingsCommand.cs": {
+    "mtime": 1790068913.2390323,
+    "seen": 1790073310.0449111,
+    "ast_hash": "bbc2f845c468b4fc374db1893895e378",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/UpdateCompanySettingsHandler.cs": {
+    "mtime": 1790068913.2392724,
+    "seen": 1790073310.044912,
+    "ast_hash": "7c651798037a5234720815203d0eced1",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/UpdateCompanySettingsResult.cs": {
+    "mtime": 1790068913.2394137,
+    "seen": 1790073310.0449128,
+    "ast_hash": "afbc6322b305f4c0845da04720931826",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Domain/TenantProfile.cs": {
+    "mtime": 1790068913.239603,
+    "seen": 1790073310.0449128,
+    "ast_hash": "d4fe18339890e0566976aa938f062156",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Domain/TenantProfileDetails.cs": {
+    "mtime": 1790068913.2398171,
+    "seen": 1790073310.044914,
+    "ast_hash": "932d1c94c2b94af27fac942f77e3e013",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Idempotency/IdempotencyRecord.cs": {
+    "mtime": 1790068913.2400048,
+    "seen": 1790073310.044914,
+    "ast_hash": "ffc538b1700cd6026f5368bc2c0e4308",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Outbox/OutboxMessage.cs": {
+    "mtime": 1790068913.2401667,
+    "seen": 1790073310.044915,
+    "ast_hash": "b45c99e79144e5c8e49b3216b5f8b597",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Persistence/Configurations/IdempotencyRecordConfiguration.cs": {
+    "mtime": 1790068913.24038,
+    "seen": 1790073310.044915,
+    "ast_hash": "9eb68f4dade28f85468b51d4717687dd",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Persistence/Configurations/OutboxMessageConfiguration.cs": {
+    "mtime": 1790068913.2405412,
+    "seen": 1790073310.044916,
+    "ast_hash": "3fc73e0a80dd1a8a6b47e5936529ae75",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Persistence/Configurations/TenantProfileConfiguration.cs": {
+    "mtime": 1790068913.2409222,
+    "seen": 1790073310.044917,
+    "ast_hash": "9cdde299e3a29a7868bcb4f0f4f17b7b",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Persistence/Migrations/20260922081604_InitialTenantLifecycleSchema.Designer.cs": {
+    "mtime": 1790068913.2411585,
+    "seen": 1790073310.044917,
+    "ast_hash": "b439edd35553b99c8e542ccffd38b8f9",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Persistence/Migrations/20260922081604_InitialTenantLifecycleSchema.cs": {
+    "mtime": 1790068913.241558,
+    "seen": 1790073310.044918,
+    "ast_hash": "c9a318c8b94d4538b5cc31896b776606",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Persistence/Migrations/20260922081607_EnableRowLevelSecurity.Designer.cs": {
+    "mtime": 1790068913.2418106,
+    "seen": 1790073310.044918,
+    "ast_hash": "24c4f9dfe5ef99783b4c8e164ed5458a",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Persistence/Migrations/20260922081607_EnableRowLevelSecurity.cs": {
+    "mtime": 1790068913.242309,
+    "seen": 1790073310.044919,
+    "ast_hash": "1235dcd3c96c38f7c6e0c56f19a4300f",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Persistence/Migrations/TenantLifecycleDbContextModelSnapshot.cs": {
+    "mtime": 1790068913.2426274,
+    "seen": 1790073310.044919,
+    "ast_hash": "2f3e0627bdad5a24abc3085bd287c9c0",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Persistence/TenantLifecycleConnectionString.cs": {
+    "mtime": 1790068913.2427738,
+    "seen": 1790073310.04492,
+    "ast_hash": "e0ca5f2ad66863d3d53a0b15c947e8aa",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Persistence/TenantLifecycleDbContext.cs": {
+    "mtime": 1790068913.242907,
+    "seen": 1790073310.04492,
+    "ast_hash": "9061669d899eadcefb11f2e6e9ccab42",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Persistence/TenantLifecycleDbContextFactory.cs": {
+    "mtime": 1790068913.2430336,
+    "seen": 1790073310.0449212,
+    "ast_hash": "2581f2f4482e6ca11618617d237474a3",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Persistence/TenantLifecycleDbContextTenantExtensions.cs": {
+    "mtime": 1790068913.2432494,
+    "seen": 1790073310.0449212,
+    "ast_hash": "92f4d7351581d8fb9b94d7203f749a8f",
+    "semantic_hash": ""
+  },
+  "tests/Host.Tests/CompanySettingsEndpointsTests.cs": {
+    "mtime": 1790068913.243866,
+    "seen": 1790073310.045009,
+    "ast_hash": "949929cd609f5b74a06c0a4d74e5b067",
+    "semantic_hash": ""
+  },
+  "tests/TenantLifecycle.Tests/Architecture/ModuleBoundaryTests.cs": {
+    "mtime": 1790068913.2451887,
+    "seen": 1790073310.045024,
+    "ast_hash": "486774f9190b4941e17a60659b2c5eda",
+    "semantic_hash": ""
+  },
+  "tests/TenantLifecycle.Tests/Domain/TenantProfileTests.cs": {
+    "mtime": 1790068913.2456014,
+    "seen": 1790073310.045025,
+    "ast_hash": "ed91b3289791a8857a16a626d9ae452c",
+    "semantic_hash": ""
+  },
+  "tests/TenantLifecycle.Tests/Integration/CompanySettingsUpdateTests.cs": {
+    "mtime": 1790068913.245925,
+    "seen": 1790073310.045025,
+    "ast_hash": "33b26a80ae7c2b80a73c359ca5215571",
+    "semantic_hash": ""
+  },
+  "tests/TenantLifecycle.Tests/Integration/PostgresCollection.cs": {
+    "mtime": 1790068913.2461982,
+    "seen": 1790073310.045026,
+    "ast_hash": "da45c315c5ea8c1abadf1a338431d4fc",
+    "semantic_hash": ""
+  },
+  "tests/TenantLifecycle.Tests/Integration/PostgresFixture.cs": {
+    "mtime": 1790068913.2464101,
+    "seen": 1790073310.045026,
+    "ast_hash": "f7ea30f11379d04bae298a3003fb7fd5",
+    "semantic_hash": ""
+  },
+  "tests/TenantLifecycle.Tests/Integration/RowLevelSecurityTests.cs": {
+    "mtime": 1790068913.2467544,
+    "seen": 1790073310.045027,
+    "ast_hash": "725782588a87b15f80af0cf4b5c59e86",
+    "semantic_hash": ""
+  },
+  "tests/TenantLifecycle.Tests/Integration/TenantProfileConstraintTests.cs": {
+    "mtime": 1790068913.2469244,
+    "seen": 1790073310.045027,
+    "ast_hash": "7acd63f7dade4b2d22133c958aae4ae2",
+    "semantic_hash": ""
+  },
+  "tests/TenantLifecycle.Tests/StubAuthorizer.cs": {
+    "mtime": 1790068913.247074,
+    "seen": 1790073310.0450282,
+    "ast_hash": "d9876dba2c341106ac629beb3bccfc83",
+    "semantic_hash": ""
+  },
+  "tests/TenantLifecycle.Tests/TenantLifecycle.Tests.csproj": {
+    "mtime": 1790068913.2475944,
+    "seen": 1790073310.0450282,
+    "ast_hash": "e13eedb4ecadd0265601f19fc856327f",
+    "semantic_hash": ""
+  },
+  "web/e2e/company-settings.e2e.ts": {
+    "mtime": 1790068913.2478442,
+    "seen": 1790073310.0450351,
+    "ast_hash": "69147aa91bb55c19512fdae4e04b176f",
+    "semantic_hash": ""
+  },
+  "web/src/features/company-settings/api.test.tsx": {
+    "mtime": 1790068913.2483842,
+    "seen": 1790073310.0451899,
+    "ast_hash": "e55e0f6fccd08f0a11e9249f5994503f",
+    "semantic_hash": ""
+  },
+  "web/src/features/company-settings/api.ts": {
+    "mtime": 1790072703.0041177,
+    "seen": 1790073310.0451899,
+    "ast_hash": "f5e0ea47beef2a006da2a415fe51b61d",
+    "semantic_hash": ""
+  },
+  "web/src/features/company-settings/index.ts": {
+    "mtime": 1790068913.2486305,
+    "seen": 1790073310.0451908,
+    "ast_hash": "846704c44b135fcb2a8fc618005eff5f",
+    "semantic_hash": ""
+  },
+  "web/src/features/company-settings/pages/CompanySettingsPage.test.tsx": {
+    "mtime": 1790072703.004375,
+    "seen": 1790073310.045192,
+    "ast_hash": "1a66c683814a457e08fc47481202513b",
+    "semantic_hash": ""
+  },
+  "web/src/features/company-settings/pages/CompanySettingsPage.tsx": {
+    "mtime": 1790072703.0046751,
+    "seen": 1790073310.045192,
+    "ast_hash": "61206bcf4379e139ce2bcffc93600947",
+    "semantic_hash": ""
+  },
+  "web/src/features/company-settings/routes.ts": {
+    "mtime": 1790068913.2490451,
+    "seen": 1790073310.045193,
+    "ast_hash": "3c54d1e9f3f249c41d34f9f2483909ff",
+    "semantic_hash": ""
+  },
+  "web/src/features/company-settings/schema.ts": {
+    "mtime": 1790072703.0048478,
+    "seen": 1790073310.045193,
+    "ast_hash": "66ce3a5321df09fc171f913c662c17d7",
+    "semantic_hash": ""
+  },
+  "web/src/locales/en/company-settings.ts": {
+    "mtime": 1790072703.0050159,
+    "seen": 1790073310.045399,
+    "ast_hash": "d567f30e7f79f987a80d1b95a1d6eba9",
+    "semantic_hash": ""
+  },
+  "web/src/locales/tr/company-settings.ts": {
+    "mtime": 1790072703.0051684,
+    "seen": 1790073310.045415,
+    "ast_hash": "3876e8cf2b984b7b5c5cca9f0938d3d8",
+    "semantic_hash": ""
+  },
+  "docs/plans/tenant-company-settings/2026-09-22-company-settings-plan.md": {
+    "mtime": 1790068913.231789,
+    "seen": 1790073310.045488,
+    "ast_hash": "ff832c9d39c442085d968891dff53e81",
+    "semantic_hash": ""
+  },
+  "docs/schema/tenant-lifecycle-schema.md": {
+    "mtime": 1790068913.2320294,
+    "seen": 1790073310.04549,
+    "ast_hash": "9dd486f59736e513193606c631907e13",
     "semantic_hash": ""
   }
 }
