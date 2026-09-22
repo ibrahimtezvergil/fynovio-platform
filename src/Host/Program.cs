@@ -20,6 +20,8 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using TenantLifecycle.Application;
+using TenantLifecycle.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,12 @@ builder.Services.AddDbContext<CollaborationDbContext>(options => options
     .UseNpgsql(
         builder.Configuration.GetConnectionString("Collaboration") ?? CollaborationConnectionString.Resolve(),
         npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", CollaborationDbContext.Schema))
+    .UseSnakeCaseNamingConvention());
+
+builder.Services.AddDbContext<TenantLifecycleDbContext>(options => options
+    .UseNpgsql(
+        builder.Configuration.GetConnectionString("TenantLifecycle") ?? TenantLifecycleConnectionString.Resolve(),
+        npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", TenantLifecycleDbContext.Schema))
     .UseSnakeCaseNamingConvention());
 
 builder.Services.AddDbContext<MasterDataDbContext>(options => options
@@ -206,6 +214,9 @@ builder.Services.AddScoped<GetCalendarEntryHandler>();
 builder.Services.AddScoped<ListCalendarEntriesHandler>();
 builder.Services.AddScoped<UpdateCalendarEntryHandler>();
 builder.Services.AddScoped<DeleteCalendarEntryHandler>();
+builder.Services.AddScoped<ProvisionTenantProfileHandler>();
+builder.Services.AddScoped<GetCompanySettingsHandler>();
+builder.Services.AddScoped<UpdateCompanySettingsHandler>();
 builder.Services.AddScoped<CreateOpportunityHandler>();
 builder.Services.AddScoped<AddOpportunityLineHandler>();
 builder.Services.AddScoped<CancelOpportunityLineHandler>();

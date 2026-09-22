@@ -12,8 +12,8 @@ using TenantLifecycle.Persistence;
 namespace TenantLifecycle.Persistence.Migrations
 {
     [DbContext(typeof(TenantLifecycleDbContext))]
-    [Migration("20260922075811_EnableRowLevelSecurity")]
-    partial class EnableRowLevelSecurity
+    [Migration("20260922081604_InitialTenantLifecycleSchema")]
+    partial class InitialTenantLifecycleSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -195,6 +195,10 @@ namespace TenantLifecycle.Persistence.Migrations
                     b.Property<long>("AggregateVersion")
                         .HasColumnType("bigint")
                         .HasColumnName("aggregate_version");
+
+                    b.Property<Guid?>("CausationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("causation_id");
 
                     b.Property<Guid>("CorrelationId")
                         .HasColumnType("uuid")

@@ -52,6 +52,7 @@ namespace TenantLifecycle.Persistence.Migrations
                     source = table.Column<string>(type: "text", nullable: false),
                     subject = table.Column<string>(type: "text", nullable: false),
                     correlation_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    causation_id = table.Column<Guid>(type: "uuid", nullable: true),
                     payload = table.Column<string>(type: "jsonb", nullable: false),
                     occurred_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     processed_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)

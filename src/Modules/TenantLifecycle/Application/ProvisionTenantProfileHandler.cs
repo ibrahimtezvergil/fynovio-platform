@@ -30,7 +30,7 @@ public sealed class ProvisionTenantProfileHandler(TenantLifecycleDbContext conte
         context.OutboxMessages.Add(OutboxMessage.Create(
             command.TenantId, nameof(TenantProfile), profile.RowVersion, TenantProfileOutbox.ProvisionedEventType,
             TenantProfileOutbox.EventSource, TenantProfileOutbox.Subject(command.TenantId.Value), command.CorrelationId,
-            TenantProfileOutbox.Payload(profile)));
+            null, TenantProfileOutbox.Payload(profile)));
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return new ProvisionTenantProfileResult(profile.RowVersion, AlreadyProvisioned: false);
