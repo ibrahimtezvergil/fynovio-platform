@@ -81,6 +81,10 @@ internal static class AuthTestFixture
             GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA collaboration TO fynovio_app;
             GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA collaboration TO fynovio_app;
 
+            GRANT USAGE ON SCHEMA tenant_lifecycle TO fynovio_app;
+            GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA tenant_lifecycle TO fynovio_app;
+            GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA tenant_lifecycle TO fynovio_app;
+
             GRANT USAGE ON SCHEMA identity TO fynovio_app;
             GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA identity TO fynovio_app;
             GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA identity TO fynovio_app;
