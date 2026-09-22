@@ -19,6 +19,7 @@ export type ApplicationIconKey =
   | 'documentManagement'
   | 'inbox'
   | 'calendar'
+  | 'companySettings'
   | 'tasks'
   | 'conversations'
   | 'notes'

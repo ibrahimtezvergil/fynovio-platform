@@ -55,6 +55,7 @@ export default {
     documentManagement: { label: 'Document Management', description: 'Manage enterprise documents, versions, permissions, approvals, archives and document lifecycles.' },
     inbox: { label: 'Inbox', description: 'Your assigned work, notifications and records that need follow-up.' },
     calendar: { label: 'Calendar', description: 'Meetings, events and scheduled work.' },
+    companySettings: { label: 'Company settings', description: 'Company identity, legal details and operating defaults.' },
     tasks: { label: 'Tasks', description: 'Manage personal and team to-dos.' },
     conversations: { label: 'Conversations', description: 'Team conversations and quick communication.' },
     notes: { label: 'Notes', description: 'Quick meeting and phone notes.' },

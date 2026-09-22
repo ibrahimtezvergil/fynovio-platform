@@ -48,6 +48,7 @@ export const APPLICATION_ICON: Record<ApplicationIconKey, LucideIcon> = {
   documentManagement: Folder,
   inbox: Inbox,
   calendar: Calendar,
+  companySettings: Building2,
   tasks: CheckSquare,
   conversations: MessagesSquare,
   notes: NotebookPen,

@@ -29,6 +29,7 @@ export const paths = {
   files: '/files',
   feedback: '/feedback',
   settings: '/profile/settings',
+  companySettings: '/company/settings',
   members: '/members',
   demoTables: '/demo/tables',
   demoForms: '/demo/forms',

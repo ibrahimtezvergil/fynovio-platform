@@ -3,6 +3,7 @@ import { initReactI18next } from 'react-i18next'
 
 import authEn from '@/locales/en/auth'
 import calendarEn from '@/locales/en/calendar'
+import companySettingsEn from '@/locales/en/company-settings'
 import commonEn from '@/locales/en/common'
 import conversationsEn from '@/locales/en/conversations'
 import dashboardEn from '@/locales/en/dashboard'
@@ -28,6 +29,7 @@ import settingsEn from '@/locales/en/settings'
 
 import authTr from '@/locales/tr/auth'
 import calendarTr from '@/locales/tr/calendar'
+import companySettingsTr from '@/locales/tr/company-settings'
 import commonTr from '@/locales/tr/common'
 import conversationsTr from '@/locales/tr/conversations'
 import dashboardTr from '@/locales/tr/dashboard'
@@ -68,6 +70,7 @@ void i18n.use(initReactI18next).init({
     tr: {
       auth: authTr,
       calendar: calendarTr,
+      'company-settings': companySettingsTr,
       common: commonTr,
       conversations: conversationsTr,
       dashboard: dashboardTr,
@@ -94,6 +97,7 @@ void i18n.use(initReactI18next).init({
     en: {
       auth: authEn,
       calendar: calendarEn,
+      'company-settings': companySettingsEn,
       common: commonEn,
       conversations: conversationsEn,
       dashboard: dashboardEn,
