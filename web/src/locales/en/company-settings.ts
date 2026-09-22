@@ -1,0 +1,62 @@
+export default {
+  page: {
+    eyebrow: 'Workspace administration',
+    title: 'Company settings',
+    description: 'Manage company identity and operating defaults.',
+  },
+  identity: {
+    title: 'Company identity',
+    description: 'Core company information visible to your team.',
+    displayName: 'Displayed company name',
+    legalName: 'Legal name',
+    legalNameHint: 'Used for invoices and official documents.',
+  },
+  legal: {
+    title: 'Tax details',
+    description: 'Identifiers used in legal processes.',
+    taxNumber: 'Tax number',
+    taxOffice: 'Tax office',
+  },
+  contact: {
+    title: 'Contact and defaults',
+    description: 'Company contact details and operating preferences.',
+    email: 'Email',
+    phone: 'Phone',
+    address: 'Address',
+    timezone: 'Timezone',
+    currency: 'Currency',
+  },
+  timezone: {
+    'Europe/Istanbul': '(GMT+03:00) Istanbul',
+    'Europe/Berlin': '(GMT+01:00) Berlin',
+    'Europe/London': '(GMT+00:00) London',
+  },
+  currency: {
+    TRY: '₺ Turkish lira (TRY)',
+    EUR: '€ Euro (EUR)',
+    USD: '$ US dollar (USD)',
+  },
+  saveBar: {
+    allSaved: 'All changes saved',
+    unsaved: 'You have unsaved changes',
+    discard: 'Discard',
+    save: 'Save changes',
+  },
+  validation: {
+    required: 'This field is required.',
+    maxChars: 'Use {{max}} characters or fewer.',
+    singleLine: 'Do not use line breaks or control characters.',
+    displayName: 'Enter at least 2 characters.',
+    email: 'Enter a valid email address.',
+    address: 'Address can contain plain text and line breaks only.',
+  },
+  problem: {
+    forbiddenTitle: 'You cannot view company settings',
+    forbiddenDescription: 'Ask a workspace administrator for access.',
+    notFoundTitle: 'Company profile is not ready yet',
+    notFoundDescription: 'Try again after workspace provisioning has finished.',
+    genericTitle: 'Company settings could not be loaded',
+    conflictTitle: 'Changes refreshed',
+    conflict: 'Someone else updated these settings. The latest values have been loaded; apply your changes again.',
+  },
+}

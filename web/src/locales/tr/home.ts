@@ -55,6 +55,7 @@ export default {
     documentManagement: { label: 'Doküman Yönetimi', description: 'Kurumsal dokümanları, versiyonları, izinleri, onayları, arşivi ve doküman yaşam döngüsünü yönetir.' },
     inbox: { label: 'İş Kutusu', description: 'Sana atanan işler, bildirimler ve takip gerektiren kayıtlar.' },
     calendar: { label: 'Takvim', description: 'Toplantılar, etkinlikler ve planlanan işler.' },
+    companySettings: { label: 'Şirket ayarları', description: 'Şirket kimliği, yasal bilgiler ve çalışma varsayılanları.' },
     tasks: { label: 'Görevler', description: 'Kişisel ve ekip yapılacaklarını yönet.' },
     conversations: { label: 'Sohbetler', description: 'Ekip içi konuşmalar ve hızlı iletişim.' },
     notes: { label: 'Notlar', description: 'Hızlı toplantı ve telefon notları.' },

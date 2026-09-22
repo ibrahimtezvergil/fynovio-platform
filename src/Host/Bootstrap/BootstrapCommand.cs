@@ -3,6 +3,7 @@ using Access.Application.Authentication;
 using Contracts;
 using Host.Authentication;
 using Host.Email;
+using TenantLifecycle.Application;
 
 namespace Host.Bootstrap;
 
@@ -51,6 +52,8 @@ public static class BootstrapCommand
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Distinct()
             .ToList() ?? [];
+        if (!modules.Contains(TenantLifecycleModuleCapabilities.ModuleKey, StringComparer.Ordinal))
+            modules.Insert(0, TenantLifecycleModuleCapabilities.ModuleKey);
 
         await using var scope = services.CreateAsyncScope();
         var catalog = scope.ServiceProvider.GetRequiredService<ModuleCapabilityCatalog>();
@@ -69,6 +72,9 @@ public static class BootstrapCommand
         switch (result.Status)
         {
             case BootstrapTenantAdministratorStatus.Completed when result.SetupToken is { } token:
+                await scope.ServiceProvider.GetRequiredService<ProvisionTenantProfileHandler>().HandleAsync(
+                    new ProvisionTenantProfileCommand(new TenantId(tenantId), options["display-name"], Guid.NewGuid()),
+                    cancellationToken);
                 var baseUrl = scope.ServiceProvider.GetRequiredService<AuthenticationHostOptions>().PublicAppBaseUrl;
                 var lifetimeHours = scope.ServiceProvider.GetRequiredService<TokenOptions>().PasswordSetupHours;
                 await output.WriteLineAsync($"Tenant {tenantId} bootstrapped. Administrator account: {options["email"]}");

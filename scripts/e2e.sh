@@ -30,7 +30,7 @@ until docker exec "$NAME" psql -U postgres -d fynovio_platform -c "SELECT 1" >/d
 
 echo "==> migrations (as postgres)"
 dotnet tool restore >/dev/null
-for module in MasterData CRM Access Collaboration; do   # CRM's migrations reference masterdata tables
+for module in MasterData CRM Access Collaboration TenantLifecycle; do   # CRM's migrations reference masterdata tables
   dotnet ef database update --connection "$ADMIN_CONN" \
     --project "src/Modules/$module/$module.csproj" --startup-project "src/Modules/$module/$module.csproj" 2>&1 | grep -v NU1900 || true
 done

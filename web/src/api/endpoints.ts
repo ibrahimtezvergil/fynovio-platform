@@ -55,6 +55,9 @@ export const endpoints = {
     entries: '/calendar/entries',
     entry: (id: number) => `/calendar/entries/${id}`,
   },
+  companySettings: {
+    profile: '/company/settings',
+  },
   demoTables: {
     employees: '/demo-tables/employees',
     employeesAll: '/demo-tables/employees/all',

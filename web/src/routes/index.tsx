@@ -2,6 +2,7 @@ import { lazy, Suspense, type ReactElement } from 'react'
 import { createBrowserRouter, Navigate, Outlet, type RouteObject } from 'react-router-dom'
 import { authAccountRoutes, authLinkRoutes, authRoutes, authSessionRoutes } from '@/features/auth/routes'
 import { calendarRoutes } from '@/features/calendar/routes'
+import { companySettingsRoutes } from '@/features/company-settings/routes'
 import { dashboardRoutes } from '@/features/dashboard/routes'
 import { demoBadgesRoutes } from '@/features/demo-badges/routes'
 import { demoChartsRoutes } from '@/features/demo-charts/routes'
@@ -67,7 +68,7 @@ const homeRouteGroup: RouteObject = {
  */
 const utilityRoutes: RouteObject = {
   handle: { surface: 'utility' },
-  children: toRouteObjects([...calendarRoutes, ...placeholderUtilityRoutes, ...settingsRoutes, ...authAccountRoutes], true),
+  children: toRouteObjects([...calendarRoutes, ...companySettingsRoutes, ...placeholderUtilityRoutes, ...settingsRoutes, ...authAccountRoutes], true),
 }
 
 /**

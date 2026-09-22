@@ -2,6 +2,7 @@ using Access.Application;
 using Access.Persistence;
 using Collaboration.Application;
 using CRM.Application;
+using TenantLifecycle.Application;
 using Host.Modules;
 using Host.Tests.Fixtures;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +22,7 @@ public sealed class PlatformModulesTests : IClassFixture<AuthApiFixture>
     public PlatformModulesTests(AuthApiFixture fixture) => _fixture = fixture;
 
     [Fact]
-    public void The_registry_is_the_union_of_access_crm_and_collaboration_with_no_duplicates()
+    public void The_registry_is_the_union_of_access_crm_collaboration_and_tenant_lifecycle_with_no_duplicates()
     {
         var keys = PlatformModules.ActionRegistry.Select(d => d.ActionKey).ToList();
 
@@ -29,9 +30,11 @@ public sealed class PlatformModulesTests : IClassFixture<AuthApiFixture>
         Assert.Superset(AccessActionCatalog.All.Select(d => d.ActionKey).ToHashSet(), keys.ToHashSet());
         Assert.Superset(CrmActionCatalog.All.Select(d => d.ActionKey).ToHashSet(), keys.ToHashSet());
         Assert.Superset(CollaborationActionCatalog.All.Select(d => d.ActionKey).ToHashSet(), keys.ToHashSet());
-        Assert.Equal(AccessActionCatalog.All.Count + CrmActionCatalog.All.Count + CollaborationActionCatalog.All.Count, keys.Count);
+        Assert.Superset(TenantLifecycleActionCatalog.All.Select(d => d.ActionKey).ToHashSet(), keys.ToHashSet());
+        Assert.Equal(AccessActionCatalog.All.Count + CrmActionCatalog.All.Count + CollaborationActionCatalog.All.Count + TenantLifecycleActionCatalog.All.Count, keys.Count);
         Assert.All(PlatformModules.ActionRegistry.Where(d => d.ActionKey.StartsWith("crm.", StringComparison.Ordinal)), d => Assert.Equal("CRM", d.OwnerModule));
         Assert.All(PlatformModules.ActionRegistry.Where(d => d.ActionKey.StartsWith("collaboration.", StringComparison.Ordinal)), d => Assert.Equal("Collaboration", d.OwnerModule));
+        Assert.All(PlatformModules.ActionRegistry.Where(d => d.ActionKey.StartsWith("tenant.", StringComparison.Ordinal)), d => Assert.Equal("TenantLifecycle", d.OwnerModule));
     }
 
     [Fact]
@@ -45,6 +48,7 @@ public sealed class PlatformModulesTests : IClassFixture<AuthApiFixture>
         var catalog = new ModuleCapabilityCatalog(PlatformModules.CapabilityManifests);
         Assert.NotNull(catalog.Find("crm"));
         Assert.NotNull(catalog.Find("collaboration"));
+        Assert.NotNull(catalog.Find("tenant_lifecycle"));
     }
 
     [Fact]

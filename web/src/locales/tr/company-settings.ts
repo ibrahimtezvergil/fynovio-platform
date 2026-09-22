@@ -1,0 +1,62 @@
+export default {
+  page: {
+    eyebrow: 'Çalışma alanı yönetimi',
+    title: 'Şirket ayarları',
+    description: 'Şirket kimliğini ve çalışma varsayılanlarını yönetin.',
+  },
+  identity: {
+    title: 'Şirket kimliği',
+    description: 'Ekip içinde görünen temel şirket bilgileri.',
+    displayName: 'Görünen şirket adı',
+    legalName: 'Yasal unvan',
+    legalNameHint: 'Fatura ve resmi belgelerde kullanılacak ad.',
+  },
+  legal: {
+    title: 'Vergi bilgileri',
+    description: 'Yasal süreçlerde kullanılan tanımlayıcılar.',
+    taxNumber: 'Vergi numarası',
+    taxOffice: 'Vergi dairesi',
+  },
+  contact: {
+    title: 'İletişim ve varsayılanlar',
+    description: 'Şirket iletişim bilgileri ve çalışma tercihleri.',
+    email: 'E-posta',
+    phone: 'Telefon',
+    address: 'Adres',
+    timezone: 'Zaman dilimi',
+    currency: 'Para birimi',
+  },
+  timezone: {
+    'Europe/Istanbul': '(GMT+03:00) İstanbul',
+    'Europe/Berlin': '(GMT+01:00) Berlin',
+    'Europe/London': '(GMT+00:00) Londra',
+  },
+  currency: {
+    TRY: '₺ Türk lirası (TRY)',
+    EUR: '€ Euro (EUR)',
+    USD: '$ ABD doları (USD)',
+  },
+  saveBar: {
+    allSaved: 'Tüm değişiklikler kaydedildi',
+    unsaved: 'Kaydedilmemiş değişiklikler var',
+    discard: 'Vazgeç',
+    save: 'Değişiklikleri kaydet',
+  },
+  validation: {
+    required: 'Bu alan zorunludur.',
+    maxChars: 'En fazla {{max}} karakter kullanın.',
+    singleLine: 'Satır sonu veya kontrol karakteri kullanmayın.',
+    displayName: 'En az 2 karakter girin.',
+    email: 'Geçerli bir e-posta girin.',
+    address: 'Adres yalnızca normal metin ve satır sonları içerebilir.',
+  },
+  problem: {
+    forbiddenTitle: 'Şirket ayarlarını görüntüleme izniniz yok',
+    forbiddenDescription: 'Erişim için bir çalışma alanı yöneticisiyle görüşün.',
+    notFoundTitle: 'Şirket profili henüz hazır değil',
+    notFoundDescription: 'Çalışma alanı hazırlığı tamamlandıktan sonra tekrar deneyin.',
+    genericTitle: 'Şirket ayarları yüklenemedi',
+    conflictTitle: 'Değişiklikler yenilendi',
+    conflict: 'Bu ayarlar başka biri tarafından güncellendi. En güncel değerler yüklendi; değişikliklerinizi tekrar uygulayın.',
+  },
+}

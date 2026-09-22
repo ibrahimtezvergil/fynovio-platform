@@ -49,6 +49,7 @@ export default defineConfig({
         ConnectionStrings__Crm: RUNTIME_CONNECTION,
         ConnectionStrings__Collaboration: RUNTIME_CONNECTION,
         ConnectionStrings__MasterData: RUNTIME_CONNECTION,
+        ConnectionStrings__TenantLifecycle: RUNTIME_CONNECTION,
         DevSeed__Enabled: 'true',
         DevSeed__Password: SEED_PASSWORD,
         Email__Smtp__Enabled: 'false',

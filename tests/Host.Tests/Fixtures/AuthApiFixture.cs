@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Testcontainers.PostgreSql;
+using TenantLifecycle.Persistence;
 using Xunit;
 
 namespace Host.Tests.Fixtures;
@@ -150,6 +151,8 @@ public sealed class AuthApiFixture : IAsyncLifetime
             await access.Database.MigrateAsync();
         await using (var collaboration = AuthTestFixture.CreateCollaborationContext(AdminConnectionString))
             await collaboration.Database.MigrateAsync();
+        await using (var tenantLifecycle = CreateTenantLifecycleContext(AdminConnectionString))
+            await tenantLifecycle.Database.MigrateAsync();
 
         _runtimeConnectionString = await AuthTestFixture.CreateRuntimeRoleAsync(AdminConnectionString);
     }
@@ -174,6 +177,7 @@ public sealed class AuthApiFixture : IAsyncLifetime
             ["ConnectionStrings__Collaboration"] = _runtimeConnectionString,
             ["ConnectionStrings__Access"] = _runtimeConnectionString,
             ["ConnectionStrings__MasterData"] = _runtimeConnectionString,
+            ["ConnectionStrings__TenantLifecycle"] = _runtimeConnectionString,
             ["ASPNETCORE_ENVIRONMENT"] = "Development",
             ["Authentication__Session__RequireSessionClaim"] = "true",
             ["Authentication__Session__RefreshGraceSeconds"] = "1",
@@ -206,6 +210,12 @@ public sealed class AuthApiFixture : IAsyncLifetime
             EnvironmentGate.Release();
         }
     }
+
+    private static TenantLifecycleDbContext CreateTenantLifecycleContext(string connectionString) => new(
+        new DbContextOptionsBuilder<TenantLifecycleDbContext>()
+            .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", TenantLifecycleDbContext.Schema))
+            .UseSnakeCaseNamingConvention()
+            .Options);
 
     private AccessDbContext CreateAdminAccessContext() => AuthTestFixture.CreateAccessContext(AdminConnectionString);
 
