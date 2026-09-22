@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { endpoints } from '@/api/endpoints'
 import { useSessionStore } from '@/lib/auth'
 import { server } from '@/mocks/server'
@@ -15,6 +15,14 @@ const settings = {
   address: null, timezone: 'Europe/Istanbul', currencyCode: 'TRY', rowVersion: 3,
 } as const
 
+beforeAll(() => {
+  globalThis.IntersectionObserver ??= class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof IntersectionObserver
+})
+
 beforeEach(() => {
   resetSession()
   useSessionStore.getState().applyAuthResult(authenticated({ activeTenant: { tenantId: 1 } }))
@@ -27,6 +35,8 @@ describe('CompanySettingsPage', () => {
     expect(await screen.findByDisplayValue('Acme Logistics')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: t('page.title') })).toBeInTheDocument()
     expect(screen.queryByText(/profile settings|profil ayarları/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: t('page.sectionNavLabel') })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: t('page.sectionIdentity') })).toHaveAttribute('href', '#sirket-kimligi')
   })
 
   it('submits the full replacement with the server version and resets its dirty state', async () => {
