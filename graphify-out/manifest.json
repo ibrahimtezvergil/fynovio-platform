@@ -1182,9 +1182,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/PermissionSet.cs": {
-    "mtime": 1790153234.8487601,
-    "seen": 1790155173.226347,
-    "ast_hash": "36063da560b22f5fdb44f3f99cecebde",
+    "mtime": 1790178889.622289,
+    "seen": 1790180733.797173,
+    "ast_hash": "d0eb84d14027684c2b4b16ad7d09106c",
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/PermissionSetItem.cs": {
@@ -1326,9 +1326,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/BootstrapTenantAccessHandler.cs": {
-    "mtime": 1790171345.5411773,
-    "seen": 1790171896.140779,
-    "ast_hash": "87eb5faee8eafa2a5b268f6d31c00e6e",
+    "mtime": 1790180206.1184313,
+    "seen": 1790180733.797158,
+    "ast_hash": "3e7d9765fd5c419135a6349250659916",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/GrantRoleAssignmentCommand.cs": {
@@ -1464,9 +1464,9 @@
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/BootstrapTenantAccessHandlerTests.cs": {
-    "mtime": 1790171454.1274312,
-    "seen": 1790171896.141034,
-    "ast_hash": "478078707ffbb89d830bc3984090b099",
+    "mtime": 1790178889.7522635,
+    "seen": 1790180733.797407,
+    "ast_hash": "cef5a070de13b0c328d5d39de037ece2",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/GrantRevokeRoleAssignmentHandlerTests.cs": {
@@ -7800,9 +7800,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/GetTenantAccessOverviewQuery.cs": {
-    "mtime": 1790171345.5895495,
-    "seen": 1790171896.1407812,
-    "ast_hash": "9483ea212526f53f77721a1c99b8a16c",
+    "mtime": 1790180206.319149,
+    "seen": 1790180733.7971609,
+    "ast_hash": "d12834bfdda2abcf01bee918363e4f4b",
     "semantic_hash": ""
   },
   "src/Modules/TenantLifecycle/Application/CompanySettings.cs": {
@@ -8100,9 +8100,9 @@
     "semantic_hash": ""
   },
   "web/src/features/company-settings/pages/CompanySettingsPage.tsx": {
-    "mtime": 1790154397.6172748,
-    "seen": 1790155173.22683,
-    "ast_hash": "399259d65e02c629479a3b4c5a009c19",
+    "mtime": 1790180296.389233,
+    "seen": 1790180733.797659,
+    "ast_hash": "d8118c057be2d7f310cbc25fa348811f",
     "semantic_hash": ""
   },
   "web/src/features/company-settings/routes.ts": {
@@ -8118,15 +8118,15 @@
     "semantic_hash": ""
   },
   "web/src/locales/en/company-settings.ts": {
-    "mtime": 1790154397.7068374,
-    "seen": 1790155173.227048,
-    "ast_hash": "2b180173e998539c2e16ed00b07a4557",
+    "mtime": 1790180296.4989564,
+    "seen": 1790180733.7978802,
+    "ast_hash": "f99d65002f5f77f97b63d04ff339f662",
     "semantic_hash": ""
   },
   "web/src/locales/tr/company-settings.ts": {
-    "mtime": 1790154397.662064,
-    "seen": 1790155173.2270641,
-    "ast_hash": "ab4984f857ea746fd49fda1c7f414ee2",
+    "mtime": 1790180296.4411242,
+    "seen": 1790180733.797896,
+    "ast_hash": "1a4286606039396872c28ae699c1f459",
     "semantic_hash": ""
   },
   "docs/plans/tenant-company-settings/2026-09-22-company-settings-plan.md": {
@@ -8196,9 +8196,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/ManageTenantRoleHandler.cs": {
-    "mtime": 1790153458.5310218,
-    "seen": 1790155173.2263381,
-    "ast_hash": "e2eba668a3ddf1eea0f4fbdcc4bfb8f4",
+    "mtime": 1790180206.2014208,
+    "seen": 1790180733.797164,
+    "ast_hash": "5542a03863a28c2a4e64413fbae09c22",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/RoleAssignmentConflictException.cs": {
