@@ -1,5 +1,6 @@
 using Access.Application;
 using Access.Idempotency;
+using Access.Application.Authentication;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,6 +15,11 @@ public sealed class AccessProblemDetailsExceptionHandler : IExceptionHandler
         {
             AuthorizationDeniedException => (StatusCodes.Status403Forbidden, "forbidden"),
             IdempotencyKeyReusedException => (StatusCodes.Status409Conflict, "idempotency_key_reused"),
+            RoleAssignmentConflictException => (StatusCodes.Status409Conflict, "role_assignment_conflict"),
+            TenantAccessRevisionConflictException => (StatusCodes.Status409Conflict, "access_revision_conflict"),
+            SystemRoleImmutableException => (StatusCodes.Status422UnprocessableEntity, "system_role_immutable"),
+            InvitationUnavailableException => (StatusCodes.Status409Conflict, "invitation_unavailable"),
+            InvitationRoleUnavailableException => (StatusCodes.Status422UnprocessableEntity, "invitation_role_unavailable"),
             _ => (0, (string?)null)
         };
 

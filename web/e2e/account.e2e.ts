@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { adminToken, createMember, invite, login, mailFor, newApi, uniqueEmail } from './support/api.ts'
 import { NEW_PASSWORD, OTHER_PASSWORD, SEED_PASSWORD } from './support/env.ts'
-import { emailField, openUserMenu, passwordField, signIn, signInAndWait, t } from './support/ui.ts'
+import { emailField, openUserMenu, passwordField, signIn, signInAndWait, t, tenantName } from './support/ui.ts'
 
 const newPassword = (page: import('@playwright/test').Page) => passwordField(page, t.auth.passwordFields.newPassword)
 const confirmPassword = (page: import('@playwright/test').Page) => passwordField(page, t.auth.passwordFields.confirmPassword)
@@ -161,7 +161,7 @@ test.describe('invitations', () => {
     await page.getByRole('button', { name: t.auth.acceptInvite.submit }).click()
 
     await expect(page).toHaveURL(/\/select-tenant/) // now a member of two organisations
-    await expect(page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '2') })).toBeVisible()
+    await expect(page.getByRole('button', { name: tenantName(2) })).toBeVisible()
   })
 
   test('an invitation link opens even in a browser that is already signed in', async ({ page }) => {

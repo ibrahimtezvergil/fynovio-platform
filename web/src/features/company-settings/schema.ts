@@ -59,9 +59,23 @@ const roleAssignmentSchema = z.object({
   assignmentId: z.number().int().positive(),
   roleKey: z.string().min(1),
   roleName: z.string().min(1),
+  canRevoke: z.boolean(),
 })
 
 export const companyAccessOverviewSchema = z.object({
+  revision: z.number().int().nonnegative().default(0),
+  canInvite: z.boolean(),
+  canGrant: z.boolean(),
+  canRevoke: z.boolean(),
+  canManageRoles: z.boolean().default(false),
+  availableActions: z.array(z.object({ key: z.string().min(1), ownerModule: z.string().min(1), resourceType: z.string().min(1) })).default([]),
+  pendingInvitations: z.array(z.object({
+    invitationId: z.string().uuid(),
+    email: z.string().email(),
+    displayName: z.string().nullable(),
+    roleKey: z.string().nullable(),
+    expiresAt: z.string().datetime({ offset: true }),
+  })),
   members: z.array(z.object({
     principalIssuer: z.string().min(1),
     principalSubject: z.string().min(1),
@@ -74,7 +88,8 @@ export const companyAccessOverviewSchema = z.object({
     key: z.string().min(1),
     name: z.string().min(1),
     origin: z.enum(['tenant', 'system_template']),
-    actionKeys: z.array(z.string().min(1)),
+    canEdit: z.boolean().default(false),
+    permissions: z.array(z.object({ actionKey: z.string().min(1), relation: z.string().nullable() })),
   })),
 })
 

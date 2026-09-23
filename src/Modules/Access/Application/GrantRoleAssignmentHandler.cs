@@ -73,6 +73,13 @@ public sealed class GrantRoleAssignmentHandler(AccessDbContext context, IAuthori
         var role = await context.Roles.SingleOrDefaultAsync(r => r.TenantId == command.TenantId && r.Key == command.RoleKey, cancellationToken)
             ?? throw new InvalidOperationException($"Role '{command.RoleKey}' does not exist for tenant {command.TenantId}.");
 
+        // Serialize access changes for this tenant before checking the active grant.
+        await context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE access.tenant_access_state SET revision = revision WHERE tenant_id = {command.TenantId.Value}", cancellationToken);
+        if (await context.RoleAssignments.AnyAsync(a => a.TenantId == command.TenantId
+            && a.AccountId == granteeAccountId && a.RoleId == role.Id && a.ValidTo == null, cancellationToken))
+            throw new RoleAssignmentConflictException("This member already has the role.");
+
         var assignment = RoleAssignment.Grant(command.TenantId, granteeAccountId, role.Id, grantedByAccountId, RoleAssignment.SourceManual, command.Reason);
         context.RoleAssignments.Add(assignment);
 

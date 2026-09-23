@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Access.Domain.Authentication;
 using Access.Domain.Identity;
+using Access.Domain.Authorization;
 using Access.Evidence;
 using Access.Outbox;
 using Access.Persistence;
@@ -28,6 +29,7 @@ public sealed class AcceptInvitationHandler
     private readonly AccountTokenService _tokens;
     private readonly AuthEventWriter _eventWriter;
     private readonly TimeProvider _timeProvider;
+    private readonly IAuthorizer? _authorizer;
 
     public AcceptInvitationHandler(
         AccessDbContext context,
@@ -37,7 +39,8 @@ public sealed class AcceptInvitationHandler
         SessionOptions sessionOptions,
         AccountTokenService tokens,
         AuthEventWriter eventWriter,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        IAuthorizer? authorizer = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _passwordService = passwordService ?? throw new ArgumentNullException(nameof(passwordService));
@@ -46,6 +49,7 @@ public sealed class AcceptInvitationHandler
         _tokens = tokens ?? throw new ArgumentNullException(nameof(tokens));
         _eventWriter = eventWriter ?? throw new ArgumentNullException(nameof(eventWriter));
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _authorizer = authorizer;
         _verifier = new CredentialVerifier(context, passwordService, lockoutOptions ?? throw new ArgumentNullException(nameof(lockoutOptions)));
     }
 
@@ -99,6 +103,11 @@ public sealed class AcceptInvitationHandler
             if (!await _tokens.TryConsumeAsync(token.Id, now, cancellationToken))
                 return invalid; // lost the race for the single use; nothing was created
 
+            await _context.SetTenantContextAsync(tenantId, cancellationToken);
+            var delivery = await _context.InvitationDeliveries.SingleOrDefaultAsync(row =>
+                row.TenantId == tenantId && row.InvitationId == token.Id, cancellationToken);
+            delivery?.MarkDelivered(now);
+
             if (credential is null)
             {
                 var displayName = FirstNonBlank(command.DisplayName, token.DisplayName, email[..email.IndexOf('@')]);
@@ -146,6 +155,49 @@ public sealed class AcceptInvitationHandler
             {
                 await transaction.RollbackAsync(cancellationToken); // an invitation never re-enables a disabled member
                 return invalid;
+            }
+
+            if (token.InvitedRoleKey is { } invitedRoleKey)
+            {
+                var inviter = await _context.ExternalIdentities.AsNoTracking()
+                    .Where(identity => identity.AccountId == token.CreatedByAccountId)
+                    .Select(identity => new PrincipalRef(identity.Issuer, identity.Subject))
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (inviter == default || _authorizer is null
+                    || !(await _authorizer.AuthorizeAsync(new AuthorizationRequest(
+                        new ActorContext(tenantId, inviter, CorrelationIds.ParseOrNew(command.CorrelationId)),
+                        new ActionKey("access.role_assignment.grant"),
+                        new ResourceDescriptor("Access.RoleAssignment", null, null)), cancellationToken)).IsAllowed)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return invalid;
+                }
+                var role = await _context.Roles.SingleOrDefaultAsync(r => r.TenantId == tenantId && r.Key == invitedRoleKey,
+                    cancellationToken);
+                if (role is null || token.CreatedByAccountId is null)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return invalid;
+                }
+
+                var alreadyGranted = await _context.RoleAssignments.AnyAsync(a => a.TenantId == tenantId
+                    && a.AccountId == account.Id && a.RoleId == role.Id && a.ValidTo == null, cancellationToken);
+                if (!alreadyGranted)
+                {
+                    var assignment = RoleAssignment.Grant(tenantId, account.Id, role.Id, token.CreatedByAccountId.Value,
+                        RoleAssignment.SourceManual, "Invitation");
+                    _context.RoleAssignments.Add(assignment);
+                    var accessState = await _context.TenantAccessStates.SingleAsync(s => s.TenantId == tenantId, cancellationToken);
+                    accessState.BumpRevision();
+                    await SaveAllowingCredentialConflictAsync(credential, cancellationToken);
+                    var grantPayload = JsonSerializer.Serialize(new { accountId = account.Id, roleKey = invitedRoleKey, invitationId = token.Id });
+                    var grantCorrelationId = CorrelationIds.ParseOrNew(command.CorrelationId);
+                    _context.EvidenceRecords.Add(EvidenceRecord.Create(tenantId, nameof(RoleAssignment), assignment.Id,
+                        assignment.RowVersion, inviter, "RoleAssignment.GrantFromInvitation", grantPayload, grantCorrelationId));
+                    _context.OutboxMessages.Add(OutboxMessage.Create(tenantId, nameof(RoleAssignment), assignment.Id,
+                        assignment.RowVersion, "enterprise.access.role_assignment.granted.v1", "/enterprise/access",
+                        $"role-assignments/{assignment.Id}", grantCorrelationId, null, grantPayload));
+                }
             }
 
             await SaveAllowingCredentialConflictAsync(credential, cancellationToken); // assigns the membership id

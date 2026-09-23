@@ -22,9 +22,11 @@ export interface SessionUser {
 
 export interface Membership {
   tenantId: number
+  displayName: string
 }
 
-const membershipSchema = z.object({ tenantId: z.number() })
+const tenantReferenceSchema = z.object({ tenantId: z.number() })
+const membershipSchema = tenantReferenceSchema.extend({ displayName: z.string() })
 
 /** Shared response of `POST /auth/login` and `POST /auth/refresh`. */
 export const authResultSchema = z.object({
@@ -37,7 +39,7 @@ export const authResultSchema = z.object({
     displayName: z.string(),
     locale: z.string().nullish(),
   }),
-  activeTenant: membershipSchema.nullish(),
+  activeTenant: tenantReferenceSchema.nullish(),
   memberships: z.array(membershipSchema),
 })
 export type AuthResult = z.infer<typeof authResultSchema>
@@ -46,6 +48,6 @@ export type AuthResult = z.infer<typeof authResultSchema>
 export const tenantSelectionSchema = z.object({
   accessToken: z.string(),
   expiresIn: z.number(),
-  activeTenant: membershipSchema,
+  activeTenant: tenantReferenceSchema,
 })
 export type TenantSelection = z.infer<typeof tenantSelectionSchema>

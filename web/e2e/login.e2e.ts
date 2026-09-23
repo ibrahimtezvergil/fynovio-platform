@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { ADMIN, APP_URL, NO_MEMBERSHIP, SEED_PASSWORD, SINGLE } from './support/env.ts'
-import { emailField, expectNoTokenInStorage, passwordField, signIn, signOut, t, tenantLabel, userMenuTrigger } from './support/ui.ts'
+import { emailField, expectNoTokenInStorage, passwordField, signIn, signOut, t, tenantName, userMenuTrigger } from './support/ui.ts'
 
 test.describe('signing in and out', () => {
   test('signs in, survives a reload, holds no token in web storage, and signs out for good', async ({ page }) => {
@@ -82,12 +82,12 @@ test.describe('signing in and out', () => {
     await signIn(page, ADMIN, SEED_PASSWORD)
 
     await expect(page).toHaveURL(/\/select-tenant/)
-    await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await page.getByRole('button', { name: tenantName(1) }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
 
     // The organisation switcher is the sidebar's top slot; the home page has no sidebar, so go into the CRM.
     await page.goto('/crm/opportunities')
-    const slot = (id: number) => page.getByRole('button', { name: tenantLabel(id), exact: true })
+    const slot = (id: number) => page.getByRole('button', { name: tenantName(id), exact: true })
     await slot(1).click()
     const selected = page.waitForResponse((r) => r.url().endsWith('/api/auth/tenants/select') && r.request().method() === 'POST')
     await slot(2).click() // the server checks the membership and mints a token for tenant 2; the popover closes itself
@@ -99,7 +99,7 @@ test.describe('signing in and out', () => {
     const switcher = page.getByRole('group', { name: t.auth.tenantSwitcher.label })
     await expect(async () => {
       if (!(await switcher.isVisible())) await slot(2).click()
-      await expect(switcher.getByRole('button', { name: tenantLabel(2), exact: true })).toHaveAttribute('aria-current', 'true', { timeout: 1_000 })
+      await expect(switcher.getByRole('button', { name: tenantName(2), exact: true })).toHaveAttribute('aria-current', 'true', { timeout: 1_000 })
     }).toPass({ timeout: 10_000 })
   })
 

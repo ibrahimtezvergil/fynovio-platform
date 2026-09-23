@@ -67,7 +67,7 @@ describe('UserMenu sign-out', () => {
   })
 
   it('does not carry the tenant switcher, even for multi-tenant accounts', () => {
-    useSessionStore.getState().applyAuthResult(authenticated({ memberships: [{ tenantId: 1 }, { tenantId: 2 }] }))
+    useSessionStore.getState().applyAuthResult(authenticated({ memberships: [{ tenantId: 1, displayName: 'Acme Türkiye' }, { tenantId: 2, displayName: 'Northwind' }] }))
     renderRoutes(routes(), '/')
     openMenu()
     expect(screen.queryByRole('group', { name: tr('tenantSwitcher.label') })).not.toBeInTheDocument()

@@ -83,7 +83,8 @@ internal static class AuthTestSetup
 
     public static AcceptInvitationHandler Acceptor(AccessDbContext context, TimeProvider time, LockoutOptions? lockout = null) =>
         new(context, new PasswordService(), new PasswordPolicy(new PasswordPolicyOptions()), lockout ?? new LockoutOptions(),
-            Session, Tokens(context), new AuthEventWriter(context), time);
+            Session, Tokens(context), new AuthEventWriter(context), time,
+            new AccessAuthorizer(context, new PrincipalResolver(context), new AccessActionCatalogService(context)));
 
     /// <summary>An invitation created by the real handler; returns the raw token that was "mailed".</summary>
     public static async Task<string> InviteAsync(

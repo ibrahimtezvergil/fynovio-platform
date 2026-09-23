@@ -9,4 +9,5 @@ export const placeholderUtilityRoutes = [
   { path: paths.files, protected: true, element: createElement(PlaceholderPage, { titleKey: 'files' }) },
   { path: paths.feedback, protected: true, element: createElement(PlaceholderPage, { titleKey: 'feedback' }) },
   { path: paths.members, protected: true, element: createElement(PlaceholderPage, { titleKey: 'members' }) },
+  { path: paths.companyCreate, protected: true, element: createElement(PlaceholderPage, { titleKey: 'companyCreate' }) },
 ] satisfies FeatureRoute[]

@@ -1,6 +1,5 @@
 import { ChevronsUpDown } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useSessionStore } from '@/lib/auth'
@@ -10,18 +9,18 @@ import { TenantSwitcher } from './TenantSwitcher'
 /**
  * The sidebar's active-organisation slot — square avatar: an org, not a person.
  * Accounts with several memberships open the switcher from it; single-tenant
- * accounts just see which organisation they are in. The API exposes only the
- * tenant id, so that is what the label is built from.
+ * accounts just see which organisation they are in. Memberships carry the
+ * display name used for the label.
  */
 export function TenantMenu({ collapsed }: { collapsed: boolean }) {
-  const { t } = useTranslation('auth')
   const activeTenantId = useSessionStore((s) => s.activeTenantId)
+  const memberships = useSessionStore((s) => s.memberships)
   const switchable = useSessionStore((s) => s.memberships.length > 1)
   const [open, setOpen] = useState(false)
 
   if (activeTenantId === null) return null
 
-  const label = t('tenantSelector.tenantLabel', { id: activeTenantId })
+  const label = memberships.find((membership) => membership.tenantId === activeTenantId)?.displayName
   const slotClass = cn(
     'nx-material flex h-11 items-center gap-2.5 rounded-[16px] text-left text-[13.5px] font-medium',
     collapsed ? 'w-11 shrink-0 justify-center px-0' : 'w-full px-[11px]',

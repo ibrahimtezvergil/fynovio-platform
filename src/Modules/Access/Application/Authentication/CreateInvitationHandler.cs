@@ -2,7 +2,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Access.Domain.Authentication;
+using Access.Domain.Authorization;
 using Access.Evidence;
+using Access.Idempotency;
 using Access.Outbox;
 using Access.Persistence;
 using Contracts;
@@ -25,6 +27,8 @@ public sealed class CreateInvitationHandler
     private readonly IEmailSender _emailSender;
     private readonly AuthEventWriter _eventWriter;
     private readonly TimeProvider _timeProvider;
+    private readonly IInvitationTokenProtector? _protector;
+    private readonly IInvitationPreviewRecorder? _previewRecorder;
 
     public CreateInvitationHandler(
         AccessDbContext context,
@@ -32,7 +36,9 @@ public sealed class CreateInvitationHandler
         AccountTokenService tokens,
         IEmailSender emailSender,
         AuthEventWriter eventWriter,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        IInvitationTokenProtector? protector = null,
+        IInvitationPreviewRecorder? previewRecorder = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _authorizer = authorizer ?? throw new ArgumentNullException(nameof(authorizer));
@@ -40,6 +46,8 @@ public sealed class CreateInvitationHandler
         _emailSender = emailSender ?? throw new ArgumentNullException(nameof(emailSender));
         _eventWriter = eventWriter ?? throw new ArgumentNullException(nameof(eventWriter));
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _protector = protector;
+        _previewRecorder = previewRecorder;
     }
 
     public async Task<CreateInvitationResult> HandleAsync(CreateInvitationCommand command, CancellationToken cancellationToken = default)
@@ -70,6 +78,29 @@ public sealed class CreateInvitationHandler
         }
 
         var email = EmailNormalizer.Normalize(command.Email);
+        if (command.RoleKey is not null)
+        {
+            var grantDecision = await _authorizer.AuthorizeAsync(new AuthorizationRequest(command.Actor,
+                new ActionKey("access.role_assignment.grant"), new ResourceDescriptor("Access.RoleAssignment", null, null)),
+                cancellationToken);
+            if (!grantDecision.IsAllowed)
+                throw new Access.Application.AuthorizationDeniedException("access.role_assignment.grant", grantDecision.ReasonCode);
+            if (!await _context.Roles.AnyAsync(role => role.TenantId == tenantId && role.Key == command.RoleKey, cancellationToken))
+                throw new InvitationRoleUnavailableException();
+        }
+        var requestHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
+            System.Text.Json.JsonSerializer.Serialize(new { email, command.DisplayName, command.Locale, command.RoleKey }))));
+        var idempotencyKey = command.IdempotencyKey ?? Guid.NewGuid().ToString("N");
+        var existing = await _context.IdempotencyRecords.AsNoTracking().SingleOrDefaultAsync(record =>
+            record.TenantId == tenantId && record.PrincipalIssuer == command.Actor.Principal.Issuer
+            && record.PrincipalSubject == command.Actor.Principal.Subject && record.Operation == "CreateInvitation"
+            && record.IdempotencyKey == idempotencyKey, cancellationToken);
+        if (existing is not null)
+        {
+            if (existing.RequestHash != requestHash)
+                throw new Access.Application.IdempotencyKeyReusedException("CreateInvitation", idempotencyKey);
+            return new CreateInvitationResult(CreateInvitationStatus.Accepted);
+        }
 
         var inviterAccountId = await _context.ExternalIdentities
             .Where(e => e.Issuer == command.Actor.Principal.Issuer && e.Subject == command.Actor.Principal.Subject)
@@ -77,12 +108,27 @@ public sealed class CreateInvitationHandler
             .FirstOrDefaultAsync(cancellationToken);
 
         // Only the newest invitation for (tenant, address) can be redeemed.
+        var priorInvitationIds = await _context.AccountTokens
+            .Where(token => token.Purpose == AccountTokenPurpose.Invite && token.TenantId == tenantId.Value
+                && token.EmailNormalized == email && token.ConsumedAt == null && token.RevokedAt == null)
+            .Select(token => token.Id).ToListAsync(cancellationToken);
         await _tokens.RevokeOutstandingInvitesAsync(tenantId.Value, email, now, cancellationToken);
+        if (priorInvitationIds.Count > 0)
+            await _context.InvitationDeliveries
+                .Where(delivery => delivery.TenantId == tenantId && priorInvitationIds.Contains(delivery.InvitationId))
+                .ExecuteUpdateAsync(update => update
+                    .SetProperty(delivery => delivery.DeliveredAt, now)
+                    .SetProperty(delivery => delivery.ProtectedToken, string.Empty), cancellationToken);
 
         var (secret, hash) = AccountTokenService.NewSecret();
         var token = AccountToken.CreateInvite(
-            tenantId.Value, email, command.DisplayName, command.Locale, hash, now, _tokens.InviteLifetime, inviterAccountId);
+            tenantId.Value, email, command.DisplayName, command.Locale, hash, now, _tokens.InviteLifetime, inviterAccountId,
+            command.RoleKey);
         _context.AccountTokens.Add(token);
+        var rawToken = AccountTokenService.Compose(token.Id, secret);
+        if (_protector is not null)
+            _context.InvitationDeliveries.Add(InvitationDelivery.Create(tenantId, token.Id,
+                _protector.Protect(rawToken), now));
 
         // Evidence/outbox are tenant-scoped (RLS): written inside the tenant context. They name the
         // invitation and a hash of the address — never the address or the token.
@@ -100,6 +146,8 @@ public sealed class CreateInvitationHandler
         _context.OutboxMessages.Add(OutboxMessage.Create(
             tenantId, "Tenant", tenantId.Value, revision, EventType, EventSource,
             $"tenants/{tenantId.Value}/invitations/{token.Id}", correlationId, null, payload));
+        _context.IdempotencyRecords.Add(IdempotencyRecord.Create(tenantId, command.Actor.Principal,
+            "CreateInvitation", idempotencyKey, requestHash, 202, payload, TimeSpan.FromDays(7)));
 
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
@@ -107,14 +155,16 @@ public sealed class CreateInvitationHandler
         await _eventWriter.WriteAsync("invite_created", "success", now, inviterAccountId, tenantId.Value,
             correlationId: correlationId.ToString(), ipHash: command.IpHash, cancellationToken: cancellationToken);
 
-        await _emailSender.SendAsync(
-            new EmailMessage(email, EmailMessage.InviteTemplate, command.Locale ?? "tr", new Dictionary<string, string>
-            {
-                ["token"] = AccountTokenService.Compose(token.Id, secret),
-                ["tenantId"] = tenantId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                ["expiresAt"] = token.ExpiresAt.ToString("O", System.Globalization.CultureInfo.InvariantCulture)
-            }),
-            cancellationToken);
+        var message = new EmailMessage(email, EmailMessage.InviteTemplate, command.Locale ?? "tr", new Dictionary<string, string>
+        {
+            ["token"] = rawToken,
+            ["tenantId"] = tenantId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["expiresAt"] = token.ExpiresAt.ToString("O", System.Globalization.CultureInfo.InvariantCulture)
+        });
+        if (_protector is null)
+            await _emailSender.SendAsync(message, cancellationToken);
+        else if (_previewRecorder is not null)
+            await _previewRecorder.RecordAsync(message, cancellationToken);
 
         return new CreateInvitationResult(CreateInvitationStatus.Accepted);
     }

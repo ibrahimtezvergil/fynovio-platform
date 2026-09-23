@@ -72,6 +72,7 @@ public static class AuthEndpoints
         ClientFingerprint fingerprint,
         AuthenticationHostOptions options,
         TimeProvider timeProvider,
+        ITenantDirectory tenantDirectory,
         CancellationToken cancellationToken)
     {
         var body = await TryReadJsonAsync<LoginRequest>(context, cancellationToken);
@@ -99,18 +100,20 @@ public static class AuthEndpoints
         if (result.Status == AuthenticationStatus.InvalidCredentials || result.RefreshCookie is null)
             return AuthProblems.InvalidCredentials();
 
-        return StartSession(context, result, issuer, cookieWriter, options, timeProvider);
+        return await StartSessionAsync(context, result, issuer, cookieWriter, options, timeProvider, tenantDirectory, cancellationToken);
     }
 
     /// <summary>Sets the refresh cookie and answers with the login-shaped body. Used by login and by
     /// invitation acceptance, which both end with a freshly created session.</summary>
-    internal static IResult StartSession(
+    internal static async Task<IResult> StartSessionAsync(
         HttpContext context,
         AuthenticateResult result,
         AccessTokenIssuer issuer,
         RefreshCookieWriter cookieWriter,
         AuthenticationHostOptions options,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        ITenantDirectory tenantDirectory,
+        CancellationToken cancellationToken)
     {
         if (result.RefreshCookie is null)
             return AuthProblems.SessionInvalid();
@@ -120,7 +123,7 @@ public static class AuthEndpoints
             result.RefreshCookie,
             result.SessionExpiresAt ?? timeProvider.GetUtcNow().AddDays(options.Session.RefreshAbsoluteDays));
 
-        return SessionResponse(issuer, result.Account, result.MembershipTenantIds, result.SelectedTenantId, result.Principal, result.SessionId);
+        return await SessionResponseAsync(issuer, result.Account, result.MembershipTenantIds, result.SelectedTenantId, result.Principal, result.SessionId, tenantDirectory, cancellationToken);
     }
 
     private static async Task<IResult> RefreshAsync(
@@ -131,6 +134,7 @@ public static class AuthEndpoints
         ClientFingerprint fingerprint,
         AuthenticationHostOptions options,
         TimeProvider timeProvider,
+        ITenantDirectory tenantDirectory,
         CancellationToken cancellationToken)
     {
         var cookieValue = cookieWriter.ReadToken(context.Request);
@@ -155,7 +159,7 @@ public static class AuthEndpoints
             result.RefreshCookie,
             result.SessionExpiresAt ?? timeProvider.GetUtcNow().AddDays(options.Session.RefreshAbsoluteDays));
 
-        return SessionResponse(issuer, result.Account, result.MembershipTenantIds, result.SelectedTenantId, result.Principal, result.SessionId);
+        return await SessionResponseAsync(issuer, result.Account, result.MembershipTenantIds, result.SelectedTenantId, result.Principal, result.SessionId, tenantDirectory, cancellationToken);
     }
 
     private static async Task<IResult> LogoutAsync(
@@ -219,6 +223,7 @@ public static class AuthEndpoints
         HttpContext context,
         GetSessionOverviewHandler handler,
         GetCapabilitiesHandler capabilitiesHandler,
+        ITenantDirectory tenantDirectory,
         CancellationToken cancellationToken)
     {
         var actor = context.GetActorContext();
@@ -231,12 +236,14 @@ public static class AuthEndpoints
 
         var capabilities = await capabilitiesHandler.HandleAsync(actor, cancellationToken);
 
+        var memberships = await MembershipsAsync(overview.MembershipTenantIds, tenantDirectory, cancellationToken);
+
         return Results.Ok(new
         {
             account = AccountBody(overview.Account),
             // The tenant the *token* is scoped to (validated by ActorContextMiddleware), not the session's latest selection.
             activeTenant = new { tenantId = actor.TenantId.Value },
-            memberships = overview.MembershipTenantIds.Select(id => new { tenantId = id }).ToList(),
+            memberships,
             // UX hints from the PDP; the backend authorises the action itself again when it is attempted.
             capabilities = new { canInviteMembers = capabilities.CanInviteMembers }
         });
@@ -244,18 +251,20 @@ public static class AuthEndpoints
 
     /// <summary>The shared body of login and refresh: `authenticated` (with an access token for
     /// the selected tenant), `tenant_selection_required` or `no_membership` (no token).</summary>
-    private static IResult SessionResponse(
+    private static async Task<IResult> SessionResponseAsync(
         AccessTokenIssuer issuer,
         AccountSummary? account,
         IReadOnlyList<long>? membershipTenantIds,
         long? selectedTenantId,
         PrincipalRef? principal,
-        Guid? sessionId)
+        Guid? sessionId,
+        ITenantDirectory tenantDirectory,
+        CancellationToken cancellationToken)
     {
         if (account is null)
             return AuthProblems.SessionInvalid();
 
-        var memberships = (membershipTenantIds ?? []).Select(id => new { tenantId = id }).ToList();
+        var memberships = await MembershipsAsync(membershipTenantIds ?? [], tenantDirectory, cancellationToken);
         var body = new Dictionary<string, object?>
         {
             ["account"] = AccountBody(account),
@@ -277,6 +286,23 @@ public static class AuthEndpoints
         }
 
         return Results.Ok(body);
+    }
+
+    private static async Task<IReadOnlyList<object>> MembershipsAsync(
+        IReadOnlyList<long> membershipTenantIds,
+        ITenantDirectory tenantDirectory,
+        CancellationToken cancellationToken)
+    {
+        var tenantIds = membershipTenantIds.Select(id => new TenantId(id)).ToList();
+        var names = (await tenantDirectory.GetEntriesAsync(tenantIds, cancellationToken))
+            .ToDictionary(entry => entry.TenantId.Value, entry => entry.DisplayName);
+        return membershipTenantIds
+            .Select(tenantId => (object)new
+            {
+                tenantId,
+                displayName = names.TryGetValue(tenantId, out var name) ? name : $"Tenant {tenantId}"
+            })
+            .ToList();
     }
 
     internal static object AccountBody(AccountSummary account) =>

@@ -20,9 +20,11 @@ export interface NavSection {
 export function SectionNav({
   sections,
   label,
+  sticky = true,
 }: {
   sections: readonly NavSection[]
   label: string
+  sticky?: boolean
 }) {
   const [active, setActive] = useState(sections[0]?.id ?? '')
 
@@ -47,7 +49,7 @@ export function SectionNav({
   }, [sections])
 
   return (
-    <Card className="sticky top-[88px] gap-0 px-2 py-2.5">
+    <Card className={`${sticky ? 'sticky top-[88px] ' : ''}gap-0 px-2 py-2.5`}>
       <nav aria-label={label} className="flex flex-col gap-0.5">
         {sections.map(({ id, label, icon: Icon }) => (
           <a

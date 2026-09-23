@@ -4,6 +4,7 @@ export default {
     files: 'Dosyalar',
     feedback: 'Geri Bildirim',
     members: 'Kullanıcılar',
+    companyCreate: 'Şirket oluştur',
   },
   notConnected: 'Bu modül henüz bağlanmadı.',
   inProgress: '{{title}} yapım aşamasında',

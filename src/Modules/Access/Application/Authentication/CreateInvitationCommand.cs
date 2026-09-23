@@ -10,7 +10,9 @@ public sealed record CreateInvitationCommand(
     string Email,
     string? DisplayName = null,
     string? Locale = null,
-    string? IpHash = null);
+    string? IpHash = null,
+    string? IdempotencyKey = null,
+    string? RoleKey = null);
 
 public enum CreateInvitationStatus
 {

@@ -15,7 +15,7 @@ function signIn() {
     expiresIn: 600,
     account: { id: 1, email: 'viewer@example.com', displayName: 'Viewer', locale: null },
     activeTenant: { tenantId: 1 },
-    memberships: [{ tenantId: 1 }],
+    memberships: [{ tenantId: 1, displayName: 'Acme Türkiye' }],
   })
 }
 

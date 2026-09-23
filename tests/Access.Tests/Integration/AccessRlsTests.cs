@@ -1,5 +1,7 @@
 using Access.Domain.Authorization;
 using Access.Domain.Identity;
+using Access.Domain.Authentication;
+using Access.Persistence;
 using Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +14,27 @@ public sealed class AccessRlsTests : IClassFixture<PostgresFixture>
     private readonly PostgresFixture _fixture;
 
     public AccessRlsTests(PostgresFixture fixture) => _fixture = fixture;
+
+    [Fact]
+    public async Task Runtime_role_cannot_read_or_insert_another_tenants_invitation_delivery()
+    {
+        var home = new TenantId(1901);
+        var foreign = new TenantId(1902);
+        var invitationId = Guid.NewGuid();
+        await using (var admin = _fixture.CreateAdminContext())
+        {
+            admin.InvitationDeliveries.Add(InvitationDelivery.Create(foreign, invitationId, "protected", DateTimeOffset.UtcNow));
+            await admin.SaveChangesAsync();
+        }
+
+        var runtimeConnectionString = await _fixture.RuntimeConnectionStringAsync();
+        await using var runtime = PostgresFixture.CreateContext(runtimeConnectionString);
+        await using var transaction = await runtime.Database.BeginTransactionAsync();
+        await runtime.SetTenantContextAsync(home);
+        Assert.False(await runtime.InvitationDeliveries.AnyAsync(delivery => delivery.InvitationId == invitationId));
+        runtime.InvitationDeliveries.Add(InvitationDelivery.Create(foreign, Guid.NewGuid(), "protected", DateTimeOffset.UtcNow));
+        await Assert.ThrowsAsync<DbUpdateException>(() => runtime.SaveChangesAsync());
+    }
 
     [Fact]
     public async Task Runtime_role_cannot_see_another_tenants_roles()

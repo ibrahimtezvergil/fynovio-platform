@@ -31,6 +31,33 @@ public sealed class InvitationAcceptanceTests : IClassFixture<PostgresFixture>
     private Task<long> CountAsync(string sql, params (string, object)[] p) => AuthTestSetup.ScalarLongAsync(_fixture, sql, p);
 
     [Fact]
+    public async Task Selected_invitation_role_is_granted_when_the_member_accepts()
+    {
+        var (tenant, admin) = await TenantWithAdminAsync();
+        var time = new TestTimeProvider();
+        var email = AuthTestSetup.NewEmail();
+        var mail = new FakeEmailSender();
+        await using (var context = await AuthTestSetup.RuntimeContextAsync(_fixture))
+        {
+            var result = await AuthTestSetup.Invitations(context, mail, time).HandleAsync(
+                new CreateInvitationCommand(AuthTestSetup.Actor(tenant, admin), email,
+                    RoleKey: "tenant_administrator"));
+            Assert.Equal(CreateInvitationStatus.Accepted, result.Status);
+        }
+
+        var accepted = await AcceptAsync(mail.TokenFor(email), NewPassword, time);
+        Assert.Equal(AcceptInvitationStatus.Accepted, accepted.Status);
+        await using var verify = _fixture.CreateAdminContext();
+        var roleId = await verify.Roles.Where(role => role.TenantId == tenant && role.Key == "tenant_administrator")
+            .Select(role => role.Id).SingleAsync();
+        Assert.Equal(1, await verify.RoleAssignments.CountAsync(assignment => assignment.TenantId == tenant
+            && assignment.AccountId == accepted.Session!.AccountId && assignment.RoleId == roleId
+            && assignment.ValidTo == null));
+        Assert.Equal(1, await verify.OutboxMessages.CountAsync(message => message.TenantId == tenant
+            && message.EventType == "enterprise.access.role_assignment.granted.v1"));
+    }
+
+    [Fact]
     public async Task Accepting_for_a_new_address_creates_the_account_membership_and_session()
     {
         var (tenant, admin) = await TenantWithAdminAsync();

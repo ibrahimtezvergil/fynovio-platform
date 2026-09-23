@@ -40,18 +40,18 @@ export default function TenantSelectorPage() {
         <CardDescription>{t('tenantSelector.description')}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-        {memberships.map(({ tenantId }) => (
+        {memberships.map((membership) => (
           <Button
-            key={tenantId}
+            key={membership.tenantId}
             type="button"
             variant="outline"
             size="lg"
             className="w-full justify-between"
             disabled={select.isPending}
-            onClick={() => void choose(tenantId)}
+            onClick={() => void choose(membership.tenantId)}
           >
-            <span>{t('tenantSelector.tenantLabel', { id: tenantId })}</span>
-            {pendingId === tenantId && <Loader2 aria-hidden className="size-4 animate-spin" />}
+            <span>{membership.displayName}</span>
+            {pendingId === membership.tenantId && <Loader2 aria-hidden className="size-4 animate-spin" />}
           </Button>
         ))}
         {error && (

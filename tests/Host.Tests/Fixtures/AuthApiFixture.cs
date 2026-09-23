@@ -183,6 +183,7 @@ public sealed class AuthApiFixture : IAsyncLifetime
             ["Authentication__Session__RefreshGraceSeconds"] = "1",
             // A developer's user-secrets may hold real SMTP credentials; tests must never send mail.
             ["Email__Smtp__Enabled"] = "false",
+            ["Email__Smtp__Host"] = "",
         };
         foreach (var (key, value) in settings ?? [])
             effective[key] = value;

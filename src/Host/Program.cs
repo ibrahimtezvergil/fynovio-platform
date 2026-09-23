@@ -16,6 +16,7 @@ using Host.Modules;
 using MasterData.Application;
 using MasterData.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -57,6 +58,7 @@ builder.Services.AddDbContext<AccessDbContext>(options => options
     .AddInterceptors(new RowVersionInterceptor()));
 
 builder.Services.AddScoped<IPartyDirectory, PartyDirectory>();
+builder.Services.AddScoped<ITenantDirectory, TenantDirectory>();
 builder.Services.AddScoped<IPartySearch, PartyDirectory>();
 builder.Services.AddScoped<CreatePartyHandler>();
 builder.Services.AddScoped<IPartyRegistration, PartyRegistration>();
@@ -165,6 +167,7 @@ builder.Services.AddScoped<EnableTenantModuleHandler>();
 // Invitations, password lifecycle, registration, bootstrap and capabilities
 builder.Services.AddScoped<AccountTokenService>();
 builder.Services.AddScoped<CreateInvitationHandler>();
+builder.Services.AddScoped<CancelInvitationHandler>();
 builder.Services.AddScoped<ValidateInvitationHandler>();
 builder.Services.AddScoped<AcceptInvitationHandler>();
 builder.Services.AddScoped<RequestPasswordResetHandler>();
@@ -188,9 +191,20 @@ if (emailOptions.Smtp.Enabled)
 else
     builder.Services.AddSingleton<IEmailTransport, UndeliveredEmailTransport>();
 if (builder.Environment.IsDevelopment())
+{
     builder.Services.AddSingleton<DevMailbox>();
+    builder.Services.AddSingleton<IInvitationPreviewRecorder, DevInvitationPreviewRecorder>();
+}
 builder.Services.AddSingleton<IEmailSender, EmailDispatcher>();
 builder.Services.AddHostedService<EmailDeliveryService>();
+var invitationKeyRingPath = builder.Configuration["Email:InvitationKeyRingPath"];
+if (emailOptions.Smtp.Enabled && !builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(invitationKeyRingPath))
+    throw new InvalidOperationException("Email:InvitationKeyRingPath is required for durable invitation delivery.");
+var dataProtection = builder.Services.AddDataProtection().SetApplicationName("fynovio-platform");
+if (!string.IsNullOrWhiteSpace(invitationKeyRingPath))
+    dataProtection.PersistKeysToFileSystem(new DirectoryInfo(invitationKeyRingPath));
+builder.Services.AddSingleton<IInvitationTokenProtector, InvitationTokenProtector>();
+builder.Services.AddHostedService<InvitationDeliveryService>();
 
 // Register Host authentication infrastructure
 builder.Services.AddScoped<AccessTokenIssuer>();
@@ -220,6 +234,7 @@ builder.Services.AddScoped<UpdateCompanySettingsHandler>();
 builder.Services.AddScoped<GetTenantAccessOverviewHandler>();
 builder.Services.AddScoped<GrantRoleAssignmentHandler>();
 builder.Services.AddScoped<RevokeRoleAssignmentHandler>();
+builder.Services.AddScoped<ManageTenantRoleHandler>();
 builder.Services.AddScoped<CreateOpportunityHandler>();
 builder.Services.AddScoped<AddOpportunityLineHandler>();
 builder.Services.AddScoped<CancelOpportunityLineHandler>();

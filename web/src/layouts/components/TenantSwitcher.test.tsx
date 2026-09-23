@@ -5,13 +5,14 @@ import { queryClient } from '@/api/queryClient'
 import { useSessionStore } from '@/lib/auth'
 import { server } from '@/mocks/server'
 import { authenticated, problem, selectTenantHandler } from '@/test/authHandlers'
-import { renderPage, tr } from '@/test/render'
+import { renderPage } from '@/test/render'
 import { resetSession } from '@/test/session'
 import { TenantSwitcher } from './TenantSwitcher'
 
 beforeEach(resetSession)
 
-const tenantButton = (id: number) => screen.getByRole('button', { name: new RegExp(tr('tenantSelector.tenantLabel', { id })) })
+const tenantName = (id: number) => id === 1 ? 'Acme Türkiye' : 'Northwind'
+const tenantButton = (id: number) => screen.getByRole('button', { name: new RegExp(tenantName(id), 'i') })
 
 describe('TenantSwitcher', () => {
   it('renders nothing for a single-tenant account', () => {
@@ -21,15 +22,23 @@ describe('TenantSwitcher', () => {
   })
 
   it('lists the tenants of a multi-tenant account and marks the active one', () => {
-    useSessionStore.getState().applyAuthResult(authenticated({ memberships: [{ tenantId: 1 }, { tenantId: 2 }] }))
+    useSessionStore.getState().applyAuthResult(authenticated({ memberships: [{ tenantId: 1, displayName: tenantName(1) }, { tenantId: 2, displayName: tenantName(2) }] }))
     renderPage(<TenantSwitcher />)
 
     expect(tenantButton(1)).toHaveAttribute('aria-current', 'true')
     expect(tenantButton(2)).not.toHaveAttribute('aria-current')
   })
 
+  it('uses the tenant display name when the authenticated session provides one', () => {
+    useSessionStore.getState().applyAuthResult(authenticated({ memberships: [{ tenantId: 1, displayName: tenantName(1) }, { tenantId: 2, displayName: tenantName(2) }] }))
+    renderPage(<TenantSwitcher />)
+
+    expect(screen.getByRole('button', { name: /acme türkiye/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /northwind/i })).toBeInTheDocument()
+  })
+
   it('switching asks the server for the new tenant, swaps the token and clears the query cache', async () => {
-    useSessionStore.getState().applyAuthResult(authenticated({ memberships: [{ tenantId: 1 }, { tenantId: 2 }] }))
+    useSessionStore.getState().applyAuthResult(authenticated({ memberships: [{ tenantId: 1, displayName: tenantName(1) }, { tenantId: 2, displayName: tenantName(2) }] }))
     const clear = vi.spyOn(queryClient, 'clear')
     const onSwitched = vi.fn()
     server.use(selectTenantHandler(() => HttpResponse.json({ accessToken: 'tenant-2-token', expiresIn: 600, activeTenant: { tenantId: 2 } })))
@@ -44,7 +53,7 @@ describe('TenantSwitcher', () => {
   })
 
   it('clicking the already-active tenant does nothing', async () => {
-    useSessionStore.getState().applyAuthResult(authenticated({ memberships: [{ tenantId: 1 }, { tenantId: 2 }] }))
+    useSessionStore.getState().applyAuthResult(authenticated({ memberships: [{ tenantId: 1, displayName: tenantName(1) }, { tenantId: 2, displayName: tenantName(2) }] }))
     let calls = 0
     server.use(selectTenantHandler(() => { calls++; return HttpResponse.json({ accessToken: 't', expiresIn: 600, activeTenant: { tenantId: 1 } }) }))
     renderPage(<TenantSwitcher />)
@@ -56,7 +65,7 @@ describe('TenantSwitcher', () => {
   })
 
   it('a refused switch keeps the current tenant and token', async () => {
-    useSessionStore.getState().applyAuthResult(authenticated({ memberships: [{ tenantId: 1 }, { tenantId: 2 }] }))
+    useSessionStore.getState().applyAuthResult(authenticated({ memberships: [{ tenantId: 1, displayName: tenantName(1) }, { tenantId: 2, displayName: tenantName(2) }] }))
     const clear = vi.spyOn(queryClient, 'clear')
     const onSwitched = vi.fn()
     server.use(selectTenantHandler(() => problem(403, 'tenant_not_permitted')))

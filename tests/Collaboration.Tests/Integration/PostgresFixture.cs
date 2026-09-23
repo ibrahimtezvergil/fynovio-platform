@@ -104,8 +104,7 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     /// <summary>Load scripts/create-runtime-role.sql from the repo root and extract:
     /// (a) the header up to and including `GRANT CONNECT ON DATABASE fynovio_platform`,
-    /// and (b) the Collaboration section (from `-- Collaboration module.` to right before
-    /// `-- Identity + Access modules`). Fail loudly if section markers are missing.</summary>
+    /// and (b) the Collaboration section only. Fail loudly if section markers are missing.</summary>
     private static string LoadAndExtractCollaborationScript()
     {
         var repoRoot = LocateRepositoryRoot();
@@ -128,15 +127,16 @@ public sealed class PostgresFixture : IAsyncLifetime
         if (collaborationStartIndex < 0)
             throw new InvalidOperationException("Script marker not found: -- Collaboration module.");
 
-        // Find the Identity + Access section start (marks the end of Collaboration section)
-        var identityAccessStartIndex = Array.FindIndex(lines, collaborationStartIndex + 1,
-            l => l.StartsWith("-- Identity + Access modules", StringComparison.Ordinal));
-        if (identityAccessStartIndex < 0)
-            throw new InvalidOperationException("Script marker not found: -- Identity + Access modules");
+        // The next module heading ends this section; new modules must not leak into this isolated fixture.
+        var nextModuleIndex = Array.FindIndex(lines, collaborationStartIndex + 1,
+            l => l.StartsWith("-- ", StringComparison.Ordinal) && l.EndsWith(" module.", StringComparison.Ordinal)
+                || l.StartsWith("-- Identity + Access modules", StringComparison.Ordinal));
+        if (nextModuleIndex < 0)
+            throw new InvalidOperationException("Script marker not found after Collaboration module.");
 
         // Extract header up to GRANT CONNECT, plus the Collaboration section
         var headerLines = lines[..(grantConnectIndex + 1)];
-        var collaborationLines = lines[collaborationStartIndex..identityAccessStartIndex];
+        var collaborationLines = lines[collaborationStartIndex..nextModuleIndex];
 
         // Combine and return as SQL text
         var combined = headerLines.Concat(collaborationLines).ToArray();

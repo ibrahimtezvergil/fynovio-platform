@@ -9,7 +9,7 @@ const result = (overrides: Partial<AuthResult> = {}): AuthResult => ({
   expiresIn: 600,
   account: { id: 7, email: 'ada@example.com', displayName: 'Ada Lovelace', locale: 'tr' },
   activeTenant: { tenantId: 1 },
-  memberships: [{ tenantId: 1 }],
+  memberships: [{ tenantId: 1, displayName: 'Acme Türkiye' }],
   ...overrides,
 })
 
@@ -35,7 +35,7 @@ describe('session store', () => {
 
   it('tenant_selection_required: signed in but tokenless, memberships kept', () => {
     useSessionStore.getState().applyAuthResult(
-      result({ status: 'tenant_selection_required', accessToken: null, activeTenant: null, memberships: [{ tenantId: 1 }, { tenantId: 2 }] }),
+      result({ status: 'tenant_selection_required', accessToken: null, activeTenant: null, memberships: [{ tenantId: 1, displayName: 'Acme Türkiye' }, { tenantId: 2, displayName: 'Northwind' }] }),
     )
     const s = useSessionStore.getState()
     expect(s.status).toBe('tenant_unresolved')
@@ -60,7 +60,7 @@ describe('session store', () => {
 
   it('tenant selection stores the new token and tenant', () => {
     useSessionStore.getState().applyAuthResult(
-      result({ status: 'tenant_selection_required', accessToken: null, activeTenant: null, memberships: [{ tenantId: 1 }, { tenantId: 2 }] }),
+      result({ status: 'tenant_selection_required', accessToken: null, activeTenant: null, memberships: [{ tenantId: 1, displayName: 'Acme Türkiye' }, { tenantId: 2, displayName: 'Northwind' }] }),
     )
     useSessionStore.getState().applyTenantSelection({ accessToken: 'tok2', expiresIn: 600, activeTenant: { tenantId: 2 } })
     const s = useSessionStore.getState()

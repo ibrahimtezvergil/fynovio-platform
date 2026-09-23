@@ -105,7 +105,6 @@ export default {
   tenantSelector: {
     title: 'Kuruluş seçin',
     description: 'Hesabınız birden fazla kuruluşa bağlı. Devam etmek için birini seçin.',
-    tenantLabel: 'Kuruluş {{id}}',
     notPermitted: 'Bu kuruluşa erişiminiz yok.',
     genericError: 'Kuruluş seçilemedi. Lütfen tekrar deneyin.',
   },

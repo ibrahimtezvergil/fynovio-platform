@@ -105,7 +105,6 @@ export default {
   tenantSelector: {
     title: 'Choose an organisation',
     description: 'Your account belongs to more than one organisation. Choose one to continue.',
-    tenantLabel: 'Organisation {{id}}',
     notPermitted: 'You do not have access to this organisation.',
     genericError: 'Could not select the organisation. Please try again.',
   },

@@ -16,11 +16,11 @@ export const authenticated = (overrides: Partial<AuthResult> = {}): AuthResult =
   expiresIn: 600,
   account,
   activeTenant: { tenantId: 1 },
-  memberships: [{ tenantId: 1 }],
+  memberships: [{ tenantId: 1, displayName: 'Acme Türkiye' }],
   ...overrides,
 })
 
-export const selectionRequired = (memberships = [{ tenantId: 1 }, { tenantId: 2 }]): AuthResult => ({
+export const selectionRequired = (memberships = [{ tenantId: 1, displayName: 'Acme Türkiye' }, { tenantId: 2, displayName: 'Northwind' }]): AuthResult => ({
   status: 'tenant_selection_required',
   account,
   activeTenant: null,

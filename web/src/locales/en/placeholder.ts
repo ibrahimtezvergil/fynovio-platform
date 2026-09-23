@@ -4,6 +4,7 @@ export default {
     files: 'Files',
     feedback: 'Feedback',
     members: 'Members',
+    companyCreate: 'Create company',
   },
   notConnected: 'This module isn’t connected yet.',
   inProgress: '{{title}} is in progress',

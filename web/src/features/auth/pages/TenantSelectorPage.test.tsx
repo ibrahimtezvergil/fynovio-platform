@@ -19,11 +19,12 @@ const routes = () => [
   { path: '/select-tenant', element: <TenantSelectorPage /> },
 ]
 
-const tenantButton = (id: number) => screen.getByRole('button', { name: new RegExp(tr('tenantSelector.tenantLabel', { id })) })
+const tenantName = (id: number) => id === 1 ? 'Acme Türkiye' : id === 2 ? 'Northwind' : `Tenant ${id}`
+const tenantButton = (id: number) => screen.getByRole('button', { name: new RegExp(tenantName(id), 'i') })
 
 describe('TenantSelectorPage', () => {
   it('lists one button per membership', () => {
-    useSessionStore.getState().applyAuthResult(selectionRequired([{ tenantId: 4 }, { tenantId: 9 }]))
+    useSessionStore.getState().applyAuthResult(selectionRequired([{ tenantId: 4, displayName: tenantName(4) }, { tenantId: 9, displayName: tenantName(9) }]))
     renderRoutes(routes(), '/select-tenant')
 
     expect(tenantButton(4)).toBeInTheDocument()

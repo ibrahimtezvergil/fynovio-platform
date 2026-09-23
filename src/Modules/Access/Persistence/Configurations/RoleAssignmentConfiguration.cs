@@ -29,6 +29,10 @@ public sealed class RoleAssignmentConfiguration : IEntityTypeConfiguration<RoleA
         // account_id/granted_by_account_id: no FK across the access/identity schema
         // boundary — same "reference by value" convention as before (identity-access-schema.md).
         builder.HasIndex(r => new { r.TenantId, r.AccountId });
+        builder.HasIndex(r => new { r.TenantId, r.AccountId, r.RoleId })
+            .IsUnique()
+            .HasFilter("valid_to IS NULL")
+            .HasDatabaseName("ux_role_assignments_active_role");
 
         // Composite tenant-safe FK now (AGENTS.md binding-core #1) — was a bare FK before.
         builder.HasOne<Role>()

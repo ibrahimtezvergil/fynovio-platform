@@ -43,16 +43,26 @@ public static class CompanySettingsEndpoints
             var body = await ReadInvitationBodyAsync(context.Request, cancellationToken);
             if (string.IsNullOrWhiteSpace(body.Email) || body.Email.Length > MaxEmailLength || body.DisplayName?.Length > MaxDisplayNameLength)
                 throw new ArgumentException("A valid e-mail address and display name are required.");
+            if (body.RoleKey is not null && (string.IsNullOrWhiteSpace(body.RoleKey) || body.RoleKey.Length > 120))
+                throw new ArgumentException("A valid role key is required.");
 
             var actor = context.GetActorContext();
             var result = await handler.HandleAsync(
-                new CreateInvitationCommand(actor, body.Email, body.DisplayName, body.Locale, fingerprint.HashIp(context)), cancellationToken);
+                new CreateInvitationCommand(actor, body.Email, body.DisplayName, body.Locale, fingerprint.HashIp(context),
+                    RequiredIdempotencyKey(context.Request), body.RoleKey), cancellationToken);
             return result.Status switch
             {
                 CreateInvitationStatus.Accepted => Results.Accepted(value: new { status = "accepted" }),
                 CreateInvitationStatus.Forbidden => Results.Forbid(),
                 _ => Results.ValidationProblem(new Dictionary<string, string[]> { ["email"] = ["Email is not valid."] })
             };
+        });
+        group.MapDelete("/invitations/{invitationId:guid}", async (Guid invitationId, HttpContext context,
+            CancelInvitationHandler handler, CancellationToken cancellationToken) =>
+        {
+            await handler.HandleAsync(context.GetActorContext(), invitationId,
+                RequiredIdempotencyKey(context.Request), cancellationToken);
+            return Results.NoContent();
         });
         group.MapPost("/role-assignments", async (HttpContext context, GrantRoleAssignmentHandler handler, CancellationToken cancellationToken) =>
         {
@@ -69,6 +79,22 @@ public static class CompanySettingsEndpoints
             var actor = context.GetActorContext();
             var result = await handler.HandleAsync(new RevokeRoleAssignmentCommand(
                 actor.TenantId, actor.Principal, assignmentId, null, actor.CorrelationId, RequiredIdempotencyKey(context.Request)), cancellationToken);
+            return Results.Ok(result);
+        });
+        group.MapPost("/roles", async (HttpContext context, ManageTenantRoleHandler handler, CancellationToken cancellationToken) =>
+        {
+            var body = await ReadRoleDefinitionBodyAsync(context.Request, cancellationToken);
+            var actor = context.GetActorContext();
+            var result = await handler.CreateAsync(new CreateTenantRoleCommand(actor.TenantId, actor.Principal, body.Name!,
+                body.ActionKeys!, body.ExpectedRevision, actor.CorrelationId, RequiredIdempotencyKey(context.Request)), cancellationToken);
+            return Results.Ok(result);
+        });
+        group.MapPut("/roles/{roleKey}", async (string roleKey, HttpContext context, ManageTenantRoleHandler handler, CancellationToken cancellationToken) =>
+        {
+            var body = await ReadRoleDefinitionBodyAsync(context.Request, cancellationToken);
+            var actor = context.GetActorContext();
+            var result = await handler.UpdateAsync(new UpdateTenantRoleCommand(actor.TenantId, actor.Principal, roleKey, body.Name!,
+                body.ActionKeys!, body.ExpectedRevision, actor.CorrelationId, RequiredIdempotencyKey(context.Request)), cancellationToken);
             return Results.Ok(result);
         });
     }
@@ -100,6 +126,15 @@ public static class CompanySettingsEndpoints
         var body = await ReadJsonAsync<RoleAssignmentRequest>(request, cancellationToken);
         if (string.IsNullOrWhiteSpace(body.PrincipalIssuer) || string.IsNullOrWhiteSpace(body.PrincipalSubject) || string.IsNullOrWhiteSpace(body.RoleKey))
             throw new ArgumentException("Principal and role are required.");
+        return body;
+    }
+
+    private static async Task<RoleDefinitionRequest> ReadRoleDefinitionBodyAsync(HttpRequest request, CancellationToken cancellationToken)
+    {
+        var body = await ReadJsonAsync<RoleDefinitionRequest>(request, cancellationToken);
+        if (string.IsNullOrWhiteSpace(body.Name) || body.Name.Length > 120 || body.ActionKeys is not { Count: > 0 and <= 100 }
+            || body.ActionKeys.Any(string.IsNullOrWhiteSpace) || body.ExpectedRevision < 0)
+            throw new ArgumentException("A role name, permissions and access revision are required.");
         return body;
     }
 
@@ -147,6 +182,8 @@ public sealed record CompanySettingsRequest(
     [property: JsonRequired] string? CurrencyCode,
     [property: JsonRequired] long ExpectedVersion);
 
-public sealed record InvitationRequest(string? Email, string? DisplayName, string? Locale);
+public sealed record InvitationRequest(string? Email, string? DisplayName, string? Locale, string? RoleKey);
 
 public sealed record RoleAssignmentRequest(string? PrincipalIssuer, string? PrincipalSubject, string? RoleKey, string? Reason);
+
+public sealed record RoleDefinitionRequest(string? Name, IReadOnlyList<string>? ActionKeys, long ExpectedRevision);

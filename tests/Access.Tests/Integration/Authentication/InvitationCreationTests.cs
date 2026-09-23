@@ -9,6 +9,12 @@ namespace Access.Tests.Integration.Authentication;
 /// <summary>Creating and previewing invitations (`identity.membership.invite`).</summary>
 public sealed class InvitationCreationTests : IClassFixture<PostgresFixture>
 {
+    private sealed class TestProtector : IInvitationTokenProtector
+    {
+        public string Protect(string token) => $"protected:{token}";
+        public string Unprotect(string protectedToken) => protectedToken["protected:".Length..];
+    }
+
     private readonly PostgresFixture _fixture;
 
     public InvitationCreationTests(PostgresFixture fixture) => _fixture = fixture;
@@ -26,6 +32,48 @@ public sealed class InvitationCreationTests : IClassFixture<PostgresFixture>
     {
         var descriptor = Assert.Single(AccessActionCatalog.All, d => d.ActionKey == CreateInvitationHandler.ActionKeyValue);
         Assert.Equal("identity.membership.invite", descriptor.ActionKey);
+    }
+
+    [Fact]
+    public async Task Retrying_an_invitation_with_the_same_key_keeps_the_first_token_active()
+    {
+        var tenant = AuthTestSetup.NewTenant();
+        var (_, admin) = await AuthTestSetup.SeedTenantAdminAsync(_fixture, tenant);
+        var email = AuthTestSetup.NewEmail();
+        var mail = new FakeEmailSender();
+        var key = Guid.NewGuid().ToString("N");
+        await using var context = await AuthTestSetup.RuntimeContextAsync(_fixture);
+        var handler = AuthTestSetup.Invitations(context, mail, new TestTimeProvider());
+        var command = new CreateInvitationCommand(AuthTestSetup.Actor(tenant, admin), email,
+            IdempotencyKey: key);
+
+        Assert.Equal(CreateInvitationStatus.Accepted, (await handler.HandleAsync(command)).Status);
+        Assert.Equal(CreateInvitationStatus.Accepted, (await handler.HandleAsync(command)).Status);
+        Assert.Single(mail.Messages);
+        Assert.NotNull(await OutstandingInviteAsync(_fixture, tenant.Value, EmailNormalizer.Normalize(email)));
+    }
+
+    [Fact]
+    public async Task Durable_delivery_is_written_with_the_invitation_before_sending()
+    {
+        var tenant = AuthTestSetup.NewTenant();
+        var (_, admin) = await AuthTestSetup.SeedTenantAdminAsync(_fixture, tenant);
+        var mail = new FakeEmailSender();
+        await using var context = await AuthTestSetup.RuntimeContextAsync(_fixture);
+        var handler = new CreateInvitationHandler(context,
+            new AccessAuthorizer(context, new PrincipalResolver(context), new AccessActionCatalogService(context)),
+            AuthTestSetup.Tokens(context), mail, new AuthEventWriter(context), new TestTimeProvider(), new TestProtector());
+
+        var result = await handler.HandleAsync(new CreateInvitationCommand(AuthTestSetup.Actor(tenant, admin),
+            AuthTestSetup.NewEmail(), IdempotencyKey: Guid.NewGuid().ToString("N")));
+
+        Assert.Equal(CreateInvitationStatus.Accepted, result.Status);
+        Assert.Empty(mail.Messages);
+        await using var verify = _fixture.CreateAdminContext();
+        var delivery = await verify.InvitationDeliveries.SingleAsync(row => row.TenantId == tenant);
+        Assert.StartsWith("protected:", delivery.ProtectedToken);
+        Assert.Null(delivery.DeliveredAt);
+        Assert.True(await verify.AccountTokens.AnyAsync(token => token.Id == delivery.InvitationId));
     }
 
     [Fact]

@@ -29,6 +29,10 @@ export default {
     demoKanban: 'Kanban Board',
     demoTimeline: 'Activity Feed',
   },
+  tenantSwitcher: {
+    companySettings: 'Company settings',
+    createCompany: 'Create company',
+  },
   topbar: {
     breadcrumb: 'Breadcrumb',
     generalNavigation: 'General navigation',

@@ -2,16 +2,18 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Bell, ShieldCheck, UserRound } from 'lucide-react'
 import { useMemo } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
+import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/common/PageHeader'
-import { SectionNav, type NavSection } from '@/components/common/SectionNav'
+import { PageNav, type PageNavItem } from '@/components/common/PageNav'
 import { NotificationsSection } from '@/features/settings/components/NotificationsSection'
 import { ProfileSection } from '@/features/settings/components/ProfileSection'
 import { SaveBar } from '@/features/settings/components/SaveBar'
 import { SecuritySection } from '@/features/settings/components/SecuritySection'
 import { settingsSchema, type SettingsValues } from '@/features/settings/schema'
 import { useSettingsStore } from '@/features/settings/store/useSettingsStore'
+import { paths } from '@/routes/paths'
 
 /**
  * One form spanning several cards: the sections read it through
@@ -21,15 +23,17 @@ import { useSettingsStore } from '@/features/settings/store/useSettingsStore'
  */
 export default function SettingsPage() {
   const { t } = useTranslation('settings')
+  const { section } = useParams<{ section?: string }>()
+  const currentSection = section === 'notifications' || section === 'security' ? section : 'profile'
   const saved = useSettingsStore((state) => state.saved)
   const save = useSettingsStore((state) => state.save)
 
   // Only sections that exist. A nav entry that leads nowhere is worse than none.
-  const sections: readonly NavSection[] = useMemo(
+  const sections: readonly PageNavItem[] = useMemo(
     () => [
-      { id: 'profil', label: t('page.sectionProfile'), icon: UserRound },
-      { id: 'bildirimler', label: t('page.sectionNotifications'), icon: Bell },
-      { id: 'guvenlik', label: t('page.sectionSecurity'), icon: ShieldCheck },
+      { to: paths.settings, label: t('page.sectionProfile'), icon: UserRound },
+      { to: paths.settingsSection('notifications'), label: t('page.sectionNotifications'), icon: Bell },
+      { to: paths.settingsSection('security'), label: t('page.sectionSecurity'), icon: ShieldCheck },
     ],
     [t],
   )
@@ -53,14 +57,14 @@ export default function SettingsPage() {
       <PageHeader title={t('page.title')} description={t('page.description')} />
 
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[236px_minmax(0,1fr)]">
-        <SectionNav sections={sections} label={t('page.sectionNavLabel')} />
+        <PageNav items={sections} label={t('page.sectionNavLabel')} />
 
         <div className="flex flex-col gap-4">
           <FormProvider {...form}>
-            <ProfileSection />
-            <NotificationsSection />
-            <SecuritySection />
-            <SaveBar onSubmit={onSubmit} />
+            {currentSection === 'profile' && <ProfileSection />}
+            {currentSection === 'notifications' && <NotificationsSection />}
+            {currentSection === 'security' && <SecuritySection />}
+            {currentSection !== 'security' && <SaveBar onSubmit={onSubmit} />}
           </FormProvider>
         </div>
       </div>

@@ -48,4 +48,12 @@ public sealed class Role
             OriginVersion = originVersion
         };
     }
+
+    public void Rename(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name is required.", nameof(name));
+
+        Name = name;
+    }
 }

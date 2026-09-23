@@ -33,8 +33,20 @@ export function useInviteCompanyMember() {
   const tenantId = useSessionStore((state) => state.activeTenantId)
   return useAppMutation({
     name: 'companySettings.inviteMember',
-    mutationFn: async (values: { email: string; displayName?: string; locale?: string }) => {
-      await apiClient.post(endpoints.companySettings.invitations, values)
+    mutationFn: async (values: { email: string; displayName?: string; locale?: string; roleKey?: string; idempotencyKey: string }) => {
+      await apiClient.post(endpoints.companySettings.invitations, values, { headers: { [IDEMPOTENCY_HEADER]: values.idempotencyKey } })
+    },
+    invalidateKeys: () => [companySettingsKeys.access(tenantId)],
+  })
+}
+
+export function useCancelCompanyInvitation() {
+  const tenantId = useSessionStore((state) => state.activeTenantId)
+  return useAppMutation({
+    name: 'companySettings.cancelInvitation',
+    mutationFn: async (values: { invitationId: string; idempotencyKey: string }) => {
+      await apiClient.delete(endpoints.companySettings.invitation(values.invitationId),
+        { headers: { [IDEMPOTENCY_HEADER]: values.idempotencyKey } })
     },
     invalidateKeys: () => [companySettingsKeys.access(tenantId)],
   })
@@ -57,6 +69,28 @@ export function useRevokeCompanyRole() {
     name: 'companySettings.revokeRole',
     mutationFn: async (values: { assignmentId: number; idempotencyKey: string }) => {
       await apiClient.delete(endpoints.companySettings.roleAssignment(values.assignmentId), { headers: { [IDEMPOTENCY_HEADER]: values.idempotencyKey } })
+    },
+    invalidateKeys: () => [companySettingsKeys.access(tenantId)],
+  })
+}
+
+export function useCreateCompanyRole() {
+  const tenantId = useSessionStore((state) => state.activeTenantId)
+  return useAppMutation({
+    name: 'companySettings.createRole',
+    mutationFn: async (values: { name: string; actionKeys: string[]; expectedRevision: number; idempotencyKey: string }) => {
+      await apiClient.post(endpoints.companySettings.roles, values, { headers: { [IDEMPOTENCY_HEADER]: values.idempotencyKey } })
+    },
+    invalidateKeys: () => [companySettingsKeys.access(tenantId)],
+  })
+}
+
+export function useUpdateCompanyRole() {
+  const tenantId = useSessionStore((state) => state.activeTenantId)
+  return useAppMutation({
+    name: 'companySettings.updateRole',
+    mutationFn: async (values: { roleKey: string; name: string; actionKeys: string[]; expectedRevision: number; idempotencyKey: string }) => {
+      await apiClient.put(endpoints.companySettings.role(values.roleKey), values, { headers: { [IDEMPOTENCY_HEADER]: values.idempotencyKey } })
     },
     invalidateKeys: () => [companySettingsKeys.access(tenantId)],
   })

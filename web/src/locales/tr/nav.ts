@@ -29,6 +29,10 @@ export default {
     demoKanban: 'Kanban Board',
     demoTimeline: 'Aktivite Akışı',
   },
+  tenantSwitcher: {
+    companySettings: 'Şirket ayarları',
+    createCompany: 'Şirket oluştur',
+  },
   topbar: {
     breadcrumb: 'Breadcrumb',
     generalNavigation: 'Genel gezinme',

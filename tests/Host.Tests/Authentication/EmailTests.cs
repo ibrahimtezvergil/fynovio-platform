@@ -4,6 +4,8 @@ using Host.Email;
 using Host.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Xunit;
 using static Host.Tests.Authentication.LifecycleTestSupport;
 
@@ -71,6 +73,27 @@ public sealed class EmailDeliveryTests : IClassFixture<AuthApiFixture>
     private readonly AuthApiFixture _fixture;
 
     public EmailDeliveryTests(AuthApiFixture fixture) => _fixture = fixture;
+
+    [Fact]
+    public async Task Durable_invitation_delivery_clears_the_protected_token_after_processing()
+    {
+        var tenant = AuthApiFixture.NewTenantId();
+        using var host = await _fixture.StartHostAsync();
+        using var client = host.CreateClient();
+        var (_, bearer) = await InviterAsync(_fixture, client, tenant);
+        var email = AuthApiFixture.NewEmail();
+        Assert.Equal(HttpStatusCode.Accepted, (await Invite(client, tenant, bearer, email)).StatusCode);
+        var sent = await MailAsync(client, email, "invite");
+        Assert.True(AccountTokenService.TryParse(sent.Token, out var invitationId, out _));
+
+        var worker = host.Services.GetServices<IHostedService>().OfType<InvitationDeliveryService>().Single();
+        await worker.DeliverPendingAsync(CancellationToken.None);
+
+        await using var verify = AuthTestFixture.CreateAccessContext(_fixture.AdminConnectionString);
+        var delivery = await verify.InvitationDeliveries.SingleAsync(row => row.InvitationId == invitationId);
+        Assert.NotNull(delivery.DeliveredAt);
+        Assert.Empty(delivery.ProtectedToken);
+    }
 
     private sealed class ScriptedTransport(Func<RenderedEmail, CancellationToken, Task> send) : IEmailTransport
     {

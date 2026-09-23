@@ -145,6 +145,37 @@ public sealed class GrantRevokeRoleAssignmentHandlerTests : IClassFixture<Postgr
         return await context.TenantAccessStates.Where(s => s.TenantId == tenantId).Select(s => s.Revision).SingleAsync();
     }
 
+    [Fact]
+    public async Task Last_active_tenant_administrator_cannot_be_revoked()
+    {
+        var (tenantId, admin, _, assignmentId) = await GivenBootstrappedTenantAsync();
+        await using var context = _fixture.CreateAdminContext();
+        var handler = new RevokeRoleAssignmentHandler(context, BuildAuthorizer(context));
+
+        await Assert.ThrowsAsync<RoleAssignmentConflictException>(() => handler.HandleAsync(
+            new RevokeRoleAssignmentCommand(tenantId, admin, assignmentId, null, Guid.NewGuid(), Guid.NewGuid().ToString("N"))));
+        await using var verify = _fixture.CreateAdminContext();
+        Assert.Null((await verify.RoleAssignments.SingleAsync(a => a.Id == assignmentId)).ValidTo);
+    }
+
+    [Fact]
+    public async Task Same_active_role_cannot_be_granted_twice_with_different_keys()
+    {
+        var (tenantId, admin, grantee, _) = await GivenBootstrappedTenantAsync();
+        await using (var context = _fixture.CreateAdminContext())
+        {
+            await new GrantRoleAssignmentHandler(context, BuildAuthorizer(context)).HandleAsync(
+                new GrantRoleAssignmentCommand(tenantId, admin, grantee, TenantAdministratorRoleKey, null,
+                    Guid.NewGuid(), Guid.NewGuid().ToString("N")));
+        }
+
+        await using var second = _fixture.CreateAdminContext();
+        await Assert.ThrowsAsync<RoleAssignmentConflictException>(() =>
+            new GrantRoleAssignmentHandler(second, BuildAuthorizer(second)).HandleAsync(
+                new GrantRoleAssignmentCommand(tenantId, admin, grantee, TenantAdministratorRoleKey, null,
+                    Guid.NewGuid(), Guid.NewGuid().ToString("N"))));
+    }
+
     /// <summary>C7a: a successful new grant must move the tenant's authorization
     /// epoch forward by exactly one — not zero (forgotten bump), not more than one
     /// (double bump on a single SaveChanges cycle).</summary>
@@ -389,5 +420,41 @@ public sealed class GrantRevokeRoleAssignmentHandlerTests : IClassFixture<Postgr
             Assert.False(result.Replayed);
             Assert.NotEqual(firstAssignmentId, result.RoleAssignmentId);
         }
+    }
+
+    [Fact]
+    public async Task Tenant_administrator_can_create_and_edit_a_custom_role_without_changing_template_roles()
+    {
+        var (tenantId, admin, _, _) = await GivenBootstrappedTenantAsync();
+        ManageTenantRoleResult created;
+        await using (var context = _fixture.CreateAdminContext())
+        {
+            var handler = new ManageTenantRoleHandler(context, BuildAuthorizer(context));
+            created = await handler.CreateAsync(new CreateTenantRoleCommand(tenantId, admin, "Sales analyst",
+                ["crm.opportunity.read"], await GetRevisionAsync(tenantId), Guid.NewGuid(), Guid.NewGuid().ToString("N")));
+        }
+
+        await using (var context = _fixture.CreateAdminContext())
+        {
+            var handler = new ManageTenantRoleHandler(context, BuildAuthorizer(context));
+            var updated = await handler.UpdateAsync(new UpdateTenantRoleCommand(tenantId, admin, created.RoleKey, "Sales analyst",
+                ["crm.opportunity.list"], created.Revision, Guid.NewGuid(), Guid.NewGuid().ToString("N")));
+            Assert.Equal(created.Revision + 1, updated.Revision);
+        }
+
+        await using var verify = _fixture.CreateAdminContext();
+        var role = await verify.Roles.SingleAsync(role => role.TenantId == tenantId && role.Key == created.RoleKey);
+        Assert.Equal("tenant", role.Origin);
+        Assert.Equal("Sales analyst", role.Name);
+        var actions = await (
+            from rolePermissionSet in verify.RolePermissionSets
+            join item in verify.PermissionSetItems on rolePermissionSet.PermissionSetId equals item.PermissionSetId
+            where rolePermissionSet.TenantId == tenantId && rolePermissionSet.RoleId == role.Id
+            select item.ActionKey).ToListAsync();
+        Assert.Equal(["crm.opportunity.list"], actions);
+        Assert.Equal(1, await verify.OutboxMessages.CountAsync(message => message.TenantId == tenantId
+            && message.EventType == "enterprise.access.role.created.v1"));
+        Assert.Equal(1, await verify.OutboxMessages.CountAsync(message => message.TenantId == tenantId
+            && message.EventType == "enterprise.access.role.updated.v1"));
     }
 }

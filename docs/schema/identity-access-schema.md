@@ -1,5 +1,13 @@
 # Identity + Access schema (PostgreSQL, `identity`/`access` schemas)
 
+### Revision 11 (2026-09-22) — company access administration
+
+- `access.role_assignments` has a partial unique index on `(tenant_id, account_id, role_id)` where `valid_to IS NULL`. Grant and revoke commands serialize on the tenant access state row. Revocation rejects removal of the last active tenant administrator.
+- `identity.account_tokens.invited_role_key` records an optional tenant role selected during invitation. Creation requires both invitation and role-grant authorization; acceptance grants the role and activates membership in one transaction. The token remains opaque and only its hash is stored there.
+- `access.invitation_deliveries` stores `(tenant_id, invitation_id)` as its key, a protected token, retry count, next attempt time, and delivery time. It has a due-work index, forced tenant RLS, and no cross-schema FK to the global `identity.account_tokens` table. CHECK `ck_invitation_deliveries_state` requires nonnegative attempts and a protected token only until delivery. `identity.account_tokens` CHECK `ck_account_tokens_invited_role_shape` allows a nonblank invited role only on invitation tokens. Invitation creation writes the delivery row in the same transaction as the invitation, evidence, outbox and idempotency record. The Host delivery service decrypts and sends due messages, then clears the protected token. The development mailbox is populated immediately for local acceptance flows.
+- Production SMTP deployments set `Email:InvitationKeyRingPath` to a persistent, shared directory for ASP.NET Core Data Protection keys so queued invitations remain decryptable after a restart or on another Host instance.
+- The tenant access overview includes outstanding invitations and each permission's relation (`owner` or tenant-wide). Cancelling an invitation writes idempotency, evidence and outbox in one transaction. Re-sending creates a new invitation and revokes its predecessor.
+
 Physical schema decided in `docs/architecture-analysis/19_IDENTITY_ACCESS_AND_DEALER_NETWORK.md`
 (in the research project, sibling to this repo). **Revision 4 (2026-09-17) — the Enterprise
 Access Foundation Phase 1.5 rebuild:** `Permission`/`RolePermission` replaced by

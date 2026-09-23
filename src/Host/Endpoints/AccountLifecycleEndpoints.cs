@@ -96,6 +96,7 @@ public static class AccountLifecycleEndpoints
         ClientFingerprint fingerprint,
         AuthenticationHostOptions options,
         TimeProvider timeProvider,
+        ITenantDirectory tenantDirectory,
         CancellationToken cancellationToken)
     {
         var body = await AuthEndpoints.TryReadJsonAsync<AcceptInvitationRequest>(context, cancellationToken);
@@ -117,10 +118,11 @@ public static class AccountLifecycleEndpoints
                 fingerprint.HashUserAgent(context)),
             cancellationToken);
 
+        if (result.Status == AcceptInvitationStatus.Accepted && result.Session is { } session)
+            return await AuthEndpoints.StartSessionAsync(context, session, issuer, cookieWriter, options, timeProvider, tenantDirectory, cancellationToken);
+
         return result.Status switch
         {
-            AcceptInvitationStatus.Accepted when result.Session is { } session =>
-                AuthEndpoints.StartSession(context, session, issuer, cookieWriter, options, timeProvider),
             AcceptInvitationStatus.InvalidCredentials => AuthProblems.InvalidCredentials(),
             AcceptInvitationStatus.PolicyViolation => AuthProblems.PasswordPolicyViolation(result.PolicyViolations),
             _ => AuthProblems.InvalidOrExpiredToken()

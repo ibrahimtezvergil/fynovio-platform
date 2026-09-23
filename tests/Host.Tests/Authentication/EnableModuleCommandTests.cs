@@ -281,6 +281,6 @@ public sealed class EnableModuleCommandTests : IClassFixture<AuthApiFixture>
     {
         await using var transaction = await access.Database.BeginTransactionAsync();
         await access.SetTenantContextAsync(new TenantId(tenant), CancellationToken.None);
-        return await access.TenantModuleEnablements.CountAsync();
+        return await access.TenantModuleEnablements.CountAsync(enablement => enablement.ModuleKey == "crm");
     }
 }

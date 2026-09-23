@@ -24,6 +24,7 @@ public sealed class AccountToken
     public string? EmailNormalized { get; private set; }
     public string? DisplayName { get; private set; }
     public string? Locale { get; private set; }
+    public string? InvitedRoleKey { get; private set; }
     public DateTimeOffset ExpiresAt { get; private set; }
     public DateTimeOffset? ConsumedAt { get; private set; }
     public DateTimeOffset? RevokedAt { get; private set; }
@@ -40,12 +41,15 @@ public sealed class AccountToken
         string tokenHash,
         DateTimeOffset now,
         TimeSpan lifetime,
-        long? createdByAccountId)
+        long? createdByAccountId,
+        string? invitedRoleKey = null)
     {
         if (tenantId <= 0)
             throw new ArgumentException("Tenant ID must be positive.", nameof(tenantId));
         if (string.IsNullOrWhiteSpace(emailNormalized))
             throw new ArgumentException("Email is required.", nameof(emailNormalized));
+        if (invitedRoleKey is not null && string.IsNullOrWhiteSpace(invitedRoleKey))
+            throw new ArgumentException("An invited role key cannot be blank.", nameof(invitedRoleKey));
 
         var token = Create(AccountTokenPurpose.Invite, tokenHash, now, lifetime);
         token.TenantId = tenantId;
@@ -53,6 +57,7 @@ public sealed class AccountToken
         token.DisplayName = string.IsNullOrWhiteSpace(displayName) ? null : displayName.Trim();
         token.Locale = string.IsNullOrWhiteSpace(locale) ? null : locale.Trim();
         token.CreatedByAccountId = createdByAccountId;
+        token.InvitedRoleKey = invitedRoleKey;
         return token;
     }
 

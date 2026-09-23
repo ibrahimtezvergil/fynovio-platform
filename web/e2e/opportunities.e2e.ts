@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { adminToken, newApi } from './support/api.ts'
 import { ADMIN, SALES_REP, SEED_PASSWORD, VIEWER, SINGLE } from './support/env.ts'
-import { choosePartyByName, expectNoTokenInStorage, signIn, t, tenantLabel } from './support/ui.ts'
+import { choosePartyByName, expectNoTokenInStorage, signIn, t, tenantName } from './support/ui.ts'
 import {
   addLineViaApi,
   assignableViaApi,
@@ -24,7 +24,7 @@ test.describe('CRM Opportunities workflow', () => {
     await signIn(page, ADMIN, SEED_PASSWORD)
 
     // Select tenant 1
-    await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await page.getByRole('button', { name: tenantName(1) }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
     await expect(page).toHaveURL(/\/dashboard$/)
 
@@ -47,7 +47,7 @@ test.describe('CRM Opportunities workflow', () => {
 
     // Sign in and navigate to create form
     await signIn(page, ADMIN, SEED_PASSWORD)
-    await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await page.getByRole('button', { name: tenantName(1) }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
     await page.goto('/crm/opportunities')
     await page.getByRole('button', { name: t.opportunities.list.newAction, exact: true }).first().click()
@@ -137,7 +137,7 @@ test.describe('CRM Opportunities workflow', () => {
 
     // Navigate to detail page
     await signIn(page, ADMIN, SEED_PASSWORD)
-    await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await page.getByRole('button', { name: tenantName(1) }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
     await page.goto(`/crm/opportunities/${id}`)
 
@@ -163,7 +163,7 @@ test.describe('CRM Opportunities workflow', () => {
     await openViaApi(admin, id, { expectedVersion: opp.rowVersion, expiryDate: futureDate.toISOString() })
 
     await signIn(page, ADMIN, SEED_PASSWORD)
-    await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await page.getByRole('button', { name: tenantName(1) }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
     await page.goto(`/crm/opportunities/${id}`)
 
@@ -192,7 +192,7 @@ test.describe('CRM Opportunities workflow', () => {
     const beforeList = await listViaApi(admin)
 
     await signIn(page, ADMIN, SEED_PASSWORD)
-    await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await page.getByRole('button', { name: tenantName(1) }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
     await page.goto('/crm/opportunities')
     await page.getByRole('button', { name: t.opportunities.list.newAction, exact: true }).first().click()
@@ -279,7 +279,7 @@ test.describe('CRM Opportunities workflow', () => {
     const ownerBefore = (await getViaApi(admin, id)).assignedPrincipalSubject
 
     await signIn(page, ADMIN, SEED_PASSWORD)
-    await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await page.getByRole('button', { name: tenantName(1) }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
     await page.goto(`/crm/opportunities/${id}`)
     await page.getByRole('button', { name: t.opportunities.summary.reassign, exact: true }).click()
@@ -382,12 +382,12 @@ test.describe('CRM Opportunities workflow', () => {
 
     // Both sign in and navigate to the detail page
     await signIn(pageA, ADMIN, SEED_PASSWORD)
-    await pageA.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await pageA.getByRole('button', { name: tenantName(1) }).click()
     await expect(pageA).toHaveURL(/\/dashboard$/)
     await pageA.goto(`/crm/opportunities/${id}`)
 
     await signIn(pageB, ADMIN, SEED_PASSWORD)
-    await pageB.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await pageB.getByRole('button', { name: tenantName(1) }).click()
     await expect(pageB).toHaveURL(/\/dashboard$/)
     await pageB.goto(`/crm/opportunities/${id}`)
 
@@ -436,7 +436,7 @@ test.describe('CRM Opportunities workflow', () => {
     const beforeList = await listViaApi(admin)
 
     await signIn(page, ADMIN, SEED_PASSWORD)
-    await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await page.getByRole('button', { name: tenantName(1) }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
     await page.goto('/crm/opportunities')
     await page.getByRole('button', { name: t.opportunities.list.newAction, exact: true }).first().click()
@@ -525,7 +525,7 @@ test.describe('CRM Opportunities workflow', () => {
 
     // Verify visible in tenant 1
     await signIn(page, ADMIN, SEED_PASSWORD)
-    await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await page.getByRole('button', { name: tenantName(1) }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
     await page.goto('/crm/opportunities')
     const rows = page.locator('[data-testid="opportunity-row"]')
@@ -537,8 +537,8 @@ test.describe('CRM Opportunities workflow', () => {
 
     // Switch to tenant 2
     // The organisation switcher is the sidebar's top slot; this page is inside the CRM, so the rail is there.
-    await page.getByRole('button', { name: tenantLabel(1), exact: true }).click()
-    const tenantTwo = page.getByRole('button', { name: tenantLabel(2), exact: true })
+    await page.getByRole('button', { name: tenantName(1), exact: true }).click()
+    const tenantTwo = page.getByRole('button', { name: tenantName(2), exact: true })
     // Switching inside the app keeps the page; wait for the server to have issued the tenant-2 token.
     await Promise.all([page.waitForResponse((response) => response.url().includes('/auth/tenants/select') && response.ok()), tenantTwo.click()])
 
@@ -576,7 +576,7 @@ test.describe('CRM Opportunities workflow', () => {
 
   test('11: 401 recovery — mid-session token refresh on list refetch', async ({ page }) => {
     await signIn(page, ADMIN, SEED_PASSWORD)
-    await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await page.getByRole('button', { name: tenantName(1) }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
     await page.goto('/crm/opportunities')
 
@@ -631,7 +631,7 @@ test.describe('CRM Opportunities workflow', () => {
 
   test('12b: Not-found state — admin on nonexistent opportunity', async ({ page }) => {
     await signIn(page, ADMIN, SEED_PASSWORD)
-    await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await page.getByRole('button', { name: tenantName(1) }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
 
     await page.goto('/crm/opportunities/999999')
@@ -641,7 +641,7 @@ test.describe('CRM Opportunities workflow', () => {
 
   test('12c: Malformed ID returns not-found state', async ({ page }) => {
     await signIn(page, ADMIN, SEED_PASSWORD)
-    await page.getByRole('button', { name: t.auth.tenantSelector.tenantLabel.replace('{{id}}', '1') }).click()
+    await page.getByRole('button', { name: tenantName(1) }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
 
     await page.goto('/crm/opportunities/abc')

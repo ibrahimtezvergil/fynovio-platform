@@ -51,9 +51,33 @@ public sealed class RevokeRoleAssignmentHandler(AccessDbContext context, IAuthor
             return new RevokeRoleAssignmentResult(stored.RoleAssignmentId, Replayed: true);
         }
 
+        await context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE access.tenant_access_state SET revision = revision WHERE tenant_id = {command.TenantId.Value}", cancellationToken);
+
         var assignment = await context.RoleAssignments
             .SingleOrDefaultAsync(a => a.TenantId == command.TenantId && a.Id == command.RoleAssignmentId, cancellationToken)
             ?? throw new InvalidOperationException($"RoleAssignment {command.RoleAssignmentId} does not exist for tenant {command.TenantId}.");
+
+        if (assignment.ValidTo is not null)
+            throw new RoleAssignmentConflictException("This role assignment has already been revoked.");
+
+        var roleKey = await context.Roles.Where(r => r.TenantId == command.TenantId && r.Id == assignment.RoleId)
+            .Select(r => r.Key).SingleAsync(cancellationToken);
+        if (roleKey == BootstrapTenantAccessHandler.TenantAdministratorRoleKey)
+        {
+            var otherAdministrators = await context.RoleAssignments
+                .Join(context.Roles, a => a.RoleId, r => r.Id, (a, r) => new { Assignment = a, Role = r })
+                .Join(context.TenantMemberships, x => x.Assignment.AccountId, m => m.AccountId,
+                    (x, m) => new { x.Assignment, x.Role, Membership = m })
+                .AnyAsync(x => x.Assignment.TenantId == command.TenantId && x.Role.TenantId == command.TenantId
+                    && x.Membership.TenantId == command.TenantId && x.Role.Key == BootstrapTenantAccessHandler.TenantAdministratorRoleKey
+                    && x.Assignment.AccountId != assignment.AccountId && x.Assignment.ValidTo == null
+                    && x.Assignment.ValidFrom <= DateTimeOffset.UtcNow
+                    && x.Membership.Status == Access.Domain.Identity.MembershipStatus.Active,
+                    cancellationToken);
+            if (!otherAdministrators)
+                throw new RoleAssignmentConflictException("The last tenant administrator cannot be removed.");
+        }
 
         assignment.Revoke();
 

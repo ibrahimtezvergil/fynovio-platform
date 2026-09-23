@@ -32,14 +32,22 @@ public sealed class BootstrapTenantAccessHandler(AccessDbContext context)
             ?? throw new InvalidOperationException("Tenant administrator principal must have a linked Account/ExternalIdentity before bootstrap.");
 
         var permissionSet = PermissionSet.Create(
-            command.TenantId, TenantAdministratorPermissionSetKey, "Tenant Administration", PermissionSet.OriginSystemTemplate,
+            command.TenantId, TenantAdministratorPermissionSetKey, "Sistem Yönetimi", PermissionSet.OriginSystemTemplate,
             AccessTemplateModuleKey, AccessTemplateVersion);
-        foreach (var descriptor in AccessActionCatalog.All)
-            permissionSet.Grant(descriptor.ActionKey);
+        // The bootstrap administrator is the tenant's break-glass operator. Grant every
+        // active platform action already registered by Host, rather than a partial,
+        // hard-coded Access-only catalog.
+        var actionKeys = await context.Actions
+            .Where(action => !action.IsDeprecated)
+            .OrderBy(action => action.ActionKey)
+            .Select(action => action.ActionKey)
+            .ToListAsync(cancellationToken);
+        foreach (var actionKey in actionKeys)
+            permissionSet.Grant(actionKey);
         context.PermissionSets.Add(permissionSet);
 
         var role = Role.Create(
-            command.TenantId, TenantAdministratorRoleKey, "Tenant Administrator", Role.OriginSystemTemplate,
+            command.TenantId, TenantAdministratorRoleKey, "Sistem Yöneticisi (Admin)", Role.OriginSystemTemplate,
             AccessTemplateModuleKey, AccessTemplateVersion);
         context.Roles.Add(role);
         await context.SaveChangesAsync(cancellationToken); // assigns Id to permissionSet/role before the join row

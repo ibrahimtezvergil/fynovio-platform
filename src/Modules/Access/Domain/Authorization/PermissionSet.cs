@@ -59,4 +59,25 @@ public sealed class PermissionSet
         _items.Add(item);
         return item;
     }
+
+    public void Rename(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name is required.", nameof(name));
+
+        Name = name;
+    }
+
+    public void ReplaceGrants(IEnumerable<(string ActionKey, string? Relation)> grants)
+    {
+        var values = grants.ToArray();
+        if (values.Length == 0)
+            throw new ArgumentException("At least one action is required.", nameof(grants));
+        if (values.Select(value => value.ActionKey).Distinct(StringComparer.Ordinal).Count() != values.Length)
+            throw new ArgumentException("An action can only be granted once.", nameof(grants));
+
+        _items.Clear();
+        foreach (var (actionKey, relation) in values)
+            Grant(actionKey, relation);
+    }
 }

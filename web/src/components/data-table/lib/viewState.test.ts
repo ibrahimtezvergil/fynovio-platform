@@ -63,7 +63,7 @@ describe('useViewStateUserId', () => {
       expiresIn: 600,
       account: { id: 42, email: 'a@example.com', displayName: 'A', locale: null },
       activeTenant: { tenantId: 1 },
-      memberships: [{ tenantId: 1 }],
+      memberships: [{ tenantId: 1, displayName: 'Acme Türkiye' }],
     })
     const { result } = renderHook(() => useViewStateUserId())
     expect(result.current).toBe('42')

@@ -106,6 +106,11 @@ namespace Access.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at");
 
+                    b.Property<string>("InvitedRoleKey")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("invited_role_key");
+
                     b.Property<string>("Locale")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
@@ -150,6 +155,8 @@ namespace Access.Persistence.Migrations
                             t.HasCheckConstraint("ck_account_tokens_account_purposes_have_account", "purpose = 'invite' OR account_id IS NOT NULL");
 
                             t.HasCheckConstraint("ck_account_tokens_invite_shape", "purpose <> 'invite' OR (tenant_id IS NOT NULL AND email_normalized IS NOT NULL)");
+
+                            t.HasCheckConstraint("ck_account_tokens_invited_role_shape", "invited_role_key IS NULL OR (purpose = 'invite' AND length(trim(invited_role_key)) > 0)");
 
                             t.HasCheckConstraint("ck_account_tokens_purpose", "purpose IN ('invite', 'password_reset', 'password_setup')");
                         });
@@ -275,6 +282,46 @@ namespace Access.Persistence.Migrations
                         .HasDatabaseName("ix_auth_sessions_account_id_created_at");
 
                     b.ToTable("auth_sessions", "identity");
+                });
+
+            modelBuilder.Entity("Access.Domain.Authentication.InvitationDelivery", b =>
+                {
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("InvitationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("invitation_id");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
+                    b.Property<DateTimeOffset?>("DeliveredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("delivered_at");
+
+                    b.Property<DateTimeOffset>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_attempt_at");
+
+                    b.Property<string>("ProtectedToken")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("protected_token");
+
+                    b.HasKey("TenantId", "InvitationId")
+                        .HasName("pk_invitation_deliveries");
+
+                    b.HasIndex("TenantId", "NextAttemptAt")
+                        .HasDatabaseName("ix_invitation_deliveries_tenant_id_next_attempt_at")
+                        .HasFilter("delivered_at IS NULL");
+
+                    b.ToTable("invitation_deliveries", "access", t =>
+                        {
+                            t.HasCheckConstraint("ck_invitation_deliveries_state", "attempts >= 0 AND ((delivered_at IS NULL AND length(protected_token) > 0) OR (delivered_at IS NOT NULL AND protected_token = ''))");
+                        });
                 });
 
             modelBuilder.Entity("Access.Domain.Authentication.RefreshToken", b =>
@@ -588,6 +635,11 @@ namespace Access.Persistence.Migrations
 
                     b.HasIndex("TenantId", "RoleId")
                         .HasDatabaseName("ix_role_assignments_tenant_id_role_id");
+
+                    b.HasIndex("TenantId", "AccountId", "RoleId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_role_assignments_active_role")
+                        .HasFilter("valid_to IS NULL");
 
                     b.ToTable("role_assignments", "access", t =>
                         {

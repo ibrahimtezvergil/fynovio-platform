@@ -90,6 +90,8 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
         Assert.False(body.TryGetProperty("accessToken", out _));
         var tenants = body.GetProperty("memberships").EnumerateArray().Select(m => m.GetProperty("tenantId").GetInt64()).Order().ToArray();
         Assert.Equal([1L, 2L], tenants);
+        var names = body.GetProperty("memberships").EnumerateArray().Select(m => m.GetProperty("displayName").GetString()!).Order().ToArray();
+        Assert.Equal(["Fynovio Development 1", "Fynovio Development 2"], names);
 
         foreach (var tenant in tenants)
         {

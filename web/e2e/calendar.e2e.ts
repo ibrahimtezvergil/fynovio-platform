@@ -3,7 +3,7 @@ import { adminToken } from './support/api.ts'
 import { calendar, createEntry, listEntries } from './support/calendar.ts'
 import { ADMIN, SEED_PASSWORD } from './support/env.ts'
 import { createViaApi, salesRepToken } from './support/opportunities.ts'
-import { signIn, t, tenantLabel } from './support/ui.ts'
+import { signIn, t, tenantName } from './support/ui.ts'
 
 /**
  * The calendar against the REAL API (no MSW). Needs the Collaboration module migrated and its runtime-role grants in
@@ -16,7 +16,7 @@ import { signIn, t, tenantLabel } from './support/ui.ts'
  */
 async function signInToCalendar(page: import('@playwright/test').Page) {
   await signIn(page, ADMIN, SEED_PASSWORD)
-  await page.getByRole('button', { name: tenantLabel(1) }).click()
+  await page.getByRole('button', { name: tenantName(1) }).click()
   await expect(page).toHaveURL(/\/dashboard$/)
   await page.goto('/calendar')
   await expect(page.getByRole('heading', { name: calendar.page.title, level: 1 })).toBeVisible()

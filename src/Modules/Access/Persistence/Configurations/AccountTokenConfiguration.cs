@@ -19,6 +19,9 @@ public sealed class AccountTokenConfiguration : IEntityTypeConfiguration<Account
             table.HasCheckConstraint(
                 "ck_account_tokens_account_purposes_have_account",
                 "purpose = 'invite' OR account_id IS NOT NULL");
+            table.HasCheckConstraint(
+                "ck_account_tokens_invited_role_shape",
+                "invited_role_key IS NULL OR (purpose = 'invite' AND length(trim(invited_role_key)) > 0)");
         });
 
         builder.HasKey(t => t.Id);
@@ -29,6 +32,7 @@ public sealed class AccountTokenConfiguration : IEntityTypeConfiguration<Account
         builder.Property(t => t.EmailNormalized).HasMaxLength(320);
         builder.Property(t => t.DisplayName).HasMaxLength(200);
         builder.Property(t => t.Locale).HasMaxLength(20);
+        builder.Property(t => t.InvitedRoleKey).HasMaxLength(120);
         builder.Property(t => t.ExpiresAt).IsRequired();
         builder.Property(t => t.CreatedAt).IsRequired();
 

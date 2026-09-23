@@ -51,6 +51,41 @@ public sealed class CompanySettingsEndpointsTests(CalendarApiFixture api) : ICla
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Administrator_can_list_and_cancel_a_pending_invitation()
+    {
+        var email = $"company-{Guid.NewGuid():N}@example.test";
+        var invite = new HttpRequestMessage(HttpMethod.Post, "/company/settings/invitations")
+        {
+            Content = JsonContent.Create(new
+            {
+                email,
+                displayName = "Pending Member",
+                locale = "en",
+                roleKey = "tenant_administrator"
+            })
+        };
+        invite.Headers.Authorization = new AuthenticationHeaderValue("Bearer", api.AdminTenantOne);
+        invite.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("N"));
+        var invited = await api.Client.SendAsync(invite);
+        Assert.Equal(HttpStatusCode.Accepted, invited.StatusCode);
+
+        var access = new HttpRequestMessage(HttpMethod.Get, "/company/settings/access");
+        access.Headers.Authorization = new AuthenticationHeaderValue("Bearer", api.AdminTenantOne);
+        var overview = await api.Client.SendAsync(access);
+        Assert.Equal(HttpStatusCode.OK, overview.StatusCode);
+        var body = await overview.Content.ReadFromJsonAsync<JsonElement>();
+        var pending = body.GetProperty("pendingInvitations").EnumerateArray()
+            .Single(item => item.GetProperty("email").GetString() == email);
+        Assert.Equal("tenant_administrator", pending.GetProperty("roleKey").GetString());
+
+        var cancel = new HttpRequestMessage(HttpMethod.Delete,
+            $"/company/settings/invitations/{pending.GetProperty("invitationId").GetGuid():D}");
+        cancel.Headers.Authorization = new AuthenticationHeaderValue("Bearer", api.AdminTenantOne);
+        cancel.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("N"));
+        Assert.Equal(HttpStatusCode.NoContent, (await api.Client.SendAsync(cancel)).StatusCode);
+    }
+
     private async Task<JsonElement> GetAsync(string token)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, "/company/settings");
