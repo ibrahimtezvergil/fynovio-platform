@@ -9,8 +9,8 @@ import { paths } from '@/routes/paths'
 
 /**
  * Switches the active tenant. The server validates the membership and mints a
- * new access token for it; nothing here builds or edits a tenant claim. Rendered
- * only for accounts with more than one membership.
+ * new access token for it; nothing here builds or edits a tenant claim. With one
+ * membership it remains the entry point for company settings and creation.
  */
 export function TenantSwitcher({ onSwitched }: { onSwitched?: () => void }) {
   const { t } = useTranslation('auth')
@@ -19,8 +19,6 @@ export function TenantSwitcher({ onSwitched }: { onSwitched?: () => void }) {
   const activeTenantId = useSessionStore((s) => s.activeTenantId)
   const confirmTenantSwitch = useTenantSwitchGuard((s) => s.confirm)
   const [pendingId, setPendingId] = useState<number | null>(null)
-
-  if (memberships.length < 2) return null
 
   const switchTo = async (tenantId: number) => {
     if (pendingId !== null || tenantId === activeTenantId) return

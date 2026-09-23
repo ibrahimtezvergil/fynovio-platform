@@ -18,11 +18,12 @@ describe('TenantMenu', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('shows the active tenant without a switcher for a single-tenant account', () => {
+  it('opens the tenant menu for a single-tenant account', async () => {
     useSessionStore.getState().applyAuthResult(authenticated())
     renderPage(<TenantMenu collapsed={false} />)
-    expect(screen.getByText(name(1))).toBeInTheDocument()
-    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: name(1) }))
+
+    expect(await screen.findByRole('link', { name: /şirket ayarları/i })).toHaveAttribute('href', '/company/settings')
   })
 
   it('lets a multi-tenant account switch from the sidebar and closes afterwards', async () => {

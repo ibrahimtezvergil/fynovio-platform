@@ -15,10 +15,13 @@ const tenantName = (id: number) => id === 1 ? 'Acme Türkiye' : 'Northwind'
 const tenantButton = (id: number) => screen.getByRole('button', { name: new RegExp(tenantName(id), 'i') })
 
 describe('TenantSwitcher', () => {
-  it('renders nothing for a single-tenant account', () => {
+  it('shows the active tenant and company links for a single-tenant account', () => {
     useSessionStore.getState().applyAuthResult(authenticated())
-    const { container } = renderPage(<TenantSwitcher />)
-    expect(container).toBeEmptyDOMElement()
+    renderPage(<TenantSwitcher />)
+
+    expect(tenantButton(1)).toHaveAttribute('aria-current', 'true')
+    expect(screen.getByRole('link', { name: /şirket ayarları/i })).toHaveAttribute('href', '/company/settings')
+    expect(screen.getByRole('link', { name: /şirket oluştur/i })).toHaveAttribute('href', '/companies/new')
   })
 
   it('lists the tenants of a multi-tenant account and marks the active one', () => {

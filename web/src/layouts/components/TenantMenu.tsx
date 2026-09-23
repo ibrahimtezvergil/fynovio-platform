@@ -8,14 +8,13 @@ import { TenantSwitcher } from './TenantSwitcher'
 
 /**
  * The sidebar's active-organisation slot — square avatar: an org, not a person.
- * Accounts with several memberships open the switcher from it; single-tenant
- * accounts just see which organisation they are in. Memberships carry the
- * display name used for the label.
+ * It always opens the tenant menu: single-tenant accounts use it for company
+ * settings and creating another company, while multi-tenant accounts can also
+ * switch context. Memberships carry the display name used for the label.
  */
 export function TenantMenu({ collapsed }: { collapsed: boolean }) {
   const activeTenantId = useSessionStore((s) => s.activeTenantId)
   const memberships = useSessionStore((s) => s.memberships)
-  const switchable = useSessionStore((s) => s.memberships.length > 1)
   const [open, setOpen] = useState(false)
 
   if (activeTenantId === null) return null
@@ -33,20 +32,11 @@ export function TenantMenu({ collapsed }: { collapsed: boolean }) {
       {!collapsed && (
         <>
           <span className="min-w-0 flex-1 truncate">{label}</span>
-          {switchable && <ChevronsUpDown aria-hidden className="text-muted-foreground size-[15px] shrink-0" />}
+          <ChevronsUpDown aria-hidden className="text-muted-foreground size-[15px] shrink-0" />
         </>
       )}
     </>
   )
-
-  if (!switchable) {
-    return (
-      <div title={collapsed ? label : undefined} className={slotClass}>
-        {content}
-        {collapsed && <span className="sr-only">{label}</span>}
-      </div>
-    )
-  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
