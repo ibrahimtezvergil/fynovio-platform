@@ -41,7 +41,9 @@ function SectionHeading({ title, description }: { title: string; description: st
 }
 
 function roleDisplayName(role: { key: string; name: string }, t: (key: string) => string) {
-  return role.key === 'tenant_administrator' ? t('roles.administrator') : role.name
+  if (role.key === 'tenant_administrator') return t('roles.administrator')
+  if (role.key === 'support') return t('roles.support')
+  return role.name
 }
 
 function ProfileFields() {
@@ -198,7 +200,7 @@ function AccessFields({ section }: { section: 'members' | 'roles' }) {
     setActionSearch('')
   }
   const saveRole = async () => {
-    if (!access.data || !roleName.trim() || selectedActions.length === 0) return
+    if (!access.data || !roleName.trim() || (editingRoleKey === 'new' && selectedActions.length === 0)) return
     const values = { name: roleName.trim(), actionKeys: selectedActions, expectedRevision: access.data.revision }
     const key = keys.begin({ ...values, roleKey: editingRoleKey })
     try {
@@ -265,18 +267,18 @@ function AccessFields({ section }: { section: 'members' | 'roles' }) {
           {access.data?.canManageRoles && <Button type="button" size="sm" onClick={() => openRoleEditor()}><Plus aria-hidden />{t('roles.create')}</Button>}
         </div>
         <div className="divide-y rounded-[var(--nx-r-card)] border">
-          {access.data?.roles.map((role) => <div key={role.key} className="px-4 py-3.5"><div className="flex flex-wrap items-center gap-2"><p className="mr-auto text-sm font-medium">{roleDisplayName(role, t)}</p>{role.origin === 'system_template' && <span className="rounded-md bg-secondary px-2 py-1 text-xs text-muted-foreground">{t('roles.systemManaged')}</span>}{role.canEdit && <Button type="button" size="sm" variant="outline" onClick={() => openRoleEditor(role.key)}>{t('roles.edit')}</Button>}</div><div className="mt-2 flex flex-wrap gap-1.5">{role.permissions.length > 0 ? role.permissions.map((permission) => <span key={`${permission.actionKey}/${permission.relation}`} className="rounded-md bg-secondary px-2 py-1 text-xs" title={permission.actionKey}>{t(`roles.actions.${permission.actionKey}`, { defaultValue: permission.actionKey })} · {permission.relation === 'owner' ? t('roles.ownerScope') : t('roles.tenantScope')}</span>) : <span className="text-xs text-muted-foreground">{t('roles.noPermissions')}</span>}</div></div>)}
+          {access.data?.roles.map((role) => <div key={role.key} className="px-4 py-3.5"><div className="flex flex-wrap items-center gap-2"><p className="mr-auto text-sm font-medium">{roleDisplayName(role, t)}</p>{role.origin === 'system_template' && <span className="rounded-md bg-secondary px-2 py-1 text-xs text-muted-foreground">{t('roles.systemManaged')}</span>}{role.canEdit && <Button type="button" size="sm" variant="outline" onClick={() => openRoleEditor(role.key)}>{t('roles.edit')}</Button>}</div>{role.permissions.length > 0 ? <details className="group mt-2"><summary className="text-muted-foreground flex cursor-pointer list-none items-center justify-between gap-3 text-xs hover:text-foreground"><span className="rounded-md bg-secondary px-2 py-1">{t('roles.permissionCount', { count: role.permissions.length })}</span><span className="group-open:hidden">{t('roles.showPermissions')}</span><span className="hidden group-open:inline">{t('roles.hidePermissions')}</span></summary><div className="mt-2 grid gap-1.5 sm:grid-cols-2">{role.permissions.map((permission) => <span key={`${permission.actionKey}/${permission.relation}`} className="truncate rounded-md bg-secondary px-2 py-1 text-xs" title={`${t(`roles.actions.${permission.actionKey}`, { defaultValue: permission.actionKey })} · ${permission.relation === 'owner' ? t('roles.ownerScope') : t('roles.tenantScope')}`}>{t(`roles.actions.${permission.actionKey}`, { defaultValue: permission.actionKey })}</span>)}</div></details> : <p className="text-muted-foreground mt-2 text-xs">{t('roles.noPermissions')}</p>}</div>)}
           {access.data?.roles.length === 0 && <p className="px-4 py-6 text-sm text-muted-foreground">{t('roles.empty')}</p>}
         </div>
         <Dialog open={editingRoleKey !== null} onOpenChange={(open) => { if (!open) setEditingRoleKey(null) }}>
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader><DialogTitle>{editingRoleKey === 'new' ? t('roles.create') : t('roles.edit')}</DialogTitle><DialogDescription>{t('roles.editorDescription')}</DialogDescription></DialogHeader>
-            <Field label={t('roles.name')}>{(props) => <Input {...props} value={roleName} autoFocus onChange={(event) => setRoleName(event.target.value)} />}</Field>
+            <Field label={t('roles.name')}>{(props) => <Input {...props} value={roleName} autoFocus disabled={editingRoleKey === 'support'} onChange={(event) => setRoleName(event.target.value)} />}</Field>
             <div className="space-y-3"><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-medium">{t('roles.permissions')}</p><span className="text-xs text-muted-foreground">{t('roles.selected', { count: selectedActions.length })}</span></div>
               <div className="relative"><Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" /><Input aria-label={t('roles.search')} className="pl-9" value={actionSearch} onChange={(event) => setActionSearch(event.target.value)} /></div>
               <div className="max-h-72 divide-y overflow-y-auto rounded-[var(--nx-r-card)] border">{filteredActions.map((action) => <label key={action.key} className="flex cursor-pointer items-center gap-3 px-3 py-2.5 hover:bg-muted"><Checkbox aria-label={t(`roles.actions.${action.key}`, { defaultValue: action.key })} checked={selectedActions.includes(action.key)} onChange={() => toggleAction(action.key)} /><span className="min-w-0 flex-1"><span className="block text-sm">{t(`roles.actions.${action.key}`, { defaultValue: action.key })}</span><span className="block truncate text-xs text-muted-foreground">{action.ownerModule} · {action.key}</span></span></label>)}{filteredActions.length === 0 && <p className="px-3 py-6 text-sm text-muted-foreground">{t('roles.noAction')}</p>}</div>
             </div>
-            <DialogFooter><Button type="button" variant="outline" onClick={() => setEditingRoleKey(null)}>{t('roles.cancel')}</Button><Button type="button" disabled={!roleName.trim() || selectedActions.length === 0 || createRole.isPending || updateRole.isPending} onClick={() => void saveRole()}>{t('roles.save')}</Button></DialogFooter>
+            <DialogFooter><Button type="button" variant="outline" onClick={() => setEditingRoleKey(null)}>{t('roles.cancel')}</Button><Button type="button" disabled={!roleName.trim() || (editingRoleKey === 'new' && selectedActions.length === 0) || createRole.isPending || updateRole.isPending} onClick={() => void saveRole()}>{t('roles.save')}</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       </Card>}

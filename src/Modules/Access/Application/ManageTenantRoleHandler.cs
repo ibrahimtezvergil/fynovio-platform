@@ -97,22 +97,27 @@ public sealed class ManageTenantRoleHandler(AccessDbContext context, IAuthorizer
             return replay with { Replayed = true };
         }
 
-        await ValidateActionsAsync(command.ActionKeys, cancellationToken);
+        await ValidateActionsAsync(command.ActionKeys, cancellationToken, allowEmpty: true);
         var state = await RequireRevisionAsync(command.TenantId, command.ExpectedRevision, cancellationToken);
         var role = await context.Roles.SingleOrDefaultAsync(role => role.TenantId == command.TenantId && role.Key == command.RoleKey, cancellationToken)
             ?? throw new ArgumentException("Role was not found.", nameof(command.RoleKey));
-        if (role.Origin != Role.OriginTenant)
+        var editableSupport = role.Key == BootstrapTenantAccessHandler.SupportRoleKey;
+        if (role.Origin != Role.OriginTenant && !editableSupport)
             throw new SystemRoleImmutableException();
 
         var permissionSet = await (
             from rolePermissionSet in context.RolePermissionSets
             join set in context.PermissionSets.Include(set => set.Items) on rolePermissionSet.PermissionSetId equals set.Id
-            where rolePermissionSet.TenantId == command.TenantId && rolePermissionSet.RoleId == role.Id && set.Origin == PermissionSet.OriginTenant
+            where rolePermissionSet.TenantId == command.TenantId && rolePermissionSet.RoleId == role.Id
+                && (set.Origin == PermissionSet.OriginTenant || editableSupport)
             select set).SingleOrDefaultAsync(cancellationToken)
             ?? throw new InvalidOperationException("The custom role does not have an editable permission set.");
 
-        role.Rename(command.Name);
-        permissionSet.Rename(command.Name);
+        if (!editableSupport)
+        {
+            role.Rename(command.Name);
+            permissionSet.Rename(command.Name);
+        }
         permissionSet.ReplaceGrants(command.ActionKeys.Select(actionKey => (actionKey, (string?)null)));
         state.BumpRevision();
         await WriteAuditAsync(command.TenantId, command.RequestedBy, command.CorrelationId, role, state.Revision,
@@ -138,9 +143,9 @@ public sealed class ManageTenantRoleHandler(AccessDbContext context, IAuthorizer
         }
     }
 
-    private async Task ValidateActionsAsync(IReadOnlyList<string> actionKeys, CancellationToken cancellationToken)
+    private async Task ValidateActionsAsync(IReadOnlyList<string> actionKeys, CancellationToken cancellationToken, bool allowEmpty = false)
     {
-        if (actionKeys.Count == 0 || actionKeys.Any(string.IsNullOrWhiteSpace)
+        if ((!allowEmpty && actionKeys.Count == 0) || actionKeys.Any(string.IsNullOrWhiteSpace)
             || actionKeys.Distinct(StringComparer.Ordinal).Count() != actionKeys.Count)
             throw new ArgumentException("Select one or more distinct permissions.", nameof(actionKeys));
 

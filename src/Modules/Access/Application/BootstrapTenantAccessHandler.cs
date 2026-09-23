@@ -50,14 +50,17 @@ public sealed class BootstrapTenantAccessHandler(AccessDbContext context)
         var role = Role.Create(
             command.TenantId, TenantAdministratorRoleKey, "Sistem Yöneticisi (Admin)", Role.OriginSystemTemplate,
             AccessTemplateModuleKey, AccessTemplateVersion);
-        var supportRole = Role.Create(
-            command.TenantId, SupportRoleKey, "Support", Role.OriginSystemTemplate,
+        var supportSet = PermissionSet.Create(command.TenantId, SupportRoleKey, "Support", PermissionSet.OriginSystemTemplate,
             AccessTemplateModuleKey, AccessTemplateVersion);
+        var supportRole = Role.Create(command.TenantId, SupportRoleKey, "Support", Role.OriginSystemTemplate,
+            AccessTemplateModuleKey, AccessTemplateVersion);
+        context.PermissionSets.Add(supportSet);
         context.Roles.Add(role);
         context.Roles.Add(supportRole);
         await context.SaveChangesAsync(cancellationToken); // assigns Id to permissionSet/role before the join row
 
         context.RolePermissionSets.Add(RolePermissionSet.Create(command.TenantId, role.Id, permissionSet.Id));
+        context.RolePermissionSets.Add(RolePermissionSet.Create(command.TenantId, supportRole.Id, supportSet.Id));
 
         var assignment = RoleAssignment.Grant(command.TenantId, accountId, role.Id, accountId, RoleAssignment.SourceBootstrap, reason: "Tenant bootstrap");
         context.RoleAssignments.Add(assignment);

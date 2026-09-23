@@ -71,8 +71,6 @@ public sealed class PermissionSet
     public void ReplaceGrants(IEnumerable<(string ActionKey, string? Relation)> grants)
     {
         var values = grants.ToArray();
-        if (values.Length == 0)
-            throw new ArgumentException("At least one action is required.", nameof(grants));
         if (values.Select(value => value.ActionKey).Distinct(StringComparer.Ordinal).Count() != values.Length)
             throw new ArgumentException("An action can only be granted once.", nameof(grants));
 

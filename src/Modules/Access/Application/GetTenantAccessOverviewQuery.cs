@@ -134,7 +134,8 @@ public sealed class GetTenantAccessOverviewHandler(AccessDbContext context, IAut
                     .OrderBy(assignment => assignment.RoleName)
                     .ToArray())).ToArray(),
             roles.Select(role => new TenantRoleSummary(
-                role.Key, role.Name, role.Origin, canManagePermissionSets && role.Origin == Role.OriginTenant,
+                role.Key, role.Name, role.Origin, canManagePermissionSets
+                    && (role.Origin == Role.OriginTenant || role.Key == BootstrapTenantAccessHandler.SupportRoleKey),
                 actionKeysByRole[role.Id]
                     .Select(item => new TenantRolePermissionSummary(item.ActionKey, item.Relation))
                     .Distinct().OrderBy(item => item.ActionKey).ThenBy(item => item.Relation).ToArray())).ToArray(),

@@ -92,7 +92,7 @@ public sealed class BootstrapTenantAccessHandlerTests : IClassFixture<PostgresFi
             Assert.Equal(tenantId, role.TenantId);
             Assert.Equal(Role.OriginSystemTemplate, role.Origin);
 
-            var permissionSet = await verify.PermissionSets.SingleAsync(p => p.TenantId == tenantId);
+            var permissionSet = await verify.PermissionSets.SingleAsync(p => p.TenantId == tenantId && p.Key == "tenant_administration");
             Assert.Equal(tenantId, permissionSet.TenantId);
             Assert.Equal(PermissionSet.OriginSystemTemplate, permissionSet.Origin);
         }
