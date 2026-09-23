@@ -54,9 +54,9 @@
     "semantic_hash": ""
   },
   "src/Host/Program.cs": {
-    "mtime": 1790072703.00362,
-    "seen": 1790073310.044697,
-    "ast_hash": "df68ad08544c359add8288e800ad5147",
+    "mtime": 1790153310.020285,
+    "seen": 1790155173.226288,
+    "ast_hash": "7f7e4b4164b42b1144ec17febb8acdf6",
     "semantic_hash": ""
   },
   "src/Host/Properties/launchSettings.json": {
@@ -378,9 +378,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/Role.cs": {
-    "mtime": 1789933845.2494755,
-    "seen": 1790024389.329061,
-    "ast_hash": "a09ad76eb976e8c89eadf4c2ad45e237",
+    "mtime": 1790153234.8017523,
+    "seen": 1790155173.226349,
+    "ast_hash": "50649b26ff3e2e53b998cc5ecf16ec09",
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/RoleAssignment.cs": {
@@ -414,9 +414,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/AccessDbContext.cs": {
-    "mtime": 1789933845.2506115,
-    "seen": 1790024389.32907,
-    "ast_hash": "a1628087f4166357747ee74d433b2f3c",
+    "mtime": 1790105876.269957,
+    "seen": 1790155173.226357,
+    "ast_hash": "f9d356b1a6e6ddbd6c4d20a640f5833c",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/AccessDbContextFactory.cs": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/RoleAssignmentConfiguration.cs": {
-    "mtime": 1789933845.2510817,
-    "seen": 1790024389.32908,
-    "ast_hash": "e80f9720530246ba36716b4d724cf9c4",
+    "mtime": 1790105393.4741876,
+    "seen": 1790155173.226368,
+    "ast_hash": "ca8bb3fe161ddaae1e63773b4a62e43d",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/RoleConfiguration.cs": {
@@ -468,9 +468,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Migrations/AccessDbContextModelSnapshot.cs": {
-    "mtime": 1789933845.2555048,
-    "seen": 1790024389.3290932,
-    "ast_hash": "3e863e95a09cc70709a841f96524b866",
+    "mtime": 1790107321.030196,
+    "seen": 1790155173.226387,
+    "ast_hash": "37b75e0c008eebeb997a43606824eeb7",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/RowVersionInterceptor.cs": {
@@ -510,9 +510,9 @@
     "semantic_hash": ""
   },
   "docs/schema/identity-access-schema.md": {
-    "mtime": 1789933845.158516,
-    "seen": 1790024389.329775,
-    "ast_hash": "6fddc4b5991cab5be332be692d09f74e",
+    "mtime": 1790107335.1671584,
+    "seen": 1790155173.2271402,
+    "ast_hash": "aa4ead13899ca0a773f6dc25cf38429e",
     "semantic_hash": ""
   },
   "docs/schema/tenant-network-schema.md": {
@@ -1182,9 +1182,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/PermissionSet.cs": {
-    "mtime": 1789933845.2492595,
-    "seen": 1790024389.32906,
-    "ast_hash": "6390b4bdf52d5de430a04f830d763a32",
+    "mtime": 1790153234.8487601,
+    "seen": 1790155173.226347,
+    "ast_hash": "36063da560b22f5fdb44f3f99cecebde",
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authorization/PermissionSetItem.cs": {
@@ -1326,9 +1326,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/BootstrapTenantAccessHandler.cs": {
-    "mtime": 1789933845.248472,
-    "seen": 1790024389.32905,
-    "ast_hash": "58d335457498e0203174a63f61bba12a",
+    "mtime": 1790154397.5719028,
+    "seen": 1790155173.226333,
+    "ast_hash": "e33dd29a4f637b70810bfe529adaa3f6",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/GrantRoleAssignmentCommand.cs": {
@@ -1338,9 +1338,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/GrantRoleAssignmentHandler.cs": {
-    "mtime": 1789635723.4705505,
-    "seen": 1790024389.329053,
-    "ast_hash": "8f255e2d370262ba8191e5dac120ffec",
+    "mtime": 1790105372.3284,
+    "seen": 1790155173.226337,
+    "ast_hash": "4932fbf8b0b9a3dae31dc0d28521b863",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/IdempotencyKeyReusedException.cs": {
@@ -1356,9 +1356,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/RevokeRoleAssignmentHandler.cs": {
-    "mtime": 1789635723.4713378,
-    "seen": 1790024389.329056,
-    "ast_hash": "e80d4474eb1d70f6d667da8edb913296",
+    "mtime": 1790105393.4257398,
+    "seen": 1790155173.226341,
+    "ast_hash": "30b2260fd94242fdce44954c62462258",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/AccessDbContextTenantExtensions.cs": {
@@ -1416,9 +1416,9 @@
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/AccessRlsTests.cs": {
-    "mtime": 1789638889.8138387,
-    "seen": 1790024389.329244,
-    "ast_hash": "380f440baedce4bb70ec5cadf755b813",
+    "mtime": 1790106528.463164,
+    "seen": 1790155173.2265642,
+    "ast_hash": "1758f676ae84e83cb2e261f0c097f81f",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/PostgresFixture.cs": {
@@ -1470,9 +1470,9 @@
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/GrantRevokeRoleAssignmentHandlerTests.cs": {
-    "mtime": 1789857212.85337,
-    "seen": 1790024389.329254,
-    "ast_hash": "487ed0be61a7e54f4c7a66cb38f841bc",
+    "mtime": 1790153604.1078017,
+    "seen": 1790155173.2265759,
+    "ast_hash": "75a674a37bf39f717a0907da39690cc6",
     "semantic_hash": ""
   },
   "docs/plans/crm-phase1/2026-09-16-crm-phase1-lifecycle-pipeline-execution-plan.md": {
@@ -2250,15 +2250,15 @@
     "semantic_hash": ""
   },
   "src/Host/Endpoints/AccountLifecycleEndpoints.cs": {
-    "mtime": 1789913055.6467638,
-    "seen": 1790024389.32901,
-    "ast_hash": "5d23ab65e11f50b9d926a00289adbf41",
+    "mtime": 1790098379.5763464,
+    "seen": 1790155173.22628,
+    "ast_hash": "184b0c1b55dbb6c253c6655e431aedff",
     "semantic_hash": ""
   },
   "src/Host/Endpoints/AuthEndpoints.cs": {
-    "mtime": 1789913055.6472573,
-    "seen": 1790024389.329011,
-    "ast_hash": "a1e1b7901b4cf77064377ead65dc6653",
+    "mtime": 1790107105.3356478,
+    "seen": 1790155173.22628,
+    "ast_hash": "8de097542f907f6a6a842b4ea73dbcb9",
     "semantic_hash": ""
   },
   "src/Host/Endpoints/AuthProblems.cs": {
@@ -2280,9 +2280,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/Authentication/AcceptInvitationHandler.cs": {
-    "mtime": 1789913055.6535711,
-    "seen": 1790024389.329024,
-    "ast_hash": "ca4a26a3a744e93f6d36628e3e361b09",
+    "mtime": 1790106677.8185446,
+    "seen": 1790155173.226295,
+    "ast_hash": "c3b3155b914fe12b7d11f4b229a54d6c",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/Authentication/AccountProvisioning.cs": {
@@ -2346,15 +2346,15 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/Authentication/CreateInvitationCommand.cs": {
-    "mtime": 1789913055.6612368,
-    "seen": 1790024389.329031,
-    "ast_hash": "db39c23743fb58a0b7acac1c0c9454b7",
+    "mtime": 1790105629.2218018,
+    "seen": 1790155173.226304,
+    "ast_hash": "3a6b220ec78b97fe420db0dad8469379",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/Authentication/CreateInvitationHandler.cs": {
-    "mtime": 1789913055.6615262,
-    "seen": 1790024389.329031,
-    "ast_hash": "8a8a34a85888c9c3d61602809bac0b3b",
+    "mtime": 1790107105.3371105,
+    "seen": 1790155173.226304,
+    "ast_hash": "bed0267a670fa44bea894638bbe84065",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/Authentication/CredentialVerifier.cs": {
@@ -2526,9 +2526,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authentication/AccountToken.cs": {
-    "mtime": 1789913055.6729693,
-    "seen": 1790024389.329057,
-    "ast_hash": "d4c51bf1feacb54fe85fa9876a5deb14",
+    "mtime": 1790107314.7736673,
+    "seen": 1790155173.226343,
+    "ast_hash": "95713cee164478e99f32ff2437b30e4e",
     "semantic_hash": ""
   },
   "src/Modules/Access/Domain/Authentication/AuthEvent.cs": {
@@ -2556,9 +2556,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/AccountTokenConfiguration.cs": {
-    "mtime": 1789913055.6749375,
-    "seen": 1790024389.329073,
-    "ast_hash": "cfe8c168de7607896943857f9e84109a",
+    "mtime": 1790107314.721402,
+    "seen": 1790155173.22636,
+    "ast_hash": "f369af6fa7abaacb4bf793556fe2ae1a",
     "semantic_hash": ""
   },
   "src/Modules/Access/Persistence/Configurations/AuthEventConfiguration.cs": {
@@ -2658,9 +2658,9 @@
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/Authentication/AuthTestSetup.cs": {
-    "mtime": 1789913055.6863806,
-    "seen": 1790024389.329247,
-    "ast_hash": "bca5f6bdc8e0ba75bde4ee4bc36852bf",
+    "mtime": 1790106670.6558774,
+    "seen": 1790155173.226568,
+    "ast_hash": "f52bfd7578d0c0bb1bd43c496d37ade7",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/Authentication/AuthenticationBehaviourTests.cs": {
@@ -2682,15 +2682,15 @@
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/Authentication/InvitationAcceptanceTests.cs": {
-    "mtime": 1789913055.6913018,
-    "seen": 1790024389.329249,
-    "ast_hash": "95d40330ce70d221395ee3f7f755ed7e",
+    "mtime": 1790106088.3848379,
+    "seen": 1790155173.22657,
+    "ast_hash": "d908927262801ff5db722cfcfe370847",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/Authentication/InvitationCreationTests.cs": {
-    "mtime": 1789913055.6920362,
-    "seen": 1790024389.32925,
-    "ast_hash": "bc5110679829c794e2bb3d70998efeab",
+    "mtime": 1790107132.4190702,
+    "seen": 1790155173.226571,
+    "ast_hash": "fc514b31820d518a5c838d6a6920c988",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Integration/Authentication/PasswordResetTests.cs": {
@@ -2748,15 +2748,15 @@
     "semantic_hash": ""
   },
   "tests/Host.Tests/Authentication/DevSeederTests.cs": {
-    "mtime": 1790023783.009118,
-    "seen": 1790024389.3293009,
-    "ast_hash": "afae3f354edcbffe5283b902bf54f3a0",
+    "mtime": 1790102414.9287503,
+    "seen": 1790155173.226633,
+    "ast_hash": "a6bebeb809beb482bd364580b4e646a9",
     "semantic_hash": ""
   },
   "tests/Host.Tests/Authentication/EmailTests.cs": {
-    "mtime": 1789913055.6982234,
-    "seen": 1790024389.329302,
-    "ast_hash": "9b299ac1d245ee84e8b748b034891872",
+    "mtime": 1790107418.2675717,
+    "seen": 1790155173.226634,
+    "ast_hash": "d60782bd40cadf4c54d9936b308cfc55",
     "semantic_hash": ""
   },
   "tests/Host.Tests/Authentication/IdentifierRateLimiterTests.cs": {
@@ -2784,9 +2784,9 @@
     "semantic_hash": ""
   },
   "tests/Host.Tests/Fixtures/AuthApiFixture.cs": {
-    "mtime": 1790068913.2443423,
-    "seen": 1790073310.0450099,
-    "ast_hash": "1823fece4bfc825a955eb5f3fe36cc4e",
+    "mtime": 1790107635.0703208,
+    "seen": 1790155173.2266428,
+    "ast_hash": "bfc93bc3a249009bd418b3b5c075b629",
     "semantic_hash": ""
   },
   "tests/Host.Tests/Fixtures/AuthTestFixture.cs": {
@@ -2838,9 +2838,9 @@
     "semantic_hash": ""
   },
   "web/e2e/account.e2e.ts": {
-    "mtime": 1789944327.4957492,
-    "seen": 1790024389.329327,
-    "ast_hash": "f4bfd6a9bf1781dd29b9442a947ba836",
+    "mtime": 1790102460.9208791,
+    "seen": 1790155173.2266681,
+    "ast_hash": "cc3c3c144ea84554c693fc71fe06f736",
     "semantic_hash": ""
   },
   "web/e2e/isolation.e2e.ts": {
@@ -2850,9 +2850,9 @@
     "semantic_hash": ""
   },
   "web/e2e/login.e2e.ts": {
-    "mtime": 1789944327.495426,
-    "seen": 1790024389.329329,
-    "ast_hash": "64757ef4ebf7f663a3dafacc16ac6b0e",
+    "mtime": 1790102460.9218166,
+    "seen": 1790155173.22667,
+    "ast_hash": "09e9ca788f3811a31b9c341d051a9334",
     "semantic_hash": ""
   },
   "web/e2e/support/api.ts": {
@@ -2868,9 +2868,9 @@
     "semantic_hash": ""
   },
   "web/e2e/support/ui.ts": {
-    "mtime": 1789944327.4950845,
-    "seen": 1790024389.329333,
-    "ast_hash": "5cbc5a2d640bd4986e56ee19d0ac486d",
+    "mtime": 1790102460.920487,
+    "seen": 1790155173.2266738,
+    "ast_hash": "1896a4e5476c9a0908fed1e22e7adb5f",
     "semantic_hash": ""
   },
   "web/package.json": {
@@ -2886,8 +2886,8 @@
     "semantic_hash": ""
   },
   "web/public/mockServiceWorker.js": {
-    "mtime": 1790076382.9499052,
-    "seen": 1790081446.124798,
+    "mtime": 1790108295.1511288,
+    "seen": 1790155173.226676,
     "ast_hash": "c8f0dfa140ec246071c4cc5a03df5c9d",
     "semantic_hash": ""
   },
@@ -2910,9 +2910,9 @@
     "semantic_hash": ""
   },
   "web/src/api/endpoints.ts": {
-    "mtime": 1790072703.0039582,
-    "seen": 1790073310.045045,
-    "ast_hash": "0cd93b3c0a375a75b6249269e39ff4a1",
+    "mtime": 1790153345.9751637,
+    "seen": 1790155173.226679,
+    "ast_hash": "8dca001268cdfabf83a652e421f44d35",
     "semantic_hash": ""
   },
   "web/src/api/queryClient.ts": {
@@ -3030,9 +3030,9 @@
     "semantic_hash": ""
   },
   "web/src/components/common/SectionNav.tsx": {
-    "mtime": 1789861433.2435663,
-    "seen": 1790024389.329349,
-    "ast_hash": "9682ab48543309fa89416b26492ba3f0",
+    "mtime": 1790102163.42456,
+    "seen": 1790155173.2266932,
+    "ast_hash": "6e92772962799879ddd10ed87390552a",
     "semantic_hash": ""
   },
   "web/src/components/common/SegmentedControl.tsx": {
@@ -3450,9 +3450,9 @@
     "semantic_hash": ""
   },
   "web/src/components/data-table/lib/viewState.test.ts": {
-    "mtime": 1789913055.717964,
-    "seen": 1790024389.329393,
-    "ast_hash": "f71307c4093bdd79c8977f0e95e3b916",
+    "mtime": 1790102346.5548384,
+    "seen": 1790155173.226738,
+    "ast_hash": "f8cd5c338542dd0bfb843a4971e37869",
     "semantic_hash": ""
   },
   "web/src/components/data-table/lib/viewState.ts": {
@@ -3786,15 +3786,15 @@
     "semantic_hash": ""
   },
   "web/src/features/auth/pages/TenantSelectorPage.test.tsx": {
-    "mtime": 1789913055.7270994,
-    "seen": 1790024389.329428,
-    "ast_hash": "a2bb512ba6c5c88d267d06946da14cce",
+    "mtime": 1790102222.0067017,
+    "seen": 1790155173.226804,
+    "ast_hash": "ee970b81f7461f3b445bf93084973085",
     "semantic_hash": ""
   },
   "web/src/features/auth/pages/TenantSelectorPage.tsx": {
-    "mtime": 1789913055.7273118,
-    "seen": 1790024389.329428,
-    "ast_hash": "b354e46082c800c5a05496e348a7c8cb",
+    "mtime": 1790102180.70323,
+    "seen": 1790155173.226805,
+    "ast_hash": "85d526a38842de6200a9d200994c190e",
     "semantic_hash": ""
   },
   "web/src/features/auth/routes.ts": {
@@ -5064,9 +5064,9 @@
     "semantic_hash": ""
   },
   "web/src/features/placeholder/routes.ts": {
-    "mtime": 1789946180.9050484,
-    "seen": 1790024389.3296351,
-    "ast_hash": "58f711a353b95818804cb5a7a6978cb5",
+    "mtime": 1790116271.2797682,
+    "seen": 1790155173.22699,
+    "ast_hash": "391fa222ee091f9f58e57da0790e0a71",
     "semantic_hash": ""
   },
   "web/src/features/settings/components/NotificationsSection.tsx": {
@@ -5112,15 +5112,15 @@
     "semantic_hash": ""
   },
   "web/src/features/settings/pages/SettingsPage.tsx": {
-    "mtime": 1789972912.1884954,
-    "seen": 1790024389.32964,
-    "ast_hash": "fd2eeb5e29636e3c18642ec44cda7e4e",
+    "mtime": 1790116085.0241575,
+    "seen": 1790155173.226996,
+    "ast_hash": "b2040bb7c4a8119ea46c4c0270bb9c7d",
     "semantic_hash": ""
   },
   "web/src/features/settings/routes.ts": {
-    "mtime": 1789861433.2924979,
-    "seen": 1790024389.3296409,
-    "ast_hash": "fd4b0b18cf014c10e2014f6bad69c68e",
+    "mtime": 1790115917.2243829,
+    "seen": 1790155173.226997,
+    "ast_hash": "a797eb8fcdd6e8ea7bcb2fd006830e78",
     "semantic_hash": ""
   },
   "web/src/features/settings/schema.ts": {
@@ -5172,15 +5172,15 @@
     "semantic_hash": ""
   },
   "web/src/layouts/components/TenantSwitcher.test.tsx": {
-    "mtime": 1789913055.7291596,
-    "seen": 1790024389.329648,
-    "ast_hash": "c461425aa4249809bd6659a120b2971c",
+    "mtime": 1790102314.2270658,
+    "seen": 1790155173.2270029,
+    "ast_hash": "ff9e0a9ba100cc0b791ab14c75c4fe52",
     "semantic_hash": ""
   },
   "web/src/layouts/components/TenantSwitcher.tsx": {
-    "mtime": 1789943815.0900993,
-    "seen": 1790024389.329648,
-    "ast_hash": "c5c94bdc831faf130ca82d515aacaf84",
+    "mtime": 1790116261.3221753,
+    "seen": 1790155173.2270038,
+    "ast_hash": "1ad85a3ad585da2f1f3f0e12f8aa0faa",
     "semantic_hash": ""
   },
   "web/src/layouts/components/ToolsMenu.tsx": {
@@ -5196,9 +5196,9 @@
     "semantic_hash": ""
   },
   "web/src/layouts/components/UserMenu.test.tsx": {
-    "mtime": 1789946512.5934696,
-    "seen": 1790024389.32965,
-    "ast_hash": "aeede7555484deaa0894afefab4b3e42",
+    "mtime": 1790102346.6017153,
+    "seen": 1790155173.227006,
+    "ast_hash": "5cc3034b88e6bc1d93fd5a4b20f32d8b",
     "semantic_hash": ""
   },
   "web/src/layouts/components/UserMenu.tsx": {
@@ -5262,9 +5262,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/auth/index.ts": {
-    "mtime": 1789913055.730705,
-    "seen": 1790024389.329658,
-    "ast_hash": "ab1077a7a6f01fe14fb5bbdcce30bfc1",
+    "mtime": 1790098023.0775342,
+    "seen": 1790155173.2270138,
+    "ast_hash": "5d9388d8132f8862d3326307d6252da3",
     "semantic_hash": ""
   },
   "web/src/lib/auth/returnUrl.test.ts": {
@@ -5280,9 +5280,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/auth/session.test.ts": {
-    "mtime": 1789913055.7315044,
-    "seen": 1790024389.32966,
-    "ast_hash": "eac4e52332e4ad0872432bffa4baa446",
+    "mtime": 1790102346.646845,
+    "seen": 1790155173.227016,
+    "ast_hash": "179ae44393a18a9beeeb4ac00419f3ca",
     "semantic_hash": ""
   },
   "web/src/lib/auth/session.ts": {
@@ -5310,9 +5310,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/auth/types.ts": {
-    "mtime": 1789913055.7331653,
-    "seen": 1790024389.3296618,
-    "ast_hash": "217721158a905f8f96b4092fe20c72bc",
+    "mtime": 1790102314.1824558,
+    "seen": 1790155173.227019,
+    "ast_hash": "75fe9f97c9fff478ca62fef4231b1ab2",
     "semantic_hash": ""
   },
   "web/src/lib/capabilities/index.ts": {
@@ -5460,9 +5460,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/permissions/usePermission.test.tsx": {
-    "mtime": 1789913055.7341263,
-    "seen": 1790024389.329681,
-    "ast_hash": "9848254dbf808cbca2937515b93a5794",
+    "mtime": 1790102346.6917832,
+    "seen": 1790155173.2270389,
+    "ast_hash": "95ff023b9af05c387f03da79d7f0385e",
     "semantic_hash": ""
   },
   "web/src/lib/permissions/usePermission.ts": {
@@ -5532,9 +5532,9 @@
     "semantic_hash": ""
   },
   "web/src/locales/en/auth.ts": {
-    "mtime": 1789913055.735657,
-    "seen": 1790024389.329688,
-    "ast_hash": "d7296601b8fb46fc92d67b0c10defeb3",
+    "mtime": 1790102221.8578517,
+    "seen": 1790155173.2270458,
+    "ast_hash": "7e9b905f94b6442fc57ad38daf491d60",
     "semantic_hash": ""
   },
   "web/src/locales/en/calendar.ts": {
@@ -5634,9 +5634,9 @@
     "semantic_hash": ""
   },
   "web/src/locales/en/nav.ts": {
-    "mtime": 1789944216.1381004,
-    "seen": 1790024389.329699,
-    "ast_hash": "573e6928272ae4aeddd4a003524e8812",
+    "mtime": 1790116271.3927476,
+    "seen": 1790155173.227058,
+    "ast_hash": "eed11afddfc9ba01f25b662647a31231",
     "semantic_hash": ""
   },
   "web/src/locales/en/notifications.ts": {
@@ -5652,9 +5652,9 @@
     "semantic_hash": ""
   },
   "web/src/locales/en/placeholder.ts": {
-    "mtime": 1789861433.3024323,
-    "seen": 1790024389.3297012,
-    "ast_hash": "865b0857211276ab68945c22297f6448",
+    "mtime": 1790116271.6494236,
+    "seen": 1790155173.22706,
+    "ast_hash": "0290e5abf85b00051f29156e8b17bfd9",
     "semantic_hash": ""
   },
   "web/src/locales/en/routes.ts": {
@@ -5670,9 +5670,9 @@
     "semantic_hash": ""
   },
   "web/src/locales/tr/auth.ts": {
-    "mtime": 1789913055.7365487,
-    "seen": 1790024389.3297029,
-    "ast_hash": "493089de3d471e13c583b24e915f4911",
+    "mtime": 1790102221.8123116,
+    "seen": 1790155173.227062,
+    "ast_hash": "57a1fd2e461ba9e9d19dff412bef35cd",
     "semantic_hash": ""
   },
   "web/src/locales/tr/calendar.ts": {
@@ -5772,9 +5772,9 @@
     "semantic_hash": ""
   },
   "web/src/locales/tr/nav.ts": {
-    "mtime": 1789944267.5314326,
-    "seen": 1790024389.3297129,
-    "ast_hash": "d4bb761f405684f90def7a522653d87c",
+    "mtime": 1790116271.3239887,
+    "seen": 1790155173.227073,
+    "ast_hash": "ff85815a847d29dc7a92f6948d99fc27",
     "semantic_hash": ""
   },
   "web/src/locales/tr/notifications.ts": {
@@ -5790,9 +5790,9 @@
     "semantic_hash": ""
   },
   "web/src/locales/tr/placeholder.ts": {
-    "mtime": 1789861433.3053474,
-    "seen": 1790024389.329715,
-    "ast_hash": "6183126c9a6847c223c841ffc9838a8e",
+    "mtime": 1790116271.5479214,
+    "seen": 1790155173.227076,
+    "ast_hash": "17a5e3a8e46edfc8b3de06c8f4629c8c",
     "semantic_hash": ""
   },
   "web/src/locales/tr/routes.ts": {
@@ -5922,9 +5922,9 @@
     "semantic_hash": ""
   },
   "web/src/routes/paths.ts": {
-    "mtime": 1790068913.252181,
-    "seen": 1790073310.045441,
-    "ast_hash": "dabc253f95b4a68ab89b767373f974c8",
+    "mtime": 1790116271.2362573,
+    "seen": 1790155173.2270908,
+    "ast_hash": "3a28ca03df7bd06572783127009e807f",
     "semantic_hash": ""
   },
   "web/src/store/useAppStore.ts": {
@@ -5946,9 +5946,9 @@
     "semantic_hash": ""
   },
   "web/src/test/authHandlers.ts": {
-    "mtime": 1789913055.740139,
-    "seen": 1790024389.3297322,
-    "ast_hash": "3ceb4b22af7d7168d5abd2526f55653b",
+    "mtime": 1790102221.7666793,
+    "seen": 1790155173.227094,
+    "ast_hash": "ae36062207caa5716f5780ebddaeafdd",
     "semantic_hash": ""
   },
   "web/src/test/render.tsx": {
@@ -6558,9 +6558,9 @@
     "semantic_hash": ""
   },
   "web/e2e/opportunities.e2e.ts": {
-    "mtime": 1789945402.179879,
-    "seen": 1790024389.32933,
-    "ast_hash": "c60f2da5eb80301114ada550cea68d50",
+    "mtime": 1790102460.92304,
+    "seen": 1790155173.2266712,
+    "ast_hash": "503299def9ff13b87c8fe370e76858c7",
     "semantic_hash": ""
   },
   "web/e2e/support/opportunities.ts": {
@@ -6720,9 +6720,9 @@
     "semantic_hash": ""
   },
   "tests/Host.Tests/Authentication/EnableModuleCommandTests.cs": {
-    "mtime": 1790023783.009607,
-    "seen": 1790024389.329302,
-    "ast_hash": "848784376a1c772c5d4392473906f7bc",
+    "mtime": 1790106905.5953732,
+    "seen": 1790155173.226635,
+    "ast_hash": "a2f93cca89478e309d64e1b28c039ee9",
     "semantic_hash": ""
   },
   "tests/Host.Tests/Modules/PlatformModulesTests.cs": {
@@ -6996,15 +6996,15 @@
     "semantic_hash": ""
   },
   "web/src/layouts/components/TenantMenu.test.tsx": {
-    "mtime": 1789943577.8292668,
-    "seen": 1790024389.329646,
-    "ast_hash": "def1ebc847b894b52879a2b694f2ee2b",
+    "mtime": 1790102221.953434,
+    "seen": 1790155173.2270021,
+    "ast_hash": "21b2ccfa7cbaf10eac44575156734827",
     "semantic_hash": ""
   },
   "web/src/layouts/components/TenantMenu.tsx": {
-    "mtime": 1789943815.0902271,
-    "seen": 1790024389.329647,
-    "ast_hash": "4c14524a0984cfda9c1464d63f2aef3b",
+    "mtime": 1790103145.572097,
+    "seen": 1790155173.2270029,
+    "ast_hash": "16b52ab237b372e0ac4775cb027e6bdd",
     "semantic_hash": ""
   },
   "docs/architecture-analysis/CODEX SETUP PROMPT v2.1 \u2014 FINAL - LOCKED.pdf": {
@@ -7542,9 +7542,9 @@
     "semantic_hash": ""
   },
   "tests/Collaboration.Tests/Integration/PostgresFixture.cs": {
-    "mtime": 1790023783.0026996,
-    "seen": 1790024389.329294,
-    "ast_hash": "2512e9f72e7ffe46a6d11e26d97cb107",
+    "mtime": 1790106833.6507905,
+    "seen": 1790155173.2266262,
+    "ast_hash": "f64bda08533e68fd367ffc48f3d6a58c",
     "semantic_hash": ""
   },
   "tests/Collaboration.Tests/Integration/RowLevelSecurityTests.cs": {
@@ -7602,9 +7602,9 @@
     "semantic_hash": ""
   },
   "web/e2e/calendar.e2e.ts": {
-    "mtime": 1790023783.0203667,
-    "seen": 1790024389.329328,
-    "ast_hash": "14319f8adec6177c4f5848c02b3ab06b",
+    "mtime": 1790102460.9212296,
+    "seen": 1790155173.226669,
+    "ast_hash": "330cae2d234b8ff4ee8add612463aa73",
     "semantic_hash": ""
   },
   "web/e2e/support/calendar.ts": {
@@ -7782,15 +7782,15 @@
     "semantic_hash": ""
   },
   "src/Host/Endpoints/AccessProblemDetailsExceptionHandler.cs": {
-    "mtime": 1790072703.0029175,
-    "seen": 1790073310.044688,
-    "ast_hash": "c5fa904fba37b6ea36c6b1d9b563b2a3",
+    "mtime": 1790153310.0810764,
+    "seen": 1790155173.226279,
+    "ast_hash": "cbfcb78bac911d809af4b99bc4dc6221",
     "semantic_hash": ""
   },
   "src/Host/Endpoints/CompanySettingsEndpoints.cs": {
-    "mtime": 1790072703.0032663,
-    "seen": 1790073310.044692,
-    "ast_hash": "a1136aeaa5345ac1b50fd8dfbcc6abb1",
+    "mtime": 1790153310.131218,
+    "seen": 1790155173.226283,
+    "ast_hash": "92fa2aa812a54f623811e3b4bc6becdf",
     "semantic_hash": ""
   },
   "src/Host/Endpoints/TenantLifecycleProblemDetailsExceptionHandler.cs": {
@@ -7800,9 +7800,9 @@
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/GetTenantAccessOverviewQuery.cs": {
-    "mtime": 1790073937.400482,
-    "seen": 1790074270.976147,
-    "ast_hash": "a34a3c7d4848dba4eea3f6db4e1e2877",
+    "mtime": 1790154873.9396393,
+    "seen": 1790155173.226335,
+    "ast_hash": "a6d6989777376b07ec3b5aa6449c1d6f",
     "semantic_hash": ""
   },
   "src/Modules/TenantLifecycle/Application/CompanySettings.cs": {
@@ -8010,9 +8010,9 @@
     "semantic_hash": ""
   },
   "tests/Host.Tests/CompanySettingsEndpointsTests.cs": {
-    "mtime": 1790068913.243866,
-    "seen": 1790073310.045009,
-    "ast_hash": "949929cd609f5b74a06c0a4d74e5b067",
+    "mtime": 1790107105.3375728,
+    "seen": 1790155173.226642,
+    "ast_hash": "761272fa2ddf58fc984eb7fa4409abdc",
     "semantic_hash": ""
   },
   "tests/TenantLifecycle.Tests/Architecture/ModuleBoundaryTests.cs": {
@@ -8070,9 +8070,9 @@
     "semantic_hash": ""
   },
   "web/e2e/company-settings.e2e.ts": {
-    "mtime": 1790068913.2478442,
-    "seen": 1790073310.0450351,
-    "ast_hash": "69147aa91bb55c19512fdae4e04b176f",
+    "mtime": 1790107589.240284,
+    "seen": 1790155173.226669,
+    "ast_hash": "4c6e70b90fecfec0e4c6a5cca1f5ec9f",
     "semantic_hash": ""
   },
   "web/src/features/company-settings/api.test.tsx": {
@@ -8082,9 +8082,9 @@
     "semantic_hash": ""
   },
   "web/src/features/company-settings/api.ts": {
-    "mtime": 1790072703.0041177,
-    "seen": 1790073310.0451899,
-    "ast_hash": "f5e0ea47beef2a006da2a415fe51b61d",
+    "mtime": 1790153346.0700197,
+    "seen": 1790155173.226828,
+    "ast_hash": "db1d125e2f84e7bbdabce3d1cf40b73e",
     "semantic_hash": ""
   },
   "web/src/features/company-settings/index.ts": {
@@ -8094,39 +8094,39 @@
     "semantic_hash": ""
   },
   "web/src/features/company-settings/pages/CompanySettingsPage.test.tsx": {
-    "mtime": 1790072703.004375,
-    "seen": 1790073310.045192,
-    "ast_hash": "1a66c683814a457e08fc47481202513b",
+    "mtime": 1790153948.9346552,
+    "seen": 1790155173.226829,
+    "ast_hash": "ea5d0d92b37384eddf547e6d84e7761e",
     "semantic_hash": ""
   },
   "web/src/features/company-settings/pages/CompanySettingsPage.tsx": {
-    "mtime": 1790072703.0046751,
-    "seen": 1790073310.045192,
-    "ast_hash": "61206bcf4379e139ce2bcffc93600947",
+    "mtime": 1790154397.6172748,
+    "seen": 1790155173.22683,
+    "ast_hash": "399259d65e02c629479a3b4c5a009c19",
     "semantic_hash": ""
   },
   "web/src/features/company-settings/routes.ts": {
-    "mtime": 1790068913.2490451,
-    "seen": 1790073310.045193,
-    "ast_hash": "3c54d1e9f3f249c41d34f9f2483909ff",
+    "mtime": 1790115917.2676232,
+    "seen": 1790155173.22683,
+    "ast_hash": "7a77cfc114934f95751cdb0ddfd3a4d4",
     "semantic_hash": ""
   },
   "web/src/features/company-settings/schema.ts": {
-    "mtime": 1790072703.0048478,
-    "seen": 1790073310.045193,
-    "ast_hash": "66ce3a5321df09fc171f913c662c17d7",
+    "mtime": 1790153939.1813586,
+    "seen": 1790155173.2268312,
+    "ast_hash": "adab91d786a4de72e8794e25957fe95f",
     "semantic_hash": ""
   },
   "web/src/locales/en/company-settings.ts": {
-    "mtime": 1790072703.0050159,
-    "seen": 1790073310.045399,
-    "ast_hash": "d567f30e7f79f987a80d1b95a1d6eba9",
+    "mtime": 1790154397.7068374,
+    "seen": 1790155173.227048,
+    "ast_hash": "2b180173e998539c2e16ed00b07a4557",
     "semantic_hash": ""
   },
   "web/src/locales/tr/company-settings.ts": {
-    "mtime": 1790072703.0051684,
-    "seen": 1790073310.045415,
-    "ast_hash": "3876e8cf2b984b7b5c5cca9f0938d3d8",
+    "mtime": 1790154397.662064,
+    "seen": 1790155173.2270641,
+    "ast_hash": "ab4984f857ea746fd49fda1c7f414ee2",
     "semantic_hash": ""
   },
   "docs/plans/tenant-company-settings/2026-09-22-company-settings-plan.md": {
@@ -8145,6 +8145,162 @@
     "mtime": 1790081194.5980122,
     "seen": 1790081446.125272,
     "ast_hash": "b3a4b6ee25662d63497177fca63e8688",
+    "semantic_hash": ""
+  },
+  "src/Contracts/ITenantDirectory.cs": {
+    "mtime": 1790098347.32078,
+    "seen": 1790155173.2262511,
+    "ast_hash": "2dbdca9e54fb5385520a5d9bb6557e4f",
+    "semantic_hash": ""
+  },
+  "src/Contracts/TenantDirectoryEntry.cs": {
+    "mtime": 1790098347.2759705,
+    "seen": 1790155173.226261,
+    "ast_hash": "c99499ff719b10b996b04c84009194b3",
+    "semantic_hash": ""
+  },
+  "src/Host/Email/DevInvitationPreviewRecorder.cs": {
+    "mtime": 1790106023.1868773,
+    "seen": 1790155173.226274,
+    "ast_hash": "c87c4faf533fa684155ab0f1908f5d3d",
+    "semantic_hash": ""
+  },
+  "src/Host/Email/InvitationDeliveryService.cs": {
+    "mtime": 1790107413.402361,
+    "seen": 1790155173.226277,
+    "ast_hash": "b529debf65e40099aa83f9ef032d2114",
+    "semantic_hash": ""
+  },
+  "src/Host/Email/InvitationTokenProtector.cs": {
+    "mtime": 1790105937.854723,
+    "seen": 1790155173.2262778,
+    "ast_hash": "f9994f50172a7e5ae3bcedc97834d2e5",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Application/Authentication/CancelInvitationHandler.cs": {
+    "mtime": 1790106635.1604767,
+    "seen": 1790155173.226301,
+    "ast_hash": "33482f9b5a8bc1b24686e007d076130b",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Application/Authentication/IInvitationPreviewRecorder.cs": {
+    "mtime": 1790106023.0988822,
+    "seen": 1790155173.226309,
+    "ast_hash": "a40d848e04cab6cb1d85b2eead4193c1",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Application/Authentication/IInvitationTokenProtector.cs": {
+    "mtime": 1790105876.3135223,
+    "seen": 1790155173.226309,
+    "ast_hash": "ca44b45980582b5b38dd494c991d4625",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Application/ManageTenantRoleHandler.cs": {
+    "mtime": 1790153458.5310218,
+    "seen": 1790155173.2263381,
+    "ast_hash": "e2eba668a3ddf1eea0f4fbdcc4bfb8f4",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Application/RoleAssignmentConflictException.cs": {
+    "mtime": 1790105387.3676543,
+    "seen": 1790155173.226341,
+    "ast_hash": "eda5d761690d96d44cd40b6181ef22a0",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Domain/Authentication/InvitationDelivery.cs": {
+    "mtime": 1790107105.3373556,
+    "seen": 1790155173.226345,
+    "ast_hash": "8c0552b1e92df3ce76d6084e8ec4a5c6",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Persistence/Configurations/InvitationDeliveryConfiguration.cs": {
+    "mtime": 1790107314.6613166,
+    "seen": 1790155173.2263649,
+    "ast_hash": "41c297e159f8900a9e10c2ef92e553ae",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Persistence/Migrations/20260922192959_PreventDuplicateActiveRoleAssignments.Designer.cs": {
+    "mtime": 1790105399.750648,
+    "seen": 1790155173.226382,
+    "ast_hash": "3dcba4604e49fa747c7058ab86b16365",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Persistence/Migrations/20260922192959_PreventDuplicateActiveRoleAssignments.cs": {
+    "mtime": 1790105399.7504892,
+    "seen": 1790155173.226382,
+    "ast_hash": "0046d3f3e9352934676e3f6059562200",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Persistence/Migrations/20260922193428_AddInvitationRole.Designer.cs": {
+    "mtime": 1790105668.9421074,
+    "seen": 1790155173.2263832,
+    "ast_hash": "7f657e8a7af105e68bf58666bd408ed0",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Persistence/Migrations/20260922193428_AddInvitationRole.cs": {
+    "mtime": 1790105668.941938,
+    "seen": 1790155173.2263832,
+    "ast_hash": "f121f21907c8d73a26a5c8e047851831",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Persistence/Migrations/20260922193907_AddInvitationDeliveryQueue.Designer.cs": {
+    "mtime": 1790105947.3196204,
+    "seen": 1790155173.226384,
+    "ast_hash": "d56c60363f4be882341e676e7d873e36",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Persistence/Migrations/20260922193907_AddInvitationDeliveryQueue.cs": {
+    "mtime": 1790105947.3194475,
+    "seen": 1790155173.2263849,
+    "ast_hash": "a24b8f1e7537a480d9df81e977faf1dd",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Persistence/Migrations/20260922193913_EnableInvitationDeliveryRowLevelSecurity.Designer.cs": {
+    "mtime": 1790105953.3183618,
+    "seen": 1790155173.2263849,
+    "ast_hash": "417ad53c47d694556c4cee8f03f42181",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Persistence/Migrations/20260922193913_EnableInvitationDeliveryRowLevelSecurity.cs": {
+    "mtime": 1790105971.332297,
+    "seen": 1790155173.2263858,
+    "ast_hash": "4f9a3b712bde01f7f56af47cf12ee614",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Persistence/Migrations/20260922200201_ConstrainInvitationDeliveryState.Designer.cs": {
+    "mtime": 1790107321.029886,
+    "seen": 1790155173.2263858,
+    "ast_hash": "edb6a0024f2b9125f7f4fcbb902a52a4",
+    "semantic_hash": ""
+  },
+  "src/Modules/Access/Persistence/Migrations/20260922200201_ConstrainInvitationDeliveryState.cs": {
+    "mtime": 1790107321.0297494,
+    "seen": 1790155173.226387,
+    "ast_hash": "72dec731a16aad301e092766bd894110",
+    "semantic_hash": ""
+  },
+  "src/Modules/TenantLifecycle/Application/TenantDirectory.cs": {
+    "mtime": 1790106385.7370865,
+    "seen": 1790155173.22653,
+    "ast_hash": "d7a8be744e48311d648077ed639fc899",
+    "semantic_hash": ""
+  },
+  "tests/Access.Tests/Integration/Authentication/InvitationPersistenceConstraintsTests.cs": {
+    "mtime": 1790107366.999075,
+    "seen": 1790155173.226571,
+    "ast_hash": "6f21d68a932a0bb72b89191863cfa5f1",
+    "semantic_hash": ""
+  },
+  "web/src/components/common/PageNav.tsx": {
+    "mtime": 1790115917.1362464,
+    "seen": 1790155173.226691,
+    "ast_hash": "a6359c585feeec0d5e1965e521d80e93",
+    "semantic_hash": ""
+  },
+  "web/src/lib/auth/tenantSwitchGuard.ts": {
+    "mtime": 1790098023.0303535,
+    "seen": 1790155173.227019,
+    "ast_hash": "008c51024e6ebe3c195aaa19319f958a",
     "semantic_hash": ""
   }
 }
