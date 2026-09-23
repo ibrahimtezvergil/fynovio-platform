@@ -351,19 +351,13 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
         Assert.Equal(1, await CredentialCountAsync(DevSeeder.ViewerEmail));
         Assert.Equal(2, await CountAsync("SELECT count(*) FROM crm.pipeline_definitions"));
         Assert.Equal(1, await CredentialCountAsync(DevSeeder.SalesRepEmail));
-        // The CRM roles come from the production enablement path: one template copy per tenant, one assignment per
-        // administrator, and re-seeding neither duplicates a copy nor re-grants.
+        // Modules contribute action vocabularies only; tenant-created roles decide which members receive them.
         Assert.Equal(2, await CountAsync("SELECT count(*) FROM access.tenant_module_enablements WHERE module_key = 'crm'"));
-        foreach (var roleKey in new[] { CrmModuleCapabilities.ManagerRoleKey, CrmModuleCapabilities.ViewerRoleKey, CrmModuleCapabilities.SalesRepresentativeRoleKey })
-            Assert.Equal(2, await CountAsync($"SELECT count(*) FROM access.roles WHERE key = '{roleKey}' AND origin = 'system_template' AND origin_module_key = 'crm'"));
-        Assert.Equal(2, await AssignmentCountAsync("module_enablement", "crm"));
-        Assert.Equal(2, await AssignmentCountAsync("manual", "crm"));
-        // Collaboration follows the same path: one template copy per tenant, the administrator through the
-        // enablement, and the viewer and sales representative (tenant 1) through one manual assignment each.
+        Assert.Equal(0, await CountAsync("SELECT count(*) FROM access.roles WHERE origin_module_key = 'crm'"));
+        Assert.Equal(0, await AssignmentCountAsync("module_enablement", "crm"));
         Assert.Equal(2, await CountAsync("SELECT count(*) FROM access.tenant_module_enablements WHERE module_key = 'collaboration'"));
-        Assert.Equal(2, await CountAsync($"SELECT count(*) FROM access.roles WHERE key = '{CollaborationModuleCapabilities.UserRoleKey}' AND origin = 'system_template' AND origin_module_key = 'collaboration'"));
-        Assert.Equal(2, await AssignmentCountAsync("module_enablement", "collaboration"));
-        Assert.Equal(2, await AssignmentCountAsync("manual", "collaboration"));
+        Assert.Equal(0, await CountAsync("SELECT count(*) FROM access.roles WHERE origin_module_key = 'collaboration'"));
+        Assert.Equal(0, await AssignmentCountAsync("module_enablement", "collaboration"));
         Assert.Equal("tenant_selection_required", (await LoginAsync(client, DevSeeder.AdminEmail)).GetProperty("status").GetString());
     }
 }

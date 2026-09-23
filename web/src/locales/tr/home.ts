@@ -5,6 +5,7 @@ export default {
     fallbackName: 'orada',
     subtitleWithCount: 'Bugün {{count}} konu dikkatini bekliyor.',
     subtitleClear: 'Bugün dikkatini bekleyen bir konu yok.',
+    companySettings: 'Şirket ayarları',
   },
   commandBar: {
     placeholder: 'Müşteri, teklif, sipariş veya işlem ara…',

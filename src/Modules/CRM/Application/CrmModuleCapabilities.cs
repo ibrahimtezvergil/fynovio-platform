@@ -19,10 +19,6 @@ public static class CrmModuleCapabilities
     public const string WriteSetKey = "crm_opportunity_write";
     public const string ReassignSetKey = "crm_opportunity_reassign";
 
-    public const string ViewerRoleKey = "crm_viewer";
-    public const string SalesRepresentativeRoleKey = "crm_sales_representative";
-    public const string ManagerRoleKey = "crm_manager";
-
     public static readonly ModuleCapabilityManifest Manifest = new(
         ModuleKey,
         "CRM",
@@ -51,10 +47,5 @@ public static class CrmModuleCapabilities
                 new(CrmActionKeys.OpportunityReassign)
             ])
         ],
-        Roles:
-        [
-            new RoleTemplate(ViewerRoleKey, "CRM Viewer", [ReadSetKey]),
-            new RoleTemplate(SalesRepresentativeRoleKey, "CRM Sales Representative", [ReadSetKey, WriteSetKey]),
-            new RoleTemplate(ManagerRoleKey, "CRM Manager", [ReadSetKey, WriteSetKey, ReassignSetKey], GrantToTenantAdministrators: true)
-        ]);
+        Roles: []);
 }

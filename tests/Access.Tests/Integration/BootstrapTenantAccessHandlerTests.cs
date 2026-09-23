@@ -47,6 +47,10 @@ public sealed class BootstrapTenantAccessHandlerTests : IClassFixture<PostgresFi
 
             var assignment = await verify.RoleAssignments.SingleAsync(a => a.TenantId == tenantId);
             Assert.Equal("bootstrap", assignment.Source);
+            Assert.Equal("tenant_administrator", await verify.Roles.Where(role => role.Id == assignment.RoleId).Select(role => role.Key).SingleAsync());
+            Assert.Equal(
+                ["support", "tenant_administrator"],
+                await verify.Roles.Where(role => role.TenantId == tenantId).Select(role => role.Key).Order().ToArrayAsync());
 
             var evidenceCount = await verify.EvidenceRecords.CountAsync(e => e.TenantId == tenantId);
             var outboxCount = await verify.OutboxMessages.CountAsync(m => m.TenantId == tenantId);
@@ -84,7 +88,7 @@ public sealed class BootstrapTenantAccessHandlerTests : IClassFixture<PostgresFi
 
         await using (var verify = _fixture.CreateAdminContext())
         {
-            var role = await verify.Roles.SingleAsync(r => r.TenantId == tenantId);
+            var role = await verify.Roles.SingleAsync(r => r.TenantId == tenantId && r.Key == "tenant_administrator");
             Assert.Equal(tenantId, role.TenantId);
             Assert.Equal(Role.OriginSystemTemplate, role.Origin);
 

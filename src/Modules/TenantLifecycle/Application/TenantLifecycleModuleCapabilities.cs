@@ -6,7 +6,6 @@ public static class TenantLifecycleModuleCapabilities
 {
     public const string ModuleKey = "tenant_lifecycle";
     public const int Version = 1;
-    public const string AdministratorRoleKey = "tenant_settings_administrator";
     private const string SettingsSetKey = "tenant_settings_administration";
 
     public static readonly ModuleCapabilityManifest Manifest = new(
@@ -21,5 +20,5 @@ public static class TenantLifecycleModuleCapabilities
                 new(TenantProfileActionKeys.SettingsUpdate)
             ])
         ],
-        Roles: [new RoleTemplate(AdministratorRoleKey, "Tenant Settings Administrator", [SettingsSetKey], GrantToTenantAdministrators: true)]);
+        Roles: []);
 }

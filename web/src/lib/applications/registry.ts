@@ -27,7 +27,6 @@ export const applicationRegistry: ApplicationItem[] = [
   { id: 'document-management', kind: 'application', status: 'comingSoon', labelKey: 'applications.documentManagement.label', descriptionKey: 'applications.documentManagement.description', icon: 'documentManagement', order: 16 },
   { id: 'inbox', kind: 'utility', status: 'comingSoon', labelKey: 'applications.inbox.label', descriptionKey: 'applications.inbox.description', icon: 'inbox', order: 1 },
   { id: 'calendar', kind: 'utility', status: 'comingSoon', labelKey: 'applications.calendar.label', descriptionKey: 'applications.calendar.description', icon: 'calendar', route: paths.calendar, order: 2 },
-  { id: 'company-settings', kind: 'utility', status: 'available', labelKey: 'applications.companySettings.label', descriptionKey: 'applications.companySettings.description', icon: 'companySettings', route: paths.companySettings, order: 3 },
   { id: 'tasks', kind: 'utility', status: 'comingSoon', labelKey: 'applications.tasks.label', descriptionKey: 'applications.tasks.description', icon: 'tasks', order: 4 },
   { id: 'conversations', kind: 'utility', status: 'comingSoon', labelKey: 'applications.conversations.label', descriptionKey: 'applications.conversations.description', icon: 'conversations', order: 5 },
   { id: 'notes', kind: 'utility', status: 'comingSoon', labelKey: 'applications.notes.label', descriptionKey: 'applications.notes.description', icon: 'notes', order: 6 },

@@ -13,6 +13,7 @@ namespace Access.Application;
 public sealed class BootstrapTenantAccessHandler(AccessDbContext context)
 {
     internal const string TenantAdministratorRoleKey = "tenant_administrator";
+    internal const string SupportRoleKey = "support";
     private const string TenantAdministratorPermissionSetKey = "tenant_administration";
     private const string AccessTemplateModuleKey = "access";
     private const int AccessTemplateVersion = 1;
@@ -49,7 +50,11 @@ public sealed class BootstrapTenantAccessHandler(AccessDbContext context)
         var role = Role.Create(
             command.TenantId, TenantAdministratorRoleKey, "Sistem Yöneticisi (Admin)", Role.OriginSystemTemplate,
             AccessTemplateModuleKey, AccessTemplateVersion);
+        var supportRole = Role.Create(
+            command.TenantId, SupportRoleKey, "Support", Role.OriginSystemTemplate,
+            AccessTemplateModuleKey, AccessTemplateVersion);
         context.Roles.Add(role);
+        context.Roles.Add(supportRole);
         await context.SaveChangesAsync(cancellationToken); // assigns Id to permissionSet/role before the join row
 
         context.RolePermissionSets.Add(RolePermissionSet.Create(command.TenantId, role.Id, permissionSet.Id));

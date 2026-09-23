@@ -75,7 +75,9 @@ public sealed class GetTenantAccessOverviewHandler(AccessDbContext context, IAut
             from assignment in context.RoleAssignments.AsNoTracking()
             join role in context.Roles.AsNoTracking() on assignment.RoleId equals role.Id
             where assignment.TenantId == query.TenantId && assignment.ValidTo == null
-                && (role.Key == BootstrapTenantAccessHandler.TenantAdministratorRoleKey || role.Origin == Role.OriginTenant)
+                && (role.Key == BootstrapTenantAccessHandler.TenantAdministratorRoleKey
+                    || role.Key == BootstrapTenantAccessHandler.SupportRoleKey
+                    || role.Origin == Role.OriginTenant)
             select new { assignment.AccountId, assignment.Id, role.Key, role.Name })
             .ToListAsync(cancellationToken);
 
@@ -83,7 +85,9 @@ public sealed class GetTenantAccessOverviewHandler(AccessDbContext context, IAut
             // Module templates remain internal capability grants. The workspace console starts
             // with its one administrator role and subsequently shows tenant-created roles.
             .Where(role => role.TenantId == query.TenantId
-                && (role.Key == BootstrapTenantAccessHandler.TenantAdministratorRoleKey || role.Origin == Role.OriginTenant))
+                && (role.Key == BootstrapTenantAccessHandler.TenantAdministratorRoleKey
+                    || role.Key == BootstrapTenantAccessHandler.SupportRoleKey
+                    || role.Origin == Role.OriginTenant))
             .OrderBy(role => role.Name)
             .Select(role => new { role.Id, role.Key, role.Name, role.Origin })
             .ToListAsync(cancellationToken);

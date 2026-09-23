@@ -53,11 +53,12 @@ public sealed class TenantAdministratorBootstrapTests : IClassFixture<PostgresFi
         Assert.Equal(1, await admin.RoleAssignments.CountAsync(a => a.TenantId == tenant && a.AccountId == accountId));
         Assert.Equal(result.Principal, (await admin.ExternalIdentities.SingleAsync(e => e.AccountId == accountId)).Principal);
 
-        var stored = await AuthTestSetup.LoadTokenAsync(_fixture, result.SetupToken!);
+        var setupToken = Assert.IsType<string>(result.SetupToken);
+        var stored = await AuthTestSetup.LoadTokenAsync(_fixture, setupToken);
         Assert.Equal(AccountTokenPurpose.PasswordSetup, stored.Purpose);
         Assert.Equal(accountId, stored.AccountId);
         Assert.Equal(time.GetUtcNow().AddHours(24), stored.ExpiresAt);
-        Assert.DoesNotContain(result.SetupToken![(result.SetupToken.IndexOf('.') + 1)..], stored.TokenHash); // only the hash is stored
+        Assert.DoesNotContain(setupToken[(setupToken.IndexOf('.') + 1)..], stored.TokenHash); // only the hash is stored
     }
 
     [Fact]

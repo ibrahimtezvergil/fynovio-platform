@@ -5,6 +5,7 @@ export default {
     fallbackName: 'there',
     subtitleWithCount: '{{count}} items need your attention today.',
     subtitleClear: 'Nothing needs your attention today.',
+    companySettings: 'Company settings',
   },
   commandBar: {
     placeholder: 'Search customers, quotes, orders or actions…',

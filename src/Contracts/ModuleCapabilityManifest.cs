@@ -31,8 +31,8 @@ public sealed partial record ModuleCapabilityManifest(
             throw new InvalidOperationException($"Module '{ModuleKey}' needs a name.");
         if (Version < 1)
             throw new InvalidOperationException($"Module '{ModuleKey}' version must be at least 1.");
-        if (PermissionSets.Count == 0 || Roles.Count == 0)
-            throw new InvalidOperationException($"Module '{ModuleKey}' must ship at least one permission set and one role.");
+        if (PermissionSets.Count == 0)
+            throw new InvalidOperationException($"Module '{ModuleKey}' must ship at least one permission set.");
 
         RequireUnique(PermissionSets.Select(s => s.Key), $"Module '{ModuleKey}' permission set key");
         RequireUnique(Roles.Select(r => r.Key), $"Module '{ModuleKey}' role key");

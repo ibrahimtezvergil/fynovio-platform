@@ -138,52 +138,27 @@ public static class DevSeeder
         IServiceProvider services, AccessDbContext access, string platformIssuer, ILogger logger, CancellationToken cancellationToken)
     {
         var enableModule = services.GetRequiredService<EnableTenantModuleHandler>();
-        var adminAccountId = await AccountIdAsync(access, AdminEmail, cancellationToken);
-        var viewerAccountId = await AccountIdAsync(access, ViewerEmail, cancellationToken);
-        var salesRepAccountId = await AccountIdAsync(access, SalesRepEmail, cancellationToken);
         var seedOperator = new PrincipalRef(platformIssuer, "operator:dev-seed");
 
         foreach (var tenant in new[] { TenantOne, TenantTwo })
         {
-            // The production mechanism, not a dev shortcut: copies the CRM template and gives the tenant
-            // administrator the manager role. Idempotent (a second run reports AlreadyEnabled).
+            // The production mechanism, not a dev shortcut: copies CRM's permission vocabulary.
             await EnableModuleAsync(enableModule, tenant, CrmModuleCapabilities.ModuleKey, "CRM", seedOperator, logger, cancellationToken);
-
-            // Viewer and sales representative belong to tenant 1 only (an assignment needs an active membership there).
-            if (tenant == TenantOne)
-            {
-                await CrmDevSeed.EnsureAssignmentAsync(access, tenant, CrmModuleCapabilities.ViewerRoleKey, viewerAccountId, adminAccountId, cancellationToken);
-                await CrmDevSeed.EnsureAssignmentAsync(access, tenant, CrmModuleCapabilities.SalesRepresentativeRoleKey, salesRepAccountId, adminAccountId, cancellationToken);
-            }
 
             await CrmDevSeed.EnsurePipelineAsync(services.GetRequiredService<ProvisionPipelineHandler>(), tenant, cancellationToken);
             await PartyDevSeed.EnsurePartiesAsync(services.GetRequiredService<CreatePartyHandler>(), tenant, cancellationToken);
         }
     }
 
-    /// <summary>The calendar is personal, so every dev identity that works in tenant 1 (administrator, viewer, sales
-    /// representative) gets the `collaboration_user` role; the single-tenant account deliberately stays without grants
-    /// (its purpose is the 403 state). The administrator receives the role through the template's
-    /// `GrantToTenantAdministrators`; any other member needs an explicit assignment.</summary>
+    /// <summary>Enables the calendar action vocabulary for both development tenants.</summary>
     private static async Task SeedCollaborationAsync(
         IServiceProvider services, AccessDbContext access, string platformIssuer, ILogger logger, CancellationToken cancellationToken)
     {
         var enableModule = services.GetRequiredService<EnableTenantModuleHandler>();
-        var adminAccountId = await AccountIdAsync(access, AdminEmail, cancellationToken);
-        var viewerAccountId = await AccountIdAsync(access, ViewerEmail, cancellationToken);
-        var salesRepAccountId = await AccountIdAsync(access, SalesRepEmail, cancellationToken);
         var seedOperator = new PrincipalRef(platformIssuer, "operator:dev-seed");
 
         foreach (var tenant in new[] { TenantOne, TenantTwo })
-        {
             await EnableModuleAsync(enableModule, tenant, CollaborationModuleCapabilities.ModuleKey, "Collaboration", seedOperator, logger, cancellationToken);
-
-            if (tenant == TenantOne)
-            {
-                await CrmDevSeed.EnsureAssignmentAsync(access, tenant, CollaborationModuleCapabilities.UserRoleKey, viewerAccountId, adminAccountId, cancellationToken);
-                await CrmDevSeed.EnsureAssignmentAsync(access, tenant, CollaborationModuleCapabilities.UserRoleKey, salesRepAccountId, adminAccountId, cancellationToken);
-            }
-        }
     }
 
     private static async Task SeedTenantProfilesAsync(IServiceProvider services, CancellationToken cancellationToken)
