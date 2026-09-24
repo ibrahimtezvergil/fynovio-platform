@@ -20,6 +20,9 @@ public sealed class CrmDbContext : DbContext
     }
 
     public DbSet<CustomerNeed> CustomerNeeds => Set<CustomerNeed>();
+    public DbSet<CrmSettings> CrmSettings => Set<CrmSettings>();
+    public DbSet<OpportunityType> OpportunityTypes => Set<OpportunityType>();
+    public DbSet<LostReason> LostReasons => Set<LostReason>();
     public DbSet<Opportunity> Opportunities => Set<Opportunity>();
     public DbSet<OpportunityLine> OpportunityLines => Set<OpportunityLine>();
     public DbSet<OpportunityNeed> OpportunityNeeds => Set<OpportunityNeed>();
@@ -27,9 +30,29 @@ public sealed class CrmDbContext : DbContext
     public DbSet<PipelineDefinition> PipelineDefinitions => Set<PipelineDefinition>();
     public DbSet<PipelineDefinitionVersion> PipelineDefinitionVersions => Set<PipelineDefinitionVersion>();
     public DbSet<PipelineStage> PipelineStages => Set<PipelineStage>();
+    public DbSet<PipelineStageTransition> PipelineStageTransitions => Set<PipelineStageTransition>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
     public DbSet<EvidenceRecord> EvidenceRecords => Set<EvidenceRecord>();
+
+    public Task<long> AllocateConfigurationIdAsync<TEntity>(CancellationToken cancellationToken = default) where TEntity : class
+    {
+        var query = typeof(TEntity) == typeof(PipelineDefinition)
+            ? Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('crm.pipeline_definitions', 'id')) AS \"Value\"")
+            : typeof(TEntity) == typeof(PipelineDefinitionVersion)
+                ? Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('crm.pipeline_definition_versions', 'id')) AS \"Value\"")
+            : typeof(TEntity) == typeof(PipelineStage)
+                ? Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('crm.pipeline_stages', 'id')) AS \"Value\"")
+            : typeof(TEntity) == typeof(OpportunityType)
+                ? Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('crm.opportunity_types', 'id')) AS \"Value\"")
+            : typeof(TEntity) == typeof(LostReason)
+                ? Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('crm.lost_reasons', 'id')) AS \"Value\"")
+            : typeof(TEntity) == typeof(CustomerNeed)
+                ? Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('crm.customer_needs', 'id')) AS \"Value\"")
+            : throw new ArgumentOutOfRangeException(nameof(TEntity));
+
+        return query.SingleAsync(cancellationToken);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

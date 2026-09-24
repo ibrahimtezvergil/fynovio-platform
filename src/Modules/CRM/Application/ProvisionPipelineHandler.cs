@@ -48,6 +48,8 @@ public sealed class ProvisionPipelineHandler(CrmDbContext context)
             sortOrder += 10;
         }
 
+        version.Publish();
+
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return new ProvisionPipelineResult(ProvisionPipelineStatus.Provisioned, version.Id);

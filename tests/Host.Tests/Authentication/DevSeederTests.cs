@@ -247,6 +247,26 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
         Assert.False(actions.GetProperty("canReassign").GetBoolean());
     }
 
+    [Fact]
+    public async Task Existing_tenant_admin_receives_new_active_actions_on_session_refresh()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+        var adminToken = await AdminTokenAsync(client, 1);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(Authorized(HttpMethod.Get, "/auth/me", adminToken))).StatusCode);
+        var partyId = await SeededPartyIdAsync(client, adminToken);
+        var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", adminToken,
+            new { partyId, currency = "TRY", estimatedAmount = 10 }));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var id = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("opportunityId").GetInt64();
+
+        var response = await client.SendAsync(Authorized(HttpMethod.Get, $"/opportunities/{id}/actions", adminToken));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var actions = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(actions.GetProperty("canArchive").GetBoolean());
+        Assert.False(actions.GetProperty("canRestore").GetBoolean());
+    }
+
     private async Task<long> CountAsync(string sql)
     {
         await using var connection = new NpgsqlConnection(_fixture.AdminConnectionString);

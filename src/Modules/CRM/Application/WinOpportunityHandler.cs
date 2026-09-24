@@ -70,7 +70,11 @@ public sealed class WinOpportunityHandler(CrmDbContext context, IAuthorizer auth
         if (opportunity.RowVersion != command.ExpectedVersion)
             throw new OpportunityConcurrencyConflictException(opportunity.Id, command.ExpectedVersion);
 
-        opportunity.Win();
+        var requireWonLine = await context.CrmSettings.AsNoTracking()
+            .Where(settings => settings.TenantId == command.TenantId)
+            .Select(settings => (bool?)settings.RequireWonLine)
+            .SingleOrDefaultAsync(cancellationToken) ?? true;
+        opportunity.Win(requireWonLine);
 
         var payload = new WonPayload(
             opportunity.Id,

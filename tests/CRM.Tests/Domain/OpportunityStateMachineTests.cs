@@ -22,6 +22,39 @@ public sealed class OpportunityStateMachineTests
     }
 
     [Fact]
+    public void Archive_and_restore_preserve_lifecycle_and_stage()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: 42, pipelineStageId: 7);
+        var beforeArchiveVersion = opportunity.RowVersion;
+
+        opportunity.Archive(confirmOpenOpportunity: true);
+
+        Assert.True(opportunity.IsArchived);
+        Assert.Equal(OpportunityStatus.Open, opportunity.Status);
+        Assert.Equal(7, opportunity.PipelineStageId);
+        Assert.True(opportunity.RowVersion > beforeArchiveVersion);
+
+        opportunity.Restore();
+
+        Assert.False(opportunity.IsArchived);
+        Assert.Null(opportunity.ArchivedAt);
+        Assert.Equal(OpportunityStatus.Open, opportunity.Status);
+        Assert.Equal(7, opportunity.PipelineStageId);
+    }
+
+    [Fact]
+    public void Open_archive_requires_confirmation_and_terminal_records_cannot_be_archived()
+    {
+        var open = NewDraftOpportunity();
+        open.Open(DateTimeOffset.UtcNow.AddDays(7), null, null);
+        Assert.Throws<InvalidOperationException>(() => open.Archive(confirmOpenOpportunity: false));
+
+        var won = WonOpportunity();
+        Assert.Throws<InvalidOperationException>(() => won.Archive(confirmOpenOpportunity: true));
+    }
+
+    [Fact]
     public void Create_rejects_a_currency_that_is_not_three_letters()
     {
         var tenant = TestData.NextTenant();

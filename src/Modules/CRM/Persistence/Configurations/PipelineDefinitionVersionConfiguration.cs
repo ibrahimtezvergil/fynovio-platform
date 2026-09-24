@@ -9,13 +9,18 @@ public sealed class PipelineDefinitionVersionConfiguration : IEntityTypeConfigur
 {
     public void Configure(EntityTypeBuilder<PipelineDefinitionVersion> builder)
     {
-        builder.ToTable("pipeline_definition_versions");
+        builder.ToTable("pipeline_definition_versions", table =>
+        {
+            table.HasCheckConstraint("ck_pipeline_definition_versions_status", "status IN ('Draft', 'Published', 'Superseded', 'Archived')");
+            table.HasCheckConstraint("ck_pipeline_definition_versions_version_number_positive", "version_number > 0");
+        });
 
         builder.HasKey(v => v.Id);
 
         builder.Property(v => v.TenantId)
             .HasConversion(id => id.Value, value => new TenantId(value))
             .IsRequired();
+        builder.Property(v => v.Status).HasConversion<string>().HasMaxLength(16).HasDefaultValue(PipelineVersionStatus.Draft).IsRequired();
 
         builder.HasOne<PipelineDefinition>()
             .WithMany()

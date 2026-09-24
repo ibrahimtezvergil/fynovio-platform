@@ -8,6 +8,7 @@ public sealed record OpportunityDto(
     long Id,
     OpportunityStatus Status,
     long PartyId,
+    long? OpportunityTypeId,
     string AssignedPrincipalIssuer,
     string AssignedPrincipalSubject,
     string Currency,
@@ -21,12 +22,15 @@ public sealed record OpportunityDto(
     DateTimeOffset? WonDate,
     DateTimeOffset? LostDate,
     long RowVersion,
+    bool IsArchived,
+    DateTimeOffset? ArchivedAt,
     IReadOnlyList<OpportunityLineDto> Lines)
 {
     public static OpportunityDto From(Opportunity opportunity) => new(
         opportunity.Id,
         opportunity.Status,
         opportunity.PartyRefPartyId,
+        opportunity.OpportunityTypeId,
         opportunity.AssignedPrincipalIssuer,
         opportunity.AssignedPrincipalSubject,
         opportunity.Currency,
@@ -40,5 +44,7 @@ public sealed record OpportunityDto(
         opportunity.WonDate,
         opportunity.LostDate,
         opportunity.RowVersion,
+        opportunity.IsArchived,
+        opportunity.ArchivedAt,
         opportunity.Lines.Select(l => new OpportunityLineDto(l.Id, l.Quantity, l.UnitPrice, l.LineTotal, l.IsOptional, l.IsCanceled)).ToList());
 }

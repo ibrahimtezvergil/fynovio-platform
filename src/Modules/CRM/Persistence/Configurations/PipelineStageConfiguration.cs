@@ -9,9 +9,15 @@ public sealed class PipelineStageConfiguration : IEntityTypeConfiguration<Pipeli
 {
     public void Configure(EntityTypeBuilder<PipelineStage> builder)
     {
-        builder.ToTable("pipeline_stages");
+        builder.ToTable("pipeline_stages", table =>
+        {
+            table.HasCheckConstraint("ck_pipeline_stages_sort_order_non_negative", "sort_order >= 0");
+            table.HasCheckConstraint("ck_pipeline_stages_name_non_empty", "length(btrim(name)) > 0");
+            table.HasCheckConstraint("ck_pipeline_stages_archived_inactive", "NOT is_archived OR NOT is_active");
+        });
 
         builder.HasKey(s => s.Id);
+        builder.HasAlternateKey(s => new { s.TenantId, s.PipelineDefinitionVersionId, s.Id });
 
         builder.Property(s => s.TenantId)
             .HasConversion(id => id.Value, value => new TenantId(value))
@@ -19,6 +25,7 @@ public sealed class PipelineStageConfiguration : IEntityTypeConfiguration<Pipeli
 
         builder.Property(s => s.Name).IsRequired();
         builder.Property(s => s.IsActive).HasDefaultValue(true).IsRequired();
+        builder.Property(s => s.IsArchived).HasDefaultValue(false).IsRequired();
         builder.Property(s => s.IsEntry).HasDefaultValue(false).IsRequired();
 
         builder.HasOne<PipelineDefinitionVersion>()

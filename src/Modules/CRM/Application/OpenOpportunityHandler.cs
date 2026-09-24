@@ -118,8 +118,14 @@ public sealed class OpenOpportunityHandler(CrmDbContext context, IAuthorizer aut
     private async Task<(long? PipelineDefinitionVersionId, long? PipelineStageId)> ResolveEntryStageAsync(
         TenantId tenantId, CancellationToken cancellationToken)
     {
-        var definitionId = await context.PipelineDefinitions
-            .Where(p => p.TenantId == tenantId)
+        var settings = await context.CrmSettings.AsNoTracking()
+            .Where(s => s.TenantId == tenantId)
+            .Select(s => new { s.DefaultPipelineDefinitionId })
+            .SingleOrDefaultAsync(cancellationToken);
+        var definitionId = settings is not null
+            ? settings.DefaultPipelineDefinitionId
+            : await context.PipelineDefinitions
+            .Where(p => p.TenantId == tenantId && p.IsActive && !p.IsArchived)
             .OrderBy(p => p.Id)
             .Select(p => (long?)p.Id)
             .FirstOrDefaultAsync(cancellationToken);
@@ -127,7 +133,7 @@ public sealed class OpenOpportunityHandler(CrmDbContext context, IAuthorizer aut
             return (null, null);
 
         var versionId = await context.PipelineDefinitionVersions
-            .Where(v => v.TenantId == tenantId && v.PipelineDefinitionId == resolvedDefinitionId)
+            .Where(v => v.TenantId == tenantId && v.PipelineDefinitionId == resolvedDefinitionId && v.Status == PipelineVersionStatus.Published)
             .OrderByDescending(v => v.VersionNumber)
             .Select(v => (long?)v.Id)
             .FirstOrDefaultAsync(cancellationToken);

@@ -243,6 +243,7 @@ builder.Services.AddScoped<ChangePipelineStageHandler>();
 builder.Services.AddScoped<WinOpportunityHandler>();
 builder.Services.AddScoped<LoseOpportunityHandler>();
 builder.Services.AddScoped<ReassignOpportunityHandler>();
+builder.Services.AddScoped<SetOpportunityArchiveHandler>();
 builder.Services.AddScoped<ListAssignablePrincipalsHandler>();
 builder.Services.AddScoped<ProvisionPipelineHandler>(); // operator command `provision-crm-pipeline` and the Development seed
 builder.Services.AddScoped<SearchPartyReferencesHandler>();
@@ -250,6 +251,14 @@ builder.Services.AddScoped<CreatePartyReferenceHandler>();
 builder.Services.AddScoped<GetOpportunityHandler>();
 builder.Services.AddScoped<ListOpportunitiesHandler>();
 builder.Services.AddScoped<GetPipelineStagesHandler>();
+builder.Services.AddScoped<GetCrmSettingsHandler>();
+builder.Services.AddScoped<EnsureTenantAdministratorActionsHandler>();
+builder.Services.AddScoped<UpdateCrmSettingsHandler>();
+builder.Services.AddScoped<CreatePipelineDraftHandler>();
+builder.Services.AddScoped<PublishPipelineVersionHandler>();
+builder.Services.AddScoped<ValidatePipelineDraftHandler>();
+builder.Services.AddScoped<SetPipelineLifecycleHandler>();
+builder.Services.AddScoped<ManageCrmCatalogHandler>();
 builder.Services.AddScoped<GetOpportunityAvailableActionsHandler>();
 
 builder.Services.AddExceptionHandler<AccessProblemDetailsExceptionHandler>();
@@ -388,6 +397,7 @@ app.UseExceptionHandler();
 app.MapAuthEndpoints();
 app.MapAccountLifecycleEndpoints(authOptions.SelfRegistration.Enabled);
 app.MapOpportunityEndpoints();
+app.MapCrmSettingsEndpoints();
 app.MapCalendarEndpoints();
 app.MapCompanySettingsEndpoints();
 if (app.Environment.IsDevelopment())

@@ -57,12 +57,25 @@ public sealed class LoseOpportunityHandler(CrmDbContext context, IAuthorizer aut
         if (opportunity.RowVersion != command.ExpectedVersion)
             throw new OpportunityConcurrencyConflictException(opportunity.Id, command.ExpectedVersion);
 
-        opportunity.Lose(command.LostReason);
+        var requireLostReason = await context.CrmSettings.AsNoTracking()
+            .Where(settings => settings.TenantId == command.TenantId)
+            .Select(settings => (bool?)settings.RequireLostReason)
+            .SingleOrDefaultAsync(cancellationToken) ?? false;
+        var activeReasons = await context.LostReasons.AsNoTracking().Where(x => x.TenantId == command.TenantId && x.Status == ConfigurationStatus.Active).ToListAsync(cancellationToken);
+        var matchedReason = activeReasons.FirstOrDefault(x => string.Equals(x.Key, command.LostReason, StringComparison.OrdinalIgnoreCase))
+            ?? activeReasons.FirstOrDefault(x => string.Equals(x.Name, command.LostReason, StringComparison.OrdinalIgnoreCase));
+        var resolvedReason = activeReasons.Count == 0 ? command.LostReason : matchedReason?.Name;
+        if (requireLostReason && string.IsNullOrWhiteSpace(resolvedReason))
+            throw new ArgumentException("A lost reason is required by this tenant's CRM settings.", nameof(command));
+        if (activeReasons.Count > 0 && resolvedReason is null)
+            throw new ArgumentException("Choose an active lost reason configured by this tenant.", nameof(command));
+
+        opportunity.Lose(resolvedReason ?? command.LostReason);
 
         // Written for audit/outbox purposes only — the idempotency-replay branches below
         // rebuild the result from command fields instead of deserializing this back, since
         // LoseOpportunityResult carries nothing server-computed beyond what's in the command.
-        var payload = new LostPayload(opportunity.Id, command.LostReason);
+        var payload = new LostPayload(opportunity.Id, resolvedReason ?? command.LostReason);
         var payloadJson = JsonSerializer.Serialize(payload);
 
         context.OutboxMessages.Add(OutboxMessage.Create(

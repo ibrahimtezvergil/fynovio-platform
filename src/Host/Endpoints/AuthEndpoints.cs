@@ -3,6 +3,7 @@ using Access.Application;
 using Access.Application.Authentication;
 using Contracts;
 using Host.Authentication;
+using Host.Modules;
 
 namespace Host.Endpoints;
 
@@ -223,6 +224,7 @@ public static class AuthEndpoints
         HttpContext context,
         GetSessionOverviewHandler handler,
         GetCapabilitiesHandler capabilitiesHandler,
+        EnsureTenantAdministratorActionsHandler ensureTenantAdministratorActions,
         ITenantDirectory tenantDirectory,
         CancellationToken cancellationToken)
     {
@@ -233,6 +235,14 @@ public static class AuthEndpoints
         var overview = await handler.HandleAsync(sessionId, cancellationToken);
         if (overview?.Account is null)
             return AuthProblems.SessionInvalid();
+
+        // Tenant bootstrap grants the active action registry. Reconcile that same bounded
+        // administrator capability set on the admin's authenticated session refresh, so
+        // existing tenants receive newly registered permissions without changing ordinary roles.
+        await ensureTenantAdministratorActions.HandleAsync(new EnsureTenantAdministratorActionsCommand(
+            actor.TenantId, actor.Principal,
+            PlatformModules.ActionRegistry.Select(action => action.ActionKey).Distinct(StringComparer.Ordinal).ToArray(),
+            actor.CorrelationId), cancellationToken);
 
         var capabilities = await capabilitiesHandler.HandleAsync(actor, cancellationToken);
 

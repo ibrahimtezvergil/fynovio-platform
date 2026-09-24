@@ -2,12 +2,23 @@ using Contracts;
 
 namespace CRM.Domain;
 
+public enum PipelineVersionStatus
+{
+    Draft,
+    Published,
+    Superseded,
+    Archived
+}
+
 public sealed class PipelineDefinitionVersion
 {
     public long Id { get; private set; }
     public TenantId TenantId { get; private set; }
     public long PipelineDefinitionId { get; private set; }
     public int VersionNumber { get; private set; }
+    public PipelineVersionStatus Status { get; private set; } = PipelineVersionStatus.Draft;
+    public bool EnforceAllowedTransitions { get; private set; }
+    public DateTimeOffset? PublishedAt { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 
     private readonly List<PipelineStage> _stages = [];
@@ -29,13 +40,14 @@ public sealed class PipelineDefinitionVersion
         };
     }
 
-    /// <summary>Stamps the stage with this version's current `Id` — same save-before-add
-    /// requirement as PipelineDefinition.AddVersion, for the same reason (`Stages` is
-    /// EF-`Ignore()`d, no navigation-based fixup). The first stage added to a version
+    /// <summary>Stamps the stage with this version's current `Id` — the version must be
+    /// saved or have its identity allocated before this call (`Stages` is EF-`Ignore()`d).
+    /// The first stage added to a version
     /// becomes its entry stage by default (architecture plan §2.3 OD#2, option (i)) —
     /// callers that want a different entry stage call `MarkEntry` afterward.</summary>
     public PipelineStage AddStage(string name, int sortOrder)
     {
+        if (Status != PipelineVersionStatus.Draft) throw new InvalidOperationException("Only a draft pipeline version can be edited.");
         if (_stages.Any(s => s.SortOrder == sortOrder))
             throw new InvalidOperationException($"Sort order {sortOrder} is already used on this version.");
 
@@ -63,10 +75,36 @@ public sealed class PipelineDefinitionVersion
     /// `PipelineConstraintTests.MarkEntry_persisted_*` for the proven-safe two-phase pattern.</summary>
     public void MarkEntry(PipelineStage stage)
     {
+        if (Status != PipelineVersionStatus.Draft) throw new InvalidOperationException("Only a draft pipeline version can be edited.");
         if (!_stages.Contains(stage))
             throw new InvalidOperationException("Stage does not belong to this pipeline definition version.");
 
         foreach (var s in _stages)
             s.SetEntry(ReferenceEquals(s, stage));
+    }
+
+    public void SetTransitionMode(bool enforceAllowedTransitions)
+    {
+        if (Status != PipelineVersionStatus.Draft) throw new InvalidOperationException("Only a draft pipeline version can be edited.");
+        EnforceAllowedTransitions = enforceAllowedTransitions;
+    }
+
+    public void Publish()
+    {
+        if (Status != PipelineVersionStatus.Draft) throw new InvalidOperationException("Only a draft pipeline version can be published.");
+        Status = PipelineVersionStatus.Published;
+        PublishedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void Supersede()
+    {
+        if (Status != PipelineVersionStatus.Published) throw new InvalidOperationException("Only a published version can be superseded.");
+        Status = PipelineVersionStatus.Superseded;
+    }
+
+    public void ArchiveDraft()
+    {
+        if (Status != PipelineVersionStatus.Draft) throw new InvalidOperationException("Only a draft version can be archived.");
+        Status = PipelineVersionStatus.Archived;
     }
 }

@@ -13,7 +13,7 @@ using Npgsql;
 
 namespace CRM.Application;
 
-public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer authorizer, IPartyIdentityResolver partyResolver)
+public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer authorizer, IPartyIdentityResolver partyResolver, IAuthorizedPrincipalDirectory? principalDirectory = null)
 {
     private const string Operation = "CreateOpportunity";
     private const string ActionKeyValue = "crm.opportunity.create";
@@ -24,11 +24,12 @@ public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer a
 
     public async Task<CreateOpportunityResult> HandleAsync(CreateOpportunityCommand command, CancellationToken cancellationToken = default)
     {
+        var actingPrincipal = command.CallerPrincipal ?? command.AssignedPrincipal;
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         await context.SetTenantContextAsync(command.TenantId, cancellationToken);
 
         // CREATE-shaped resource: Id is null, no owner yet (round-3 §11).
-        var actor = new ActorContext(command.TenantId, command.AssignedPrincipal, command.CorrelationId);
+        var actor = new ActorContext(command.TenantId, actingPrincipal, command.CorrelationId);
         var resource = new ResourceDescriptor(nameof(Opportunity), null, null);
         var decision = await authorizer.AuthorizeAsync(
             new AuthorizationRequest(actor, new ActionKey(ActionKeyValue), resource), cancellationToken);
@@ -40,8 +41,8 @@ public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer a
             .AsNoTracking()
             .SingleOrDefaultAsync(
                 r => r.TenantId == command.TenantId
-                    && r.PrincipalIssuer == command.AssignedPrincipal.Issuer
-                    && r.PrincipalSubject == command.AssignedPrincipal.Subject
+                    && r.PrincipalIssuer == actingPrincipal.Issuer
+                    && r.PrincipalSubject == actingPrincipal.Subject
                     && r.Operation == Operation
                     && r.IdempotencyKey == command.IdempotencyKey,
                 cancellationToken);
@@ -66,12 +67,18 @@ public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer a
         var partyRef = await partyResolver.ResolveAsync(command.PartyRef, cancellationToken)
             ?? throw new PartyNotFoundException(command.PartyRef);
 
+        var settings = await context.CrmSettings.AsNoTracking().SingleOrDefaultAsync(x => x.TenantId == command.TenantId, cancellationToken);
+        var (assignedPrincipal, opportunityTypeId) = ResolveDefaults(settings, command.AssignedPrincipal);
+        if (principalDirectory is not null && !await principalDirectory.IsPrincipalPermittedAsync(command.TenantId, assignedPrincipal,
+                CrmAssignmentPolicy.RequiredAssigneeActions, cancellationToken))
+            throw new PrincipalNotAssignableException(assignedPrincipal);
+
         var opportunity = Opportunity.Create(
-            command.TenantId, partyRef, command.AssignedPrincipal, command.Currency, command.EstimatedAmount);
+            command.TenantId, partyRef, assignedPrincipal, command.Currency, command.EstimatedAmount, opportunityTypeId);
         context.Opportunities.Add(opportunity);
         await context.SaveChangesAsync(cancellationToken); // assigns opportunity.Id
 
-        var payload = new CreatedPayload(opportunity.Id, partyRef.PartyId, command.Currency, command.EstimatedAmount);
+        var payload = new CreatedPayload(opportunity.Id, partyRef.PartyId, command.Currency, command.EstimatedAmount, opportunityTypeId);
         var payloadJson = JsonSerializer.Serialize(payload);
 
         context.OutboxMessages.Add(OutboxMessage.Create(
@@ -79,9 +86,9 @@ public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer a
             EventType, EventSource, $"opportunities/{opportunity.Id}", command.CorrelationId, null, payloadJson));
         context.EvidenceRecords.Add(EvidenceRecord.Create(
             command.TenantId, nameof(Opportunity), opportunity.Id, opportunity.RowVersion,
-            command.AssignedPrincipal, "Opportunity.Create", payloadJson, command.CorrelationId));
+            actingPrincipal, "Opportunity.Create", payloadJson, command.CorrelationId));
         context.IdempotencyRecords.Add(IdempotencyRecord.Create(
-            command.TenantId, command.AssignedPrincipal, Operation, command.IdempotencyKey, requestHash, SucceededStatus, payloadJson, IdempotencyRetention));
+            command.TenantId, actingPrincipal, Operation, command.IdempotencyKey, requestHash, SucceededStatus, payloadJson, IdempotencyRetention));
 
         try
         {
@@ -95,8 +102,8 @@ public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer a
             await transaction.RollbackAsync(cancellationToken);
             var winner = await context.IdempotencyRecords.AsNoTracking().SingleAsync(
                 record => record.TenantId == command.TenantId
-                    && record.PrincipalIssuer == command.AssignedPrincipal.Issuer
-                    && record.PrincipalSubject == command.AssignedPrincipal.Subject
+                    && record.PrincipalIssuer == actingPrincipal.Issuer
+                    && record.PrincipalSubject == actingPrincipal.Subject
                     && record.Operation == Operation
                     && record.IdempotencyKey == command.IdempotencyKey,
                 cancellationToken);
@@ -123,7 +130,23 @@ public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer a
     {
         var canonical = string.Create(
             CultureInfo.InvariantCulture,
-            $"{Operation}|{command.TenantId.Value}|{command.AssignedPrincipal}|{command.PartyRef}|{command.Currency}|{command.EstimatedAmount}");
+            $"{Operation}|{command.TenantId.Value}|{command.CallerPrincipal ?? command.AssignedPrincipal}|{command.AssignedPrincipal}|{command.PartyRef}|{command.Currency}|{command.EstimatedAmount}");
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
     }
+
+    private static (PrincipalRef Assignee, long? OpportunityTypeId) ResolveDefaults(CRM.Domain.CrmSettings? settings, PrincipalRef requestedAssignee)
+    {
+        if (settings is null || settings.DefaultAssignmentMode == AssignmentMode.Manual)
+            return (requestedAssignee, settings?.DefaultOpportunityTypeId);
+        if (settings.DefaultAssignmentMode == AssignmentMode.DefaultPrincipal
+            && settings.DefaultPrincipalIssuer is { } issuer && settings.DefaultPrincipalSubject is { } subject)
+            return (new PrincipalRef(issuer, subject), settings.DefaultOpportunityTypeId);
+        if (settings.DefaultAssignmentMode == AssignmentMode.Team)
+            throw new CrmAssignmentProviderUnavailableException("Team assignment requires the Organization team directory.");
+        if (settings.DefaultAssignmentMode == AssignmentMode.Territory)
+            throw new CrmAssignmentProviderUnavailableException("Territory assignment requires the Organization territory directory.");
+        throw new InvalidOperationException("CRM assignment configuration is invalid.");
+    }
 }
+
+public sealed class CrmAssignmentProviderUnavailableException(string message) : InvalidOperationException(message);

@@ -12,4 +12,7 @@ public sealed record OpportunitySummaryDto(
     long? PipelineStageId,
     long PartyId,
     long? PipelineDefinitionVersionId,
-    DateTimeOffset? ExpiryDate);
+    DateTimeOffset? ExpiryDate,
+    bool IsArchived,
+    DateTimeOffset? ArchivedAt,
+    long RowVersion);

@@ -13,8 +13,13 @@ public static class CrmActionKeys
     public const string OpportunityWin = "crm.opportunity.win";
     public const string OpportunityLose = "crm.opportunity.lose";
     public const string OpportunityReassign = "crm.opportunity.reassign";
+    public const string OpportunityArchive = "crm.opportunity.archive";
+    public const string OpportunityRestore = "crm.opportunity.restore";
     public const string OpportunityRead = "crm.opportunity.read";
     public const string OpportunityList = "crm.opportunity.list";
     public const string PartyReferenceSearch = "crm.reference.party.search";
     public const string PartyReferenceCreate = "crm.reference.party.create";
+    public const string SettingsRead = "crm.settings.read";
+    public const string SettingsUpdate = "crm.settings.update";
+    public const string AssignmentManage = "crm.opportunity.assignment.manage";
 }

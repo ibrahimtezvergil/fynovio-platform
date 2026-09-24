@@ -24,6 +24,7 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
             .IsRequired();
 
         builder.Property(o => o.Currency).HasMaxLength(3).IsFixedLength().IsRequired();
+        builder.Property(o => o.IsArchived).HasColumnName("is_archived").IsRequired();
         builder.Property(o => o.EstimatedAmount).HasColumnType("numeric(19,2)");
         // Computed value, 4dp — rounded to 2dp exactly once, at the `won` transition.
         builder.Property(o => o.TotalAmount).HasColumnType("numeric(19,4)");
@@ -37,7 +38,15 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
         builder.Property(o => o.PartyRefPartyId).IsRequired();
         builder.Ignore(o => o.PartyRef);
 
-        // Optional pipeline version and stage references — no enforcement yet (Phase 2's ChangePipelineStage does).
+        builder.HasOne<OpportunityType>()
+            .WithMany()
+            .HasForeignKey(o => new { o.TenantId, o.OpportunityTypeId })
+            .HasPrincipalKey(type => new { type.TenantId, type.Id })
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // A version and its stage are independently nullable for legacy records, but when both
+        // are present the composite stage FK proves the stage belongs to that exact version.
         builder.HasOne<PipelineDefinitionVersion>()
             .WithMany()
             .HasForeignKey(o => new { o.TenantId, o.PipelineDefinitionVersionId })
@@ -47,8 +56,8 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
 
         builder.HasOne<PipelineStage>()
             .WithMany()
-            .HasForeignKey(o => new { o.TenantId, o.PipelineStageId })
-            .HasPrincipalKey(s => new { s.TenantId, s.Id })
+            .HasForeignKey(o => new { o.TenantId, o.PipelineDefinitionVersionId, o.PipelineStageId })
+            .HasPrincipalKey(s => new { s.TenantId, s.PipelineDefinitionVersionId, s.Id })
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
 
@@ -73,6 +82,8 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
                 "ck_opportunities_lost_fields_required_once_lost",
                 "status <> 'lost' OR (lost_date IS NOT NULL AND lost_reason IS NOT NULL)");
             t.HasCheckConstraint("ck_opportunities_party_ref_party_id_positive", "party_ref_party_id > 0");
+            t.HasCheckConstraint("ck_opportunities_archive_timestamp", "(is_archived AND archived_at IS NOT NULL) OR (NOT is_archived AND archived_at IS NULL)");
+            t.HasCheckConstraint("ck_opportunities_archive_nonterminal", "NOT is_archived OR status IN ('draft','open')");
         });
 
         builder.HasIndex(o => new { o.TenantId, o.Status });
@@ -84,6 +95,7 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
         builder.HasIndex(o => new { o.TenantId, o.AssignedPrincipalIssuer, o.AssignedPrincipalSubject })
             .HasDatabaseName("ix_opportunities_tenant_assigned_principal");
         builder.HasIndex(o => new { o.TenantId, o.CreatedAt });
+        builder.HasIndex(o => new { o.TenantId, o.IsArchived, o.CreatedAt });
     }
 
     private static string ToDb(OpportunityStatus status) => status switch

@@ -27,17 +27,21 @@ public sealed class GetOpportunityAvailableActionsHandler(CrmDbContext context, 
         var actor = new ActorContext(query.TenantId, query.Principal, query.CorrelationId);
         var resource = new ResourceDescriptor(nameof(Opportunity), opportunity.Id, opportunity.AssignedPrincipal);
 
-        var canOpen = opportunity.Status == OpportunityStatus.Draft
+        var canOpen = !opportunity.IsArchived && opportunity.Status == OpportunityStatus.Draft
             && (await Authorize("crm.opportunity.open")).IsAllowed;
-        var canChangeStage = opportunity.Status == OpportunityStatus.Open
+        var canChangeStage = !opportunity.IsArchived && opportunity.Status == OpportunityStatus.Open
             && (await Authorize("crm.opportunity.change_stage")).IsAllowed;
-        var canWin = opportunity.Status == OpportunityStatus.Open
+        var canWin = !opportunity.IsArchived && opportunity.Status == OpportunityStatus.Open
             && opportunity.Lines.Any(l => !l.IsOptional && !l.IsCanceled)
             && (await Authorize("crm.opportunity.win")).IsAllowed;
-        var canLose = opportunity.Status is OpportunityStatus.Draft or OpportunityStatus.Open
+        var canLose = !opportunity.IsArchived && opportunity.Status is OpportunityStatus.Draft or OpportunityStatus.Open
             && (await Authorize("crm.opportunity.lose")).IsAllowed;
         var canReassign = opportunity.Status is not (OpportunityStatus.Won or OpportunityStatus.Lost)
             && (await Authorize("crm.opportunity.reassign")).IsAllowed;
+        var canArchive = !opportunity.IsArchived && opportunity.Status is OpportunityStatus.Draft or OpportunityStatus.Open
+            && (await Authorize("crm.opportunity.archive")).IsAllowed;
+        var canRestore = opportunity.IsArchived
+            && (await Authorize("crm.opportunity.restore")).IsAllowed;
 
         var allowedTargetStageIds = canChangeStage && opportunity.PipelineDefinitionVersionId is { } versionId
             ? await context.PipelineStages.AsNoTracking()
@@ -48,7 +52,7 @@ public sealed class GetOpportunityAvailableActionsHandler(CrmDbContext context, 
 
         await transaction.CommitAsync(cancellationToken);
 
-        return new OpportunityAvailableActionsDto(canOpen, canChangeStage, allowedTargetStageIds, canWin, canLose, canReassign);
+        return new OpportunityAvailableActionsDto(canOpen, canChangeStage, allowedTargetStageIds, canWin, canLose, canReassign, canArchive, canRestore);
 
         Task<AuthorizationDecision> Authorize(string actionKey) =>
             authorizer.AuthorizeAsync(new AuthorizationRequest(actor, new ActionKey(actionKey), resource), cancellationToken);

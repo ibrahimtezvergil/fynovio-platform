@@ -31,6 +31,7 @@ public sealed class OpenOpportunityHandlerTests
         await seed.SaveChangesAsync();
         var entryStage = version.AddStage("Bekliyor", 0);
         seed.PipelineStages.Add(entryStage);
+        version.Publish();
         await seed.SaveChangesAsync();
 
         var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
@@ -95,6 +96,7 @@ public sealed class OpenOpportunityHandlerTests
         await seed.SaveChangesAsync();
         var olderEntryStage = olderVersion.AddStage("Bekliyor", 0);
         seed.PipelineStages.Add(olderEntryStage);
+        olderVersion.Publish();
         await seed.SaveChangesAsync();
 
         var newer = PipelineDefinition.Create(tenant, "Sales (newer)");
@@ -105,6 +107,7 @@ public sealed class OpenOpportunityHandlerTests
         await seed.SaveChangesAsync();
         var newerEntryStage = newerVersion.AddStage("Yeni Bekliyor", 0);
         seed.PipelineStages.Add(newerEntryStage);
+        newerVersion.Publish();
         await seed.SaveChangesAsync();
 
         var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
@@ -141,6 +144,7 @@ public sealed class OpenOpportunityHandlerTests
         await seed.SaveChangesAsync();
         var v1EntryStage = v1.AddStage("Bekliyor", 0);
         seed.PipelineStages.Add(v1EntryStage);
+        v1.Publish();
         await seed.SaveChangesAsync();
 
         var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
@@ -162,6 +166,7 @@ public sealed class OpenOpportunityHandlerTests
         await seedV2.SaveChangesAsync();
         var v2EntryStage = v2.AddStage("Yeni Bekliyor", 0);
         seedV2.PipelineStages.Add(v2EntryStage);
+        v2.Publish();
         await seedV2.SaveChangesAsync();
 
         await using var verify = _fixture.CreateAdminContext();
@@ -188,6 +193,7 @@ public sealed class OpenOpportunityHandlerTests
         await seed.SaveChangesAsync();
         var version = definition.AddVersion(1);
         seed.PipelineDefinitionVersions.Add(version);
+        version.Publish();
         await seed.SaveChangesAsync();
         // No AddStage call — the version has zero stages, so zero can be flagged IsEntry.
 
@@ -229,6 +235,7 @@ public sealed class OpenOpportunityHandlerTests
         seed.PipelineStages.Add(entryStage);
         await seed.SaveChangesAsync();
         entryStage.Deactivate();
+        version.Publish();
         await seed.SaveChangesAsync();
 
         var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);

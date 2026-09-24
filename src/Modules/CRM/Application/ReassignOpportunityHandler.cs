@@ -33,10 +33,19 @@ public sealed class ReassignOpportunityHandler(CrmDbContext context, IAuthorizer
         var previousOwner = opportunity.AssignedPrincipal;
         var actor = new ActorContext(command.TenantId, command.Principal, command.CorrelationId);
         var resource = new ResourceDescriptor(nameof(Opportunity), opportunity.Id, previousOwner);
+        var assignmentPolicy = await context.CrmSettings.AsNoTracking().Where(x => x.TenantId == command.TenantId)
+            .Select(x => (AssignmentPolicy?)x.AssignmentPolicy).SingleOrDefaultAsync(cancellationToken) ?? AssignmentPolicy.AnyAssignablePrincipal;
         var decision = await authorizer.AuthorizeAsync(
             new AuthorizationRequest(actor, new ActionKey(ActionKeyValue), resource), cancellationToken);
         if (!decision.IsAllowed)
             throw new OpportunityAuthorizationDeniedException(ActionKeyValue, decision.ReasonCode, decision.DenialStage, opportunity.Id);
+        if (assignmentPolicy == AssignmentPolicy.ManagerOnly)
+        {
+            var managerDecision = await authorizer.AuthorizeAsync(new AuthorizationRequest(actor,
+                new ActionKey(CrmActionKeys.AssignmentManage), resource), cancellationToken);
+            if (!managerDecision.IsAllowed)
+                throw new OpportunityAuthorizationDeniedException(CrmActionKeys.AssignmentManage, managerDecision.ReasonCode, managerDecision.DenialStage, opportunity.Id);
+        }
 
         var requestHash = HashRequest(command);
         var existing = await context.IdempotencyRecords

@@ -28,6 +28,8 @@ public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeR
         if (query.Status is { } status)
             filtered = filtered.Where(o => o.Status == status);
 
+        filtered = filtered.Where(o => o.IsArchived == query.ArchivedOnly);
+
         var results = await filtered
             .OrderByDescending(o => o.CreatedAt)
             .ThenByDescending(o => o.Id)
@@ -35,7 +37,7 @@ public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeR
             .Take(query.Take)
             .Select(o => new OpportunitySummaryDto(
                 o.Id, o.Status, o.EstimatedAmount, o.Currency, o.AssignedPrincipalIssuer, o.AssignedPrincipalSubject, o.PipelineStageId,
-                o.PartyRefPartyId, o.PipelineDefinitionVersionId, o.ExpiryDate))
+                o.PartyRefPartyId, o.PipelineDefinitionVersionId, o.ExpiryDate, o.IsArchived, o.ArchivedAt, o.RowVersion))
             .ToListAsync(cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);

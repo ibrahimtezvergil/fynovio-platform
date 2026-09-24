@@ -28,7 +28,7 @@ public sealed class GetPipelineStagesHandler(CrmDbContext context, IAuthorizer a
         var results = await context.PipelineStages
             .Where(s => s.PipelineDefinitionVersionId == query.PipelineDefinitionVersionId)
             .OrderBy(s => s.SortOrder)
-            .Select(s => new PipelineStageDto(s.Id, s.Name, s.SortOrder, s.IsActive, s.IsEntry))
+            .Select(s => new PipelineStageDto(s.Id, s.Name, s.SortOrder, s.IsActive, s.IsEntry, s.IsArchived))
             .ToListAsync(cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);

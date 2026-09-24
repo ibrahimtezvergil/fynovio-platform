@@ -13,11 +13,13 @@ namespace CRM.Application;
 public static class CrmModuleCapabilities
 {
     public const string ModuleKey = "crm";
-    public const int Version = 1;
+    public const int Version = 2;
 
     public const string ReadSetKey = "crm_opportunity_read";
     public const string WriteSetKey = "crm_opportunity_write";
     public const string ReassignSetKey = "crm_opportunity_reassign";
+    public const string SettingsSetKey = "crm_settings_manage";
+    public const string AssignmentManageSetKey = "crm_assignment_manage";
 
     public static readonly ModuleCapabilityManifest Manifest = new(
         ModuleKey,
@@ -28,7 +30,8 @@ public static class CrmModuleCapabilities
             new PermissionSetTemplate(ReadSetKey, "CRM — read opportunities",
             [
                 new(CrmActionKeys.OpportunityRead),
-                new(CrmActionKeys.OpportunityList)
+                new(CrmActionKeys.OpportunityList),
+                new(CrmActionKeys.SettingsRead)
             ]),
             new PermissionSetTemplate(WriteSetKey, "CRM — work opportunities",
             [
@@ -39,12 +42,22 @@ public static class CrmModuleCapabilities
                 new(CrmActionKeys.OpportunityChangeStage),
                 new(CrmActionKeys.OpportunityWin),
                 new(CrmActionKeys.OpportunityLose),
+                new(CrmActionKeys.OpportunityArchive),
+                new(CrmActionKeys.OpportunityRestore),
                 new(CrmActionKeys.PartyReferenceSearch),
                 new(CrmActionKeys.PartyReferenceCreate)
             ]),
             new PermissionSetTemplate(ReassignSetKey, "CRM — reassign opportunities",
             [
                 new(CrmActionKeys.OpportunityReassign)
+            ]),
+            new PermissionSetTemplate(SettingsSetKey, "CRM — manage settings",
+            [
+                new(CrmActionKeys.SettingsUpdate)
+            ]),
+            new PermissionSetTemplate(AssignmentManageSetKey, "CRM — manager assignment override",
+            [
+                new(CrmActionKeys.AssignmentManage)
             ])
         ],
         Roles: []);

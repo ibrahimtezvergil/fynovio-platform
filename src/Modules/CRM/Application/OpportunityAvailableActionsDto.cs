@@ -10,4 +10,6 @@ public sealed record OpportunityAvailableActionsDto(
     IReadOnlyList<long> AllowedTargetStageIds,
     bool CanWin,
     bool CanLose,
-    bool CanReassign);
+    bool CanReassign,
+    bool CanArchive,
+    bool CanRestore);

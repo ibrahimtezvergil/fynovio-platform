@@ -76,6 +76,98 @@ namespace CRM.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CRM.Domain.CrmSettings", b =>
+                {
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("AssignmentPolicy")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("assignment_policy");
+
+                    b.Property<string>("DefaultAssignmentMode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("default_assignment_mode");
+
+                    b.Property<long?>("DefaultOpportunityTypeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("default_opportunity_type_id");
+
+                    b.Property<long?>("DefaultPipelineDefinitionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("default_pipeline_definition_id");
+
+                    b.Property<string>("DefaultPrincipalIssuer")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("default_principal_issuer");
+
+                    b.Property<string>("DefaultPrincipalSubject")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("default_principal_subject");
+
+                    b.Property<long?>("DefaultTeamId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("default_team_id");
+
+                    b.Property<long?>("DefaultTerritoryId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("default_territory_id");
+
+                    b.Property<string>("OpportunityCreationMode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("opportunity_creation_mode");
+
+                    b.Property<bool>("RequireLostReason")
+                        .HasColumnType("boolean")
+                        .HasColumnName("require_lost_reason");
+
+                    b.Property<bool>("RequireWonLine")
+                        .HasColumnType("boolean")
+                        .HasColumnName("require_won_line");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("row_version");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("TenantId")
+                        .HasName("pk_crm_settings");
+
+                    b.HasIndex("TenantId", "DefaultOpportunityTypeId")
+                        .HasDatabaseName("ix_crm_settings_tenant_id_default_opportunity_type_id");
+
+                    b.HasIndex("TenantId", "DefaultPipelineDefinitionId")
+                        .HasDatabaseName("ix_crm_settings_tenant_id_default_pipeline_definition_id");
+
+                    b.ToTable("crm_settings", "crm", t =>
+                        {
+                            t.HasCheckConstraint("ck_crm_settings_assignment_mode", "default_assignment_mode IN ('Manual', 'DefaultPrincipal', 'Team', 'Territory')");
+
+                            t.HasCheckConstraint("ck_crm_settings_assignment_policy", "assignment_policy IN ('AnyAssignablePrincipal', 'ManagerOnly', 'ManualOnly')");
+
+                            t.HasCheckConstraint("ck_crm_settings_assignment_reference_required", "(default_assignment_mode <> 'DefaultPrincipal' OR default_principal_issuer IS NOT NULL) AND (default_assignment_mode <> 'Team' OR default_team_id IS NOT NULL) AND (default_assignment_mode <> 'Territory' OR default_territory_id IS NOT NULL)");
+
+                            t.HasCheckConstraint("ck_crm_settings_creation_mode", "opportunity_creation_mode IN ('Form', 'Wizard')");
+
+                            t.HasCheckConstraint("ck_crm_settings_default_principal_pair", "(default_principal_issuer IS NULL AND default_principal_subject IS NULL) OR (default_principal_issuer IS NOT NULL AND default_principal_subject IS NOT NULL)");
+
+                            t.HasCheckConstraint("ck_crm_settings_manual_assignment_policy", "assignment_policy <> 'ManualOnly' OR default_assignment_mode = 'Manual'");
+                        });
+                });
+
             modelBuilder.Entity("CRM.Domain.CustomerNeed", b =>
                 {
                     b.Property<long>("Id")
@@ -89,6 +181,11 @@ namespace CRM.Persistence.Migrations
                         .HasColumnType("numeric(19,2)")
                         .HasColumnName("average_price");
 
+                    b.Property<string>("Category")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("category");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -97,6 +194,19 @@ namespace CRM.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("name");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("row_version");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("Active")
+                        .HasColumnName("status");
 
                     b.Property<long>("TenantId")
                         .HasColumnType("bigint")
@@ -111,6 +221,68 @@ namespace CRM.Persistence.Migrations
                     b.ToTable("customer_needs", "crm", t =>
                         {
                             t.HasCheckConstraint("ck_customer_needs_average_price_non_negative", "average_price >= 0");
+
+                            t.HasCheckConstraint("ck_customer_needs_name_non_empty", "length(btrim(name)) > 0");
+
+                            t.HasCheckConstraint("ck_customer_needs_status", "status IN ('Active', 'Inactive', 'Archived')");
+                        });
+                });
+
+            modelBuilder.Entity("CRM.Domain.LostReason", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("key");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("row_version");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_lost_reasons");
+
+                    b.HasAlternateKey("TenantId", "Id")
+                        .HasName("ak_lost_reasons_tenant_id_id");
+
+                    b.HasIndex("TenantId", "Key")
+                        .IsUnique()
+                        .HasDatabaseName("ix_lost_reasons_tenant_id_key");
+
+                    b.ToTable("lost_reasons", "crm", t =>
+                        {
+                            t.HasCheckConstraint("ck_lost_reasons_key_name_non_empty", "length(btrim(key)) > 0 AND length(btrim(name)) > 0");
+
+                            t.HasCheckConstraint("ck_lost_reasons_status", "status IN ('Active', 'Inactive', 'Archived')");
                         });
                 });
 
@@ -122,6 +294,10 @@ namespace CRM.Persistence.Migrations
                         .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset?>("ArchivedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("archived_at");
 
                     b.Property<string>("AssignedPrincipalIssuer")
                         .IsRequired()
@@ -156,6 +332,10 @@ namespace CRM.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expiry_date");
 
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_archived");
+
                     b.Property<DateTimeOffset?>("LostDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("lost_date");
@@ -167,6 +347,10 @@ namespace CRM.Persistence.Migrations
                     b.Property<DateTimeOffset?>("OpenedDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("opened_date");
+
+                    b.Property<long?>("OpportunityTypeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("opportunity_type_id");
 
                     b.Property<long>("PartyRefPartyId")
                         .HasColumnType("bigint")
@@ -216,14 +400,11 @@ namespace CRM.Persistence.Migrations
                     b.HasIndex("TenantId", "CreatedAt")
                         .HasDatabaseName("ix_opportunities_tenant_id_created_at");
 
+                    b.HasIndex("TenantId", "OpportunityTypeId")
+                        .HasDatabaseName("ix_opportunities_tenant_id_opportunity_type_id");
+
                     b.HasIndex("TenantId", "PartyRefPartyId")
                         .HasDatabaseName("ix_opportunities_tenant_id_party_ref_party_id");
-
-                    b.HasIndex("TenantId", "PipelineDefinitionVersionId")
-                        .HasDatabaseName("ix_opportunities_tenant_id_pipeline_definition_version_id");
-
-                    b.HasIndex("TenantId", "PipelineStageId")
-                        .HasDatabaseName("ix_opportunities_tenant_id_pipeline_stage_id");
 
                     b.HasIndex("TenantId", "Status")
                         .HasDatabaseName("ix_opportunities_tenant_id_status");
@@ -231,8 +412,18 @@ namespace CRM.Persistence.Migrations
                     b.HasIndex("TenantId", "AssignedPrincipalIssuer", "AssignedPrincipalSubject")
                         .HasDatabaseName("ix_opportunities_tenant_assigned_principal");
 
+                    b.HasIndex("TenantId", "IsArchived", "CreatedAt")
+                        .HasDatabaseName("ix_opportunities_tenant_id_is_archived_created_at");
+
+                    b.HasIndex("TenantId", "PipelineDefinitionVersionId", "PipelineStageId")
+                        .HasDatabaseName("ix_opportunities_tenant_id_pipeline_definition_version_id_pipe");
+
                     b.ToTable("opportunities", "crm", t =>
                         {
+                            t.HasCheckConstraint("ck_opportunities_archive_nonterminal", "NOT is_archived OR status IN ('draft','open')");
+
+                            t.HasCheckConstraint("ck_opportunities_archive_timestamp", "(is_archived AND archived_at IS NOT NULL) OR (NOT is_archived AND archived_at IS NULL)");
+
                             t.HasCheckConstraint("ck_opportunities_estimated_amount_non_negative", "estimated_amount >= 0");
 
                             t.HasCheckConstraint("ck_opportunities_expiry_required_once_open", "status NOT IN ('open','won') OR expiry_date IS NOT NULL");
@@ -353,6 +544,64 @@ namespace CRM.Persistence.Migrations
                     b.ToTable("opportunity_needs", "crm");
                 });
 
+            modelBuilder.Entity("CRM.Domain.OpportunityType", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("key");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("row_version");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_opportunity_types");
+
+                    b.HasAlternateKey("TenantId", "Id")
+                        .HasName("ak_opportunity_types_tenant_id_id");
+
+                    b.HasIndex("TenantId", "Key")
+                        .IsUnique()
+                        .HasDatabaseName("ix_opportunity_types_tenant_id_key");
+
+                    b.ToTable("opportunity_types", "crm", t =>
+                        {
+                            t.HasCheckConstraint("ck_opportunity_types_key_name_non_empty", "length(btrim(key)) > 0 AND length(btrim(name)) > 0");
+
+                            t.HasCheckConstraint("ck_opportunity_types_status", "status IN ('Active', 'Inactive', 'Archived')");
+                        });
+                });
+
             modelBuilder.Entity("CRM.Domain.PipelineDefinition", b =>
                 {
                     b.Property<long>("Id")
@@ -366,10 +615,27 @@ namespace CRM.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsArchived")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_archived");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("name");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("row_version");
 
                     b.Property<long>("TenantId")
                         .HasColumnType("bigint")
@@ -389,7 +655,10 @@ namespace CRM.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_pipeline_definitions_tenant_id_name");
 
-                    b.ToTable("pipeline_definitions", "crm");
+                    b.ToTable("pipeline_definitions", "crm", t =>
+                        {
+                            t.HasCheckConstraint("ck_pipeline_definitions_name_non_empty", "length(btrim(name)) > 0");
+                        });
                 });
 
             modelBuilder.Entity("CRM.Domain.PipelineDefinitionVersion", b =>
@@ -405,9 +674,25 @@ namespace CRM.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<bool>("EnforceAllowedTransitions")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enforce_allowed_transitions");
+
                     b.Property<long>("PipelineDefinitionId")
                         .HasColumnType("bigint")
                         .HasColumnName("pipeline_definition_id");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("Draft")
+                        .HasColumnName("status");
 
                     b.Property<long>("TenantId")
                         .HasColumnType("bigint")
@@ -427,7 +712,12 @@ namespace CRM.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_pipeline_definition_versions_tenant_id_pipeline_definition_");
 
-                    b.ToTable("pipeline_definition_versions", "crm");
+                    b.ToTable("pipeline_definition_versions", "crm", t =>
+                        {
+                            t.HasCheckConstraint("ck_pipeline_definition_versions_status", "status IN ('Draft', 'Published', 'Superseded', 'Archived')");
+
+                            t.HasCheckConstraint("ck_pipeline_definition_versions_version_number_positive", "version_number > 0");
+                        });
                 });
 
             modelBuilder.Entity("CRM.Domain.PipelineStage", b =>
@@ -448,6 +738,12 @@ namespace CRM.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true)
                         .HasColumnName("is_active");
+
+                    b.Property<bool>("IsArchived")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_archived");
 
                     b.Property<bool>("IsEntry")
                         .ValueGeneratedOnAdd()
@@ -475,8 +771,8 @@ namespace CRM.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_pipeline_stages");
 
-                    b.HasAlternateKey("TenantId", "Id")
-                        .HasName("ak_pipeline_stages_tenant_id_id");
+                    b.HasAlternateKey("TenantId", "PipelineDefinitionVersionId", "Id")
+                        .HasName("ak_pipeline_stages_tenant_id_pipeline_definition_version_id_id");
 
                     b.HasIndex("TenantId", "PipelineDefinitionVersionId")
                         .IsUnique()
@@ -491,7 +787,55 @@ namespace CRM.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_pipeline_stages_tenant_id_pipeline_definition_version_id_so");
 
-                    b.ToTable("pipeline_stages", "crm");
+                    b.ToTable("pipeline_stages", "crm", t =>
+                        {
+                            t.HasCheckConstraint("ck_pipeline_stages_archived_inactive", "NOT is_archived OR NOT is_active");
+
+                            t.HasCheckConstraint("ck_pipeline_stages_name_non_empty", "length(btrim(name)) > 0");
+
+                            t.HasCheckConstraint("ck_pipeline_stages_sort_order_non_negative", "sort_order >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("CRM.Domain.PipelineStageTransition", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("FromStageId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("from_stage_id");
+
+                    b.Property<long>("PipelineDefinitionVersionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pipeline_definition_version_id");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<long>("ToStageId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("to_stage_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_pipeline_stage_transitions");
+
+                    b.HasIndex("TenantId", "PipelineDefinitionVersionId", "ToStageId")
+                        .HasDatabaseName("ix_pipeline_stage_transitions_tenant_id_pipeline_definition_ve");
+
+                    b.HasIndex("TenantId", "PipelineDefinitionVersionId", "FromStageId", "ToStageId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_pipeline_stage_transitions_tenant_id_pipeline_definition_ve1");
+
+                    b.ToTable("pipeline_stage_transitions", "crm", t =>
+                        {
+                            t.HasCheckConstraint("ck_pipeline_stage_transitions_distinct_stages", "from_stage_id <> to_stage_id");
+                        });
                 });
 
             modelBuilder.Entity("CRM.Evidence.EvidenceRecord", b =>
@@ -696,8 +1040,32 @@ namespace CRM.Persistence.Migrations
                     b.ToTable("outbox_messages", "crm");
                 });
 
+            modelBuilder.Entity("CRM.Domain.CrmSettings", b =>
+                {
+                    b.HasOne("CRM.Domain.OpportunityType", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "DefaultOpportunityTypeId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_crm_settings_opportunity_types_tenant_id_default_opportunit");
+
+                    b.HasOne("CRM.Domain.PipelineDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "DefaultPipelineDefinitionId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_crm_settings_pipeline_definitions_tenant_id_default_pipelin");
+                });
+
             modelBuilder.Entity("CRM.Domain.Opportunity", b =>
                 {
+                    b.HasOne("CRM.Domain.OpportunityType", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "OpportunityTypeId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_opportunities_opportunity_types_tenant_id_opportunity_type_");
+
                     b.HasOne("CRM.Domain.PipelineDefinitionVersion", null)
                         .WithMany()
                         .HasForeignKey("TenantId", "PipelineDefinitionVersionId")
@@ -707,10 +1075,10 @@ namespace CRM.Persistence.Migrations
 
                     b.HasOne("CRM.Domain.PipelineStage", null)
                         .WithMany()
-                        .HasForeignKey("TenantId", "PipelineStageId")
-                        .HasPrincipalKey("TenantId", "Id")
+                        .HasForeignKey("TenantId", "PipelineDefinitionVersionId", "PipelineStageId")
+                        .HasPrincipalKey("TenantId", "PipelineDefinitionVersionId", "Id")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_opportunities_pipeline_stages_tenant_id_pipeline_stage_id");
+                        .HasConstraintName("fk_opportunities_pipeline_stages_tenant_id_pipeline_definition");
                 });
 
             modelBuilder.Entity("CRM.Domain.OpportunityLine", b =>
@@ -763,6 +1131,33 @@ namespace CRM.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_pipeline_stages_pipeline_definition_versions_tenant_id_pipe");
+                });
+
+            modelBuilder.Entity("CRM.Domain.PipelineStageTransition", b =>
+                {
+                    b.HasOne("CRM.Domain.PipelineDefinitionVersion", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PipelineDefinitionVersionId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_pipeline_stage_transitions_pipeline_definition_versions_ten");
+
+                    b.HasOne("CRM.Domain.PipelineStage", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PipelineDefinitionVersionId", "FromStageId")
+                        .HasPrincipalKey("TenantId", "PipelineDefinitionVersionId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_pipeline_stage_transitions_pipeline_stages_tenant_id_pipeli");
+
+                    b.HasOne("CRM.Domain.PipelineStage", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PipelineDefinitionVersionId", "ToStageId")
+                        .HasPrincipalKey("TenantId", "PipelineDefinitionVersionId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_pipeline_stage_transitions_pipeline_stages_tenant_id_pipeli1");
                 });
 
             modelBuilder.Entity("CRM.Domain.Opportunity", b =>

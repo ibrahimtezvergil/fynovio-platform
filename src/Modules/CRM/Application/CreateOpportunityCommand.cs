@@ -9,4 +9,8 @@ public sealed record CreateOpportunityCommand(
     string Currency,
     decimal EstimatedAmount,
     string IdempotencyKey,
-    Guid CorrelationId);
+    Guid CorrelationId)
+{
+    /// <summary>The authenticated caller is distinct from the selected assignee once a tenant default is applied.</summary>
+    public PrincipalRef? CallerPrincipal { get; init; }
+}

@@ -1,10 +1,64 @@
 # CRM+Sales pilot schema (PostgreSQL, `crm` schema)
 
+## Revision 10 (2026-09-24): Opportunity archive lifecycle
+
+`crm.opportunities` has `is_archived` and nullable `archived_at`, with CHECK constraints requiring these fields to agree and forbidding archived Won/Lost records. Archiving does not alter the lifecycle status or pipeline stage. Normal opportunity list queries select only non-archived rows; the archive view selects archived rows. Archive and restore are tenant-scoped, authorized, optimistic-concurrency-protected, idempotent commands, with audit evidence and outbox facts committed atomically. Restore preserves the original lifecycle and stage, except that an Open opportunity whose referenced stage is inactive must be restored to an active stage in the same pipeline version. No hard-delete command is exposed.
+
 Physical schema for the CRM module decided in
 `docs/architecture-analysis/17_CRM_SALES_PILOT_DOMAIN.md` (in the research
 project, sibling to this repo). Revision 5 (2026-09-16) — Phase 1's Lifecycle and
 Pipeline foundation; Revisions 1-4's design already implemented; Phase 1 changes
 recorded in "Revision 5" at the end of this file.
+
+## Revision 9 (2026-09-24): CRM configuration management
+
+Tenant-owned CRM defaults use typed columns in `crm.crm_settings` (one row per tenant, optimistic `row_version`): default pipeline, creation mode, default opportunity type, close requirements and assignment policy/default references. Pipeline and type defaults use tenant-safe composite foreign keys. `crm.opportunity_types` and `crm.lost_reasons` are tenant catalogs with stable keys and `Active`/`Inactive`/`Archived` lifecycle. `customer_needs` gains nullable `category` and a status lifecycle; existing rows are backfilled as `Active`. The new tenant tables have ENABLE+FORCE RLS and the standard `tenant_isolation` policy.
+
+`crm.pipeline_definitions` now carries active/archive lifecycle and a concurrency version. `pipeline_definition_versions` uses `Draft`/`Published`/`Superseded`/`Archived` with a CHECK constraint; new versions default to `Draft` at the database boundary, while previously published rows retain their state. Stage changes are authored in a draft and published as a new immutable version. Stages have explicit entry, active/archive lifecycle and stable per-version order. `pipeline_stage_transitions` stores version-scoped allowed edges with composite tenant/version/stage FKs. Opportunity references keep pointing at their original version and stage; the opportunity stage FK now proves it belongs to the referenced version. Publishing reports the count retained on previous versions and never remaps those records. No hard-delete path exists for referenced configuration.
+
+`opportunities.opportunity_type_id` is nullable for backward compatibility and has a tenant-safe FK to `opportunity_types`. Creation applies the tenant default type and assignment configuration. Opportunity type, lost reason and customer-need status enums, together with the closed setting enums, are constrained to their explicit string vocabularies with CHECK constraints. Lost reasons remain text snapshots on closed opportunities, while the tenant catalog is lifecycle-managed. CRM settings/pipeline/catalog writes use CRM PDP actions and commit state, idempotency, evidence and outbox transactionally. The settings APIs do not own platform Custom Fields, Workflow, Automation, Notifications or Authorization.
+
+## Diagram additions
+
+```mermaid
+erDiagram
+    CRM_SETTINGS }o--|| PIPELINE_DEFINITIONS : default_pipeline
+    CRM_SETTINGS }o--|| OPPORTUNITY_TYPES : default_type
+    PIPELINE_DEFINITIONS ||--o{ PIPELINE_DEFINITION_VERSIONS : versions
+    PIPELINE_DEFINITION_VERSIONS ||--o{ PIPELINE_STAGES : contains
+    PIPELINE_DEFINITION_VERSIONS ||--o{ PIPELINE_STAGE_TRANSITIONS : allows
+    OPPORTUNITIES }o--o| OPPORTUNITY_TYPES : typed_as
+    CRM_SETTINGS {
+        bigint tenant_id PK
+        bigint default_pipeline_definition_id FK
+        bigint default_opportunity_type_id FK
+        text opportunity_creation_mode
+        text default_assignment_mode
+        text assignment_policy
+        bigint row_version
+    }
+    PIPELINE_DEFINITIONS {
+        boolean is_active
+        boolean is_archived
+        bigint row_version
+    }
+    PIPELINE_DEFINITION_VERSIONS {
+        text status "Draft|Published|Superseded|Archived"
+        boolean enforce_allowed_transitions
+        timestamptz published_at
+    }
+    PIPELINE_STAGES {
+        boolean is_active
+        boolean is_entry "exactly one active entry in a valid published version"
+        boolean is_archived
+    }
+    PIPELINE_STAGE_TRANSITIONS {
+        bigint tenant_id FK
+        bigint pipeline_definition_version_id FK
+        bigint from_stage_id FK
+        bigint to_stage_id FK
+    }
+```
 
 ## Diagram
 

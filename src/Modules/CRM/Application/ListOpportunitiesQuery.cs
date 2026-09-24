@@ -9,4 +9,5 @@ public sealed record ListOpportunitiesQuery(
     Guid CorrelationId,
     OpportunityStatus? Status,
     int Skip,
-    int Take);
+    int Take,
+    bool ArchivedOnly = false);

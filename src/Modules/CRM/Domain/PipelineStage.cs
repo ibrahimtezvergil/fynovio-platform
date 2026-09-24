@@ -10,6 +10,7 @@ public sealed class PipelineStage
     public string Name { get; private set; } = null!;
     public int SortOrder { get; private set; }
     public bool IsActive { get; private set; } = true;
+    public bool IsArchived { get; private set; }
     public bool IsEntry { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 
@@ -39,6 +40,18 @@ public sealed class PipelineStage
     /// DeleteBehavior.Restrict) — this only excludes the stage from
     /// ChangePipelineStage's future valid-target list (architecture plan §2.4).</summary>
     public void Deactivate() => IsActive = false;
+
+    public void Activate()
+    {
+        if (IsArchived) throw new InvalidOperationException("An archived stage cannot be activated.");
+        IsActive = true;
+    }
+
+    public void Archive()
+    {
+        IsArchived = true;
+        IsActive = false;
+    }
 
     internal void SetEntry(bool isEntry) => IsEntry = isEntry;
 }

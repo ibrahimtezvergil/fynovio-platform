@@ -72,6 +72,18 @@ public sealed class ChangePipelineStageHandler(CrmDbContext context, IAuthorizer
         if (!targetStage.IsActive)
             throw new InvalidPipelineTransitionException(opportunity.Id, command.TargetStageId, "stage is retired and not a valid target for new transitions");
 
+        if (opportunity.PipelineDefinitionVersionId is { } currentVersionId)
+        {
+            var restrictTransitions = await context.PipelineDefinitionVersions.AsNoTracking()
+                .Where(version => version.TenantId == command.TenantId && version.Id == currentVersionId)
+                .Select(version => version.EnforceAllowedTransitions)
+                .SingleAsync(cancellationToken);
+            if (restrictTransitions && (opportunity.PipelineStageId is not { } transitionSourceStageId || !await context.PipelineStageTransitions.AnyAsync(edge =>
+                    edge.TenantId == command.TenantId && edge.PipelineDefinitionVersionId == currentVersionId && edge.FromStageId == transitionSourceStageId && edge.ToStageId == command.TargetStageId,
+                    cancellationToken)))
+                throw new InvalidPipelineTransitionException(opportunity.Id, command.TargetStageId, "the configured transition is not allowed");
+        }
+
         var fromStageId = opportunity.PipelineStageId;
         opportunity.ChangeStage(command.TargetStageId);
 

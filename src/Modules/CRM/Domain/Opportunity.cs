@@ -20,11 +20,14 @@ public sealed class Opportunity : IHasRowVersion
     public long Id { get; private set; }
     public TenantId TenantId { get; private set; }
     public long PartyRefPartyId { get; private set; }
+    public long? OpportunityTypeId { get; private set; }
     public long? PipelineDefinitionVersionId { get; private set; }
     public long? PipelineStageId { get; private set; }
     public string AssignedPrincipalIssuer { get; private set; } = null!;
     public string AssignedPrincipalSubject { get; private set; } = null!;
     public OpportunityStatus Status { get; private set; }
+    public bool IsArchived { get; private set; }
+    public DateTimeOffset? ArchivedAt { get; private set; }
     public string? LostReason { get; private set; }
     public string Currency { get; private set; } = null!;
     public decimal EstimatedAmount { get; private set; }
@@ -51,7 +54,8 @@ public sealed class Opportunity : IHasRowVersion
         PartyRef partyRef,
         PrincipalRef assignedPrincipal,
         string currency,
-        decimal estimatedAmount)
+        decimal estimatedAmount,
+        long? opportunityTypeId = null)
     {
         if (partyRef.TenantId != tenantId)
             throw new ArgumentException("PartyRef's tenant must match the opportunity's tenant.", nameof(partyRef));
@@ -67,6 +71,7 @@ public sealed class Opportunity : IHasRowVersion
         {
             TenantId = tenantId,
             PartyRefPartyId = partyRef.PartyId,
+            OpportunityTypeId = opportunityTypeId,
             AssignedPrincipalIssuer = assignedPrincipal.Issuer,
             AssignedPrincipalSubject = assignedPrincipal.Subject,
             Status = OpportunityStatus.Draft,
@@ -96,6 +101,7 @@ public sealed class Opportunity : IHasRowVersion
     /// pipeline configured yet passes both as null and Open proceeds normally.</summary>
     public void Open(DateTimeOffset expiryDate, long? pipelineDefinitionVersionId, long? pipelineStageId)
     {
+        EnsureNotArchived();
         if (Status != OpportunityStatus.Draft)
             throw new InvalidOperationException($"Cannot open an opportunity in status {Status}.");
         if (expiryDate <= DateTimeOffset.UtcNow)
@@ -115,13 +121,14 @@ public sealed class Opportunity : IHasRowVersion
     /// active (non-lost), required (non-optional) line must exist. The total is derived
     /// from those lines here — optional lines are unselected alternatives and do not count —
     /// and this is the single declared rounding point (17 §3.4).</summary>
-    public void Win()
+    public void Win(bool requireActiveRequiredLine = true)
     {
+        EnsureNotArchived();
         if (Status != OpportunityStatus.Open)
             throw new InvalidOperationException($"Cannot win an opportunity in status {Status}. It must be open first.");
 
         var billableLines = _lines.Where(line => !line.IsOptional && !line.IsCanceled).ToList();
-        if (billableLines.Count == 0)
+        if (requireActiveRequiredLine && billableLines.Count == 0)
             throw new InvalidOperationException("Cannot win an opportunity without at least one active required line.");
 
         // line_total is NULL on rows persisted before it was computed; derive it rather than count it as zero.
@@ -137,6 +144,7 @@ public sealed class Opportunity : IHasRowVersion
 
     public void Lose(string lostReason)
     {
+        EnsureNotArchived();
         if (Status is OpportunityStatus.Won or OpportunityStatus.Lost)
             throw new InvalidOperationException($"Cannot lose an opportunity in status {Status}.");
         if (string.IsNullOrWhiteSpace(lostReason))
@@ -183,11 +191,43 @@ public sealed class Opportunity : IHasRowVersion
     /// remain Win()/Lose()'s job alone.</summary>
     public void ChangeStage(long pipelineStageId)
     {
+        EnsureNotArchived();
         if (Status != OpportunityStatus.Open)
             throw new InvalidOperationException($"Cannot change pipeline stage on an opportunity in status {Status}. It must be open.");
 
         PipelineStageId = pipelineStageId;
         Touch();
+    }
+
+    public void Archive(bool confirmOpenOpportunity)
+    {
+        if (Status is OpportunityStatus.Won or OpportunityStatus.Lost)
+            throw new InvalidOperationException("Won and Lost opportunities cannot be archived.");
+        if (IsArchived)
+            return;
+        if (Status == OpportunityStatus.Open && !confirmOpenOpportunity)
+            throw new InvalidOperationException("Archiving an open opportunity requires explicit confirmation.");
+
+        IsArchived = true;
+        ArchivedAt = DateTimeOffset.UtcNow;
+        Touch();
+    }
+
+    public void Restore(long? replacementActiveStageId = null)
+    {
+        if (!IsArchived)
+            return;
+        if (replacementActiveStageId is not null)
+            PipelineStageId = replacementActiveStageId;
+        IsArchived = false;
+        ArchivedAt = null;
+        Touch();
+    }
+
+    private void EnsureNotArchived()
+    {
+        if (IsArchived)
+            throw new InvalidOperationException("Archived opportunities cannot re-enter the active sales lifecycle.");
     }
 
     /// <summary>Tek versiyon artış noktası. Interceptor yerine burada artırılıyor: outbox ve
