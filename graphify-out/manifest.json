@@ -3828,9 +3828,9 @@
     "semantic_hash": ""
   },
   "web/src/features/calendar/index.ts": {
-    "mtime": 1789861433.2612295,
-    "seen": 1790024389.3294349,
-    "ast_hash": "de983c9a239aa2555b4c20393ed7b0f6",
+    "mtime": 1790287898.0723815,
+    "seen": 1790287997.446115,
+    "ast_hash": "f8bf44a138a9477254ad3e2d722578b6",
     "semantic_hash": ""
   },
   "web/src/features/calendar/nav.ts": {
@@ -6462,9 +6462,9 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/pages/OpportunityDetailPage.tsx": {
-    "mtime": 1790279497.3246593,
-    "seen": 1790281032.399942,
-    "ast_hash": "31ce2d390bee4488c5a9ce7076dd3d6e",
+    "mtime": 1790287964.416733,
+    "seen": 1790287997.446282,
+    "ast_hash": "06ab97831d3e9cf66e5aa9854421d59a",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/pages/OpportunityNewPage.test.tsx": {
@@ -7602,9 +7602,9 @@
     "semantic_hash": ""
   },
   "web/e2e/calendar.e2e.ts": {
-    "mtime": 1790102460.9212296,
-    "seen": 1790155173.226669,
-    "ast_hash": "330cae2d234b8ff4ee8add612463aa73",
+    "mtime": 1790287922.051067,
+    "seen": 1790287997.445961,
+    "ast_hash": "d70e906880c6393c6e4a71c8c9db302f",
     "semantic_hash": ""
   },
   "web/e2e/support/calendar.ts": {
@@ -7746,9 +7746,9 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/pages/OpportunityAddToCalendar.test.tsx": {
-    "mtime": 1790023783.0473976,
-    "seen": 1790024389.329618,
-    "ast_hash": "e22bdbb4f8612fce1e83d4c614faa14d",
+    "mtime": 1790287922.0342426,
+    "seen": 1790287997.446281,
+    "ast_hash": "f5d9d9a12cf54ab13841de0a25418000",
     "semantic_hash": ""
   },
   "web/src/lib/overlay/useOverlayClose.test.tsx": {
@@ -8595,6 +8595,12 @@
     "mtime": 1790287233.0521924,
     "seen": 1790287712.967298,
     "ast_hash": "6cc7805bb3f410daf29c41e9ef5eb1c9",
+    "semantic_hash": ""
+  },
+  "web/src/features/calendar/openLinkedOpportunityEntryDialog.tsx": {
+    "mtime": 1790287898.056951,
+    "seen": 1790287997.446125,
+    "ast_hash": "55871db4b8c60153736d7040e33c9053",
     "semantic_hash": ""
   }
 }
