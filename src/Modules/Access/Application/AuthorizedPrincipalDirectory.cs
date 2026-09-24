@@ -22,6 +22,25 @@ public sealed class AuthorizedPrincipalDirectory(
     public const int MaxTake = 50;
     private const int MaxSearchLength = 100;
 
+    public Task<IReadOnlyDictionary<PrincipalRef, string>> ResolveDisplayNamesAsync(
+        TenantId tenantId, IReadOnlyCollection<PrincipalRef> principals, CancellationToken cancellationToken = default) =>
+        InTenantAsync<IReadOnlyDictionary<PrincipalRef, string>>(tenantId, async () =>
+        {
+            if (principals.Count == 0) return new Dictionary<PrincipalRef, string>();
+            var issuers = principals.Select(p => p.Issuer).Distinct().ToArray();
+            var subjects = principals.Select(p => p.Subject).Distinct().ToArray();
+            var rows = await (from membership in context.TenantMemberships
+                              join identity in context.ExternalIdentities on membership.AccountId equals identity.AccountId
+                              join account in context.Accounts on membership.AccountId equals account.Id
+                              where membership.TenantId == tenantId
+                                    && issuers.Contains(identity.Issuer) && subjects.Contains(identity.Subject)
+                              select new { identity.Issuer, identity.Subject, account.DisplayName })
+                .ToListAsync(cancellationToken);
+            var requested = principals.ToHashSet();
+            return rows.Where(x => requested.Contains(new PrincipalRef(x.Issuer, x.Subject)))
+                .ToDictionary(x => new PrincipalRef(x.Issuer, x.Subject), x => x.DisplayName);
+        }, cancellationToken);
+
     public Task<IReadOnlyList<PrincipalDirectoryEntry>> ListPermittedPrincipalsAsync(
         TenantId tenantId, IReadOnlyCollection<ActionKey> requiredActions, string? search, int take, CancellationToken cancellationToken = default) =>
         InTenantAsync<IReadOnlyList<PrincipalDirectoryEntry>>(tenantId, async () =>

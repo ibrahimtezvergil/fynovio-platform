@@ -15,4 +15,9 @@ public sealed record OpportunitySummaryDto(
     DateTimeOffset? ExpiryDate,
     bool IsArchived,
     DateTimeOffset? ArchivedAt,
-    long RowVersion);
+    long RowVersion,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
+    decimal? TotalAmount,
+    IReadOnlyList<string> Needs,
+    string? AssignedPrincipalDisplayName);

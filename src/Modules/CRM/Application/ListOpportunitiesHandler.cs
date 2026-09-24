@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Application;
 
-public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeResolver scopeResolver)
+public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeResolver scopeResolver, IAuthorizedPrincipalDirectory? principalDirectory = null)
 {
     private const string ActionKeyValue = "crm.opportunity.list";
 
@@ -37,8 +37,27 @@ public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeR
             .Take(query.Take)
             .Select(o => new OpportunitySummaryDto(
                 o.Id, o.Status, o.EstimatedAmount, o.Currency, o.AssignedPrincipalIssuer, o.AssignedPrincipalSubject, o.PipelineStageId,
-                o.PartyRefPartyId, o.PipelineDefinitionVersionId, o.ExpiryDate, o.IsArchived, o.ArchivedAt, o.RowVersion))
+                o.PartyRefPartyId, o.PipelineDefinitionVersionId, o.ExpiryDate, o.IsArchived, o.ArchivedAt, o.RowVersion,
+                o.CreatedAt, o.UpdatedAt, o.TotalAmount, Array.Empty<string>(), (string?)null))
             .ToListAsync(cancellationToken);
+
+        var opportunityIds = results.Select(x => x.Id).ToArray();
+        var needRows = await (from link in context.OpportunityNeeds
+                              join need in context.CustomerNeeds on new { link.TenantId, link.CustomerNeedId } equals new { need.TenantId, CustomerNeedId = need.Id }
+                              where link.TenantId == query.TenantId && opportunityIds.Contains(link.OpportunityId)
+                              select new { link.OpportunityId, need.Name })
+            .ToListAsync(cancellationToken);
+        var needsByOpportunity = needRows.GroupBy(x => x.OpportunityId).ToDictionary(x => x.Key, x => (IReadOnlyList<string>)x.Select(n => n.Name).Order().ToArray());
+        results = results.Select(x => x with { Needs = needsByOpportunity.GetValueOrDefault(x.Id, Array.Empty<string>()) }).ToList();
+        if (principalDirectory is not null)
+        {
+            var principals = results.Select(x => new PrincipalRef(x.AssignedPrincipalIssuer, x.AssignedPrincipalSubject)).Distinct().ToArray();
+            var names = await principalDirectory.ResolveDisplayNamesAsync(query.TenantId, principals, cancellationToken);
+            results = results.Select(x => x with
+            {
+                AssignedPrincipalDisplayName = names.GetValueOrDefault(new PrincipalRef(x.AssignedPrincipalIssuer, x.AssignedPrincipalSubject))
+            }).ToList();
+        }
 
         await transaction.CommitAsync(cancellationToken);
         return results;

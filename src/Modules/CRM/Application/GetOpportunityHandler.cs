@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Application;
 
-public sealed class GetOpportunityHandler(CrmDbContext context, IAuthorizer authorizer)
+public sealed class GetOpportunityHandler(CrmDbContext context, IAuthorizer authorizer, IAuthorizedPrincipalDirectory? principalDirectory = null)
 {
     public async Task<OpportunityDto?> HandleAsync(GetOpportunityQuery query, CancellationToken cancellationToken = default)
     {
@@ -23,10 +23,18 @@ public sealed class GetOpportunityHandler(CrmDbContext context, IAuthorizer auth
         var actor = new ActorContext(query.TenantId, query.Principal, query.CorrelationId);
         var decision = await authorizer.AuthorizeAsync(OpportunityReadAuthorization.Request(actor, opportunity), cancellationToken);
 
+        string? assignedPrincipalDisplayName = null;
+        if (decision.IsAllowed && principalDirectory is not null)
+        {
+            var principal = new PrincipalRef(opportunity.AssignedPrincipalIssuer, opportunity.AssignedPrincipalSubject);
+            var names = await principalDirectory.ResolveDisplayNamesAsync(query.TenantId, [principal], cancellationToken);
+            names.TryGetValue(principal, out assignedPrincipalDisplayName);
+        }
+
         await transaction.CommitAsync(cancellationToken);
 
         // Record-level denial looks identical to not-found — never 403 for "exists, not
         // yours" (architecture plan §15, binding spec §12's tenant-non-leak rule).
-        return decision.IsAllowed ? OpportunityDto.From(opportunity) : null;
+        return decision.IsAllowed ? OpportunityDto.From(opportunity) with { AssignedPrincipalDisplayName = assignedPrincipalDisplayName } : null;
     }
 }

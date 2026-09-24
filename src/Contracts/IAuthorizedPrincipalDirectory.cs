@@ -11,6 +11,10 @@ namespace Contracts;
 /// and the frontend do not change. Fails closed: an unregistered/deprecated action yields nobody.</summary>
 public interface IAuthorizedPrincipalDirectory
 {
+    /// <summary>Resolve names for principals already present on tenant-scoped resources.</summary>
+    Task<IReadOnlyDictionary<PrincipalRef, string>> ResolveDisplayNamesAsync(
+        TenantId tenantId, IReadOnlyCollection<PrincipalRef> principals, CancellationToken cancellationToken = default);
+
     /// <summary>Active members permitted every action in <paramref name="requiredActions"/>, ordered by display
     /// name. `search` matches display name or e-mail (case-insensitive, literal). `take` is clamped to 1..50.</summary>
     Task<IReadOnlyList<PrincipalDirectoryEntry>> ListPermittedPrincipalsAsync(
