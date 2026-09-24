@@ -1,8 +1,9 @@
 import { QueryClient } from '@tanstack/react-query'
 import { fireEvent, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { OverlayHost } from '@/components/common/OverlayHost'
 import { useSessionStore } from '@/lib/auth'
-import { paths } from '@/routes/paths'
+import { useOverlayStore } from '@/lib/overlay'
 import { authenticated } from '@/test/authHandlers'
 import { mockDetailApi, mockParties, recordRequests } from '@/test/opportunities'
 import { renderRoutes, tr } from '@/test/render'
@@ -13,28 +14,26 @@ const t = (key: string) => tr(key, undefined, 'opportunities')
 
 beforeEach(() => {
   resetSession()
+  useOverlayStore.setState({ entries: [] })
   useSessionStore.getState().applyAuthResult(authenticated())
 })
 
 describe('"Add to calendar" on the opportunity detail page', () => {
-  it('is a real link that hands the opportunity to the calendar as a URL parameter (features never import each other)', async () => {
+  it('opens the linked create dialog without leaving the opportunity page', async () => {
     mockParties()
     mockDetailApi(12, recordRequests())
     const { router } = renderRoutes(
       [
-        { path: '/crm/opportunities/:id', element: <OpportunityDetailPage /> },
+        { path: '/crm/opportunities/:id', element: <><OpportunityDetailPage /><OverlayHost /></> },
         { path: '/calendar', element: <p>CALENDAR PAGE</p> },
       ],
       '/crm/opportunities/12',
       new QueryClient({ defaultOptions: { queries: { retryDelay: 0 } } }),
     )
 
-    const link = await screen.findByRole('link', { name: t('detail.addToCalendar') })
-    expect(link).toHaveAttribute('href', paths.calendarWithLink('crm', 'opportunity', 12))
-    expect(link).toHaveAttribute('href', '/calendar?link=crm%2Fopportunity%2F12')
-
-    fireEvent.click(link)
-    expect(await screen.findByText('CALENDAR PAGE')).toBeInTheDocument()
-    expect(router.state.location.pathname + router.state.location.search).toBe('/calendar?link=crm%2Fopportunity%2F12')
+    fireEvent.click(await screen.findByRole('button', { name: t('detail.addToCalendar') }))
+    expect(await screen.findByRole('dialog', { name: tr('form.createTitle', undefined, 'calendar') })).toBeInTheDocument()
+    expect(screen.getByText(tr('link.fallback.opportunity', { id: 12 }, 'calendar'))).toBeInTheDocument()
+    expect(router.state.location.pathname + router.state.location.search).toBe('/crm/opportunities/12')
   })
 })

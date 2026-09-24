@@ -2,9 +2,10 @@ import { CalendarPlus, MoreHorizontal, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { openLinkedOpportunityEntryDialog } from '@/features/calendar'
 import { PageHeader } from '@/components/common/PageHeader'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { CommandDialog } from '../components/CommandDialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -77,12 +78,11 @@ export default function OpportunityDetailPage() {
           <>
             <OpportunityStatusBadge status={data.status} />
             {data.isArchived && <span className="rounded-full border px-2.5 py-1 text-xs font-medium">{t('list.archive.archived')}</span>}
-            {/* The link travels as a URL parameter: features cannot import each other, and the calendar owns its dialog. */}
-            {/* A plain anchor: `Button render={<Link/>}` would announce this navigation as role="button". */}
-            <Link to={paths.calendarWithLink('crm', 'opportunity', data.id)} className={buttonVariants({ variant: 'outline' })}>
+            {/* Calendar owns the linked-entry form; opening its overlay leaves the opportunity route in place. */}
+            <Button type="button" variant="outline" onClick={() => openLinkedOpportunityEntryDialog(data.id)}>
               <CalendarPlus aria-hidden />
               {t('detail.addToCalendar')}
-            </Link>
+            </Button>
             {opportunity.isFetching && <RefreshCw aria-label={t('detail.refreshing')} className="text-muted-foreground size-4 animate-spin" />}
             {actions?.canOpen && <Button variant={hasActiveRequiredLine ? 'default' : 'outline'} onClick={() => setDialog('open')}>{t('open.action')}</Button>}
             {actions?.canWin && <Button onClick={() => setDialog('win')}>{t('win.action')}</Button>}

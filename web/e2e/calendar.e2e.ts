@@ -66,16 +66,16 @@ test.describe('Calendar — real API', () => {
     expect((await listEntries(token)).some((entry) => entry.id === created?.id)).toBe(false)
   })
 
-  test('2: an opportunity link is a real link to the record, and "Add to calendar" prefills it', async ({ page }) => {
+  test('2: an opportunity link is a real link to the record, and "Add to calendar" opens a linked dialog in place', async ({ page }) => {
     const token = await adminToken(1)
     const opportunityId = await createViaApi(token, { currency: 'EUR', estimatedAmount: 100 })
     const title = `E2E linked ${Date.now().toString(36)}`
 
     await signInToCalendar(page)
     await page.goto(`/crm/opportunities/${opportunityId}`)
-    await page.getByRole('link', { name: t.opportunities.detail.addToCalendar }).click()
+    await page.getByRole('button', { name: t.opportunities.detail.addToCalendar }).click()
 
-    await expect(page).toHaveURL(/\/calendar$/) // the parameter is consumed
+    await expect(page).toHaveURL(new RegExp(`/crm/opportunities/${opportunityId}$`))
     const dialog = page.getByRole('dialog', { name: calendar.form.createTitle })
     await expect(dialog.getByText(calendar.link.fallback.opportunity.replace('{{id}}', String(opportunityId)))).toBeVisible()
     await dialog.getByLabel(calendar.form.title.label, { exact: true }).fill(title)
