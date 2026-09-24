@@ -1,7 +1,7 @@
 import { useCreateAtom, useSelector } from '@tanstack/react-store'
 import { useTable, type RowSelectionState } from '@tanstack/react-table'
 import { ChevronLeft, ChevronRight, Download, Inbox, X } from 'lucide-react'
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -30,18 +30,21 @@ interface OpportunitiesGridProps {
 
 /**
  * Selection lives in an external atom so the selection bar — which is not part of the table — can read and clear it
- * without every row re-rendering. Rows are read-only: there is no row menu or bulk edit here until the edit work starts.
+ * without every row re-rendering. Row actions are local UI prototypes until their backend commands are available.
  */
 export function OpportunitiesGrid({ rows, isLoading, refreshing, page, hasNext, loadedCount, onPageChange, returnTo }: OpportunitiesGridProps) {
   const { t } = useTranslation('opportunities')
   const navigate = useNavigate()
   const rowSelection = useCreateAtom<RowSelectionState>({})
-  const columns = useMemo(() => createOpportunityColumns(t, returnTo), [t, returnTo])
+  const [localEdits, setLocalEdits] = useState<Partial<Record<number, Partial<OpportunityRow>>>>({})
+  const visibleRows = useMemo(() => rows.map((row) => ({ ...row, ...localEdits[row.id] })), [rows, localEdits])
+  const applyLocalEdit = useCallback((id: number, changes: Partial<OpportunityRow>) => setLocalEdits((current) => ({ ...current, [id]: { ...current[id], ...changes } })), [])
+  const columns = useMemo(() => createOpportunityColumns(t, returnTo, applyLocalEdit), [t, returnTo, applyLocalEdit])
 
   const table = useTable(
     {
       features: opportunityFeatures,
-      data: rows as OpportunityRow[],
+      data: visibleRows as OpportunityRow[],
       columns,
       getRowId: getOpportunityRowId,
       atoms: { rowSelection },

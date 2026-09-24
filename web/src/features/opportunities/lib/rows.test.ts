@@ -12,6 +12,10 @@ const row = (overrides: Partial<OpportunityRow> = {}): OpportunityRow => ({
   amount: 100,
   currency: 'EUR',
   expiryDate: '2026-08-15T12:00:00Z',
+  createdAt: null,
+  updatedAt: null,
+  totalAmount: null,
+  needs: [],
   ...overrides,
 })
 

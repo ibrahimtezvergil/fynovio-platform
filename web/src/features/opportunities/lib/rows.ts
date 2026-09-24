@@ -15,6 +15,10 @@ export interface OpportunityRow {
   amount: number | null
   currency: string | null
   expiryDate: string | null
+  createdAt: string | null
+  updatedAt: string | null
+  totalAmount: number | null
+  needs: string[]
 }
 
 export function toRows(
@@ -26,13 +30,17 @@ export function toRows(
     id: item.id,
     partyId: item.partyId ?? null,
     party: item.partyId == null ? null : (partyNames?.get(item.partyId) ?? null),
-    owner: item.assignedPrincipalSubject ?? null,
+    owner: item.assignedPrincipalDisplayName ?? null,
     status: item.status,
     stageId: item.pipelineStageId ?? null,
     stage: item.pipelineDefinitionVersionId == null || item.pipelineStageId == null ? null : (stageName(item.pipelineDefinitionVersionId, item.pipelineStageId) ?? null),
     amount: item.estimatedAmount ?? null,
     currency: item.currency ?? null,
     expiryDate: item.expiryDate ?? null,
+    createdAt: item.createdAt ?? null,
+    updatedAt: item.updatedAt ?? null,
+    totalAmount: item.totalAmount ?? null,
+    needs: item.needs ?? [],
   }))
 }
 

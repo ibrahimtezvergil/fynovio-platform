@@ -9,6 +9,7 @@ import { SelectAllHeaderCheckbox, SelectRowCheckbox, type DataTableColumnMeta } 
 import { paths } from '@/routes/paths'
 import { formatDate, formatMoney } from '../lib/format'
 import type { OpportunityRow } from '../lib/rows'
+import { OpportunityRowActions } from './OpportunityRowActions'
 import { OpportunityStatusBadge } from './OpportunityStatusBadge'
 
 /**
@@ -24,7 +25,7 @@ export const opportunityFeatures = tableFeatures({
 const helper = createColumnHelper<typeof opportunityFeatures, OpportunityRow>()
 
 /** `t` comes in as an argument (this is a factory, not a component) so the caller's `useMemo` rebuilds the columns when the language changes. */
-export function createOpportunityColumns(t: TFunction<'opportunities'>, returnTo: string) {
+export function createOpportunityColumns(t: TFunction<'opportunities'>, returnTo: string, onLocalEdit: (id: number, changes: Partial<OpportunityRow>) => void) {
   return helper.columns([
     helper.display({
       id: 'select',
@@ -42,6 +43,8 @@ export function createOpportunityColumns(t: TFunction<'opportunities'>, returnTo
         </Link>
       ),
     }),
+    helper.accessor('createdAt', { header: t('list.columns.created'), meta: { label: t('list.columns.created') }, cell: (info) => formatDate(info.getValue()) ?? '-' }),
+    helper.accessor('updatedAt', { header: t('list.columns.updated'), meta: { label: t('list.columns.updated') }, cell: (info) => formatDate(info.getValue()) ?? '-' }),
     helper.accessor((row) => row.party ?? '', {
       id: 'party',
       header: t('list.columns.party'),
@@ -52,8 +55,9 @@ export function createOpportunityColumns(t: TFunction<'opportunities'>, returnTo
       id: 'owner',
       header: t('list.columns.owner'),
       meta: { label: t('list.columns.owner'), cellClassName: 'max-w-[200px]' },
-      cell: (info) => (info.getValue() ? <code className="text-[12px]">{info.getValue()}</code> : '—'),
+      cell: (info) => info.getValue() || '-',
     }),
+    helper.accessor((row) => row.needs.join(', '), { id: 'needs', header: t('list.columns.needs'), meta: { label: t('list.columns.needs') }, cell: (info) => info.getValue() || '-' }),
     helper.accessor('status', {
       header: t('list.columns.status'),
       meta: { label: t('list.columns.status'), align: 'right' },
@@ -71,10 +75,19 @@ export function createOpportunityColumns(t: TFunction<'opportunities'>, returnTo
       meta: { label: t('list.columns.amount'), align: 'right', cellClassName: 'text-foreground font-[550]' },
       cell: (info) => formatMoney(info.row.original.amount, info.row.original.currency) ?? '—',
     }),
+    helper.accessor((row) => row.totalAmount, { id: 'totalAmount', header: t('list.columns.totalAmount'), meta: { label: t('list.columns.totalAmount'), align: 'right' }, cell: (info) => formatMoney(info.getValue(), info.row.original.currency) ?? '-' }),
+    helper.display({ id: 'serviceDuration', header: t('list.columns.serviceDuration'), meta: { label: t('list.columns.serviceDuration') }, cell: () => '-' }),
+    helper.display({ id: 'interactionDuration', header: t('list.columns.interactionDuration'), meta: { label: t('list.columns.interactionDuration') }, cell: () => '-' }),
     helper.accessor('expiryDate', {
       header: t('list.columns.expiry'),
       meta: { label: t('list.columns.expiry'), align: 'right', cellClassName: 'font-[450]' },
       cell: (info) => formatDate(info.getValue()) ?? '—',
+    }),
+    helper.display({
+      id: 'rowActions',
+      header: t('list.columns.actions'),
+      meta: { label: t('list.columns.actions'), align: 'right' },
+      cell: ({ row }) => <OpportunityRowActions row={row.original} onEdit={(changes) => onLocalEdit(row.original.id, changes)} />,
     }),
   ])
 }
