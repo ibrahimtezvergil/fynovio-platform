@@ -21,6 +21,7 @@ interface OpportunitiesBoardProps {
   /** Rows the server returned for this page, before the client-side filters. */
   loadedCount: number
   onPageChange: (page: number) => void
+  returnTo: string
 }
 
 interface Column {
@@ -41,7 +42,7 @@ function toColumns(rows: readonly OpportunityRow[]): Column[] {
 }
 
 /** The board is another projection of the same filtered page the grid shows — same rows, same paging. */
-export function OpportunitiesBoard({ rows, refreshing, page, hasNext, loadedCount, onPageChange }: OpportunitiesBoardProps) {
+export function OpportunitiesBoard({ rows, refreshing, page, hasNext, loadedCount, onPageChange, returnTo }: OpportunitiesBoardProps) {
   const { t } = useTranslation('opportunities')
   const columns = useMemo(() => toColumns(rows), [rows])
 
@@ -65,7 +66,7 @@ export function OpportunitiesBoard({ rows, refreshing, page, hasNext, loadedCoun
                 {column.rows.map((row) => (
                   <Link
                     key={row.id}
-                    to={paths.crmOpportunity(row.id)}
+                    to={paths.crmOpportunity(row.id, returnTo)}
                     data-testid="opportunity-card"
                     className="flex flex-col gap-1 rounded-md border border-[var(--nx-hairline)] bg-[var(--nx-fill)] p-3 transition-colors hover:bg-[var(--nx-fill-hover)]"
                   >

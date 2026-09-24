@@ -26,6 +26,7 @@ export const PICKER_PAGE_SIZE = 20
 
 export interface OpportunityListFilter {
   status?: OpportunityStatus
+  archivedOnly?: boolean
   /** Zero-based page. */
   page: number
 }
@@ -79,6 +80,7 @@ export function useOpportunityList(filter: OpportunityListFilter) {
         status: filter.status,
         skip: filter.page * PAGE_SIZE,
         take: PAGE_SIZE + 1,
+        archivedOnly: filter.archivedOnly ?? false,
       })
       return { items: rows.slice(0, PAGE_SIZE), hasNext: rows.length > PAGE_SIZE }
     },
@@ -294,6 +296,13 @@ export const useLoseOpportunity = () =>
     url: endpoints.opportunities.lose(id),
     body: { expectedVersion, lostReason },
   }))
+
+export const useSetOpportunityArchive = (archive: boolean) =>
+  useOpportunityCommand<CommandBase & { confirmOpenOpportunity?: boolean; stageId?: number }>(archive ? 'archive' : 'restore',
+    ({ id, expectedVersion, confirmOpenOpportunity, stageId }) => ({
+      url: archive ? endpoints.opportunities.archive(id) : endpoints.opportunities.restore(id),
+      body: archive ? { expectedVersion, confirmOpenOpportunity: confirmOpenOpportunity ?? false } : { expectedVersion, stageId },
+    }))
 
 export const useAddLine = () =>
   useOpportunityCommand<CommandBase & { productId: number; quantity: number; unitPrice: number; isOptional: boolean; sortOrder: number }>(

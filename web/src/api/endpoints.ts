@@ -26,6 +26,8 @@ export const endpoints = {
     win: (id: number) => `/opportunities/${id}/win`,
     lose: (id: number) => `/opportunities/${id}/lose`,
     reassign: (id: number) => `/opportunities/${id}/reassign`,
+    archive: (id: number) => `/opportunities/${id}/archive`,
+    restore: (id: number) => `/opportunities/${id}/restore`,
     assignablePrincipals: (id: number) => `/opportunities/${id}/assignable-principals`,
   },
   references: {
@@ -33,6 +35,16 @@ export const endpoints = {
   },
   pipelines: {
     stages: (versionId: number) => `/pipelines/${versionId}/stages`,
+  },
+  crmSettings: {
+    root: '/crm/settings',
+    pipelines: '/crm/settings/pipelines',
+    pipelineDrafts: '/crm/settings/pipelines/drafts',
+    pipelineLifecycle: (id: number) => `/crm/settings/pipelines/${id}/lifecycle`,
+    pipelineValidate: (id: number, versionId: number) => `/crm/settings/pipelines/${id}/versions/${versionId}/validate`,
+    pipelinePublish: (id: number, versionId: number) => `/crm/settings/pipelines/${id}/versions/${versionId}/publish`,
+    catalog: (kind: string) => `/crm/settings/catalog/${kind}`,
+    catalogItem: (kind: string, id: number) => `/crm/settings/catalog/${kind}/${id}`,
   },
   deals: {
     list: '/deals',

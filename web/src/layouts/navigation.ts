@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next'
 import { calendarNav } from '@/features/calendar/nav'
+import { crmSettingsNav } from '@/features/crm-settings/nav'
 import { dashboardNav } from '@/features/dashboard/nav'
 import { demoBadgesNav } from '@/features/demo-badges/nav'
 import { demoChartsNav } from '@/features/demo-charts/nav'
@@ -21,7 +22,7 @@ import type { NavigationSurface, NavContribution, NavGroupId, NavScope } from '@
 import { isNavParent, type NavGroup, type NavItem, type NavLeaf, type NavLink } from '@/types'
 
 const navContributions: NavContribution[] = [
-  homeNav, dashboardNav, opportunitiesNav, calendarNav, ...placeholderNav, settingsNav, membersNav, demoTablesNav,
+  homeNav, dashboardNav, opportunitiesNav, crmSettingsNav, calendarNav, ...placeholderNav, settingsNav, membersNav, demoTablesNav,
   demoChartsNav, demoFiltersNav, demoFormsNav, demoOverlaysNav, demoNotificationsNav, demoStatesNav,
   demoDrawersNav, demoBadgesNav, demoKanbanNav, demoTimelineNav,
 ]

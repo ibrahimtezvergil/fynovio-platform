@@ -44,11 +44,19 @@ describe('form schemas', () => {
     expect(create.parse({ partyId: '1001', currency: ' try ', estimatedAmount: '250.5' })).toEqual({ partyId: 1001, currency: 'TRY', estimatedAmount: 250.5 })
   })
 
+  it('accepts Turkish decimal and thousands separators, while keeping blank distinct from zero', () => {
+    expect(create.parse({ partyId: '1001', currency: 'TRY', estimatedAmount: '1250,50' }).estimatedAmount).toBe(1250.5)
+    expect(create.parse({ partyId: '1001', currency: 'TRY', estimatedAmount: '1.250,50' }).estimatedAmount).toBe(1250.5)
+    expect(create.parse({ partyId: '1001', currency: 'TRY', estimatedAmount: '0' }).estimatedAmount).toBe(0)
+    expect(create.safeParse({ partyId: '1001', currency: 'TRY', estimatedAmount: '' }).success).toBe(false)
+  })
+
   it.each([
     [{ partyId: '', currency: 'TRY', estimatedAmount: '1' }, 'partyId'],
     [{ partyId: '0', currency: 'TRY', estimatedAmount: '1' }, 'partyId'],
     [{ partyId: '1.5', currency: 'TRY', estimatedAmount: '1' }, 'partyId'],
     [{ partyId: '1', currency: 'TR', estimatedAmount: '1' }, 'currency'],
+    [{ partyId: '1', currency: 'GBP', estimatedAmount: '1' }, 'currency'],
     [{ partyId: '1', currency: 'TRY', estimatedAmount: '-1' }, 'estimatedAmount'],
     [{ partyId: '1', currency: 'TRY', estimatedAmount: '1.234' }, 'estimatedAmount'],
     [{ partyId: '1', currency: 'TRY', estimatedAmount: 'abc' }, 'estimatedAmount'],

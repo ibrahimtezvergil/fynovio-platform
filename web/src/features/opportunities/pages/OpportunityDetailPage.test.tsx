@@ -29,6 +29,9 @@ const render = () =>
   )
 
 const dialog = () => screen.findByRole('dialog')
+const openMoreActions = async () => {
+  fireEvent.click(await screen.findByRole('button', { name: t('detail.moreActions') }))
+}
 
 describe('detail — actions come from the backend projection, not from the lifecycle', () => {
   it('a Draft with every action false offers nothing (status alone never shows a button)', async () => {
@@ -44,8 +47,21 @@ describe('detail — actions come from the backend projection, not from the life
     render()
 
     expect(await screen.findByRole('button', { name: t('win.action') })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: t('lose.action') })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: t('detail.moreActions') })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: t('open.action') })).not.toBeInTheDocument()
+  })
+
+  it('guides a draft without a required line to add one, and warns before opening closes line entry', async () => {
+    mockDetailApi(12, recordRequests(), {
+      detail: () => HttpResponse.json(wireOpportunity({ status: 0, pipelineStageId: null, pipelineDefinitionVersionId: null, lines: [] })),
+      actions: () => HttpResponse.json({ ...noActions, canOpen: true }),
+    })
+    render()
+
+    expect(await screen.findByRole('button', { name: t('lines.add.firstAction') })).toBeInTheDocument()
+    expect(screen.getByText(t('lines.requiredNotice.description'))).toBeInTheDocument()
+    fireEvent.click(await screen.findByRole('button', { name: t('open.action') }))
+    expect(await screen.findByText(t('open.missingLine.description'))).toBeInTheDocument()
   })
 
   it('fails closed when the projection cannot be loaded: no control, an explicit notice', async () => {
@@ -69,7 +85,7 @@ describe('detail — actions come from the backend projection, not from the life
     mockDetailApi(12, recordRequests())
     render()
 
-    await screen.findByText(t('detail.title', { id: 12 }))
+    await screen.findByRole('heading', { name: /Fırsat #12/ })
     expect(screen.queryByRole('button', { name: t('summary.reassign') })).not.toBeInTheDocument()
     expect(screen.queryByRole('textbox', { name: /principal|subject|owner|sahip/i })).not.toBeInTheDocument()
   })
@@ -90,7 +106,7 @@ describe('detail — actions come from the backend projection, not from the life
     mockDetailApi(12, recordRequests(), { detail: () => HttpResponse.json({ id: 12, status: 1, rowVersion: 5, lines: [] }) })
     render()
 
-    await screen.findByText(t('detail.title', { id: 12 }))
+    await screen.findByRole('heading', { name: /Fırsat #12/ })
     expect(screen.queryByTestId('summary-estimated')).not.toBeInTheDocument()
     expect(screen.queryByTestId('summary-party')).not.toBeInTheDocument()
     expect(screen.queryByTestId('summary-owner')).not.toBeInTheDocument()
@@ -127,7 +143,7 @@ describe('detail — pipeline stage', () => {
   it('explains that the entry stage arrives on Open when the Draft has none, without inventing a stage', async () => {
     mockDetailApi(12, recordRequests(), { detail: () => HttpResponse.json(wireOpportunity({ status: 0, pipelineStageId: null, pipelineDefinitionVersionId: null })) })
     render()
-    expect(await screen.findByText(t('pipeline.assignedOnOpen'))).toBeInTheDocument()
+    expect(await screen.findByText(t('pipeline.draftNextStep'))).toBeInTheDocument()
   })
 
   it('moves the stage with the version the user saw and a fresh idempotency key, then shows the refetched state', async () => {
@@ -197,7 +213,8 @@ describe('detail — commands: concurrency and idempotency', () => {
     )
     render()
 
-    fireEvent.click(await screen.findByRole('button', { name: t('lose.action') }))
+    await openMoreActions()
+    fireEvent.click(await screen.findByRole('menuitem', { name: t('lose.action') }))
     const modal = await dialog()
     fireEvent.change(within(modal).getByLabelText(t('lose.reason.label')), { target: { value: 'Budget cut' } })
     fireEvent.click(within(modal).getByRole('button', { name: t('lose.submit') }))
@@ -227,7 +244,8 @@ describe('detail — commands: concurrency and idempotency', () => {
     )
     render()
 
-    fireEvent.click(await screen.findByRole('button', { name: t('lose.action') }))
+    await openMoreActions()
+    fireEvent.click(await screen.findByRole('menuitem', { name: t('lose.action') }))
     const modal = await dialog()
     fireEvent.change(within(modal).getByLabelText(t('lose.reason.label')), { target: { value: 'Went elsewhere' } })
     fireEvent.click(within(modal).getByRole('button', { name: t('lose.submit') }))
@@ -268,7 +286,8 @@ describe('detail — commands: concurrency and idempotency', () => {
     mockDetailApi(12, recorder, winnable)
     render()
 
-    fireEvent.click(await screen.findByRole('button', { name: t('lose.action') }))
+    await openMoreActions()
+    fireEvent.click(await screen.findByRole('menuitem', { name: t('lose.action') }))
     fireEvent.click(within(await dialog()).getByRole('button', { name: t('lose.submit') }))
 
     expect(await screen.findByText(t('reason.required'))).toBeInTheDocument()
@@ -358,7 +377,7 @@ describe('detail — read failures are states of the page, never a crash', () =>
     expect(await screen.findByText(t('state.error.title'))).toBeInTheDocument()
     fail = false
     fireEvent.click(screen.getByRole('button', { name: t('state.error.retry') }))
-    expect(await screen.findByText(t('detail.title', { id: 12 }))).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Fırsat #12/ })).toBeInTheDocument()
   })
 
   it('a malformed id is treated like a record that does not exist, and never reaches the API', async () => {

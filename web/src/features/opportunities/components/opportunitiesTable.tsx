@@ -1,11 +1,6 @@
 import {
   createColumnHelper,
-  createSortedRowModel,
   rowSelectionFeature,
-  rowSortingFeature,
-  sortFn_alphanumeric,
-  sortFn_datetime,
-  sortFn_text,
   tableFeatures,
 } from '@tanstack/react-table'
 import type { TFunction } from 'i18next'
@@ -17,20 +12,11 @@ import type { OpportunityRow } from '../lib/rows'
 import { OpportunityStatusBadge } from './OpportunityStatusBadge'
 
 /**
- * Selection + sorting over the loaded page. Paging and the status filter are the server's (`useOpportunityList`),
- * so there is no pagination feature here; sorting reorders the rows already on screen. Module scope, so the table
- * never sees a new feature set.
+ * Selection over the loaded page. Sorting is intentionally unavailable until the list API can sort the full result
+ * set; allowing it here would make a page-local reorder look like a complete-list order.
  */
 export const opportunityFeatures = tableFeatures({
   rowSelectionFeature,
-
-  rowSortingFeature,
-  sortedRowModel: createSortedRowModel(),
-  sortFns: {
-    alphanumeric: sortFn_alphanumeric,
-    text: sortFn_text,
-    datetime: sortFn_datetime,
-  },
 
   columnMeta: {} as DataTableColumnMeta,
 })
@@ -38,7 +24,7 @@ export const opportunityFeatures = tableFeatures({
 const helper = createColumnHelper<typeof opportunityFeatures, OpportunityRow>()
 
 /** `t` comes in as an argument (this is a factory, not a component) so the caller's `useMemo` rebuilds the columns when the language changes. */
-export function createOpportunityColumns(t: TFunction<'opportunities'>) {
+export function createOpportunityColumns(t: TFunction<'opportunities'>, returnTo: string) {
   return helper.columns([
     helper.display({
       id: 'select',
@@ -49,10 +35,9 @@ export function createOpportunityColumns(t: TFunction<'opportunities'>) {
     }),
     helper.accessor('id', {
       header: t('list.columns.id'),
-      sortFn: 'alphanumeric',
       meta: { label: t('list.columns.id') },
       cell: (info) => (
-        <Link to={paths.crmOpportunity(info.getValue())} className="text-primary font-[590] tabular-nums hover:underline">
+        <Link to={paths.crmOpportunity(info.getValue(), returnTo)} className="text-primary font-[590] tabular-nums hover:underline">
           #{info.getValue()}
         </Link>
       ),
@@ -60,40 +45,34 @@ export function createOpportunityColumns(t: TFunction<'opportunities'>) {
     helper.accessor((row) => row.party ?? '', {
       id: 'party',
       header: t('list.columns.party'),
-      sortFn: 'text',
       meta: { label: t('list.columns.party'), cellClassName: 'text-foreground font-[550] tracking-[-0.012em]' },
       cell: (info) => info.getValue() || (info.row.original.partyId == null ? '—' : t('list.partyId', { id: info.row.original.partyId })),
     }),
     helper.accessor((row) => row.owner ?? '', {
       id: 'owner',
       header: t('list.columns.owner'),
-      sortFn: 'text',
       meta: { label: t('list.columns.owner'), cellClassName: 'max-w-[200px]' },
       cell: (info) => (info.getValue() ? <code className="text-[12px]">{info.getValue()}</code> : '—'),
     }),
     helper.accessor('status', {
       header: t('list.columns.status'),
-      enableSorting: false,
       meta: { label: t('list.columns.status'), align: 'right' },
       cell: (info) => <OpportunityStatusBadge status={info.getValue()} size="sm" />,
     }),
     helper.accessor((row) => row.stage ?? '', {
       id: 'stage',
       header: t('list.columns.stage'),
-      sortFn: 'text',
       meta: { label: t('list.columns.stage') },
       cell: (info) => info.getValue() || (info.row.original.stageId == null ? '—' : t('list.stageId', { id: info.row.original.stageId })),
     }),
     helper.accessor((row) => row.amount ?? 0, {
       id: 'amount',
       header: t('list.columns.amount'),
-      sortFn: 'alphanumeric',
       meta: { label: t('list.columns.amount'), align: 'right', cellClassName: 'text-foreground font-[550]' },
       cell: (info) => formatMoney(info.row.original.amount, info.row.original.currency) ?? '—',
     }),
     helper.accessor('expiryDate', {
       header: t('list.columns.expiry'),
-      sortFn: 'datetime',
       meta: { label: t('list.columns.expiry'), align: 'right', cellClassName: 'font-[450]' },
       cell: (info) => formatDate(info.getValue()) ?? '—',
     }),

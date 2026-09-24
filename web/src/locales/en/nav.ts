@@ -8,6 +8,7 @@ export default {
   items: {
     dashboard: 'Dashboard',
     opportunities: 'Opportunities',
+    crmSettings: 'CRM settings',
     crmDashboard: 'Dashboard',
     calendar: 'Calendar',
     reports: 'Reports',

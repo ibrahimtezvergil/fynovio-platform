@@ -49,18 +49,18 @@ export function PipelineCard({ opportunity, actions, onReload }: PipelineCardPro
   const currentStageId = opportunity.pipelineStageId
   let body: React.ReactNode
   if (opportunity.pipelineDefinitionVersionId == null || currentStageId == null) {
-    body = <p className="text-muted-foreground text-[13px]">{opportunity.status === 'Draft' ? t('pipeline.assignedOnOpen') : t('pipeline.none')}</p>
+    body = <p className="text-muted-foreground text-[13px]">{opportunity.status === 'Draft' ? t('pipeline.draftNextStep') : t('pipeline.none')}</p>
   } else {
     body = (
       <>
-        <p className="text-[13px]">
+        <div className="text-[13px]">
           <span className="text-muted-foreground">{t('pipeline.current')}: </span>
           {stages.isLoading ? (
             <Skeleton aria-label={t('pipeline.loadingStage')} className="inline-block h-4 w-28 align-middle" />
           ) : (
             <strong data-testid="current-stage">{stageLabel(currentStageId)}</strong>
           )}
-        </p>
+        </div>
         {actions?.canChangeStage ? (
           targets.length > 0 ? (
             <form onSubmit={submit} className="flex flex-wrap items-end gap-2">
@@ -95,8 +95,8 @@ export function PipelineCard({ opportunity, actions, onReload }: PipelineCardPro
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('pipeline.title')}</CardTitle>
-        <CardDescription>{t('pipeline.description')}</CardDescription>
+        <CardTitle>{opportunity.status === 'Draft' ? t('pipeline.nextStepTitle') : t('pipeline.title')}</CardTitle>
+        {opportunity.status !== 'Draft' && <CardDescription>{t('pipeline.description')}</CardDescription>}
       </CardHeader>
       <CardContent className="grid gap-3">{body}</CardContent>
     </Card>

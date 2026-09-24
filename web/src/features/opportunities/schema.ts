@@ -40,6 +40,8 @@ export const opportunitySchema = z.object({
   openedDate: z.string().nullish(),
   wonDate: z.string().nullish(),
   lostDate: z.string().nullish(),
+  isArchived: z.boolean().optional(),
+  archivedAt: z.string().nullish(),
   /** The concurrency token. Kept for mutation requests; never rendered. */
   rowVersion: z.number(),
   lines: z.array(opportunityLineSchema).default([]),
@@ -58,6 +60,9 @@ export const opportunitySummarySchema = z.object({
   /** With `pipelineStageId` this names the stage: stage ids are only meaningful inside their pipeline version. */
   pipelineDefinitionVersionId: z.number().nullish(),
   expiryDate: z.string().nullish(),
+  isArchived: z.boolean().optional(),
+  archivedAt: z.string().nullish(),
+  rowVersion: z.number().optional(),
 })
 export type OpportunitySummary = z.infer<typeof opportunitySummarySchema>
 
@@ -69,6 +74,8 @@ export const availableActionsSchema = z.object({
   canWin: z.boolean(),
   canLose: z.boolean(),
   canReassign: z.boolean(),
+  canArchive: z.boolean().optional(),
+  canRestore: z.boolean().optional(),
 })
 export type AvailableActions = z.infer<typeof availableActionsSchema>
 
@@ -78,6 +85,7 @@ export const pipelineStageSchema = z.object({
   sortOrder: z.number(),
   isActive: z.boolean(),
   isEntry: z.boolean(),
+  isArchived: z.boolean().default(false),
 })
 export type PipelineStage = z.infer<typeof pipelineStageSchema>
 
@@ -105,17 +113,37 @@ export const commandResultSchema = z.object({ opportunityId: z.number(), replaye
 
 // ---- form input schemas (immediate UX only; the backend stays authoritative) ----
 
-const CURRENCY = /^[A-Z]{3}$/
 const hasAtMostTwoDecimals = (value: number) => Math.abs(Math.round(value * 100) - value * 100) < 1e-6
+
+/**
+ * Money fields accept the two decimal forms Turkish keyboards commonly produce: `1250,50` and `1.250,50`.
+ * A bare dot remains accepted for pasted/API-style values; mixed thousands/decimal conventions are rejected
+ * instead of silently changing the amount.
+ */
+export function parseLocalizedAmount(value: unknown): unknown {
+  if (typeof value !== 'string') return value
+  const input = value.trim()
+  if (input === '') return Number.NaN
+
+  if (input.includes(',')) {
+    if (!/^-?(?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d+)?$/.test(input)) return Number.NaN
+    return Number(input.replaceAll('.', '').replace(',', '.'))
+  }
+
+  return /^-?\d+(?:\.\d+)?$/.test(input) ? Number(input) : Number.NaN
+}
+
+const localizedMoney = (invalid: string, decimals: string) =>
+  z.preprocess(
+    parseLocalizedAmount,
+    z.number({ error: invalid }).min(0, invalid).refine(hasAtMostTwoDecimals, decimals),
+  )
 
 export function createOpportunityFormSchema(t: TFunction<'opportunities'>) {
   return z.object({
     partyId: z.coerce.number({ error: t('form.partyId.invalid') }).int(t('form.partyId.invalid')).min(1, t('form.partyId.invalid')),
-    currency: z.string().trim().toUpperCase().regex(CURRENCY, t('form.currency.invalid')),
-    estimatedAmount: z.coerce
-      .number({ error: t('form.estimatedAmount.invalid') })
-      .min(0, t('form.estimatedAmount.invalid'))
-      .refine(hasAtMostTwoDecimals, t('form.estimatedAmount.decimals')),
+    currency: z.string().trim().toUpperCase().pipe(z.enum(['TRY', 'USD', 'EUR'], { error: t('form.currency.invalid') })),
+    estimatedAmount: localizedMoney(t('form.estimatedAmount.invalid'), t('form.estimatedAmount.decimals')),
   })
 }
 export type CreateOpportunityValues = z.infer<ReturnType<typeof createOpportunityFormSchema>>
@@ -125,10 +153,7 @@ export function addLineFormSchema(t: TFunction<'opportunities'>) {
   return z.object({
     productId: z.coerce.number({ error: t('lines.add.productId.invalid') }).int(t('lines.add.productId.invalid')).min(1, t('lines.add.productId.invalid')),
     quantity: z.coerce.number({ error: t('lines.add.quantity.invalid') }).int(t('lines.add.quantity.invalid')).min(1, t('lines.add.quantity.invalid')),
-    unitPrice: z.coerce
-      .number({ error: t('lines.add.unitPrice.invalid') })
-      .min(0, t('lines.add.unitPrice.invalid'))
-      .refine(hasAtMostTwoDecimals, t('lines.add.unitPrice.decimals')),
+    unitPrice: localizedMoney(t('lines.add.unitPrice.invalid'), t('lines.add.unitPrice.decimals')),
     isOptional: z.boolean(),
   })
 }

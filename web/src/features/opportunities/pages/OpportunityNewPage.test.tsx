@@ -17,6 +17,12 @@ beforeEach(() => {
   resetSession()
   useSessionStore.getState().applyAuthResult(authenticated())
   mockParties()
+  server.use(http.get(url(endpoints.crmSettings.root), () => HttpResponse.json({
+    defaultPipelineDefinitionId: null, opportunityCreationMode: 'Form', defaultOpportunityTypeId: null,
+    requireLostReason: false, requireWonLine: true, defaultAssignmentMode: 'Manual', assignmentPolicy: 'AnyAssignablePrincipal',
+    defaultPrincipal: null, defaultTeamId: null, defaultTerritoryId: null, rowVersion: 0,
+    pipelines: [], opportunityTypes: [], lostReasons: [], customerNeeds: [],
+  })))
 })
 
 const partyLabel = () => t('form.partyId.label')
@@ -34,6 +40,32 @@ const render = () =>
   )
 
 describe('opportunity create — validation', () => {
+  it('follows the tenant-configured wizard flow without changing the create command contract', async () => {
+    const recorder = recordRequests()
+    server.use(
+      http.get(url(endpoints.crmSettings.root), () => HttpResponse.json({
+        defaultPipelineDefinitionId: null, opportunityCreationMode: 'Wizard', defaultOpportunityTypeId: null,
+        requireLostReason: false, requireWonLine: true, defaultAssignmentMode: 'Manual', assignmentPolicy: 'AnyAssignablePrincipal',
+        defaultPrincipal: null, defaultTeamId: null, defaultTerritoryId: null, rowVersion: 0,
+        pipelines: [], opportunityTypes: [], lostReasons: [], customerNeeds: [],
+      })),
+      http.post(url(endpoints.opportunities.create), async ({ request }) => {
+        await recorder.record(request)
+        return HttpResponse.json({ opportunityId: 77, replayed: false })
+      }),
+    )
+    render()
+    await chooseParty()
+    fireEvent.click(await screen.findByRole('button', { name: t('form.next') }))
+    await screen.findByRole('combobox', { name: t('form.currency.label') })
+    expect(screen.queryByRole('combobox', { name: partyLabel() })).not.toBeInTheDocument()
+    fireEvent.change(await screen.findByRole('combobox', { name: t('form.currency.label') }), { target: { value: 'EUR' } })
+    fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '125' } })
+    fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
+    await screen.findByTestId('detail-page')
+    expect(recorder.commands()[0].body).toEqual({ partyId: 1001, currency: 'EUR', estimatedAmount: 125 })
+  })
+
   it('shows field errors on empty submit', async () => {
     server.use(http.post(url(endpoints.opportunities.create), () => HttpResponse.json({ opportunityId: 1, replayed: false })))
     render()
@@ -62,16 +94,11 @@ describe('opportunity create — validation', () => {
     expect(recorder.commands()).toHaveLength(0)
   })
 
-  it('shows currency error for invalid code', async () => {
-    server.use(http.post(url(endpoints.opportunities.create), () => HttpResponse.json({ opportunityId: 1, replayed: false })))
+  it('offers only supported currency values', async () => {
     render()
-
-    await chooseParty()
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TR' } })
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100' } })
-    fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
-
-    expect(await screen.findByText(t('form.currency.invalid'))).toBeInTheDocument()
+    const currency = await screen.findByRole('combobox', { name: t('form.currency.label') })
+    expect(currency.querySelectorAll('option')).toHaveLength(3)
+    expect(currency).toHaveValue('TRY')
   })
 
   it('shows decimals error for amounts with 3+ decimals', async () => {
@@ -79,7 +106,7 @@ describe('opportunity create — validation', () => {
     render()
 
     await chooseParty()
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
+    fireEvent.change(screen.getByRole('combobox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100.123' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
 
@@ -92,18 +119,18 @@ describe('opportunity create — validation', () => {
 
     await chooseParty()
     const partyInput = screen.getByRole('combobox', { name: partyLabel() })
-    const currencyInput = screen.getByRole('textbox', { name: t('form.currency.label') })
+    const currencyInput = screen.getByRole('combobox', { name: t('form.currency.label') })
     const amountInput = screen.getByRole('textbox', { name: t('form.estimatedAmount.label') })
 
-    fireEvent.change(currencyInput, { target: { value: 'INVALID' } })
-    fireEvent.change(amountInput, { target: { value: '250.50' } })
+    fireEvent.change(currencyInput, { target: { value: 'EUR' } })
+    fireEvent.change(amountInput, { target: { value: '250.123' } })
 
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
-    await screen.findByText(t('form.currency.invalid'))
+    await screen.findByText(t('form.estimatedAmount.decimals'))
 
     expect(partyInput).toHaveValue('Acme Ltd')
-    expect(amountInput).toHaveValue('250.50')
-    expect(currencyInput).toHaveValue('INVALID')
+    expect(amountInput).toHaveValue('250.123')
+    expect(currencyInput).toHaveValue('EUR')
   })
 })
 
@@ -119,7 +146,7 @@ describe('opportunity create — success', () => {
     render()
 
     await chooseParty()
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'try' } })
+    fireEvent.change(screen.getByRole('combobox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '250.5' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
 
@@ -139,7 +166,7 @@ describe('opportunity create — success', () => {
     render()
 
     await chooseParty()
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'EUR' } })
+    fireEvent.change(screen.getByRole('combobox', { name: t('form.currency.label') }), { target: { value: 'EUR' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '500' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
 
@@ -152,7 +179,7 @@ describe('opportunity create — success', () => {
     render()
 
     await chooseParty()
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
+    fireEvent.change(screen.getByRole('combobox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '250' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
 
@@ -175,7 +202,7 @@ describe('opportunity create — concurrency', () => {
     render()
 
     await chooseParty()
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
+    fireEvent.change(screen.getByRole('combobox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100' } })
     const submitButton = screen.getByRole('button', { name: t('form.submit') })
     fireEvent.click(submitButton)
@@ -198,7 +225,7 @@ describe('opportunity create — failure and retry', () => {
     render()
 
     await chooseParty()
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
+    fireEvent.change(screen.getByRole('combobox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
 
@@ -221,7 +248,7 @@ describe('opportunity create — failure and retry', () => {
     render()
 
     await chooseParty()
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
+    fireEvent.change(screen.getByRole('combobox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
 
@@ -253,7 +280,7 @@ describe('opportunity create — failure and retry', () => {
     render()
 
     await chooseParty()
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
+    fireEvent.change(screen.getByRole('combobox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
 
@@ -276,7 +303,7 @@ describe('opportunity create — failure and retry', () => {
     render()
 
     await chooseParty()
-    fireEvent.change(screen.getByRole('textbox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
+    fireEvent.change(screen.getByRole('combobox', { name: t('form.currency.label') }), { target: { value: 'TRY' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '100' } })
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
 

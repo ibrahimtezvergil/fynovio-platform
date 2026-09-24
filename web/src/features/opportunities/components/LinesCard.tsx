@@ -1,7 +1,8 @@
-import { Plus } from 'lucide-react'
+import { CircleAlert, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatMoney } from '../lib/format'
 import { lineEditability } from '../lib/lineEditability'
@@ -15,6 +16,7 @@ import { AddLineDialog, CancelLineDialog } from './LineDialogs'
 export function LinesCard({ opportunity, onReload }: { opportunity: Opportunity; onReload: () => void }) {
   const { t } = useTranslation('opportunities')
   const { canOfferAdd, canOfferCancel } = lineEditability(opportunity)
+  const hasActiveRequiredLine = opportunity.lines.some((line) => !line.isCanceled && !line.isOptional)
   const [adding, setAdding] = useState(false)
   const [cancelling, setCancelling] = useState<OpportunityLine | null>(null)
 
@@ -66,11 +68,18 @@ export function LinesCard({ opportunity, onReload }: { opportunity: Opportunity;
             </table>
           </div>
         )}
+        {canOfferAdd && !hasActiveRequiredLine && (
+          <Alert variant="warning">
+            <CircleAlert aria-hidden />
+            <AlertTitle>{t('lines.requiredNotice.title')}</AlertTitle>
+            <AlertDescription>{t('lines.requiredNotice.description')}</AlertDescription>
+          </Alert>
+        )}
         {canOfferAdd && (
           <div>
-            <Button type="button" variant="outline" size="sm" onClick={() => setAdding(true)}>
+            <Button type="button" variant={hasActiveRequiredLine ? 'outline' : 'default'} size="sm" onClick={() => setAdding(true)}>
               <Plus aria-hidden />
-              {t('lines.add.action')}
+              {hasActiveRequiredLine ? t('lines.add.action') : t('lines.add.firstAction')}
             </Button>
           </div>
         )}

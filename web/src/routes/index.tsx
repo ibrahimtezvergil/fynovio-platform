@@ -17,6 +17,7 @@ import { demoTablesRoutes } from '@/features/demo-tables/routes'
 import { demoTimelineRoutes } from '@/features/demo-timeline/routes'
 import { homeRoutes } from '@/features/home/routes'
 import { opportunityRoutes } from '@/features/opportunities/routes'
+import { crmSettingsRoutes } from '@/features/crm-settings/routes'
 import { placeholderUtilityRoutes } from '@/features/placeholder/routes'
 import { settingsRoutes } from '@/features/settings/routes'
 import type { FeatureRoute } from '@/lib/routes/types'
@@ -84,7 +85,7 @@ const crmRoutes: RouteObject = {
   handle: { surface: 'application', navScope: 'crm' },
   children: [
     { index: true, element: <Navigate to={paths.crmDashboard} replace /> },
-    ...toRouteObjects([...opportunityRoutes, ...dashboardRoutes], true),
+    ...toRouteObjects([...opportunityRoutes, ...dashboardRoutes, ...crmSettingsRoutes], true),
   ],
 }
 

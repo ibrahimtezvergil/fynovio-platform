@@ -8,8 +8,10 @@ import { Field } from '@/components/common/Field'
 import type { SelectOption } from '@/components/common/inputs/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 import { paths } from '@/routes/paths'
 import { useCreateOpportunity } from '../api'
+import { useCrmSettings } from '@/features/crm-settings/api'
 import { useKeyedCommand } from '../lib/useKeyedCommand'
 import { createOpportunityFormSchema, type CreateOpportunityInput, type CreateOpportunityValues } from '../schema'
 import { PartyPicker } from './PartyPicker'
@@ -24,6 +26,9 @@ import { ProblemNotice } from './ProblemNotice'
 export function OpportunityForm() {
   const { t } = useTranslation('opportunities')
   const navigate = useNavigate()
+  const settings = useCrmSettings()
+  const [step, setStep] = useState(0)
+  const isWizard = settings.data?.opportunityCreationMode === 'Wizard'
   const schema = useMemo(() => createOpportunityFormSchema(t), [t])
   const command = useKeyedCommand(useCreateOpportunity())
   // The form stores the Party id; the picker needs the whole option (its label) to keep showing the chosen name.
@@ -32,6 +37,7 @@ export function OpportunityForm() {
     register,
     control,
     handleSubmit,
+    trigger,
     formState: { errors },
   } = useForm<CreateOpportunityInput, unknown, CreateOpportunityValues>({
     resolver: zodResolver(schema),
@@ -42,10 +48,13 @@ export function OpportunityForm() {
     const result = await command.run(values)
     if (result) navigate(paths.crmOpportunity(result.opportunityId), { replace: true })
   })
+  const continueWizard = async () => {
+    if (await trigger('partyId')) setStep(1)
+  }
 
   return (
     <form onSubmit={submit} noValidate className="grid max-w-xl gap-4">
-      <Field label={t('form.partyId.label')} hint={t('form.partyId.hint')} error={errors.partyId?.message}>
+      {(!isWizard || step === 0) && <Field label={t('form.partyId.label')} hint={t('form.partyId.hint')} error={errors.partyId?.message}>
         {(props) => (
           <Controller
             control={control}
@@ -62,21 +71,29 @@ export function OpportunityForm() {
             )}
           />
         )}
-      </Field>
-      <div className="grid grid-cols-[120px_1fr] gap-3">
+      </Field>}
+      {(!isWizard || step === 1) && <div className="grid grid-cols-[120px_1fr] gap-3">
         <Field label={t('form.currency.label')} error={errors.currency?.message}>
-          {(props) => <Input {...props} autoComplete="off" maxLength={3} className="uppercase" {...register('currency')} />}
+        {(props) => (
+          <Select {...props} {...register('currency')}>
+            <option value="TRY">{t('form.currency.options.TRY')}</option>
+            <option value="USD">{t('form.currency.options.USD')}</option>
+            <option value="EUR">{t('form.currency.options.EUR')}</option>
+          </Select>
+        )}
         </Field>
         <Field label={t('form.estimatedAmount.label')} hint={t('form.estimatedAmount.hint')} error={errors.estimatedAmount?.message}>
-          {(props) => <Input {...props} inputMode="decimal" autoComplete="off" {...register('estimatedAmount')} />}
+          {(props) => <Input {...props} inputMode="decimal" autoComplete="off" placeholder="0,00" {...register('estimatedAmount')} />}
         </Field>
-      </div>
+      </div>}
       {command.problem && <ProblemNotice problem={command.problem} />}
       <div className="flex items-center gap-2">
-        <Button type="submit" disabled={command.isPending}>
+        {isWizard && step === 0 && <Button type="button" onClick={() => void continueWizard()}>{t('form.next')}</Button>}
+        {isWizard && step === 1 && <Button type="button" variant="ghost" disabled={command.isPending} onClick={() => setStep(0)}>{t('form.previousStep')}</Button>}
+        {(!isWizard || step === 1) && <Button type="submit" disabled={command.isPending}>
           {command.isPending && <Loader2 aria-hidden className="animate-spin" />}
           {command.isPending ? t('form.submitting') : t('form.submit')}
-        </Button>
+        </Button>}
         <Button type="button" variant="ghost" disabled={command.isPending} onClick={() => navigate(paths.crmOpportunities)}>
           {t('common.cancel')}
         </Button>

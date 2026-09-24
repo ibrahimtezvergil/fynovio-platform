@@ -62,7 +62,7 @@ export function AddLineDialog({ opportunity, onClose, onReload }: LineDialogProp
           {(props) => <Input {...props} inputMode="numeric" autoComplete="off" {...register('quantity')} />}
         </Field>
         <Field label={t('lines.add.unitPrice.label')} error={errors.unitPrice?.message}>
-          {(props) => <Input {...props} inputMode="decimal" autoComplete="off" {...register('unitPrice')} />}
+          {(props) => <Input {...props} inputMode="decimal" autoComplete="off" placeholder="0,00" {...register('unitPrice')} />}
         </Field>
       </div>
       <Controller

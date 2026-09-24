@@ -9,6 +9,7 @@ export default {
     sectionContact: 'Contact and defaults',
     sectionMembers: 'Members',
     sectionRoles: 'Roles and permissions',
+    sectionCrm: 'CRM settings',
   },
   context: {
     unsavedTitle: 'You have unsaved changes',
@@ -37,6 +38,19 @@ export default {
     address: 'Address',
     timezone: 'Timezone',
     currency: 'Currency',
+  },
+  crm: {
+    title: 'CRM creation flow',
+    description: 'Choose the flow your team uses when creating a new opportunity.',
+    form: {
+      title: 'Quick form',
+      description: 'Shows all fields on one screen for fast data entry.',
+    },
+    wizard: {
+      title: 'Step-by-step wizard',
+      description: 'Splits fields into steps for a more guided experience.',
+    },
+    selectionHint: 'This preference will apply company-wide when the CRM settings API is available.',
   },
   members: {
     title: 'Members',

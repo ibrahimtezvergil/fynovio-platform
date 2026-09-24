@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { usePartyNames } from '../api'
 import { formatDate, formatMoney } from '../lib/format'
 import type { Opportunity } from '../schema'
@@ -20,7 +21,7 @@ function Row({ label, children, testId }: { label: string; children: React.React
  * Renders what the DTO carries and nothing else: a field the backend omitted is simply absent (never inferred
  * or reconstructed elsewhere), and the row version is deliberately not shown.
  */
-export function SummaryCard({ opportunity }: { opportunity: Opportunity }) {
+export function SummaryCard({ opportunity, canReassign = false, onReassign }: { opportunity: Opportunity; canReassign?: boolean; onReassign?: () => void }) {
   const { t } = useTranslation('opportunities')
   // Best effort: a caller without the party-search permission (or a failed lookup) just keeps seeing the id.
   const partyIds = opportunity.partyId != null ? [opportunity.partyId] : []
@@ -43,7 +44,12 @@ export function SummaryCard({ opportunity }: { opportunity: Opportunity }) {
             {formatMoney(opportunity.totalAmount, opportunity.currency)}
           </Row>
           <Row label={t('summary.owner')} testId="summary-owner">
-            {opportunity.assignedPrincipalSubject && <code className="text-[12px]">{opportunity.assignedPrincipalSubject}</code>}
+            {opportunity.assignedPrincipalSubject && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span>{opportunity.assignedPrincipalSubject}</span>
+                {canReassign && onReassign && <Button type="button" variant="ghost" size="sm" onClick={onReassign}>{t('summary.reassign')}</Button>}
+              </div>
+            )}
           </Row>
           <Row label={t('summary.expiryDate')}>{formatDate(opportunity.expiryDate)}</Row>
           <Row label={t('summary.openedDate')}>{formatDate(opportunity.openedDate)}</Row>

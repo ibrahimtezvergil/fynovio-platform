@@ -55,7 +55,7 @@ test.describe('CRM Opportunities workflow', () => {
 
     // Create opportunity: the customer is chosen from the server-side party search, EUR, 250
     await choosePartyByName(page, 'Acme', 'Acme Corporation')
-    await page.getByLabel(t.opportunities.form.currency.label).fill('EUR')
+    await page.getByLabel(t.opportunities.form.currency.label).selectOption('EUR')
     await page.getByLabel(t.opportunities.form.estimatedAmount.label).fill('250')
     await page.getByRole('button', { name: t.opportunities.form.submit, exact: true }).click()
 

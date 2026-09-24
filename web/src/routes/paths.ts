@@ -16,11 +16,15 @@ export const paths = {
   crmLegacyPipeline: '/crm/pipeline',
   crm: '/crm',
   crmDashboard: '/crm/dashboard',
+  crmSettings: '/crm/settings',
+  crmSettingsSection: (section: string) => `/crm/settings/${section}`,
   crmOpportunities: '/crm/opportunities',
   crmOpportunityNew: '/crm/opportunities/new',
   /** The react-router pattern; use `crmOpportunity(id)` to build a link. */
   crmOpportunityPattern: '/crm/opportunities/:id',
-  crmOpportunity: (id: number) => `/crm/opportunities/${id}`,
+  /** Carries the list URL as a return context without making the detail route depend on list page state. */
+  crmOpportunity: (id: number, returnTo?: string) =>
+    `/crm/opportunities/${id}${returnTo ? `?from=${encodeURIComponent(returnTo)}` : ''}`,
   calendar: '/calendar',
   /** Opens the calendar's create dialog with a record already linked (`crm/opportunity/17`). Only `CalendarPage` reads it. */
   calendarWithLink: (boundedContext: string, entityType: string, id: number) =>

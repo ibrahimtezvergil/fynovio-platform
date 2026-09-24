@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Field } from '@/components/common/Field'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useLoseOpportunity, useOpenOpportunity, useWinOpportunity } from '../api'
@@ -43,6 +44,7 @@ export function OpenDialog({ opportunity, onClose, onReload }: LifecycleDialogPr
     })
     if (result) onClose()
   })
+  const hasActiveRequiredLine = opportunity.lines.some((line) => !line.isCanceled && !line.isOptional)
 
   return (
     <CommandDialog
@@ -56,6 +58,12 @@ export function OpenDialog({ opportunity, onClose, onReload }: LifecycleDialogPr
       onReload={onReload}
       onSubmit={submit}
     >
+      {!hasActiveRequiredLine && (
+        <Alert>
+          <AlertTitle>{t('open.missingLine.title')}</AlertTitle>
+          <AlertDescription>{t('open.missingLine.description')}</AlertDescription>
+        </Alert>
+      )}
       <Field label={t('open.expiry.label')} hint={t('open.expiry.hint')} error={errors.expiryDate?.message}>
         {(props) => <Input {...props} type="date" min={toDateInput(new Date())} {...register('expiryDate')} />}
       </Field>

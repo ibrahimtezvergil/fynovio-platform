@@ -247,7 +247,7 @@ describe('opportunities list — rows and rendering', () => {
     render()
 
     const detailLink = await screen.findByRole('link', { name: /#42/ })
-    expect(detailLink).toHaveAttribute('href', '/crm/opportunities/42')
+    expect(detailLink).toHaveAttribute('href', '/crm/opportunities/42?from=%2Fcrm%2Fopportunities')
   })
 
   it('has no mutation controls on rows', async () => {
@@ -378,7 +378,7 @@ describe('opportunities list — table / board switcher', () => {
     expect(router.state.location.search).toBe('?view=board')
     const headings = screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)
     expect(headings).toEqual([t('list.board.noStage'), 'Qualification', 'Proposal'])
-    expect(screen.getByRole('link', { name: /#3/ })).toHaveAttribute('href', '/crm/opportunities/3')
+    expect(screen.getByRole('link', { name: /#3/ })).toHaveAttribute('href', '/crm/opportunities/3?from=%2Fcrm%2Fopportunities%3Fview%3Dboard')
   })
 
   it('opens straight on the board from the URL and returns to the table', async () => {

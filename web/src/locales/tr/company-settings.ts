@@ -9,6 +9,7 @@ export default {
     sectionContact: 'İletişim ve varsayılanlar',
     sectionMembers: 'Kullanıcılar',
     sectionRoles: 'Roller ve izinler',
+    sectionCrm: 'CRM ayarları',
   },
   context: {
     unsavedTitle: 'Kaydedilmemiş değişiklikler var',
@@ -37,6 +38,19 @@ export default {
     address: 'Adres',
     timezone: 'Zaman dilimi',
     currency: 'Para birimi',
+  },
+  crm: {
+    title: 'CRM oluşturma akışı',
+    description: 'Yeni fırsat oluştururken ekibinizin kullanacağı akışı seçin.',
+    form: {
+      title: 'Hızlı form',
+      description: 'Tüm alanları tek ekranda gösterir; hızlı veri girişi için uygundur.',
+    },
+    wizard: {
+      title: 'Adım adım sihirbaz',
+      description: 'Alanları adımlara böler; yönlendirmeli ve daha kontrollü giriş sağlar.',
+    },
+    selectionHint: 'Bu tercih CRM API ayarları hazır olduğunda şirket geneline uygulanacaktır.',
   },
   members: {
     title: 'Kullanıcılar',
