@@ -46,7 +46,7 @@ export function SummaryCard({ opportunity, canReassign = false, onReassign }: { 
           <Row label={t('summary.owner')} testId="summary-owner">
             {opportunity.assignedPrincipalSubject && (
               <div className="flex flex-wrap items-center gap-2">
-                <span>{opportunity.assignedPrincipalSubject}</span>
+                <span>{opportunity.assignedPrincipalDisplayName ?? '-'}</span>
                 {canReassign && onReassign && <Button type="button" variant="ghost" size="sm" onClick={onReassign}>{t('summary.reassign')}</Button>}
               </div>
             )}
