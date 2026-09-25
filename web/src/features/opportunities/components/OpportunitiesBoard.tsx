@@ -35,7 +35,7 @@ interface Column {
 
 /** Always shows the active default pipeline, including empty stages, then any historical stages in the loaded page. */
 function toColumns(rows: readonly OpportunityRow[], configuredStages: readonly PipelineStage[]): Column[] {
-  const byStage = new Map<number | null, Column>(configuredStages.filter((stage) => stage.isActive && !stage.isArchived)
+  const byStage = new Map<number | null, Column>(configuredStages.filter((stage) => !stage.isArchived)
     .map((stage) => [stage.id, { stageId: stage.id, label: stage.name, sortOrder: stage.sortOrder, rows: [] }]))
   for (const row of rows) {
     const column = byStage.get(row.stageId) ?? { stageId: row.stageId, label: row.stage, sortOrder: null, rows: [] }

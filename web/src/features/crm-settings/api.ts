@@ -35,7 +35,7 @@ export function usePublishPipelineVersion() {
   return useAppMutation({ name: 'crmSettings.pipelinePublish', mutationFn: async ({ pipelineId, versionId, expectedPipelineRowVersion, idempotencyKey }: { pipelineId: number; versionId: number; expectedPipelineRowVersion: number; idempotencyKey: string }) => {
     const { data } = await apiClient.post(endpoints.crmSettings.pipelinePublish(pipelineId, versionId), { expectedPipelineRowVersion }, { headers: { 'Idempotency-Key': idempotencyKey } })
     return data
-  }, invalidateKeys: () => [key(tenantId)] })
+  }, invalidateKeys: () => [key(tenantId), ['crm-pipeline-stages', tenantId, 'default']] })
 }
 export function useSetPipelineLifecycle() {
   const tenantId = useSessionStore((state) => state.activeTenantId)
