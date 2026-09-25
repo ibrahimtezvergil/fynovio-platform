@@ -43,6 +43,7 @@ export const opportunityKeys = {
   detail: (tenantId: number | null, id: number) => [...opportunityKeys.all(tenantId), 'detail', id] as const,
   actions: (tenantId: number | null, id: number) => [...opportunityKeys.all(tenantId), 'actions', id] as const,
   stages: (tenantId: number | null, versionId: number) => ['crm-pipeline-stages', tenantId, versionId] as const,
+  defaultStages: (tenantId: number | null) => ['crm-pipeline-stages', tenantId, 'default'] as const,
   assignable: (tenantId: number | null, id: number, search: string) => [...opportunityKeys.all(tenantId), 'assignable', id, search] as const,
 }
 
@@ -123,6 +124,17 @@ export function usePipelineStages(versionId: number | null | undefined) {
     enabled: tenantId !== null && versionId != null,
     staleTime: STAGES_STALE_TIME,
     queryFn: () => fetchStages(versionId as number),
+  })
+}
+
+export function useDefaultPipelineStages(enabled = true) {
+  const tenantId = useTenantId()
+  return useQuery({
+    ...READ_OPTIONS,
+    queryKey: opportunityKeys.defaultStages(tenantId),
+    enabled: enabled && tenantId !== null,
+    staleTime: STAGES_STALE_TIME,
+    queryFn: async () => (await get(endpoints.pipelines.defaultStages, pipelineStageSchema.array())).toSorted((a, b) => a.sortOrder - b.sortOrder),
   })
 }
 

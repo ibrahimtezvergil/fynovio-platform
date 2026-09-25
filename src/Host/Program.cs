@@ -251,6 +251,7 @@ builder.Services.AddScoped<CreatePartyReferenceHandler>();
 builder.Services.AddScoped<GetOpportunityHandler>();
 builder.Services.AddScoped<ListOpportunitiesHandler>();
 builder.Services.AddScoped<GetPipelineStagesHandler>();
+builder.Services.AddScoped<GetDefaultPipelineStagesHandler>();
 builder.Services.AddScoped<GetCrmSettingsHandler>();
 builder.Services.AddScoped<EnsureTenantAdministratorActionsHandler>();
 builder.Services.AddScoped<UpdateCrmSettingsHandler>();

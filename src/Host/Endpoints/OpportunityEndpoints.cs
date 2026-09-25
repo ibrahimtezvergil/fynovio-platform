@@ -194,6 +194,12 @@ public static class OpportunityEndpoints
             var actor = httpContext.GetActorContext();
             return Results.Ok(await handler.HandleAsync(new GetPipelineStagesQuery(actor.TenantId, versionId, actor.Principal, actor.CorrelationId), cancellationToken));
         });
+        app.MapGroup("/pipelines").RequireAuthorization().MapGet("/default/stages", async (
+            GetDefaultPipelineStagesHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
+        {
+            var actor = httpContext.GetActorContext();
+            return Results.Ok(await handler.HandleAsync(new GetDefaultPipelineStagesQuery(actor.TenantId, actor.Principal, actor.CorrelationId), cancellationToken));
+        });
     }
 
     /// <summary>`ids=1,2,3` → [1,2,3]; a malformed list is a 400 (ArgumentException → validation_error), not a silent partial answer.</summary>

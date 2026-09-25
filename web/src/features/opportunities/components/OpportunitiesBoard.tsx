@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { paths } from '@/routes/paths'
 import { PAGE_SIZE } from '../api'
+import type { PipelineStage } from '../schema'
 import { formatMoney } from '../lib/format'
 import type { OpportunityRow } from '../lib/rows'
 import { OpportunityStatusBadge } from './OpportunityStatusBadge'
 
 interface OpportunitiesBoardProps {
   rows: readonly OpportunityRow[]
+  configuredStages: readonly PipelineStage[]
   /** Dims the cards during a background refetch instead of blanking them. */
   refreshing: boolean
   /** Zero-based server page. */
@@ -27,24 +29,34 @@ interface OpportunitiesBoardProps {
 interface Column {
   stageId: number | null
   label: string | null
+  sortOrder: number | null
   rows: OpportunityRow[]
 }
 
-/** One column per pipeline stage present on the loaded page; opportunities not yet in a pipeline (drafts) come first. */
-function toColumns(rows: readonly OpportunityRow[]): Column[] {
-  const byStage = new Map<number | null, Column>()
+/** Always shows the active default pipeline, including empty stages, then any historical stages in the loaded page. */
+function toColumns(rows: readonly OpportunityRow[], configuredStages: readonly PipelineStage[]): Column[] {
+  const byStage = new Map<number | null, Column>(configuredStages.filter((stage) => stage.isActive && !stage.isArchived)
+    .map((stage) => [stage.id, { stageId: stage.id, label: stage.name, sortOrder: stage.sortOrder, rows: [] }]))
   for (const row of rows) {
-    const column = byStage.get(row.stageId) ?? { stageId: row.stageId, label: row.stage, rows: [] }
+    const column = byStage.get(row.stageId) ?? { stageId: row.stageId, label: row.stage, sortOrder: null, rows: [] }
     column.rows.push(row)
     byStage.set(row.stageId, column)
   }
-  return [...byStage.values()].toSorted((a, b) => (a.stageId ?? -1) - (b.stageId ?? -1))
+  return [...byStage.values()].toSorted((a, b) => {
+    if (a.stageId === null && b.stageId === null) return 0
+    if (a.stageId === null) return -1
+    if (b.stageId === null) return 1
+    if (a.sortOrder !== null && b.sortOrder !== null) return a.sortOrder - b.sortOrder
+    if (a.sortOrder !== null) return -1
+    if (b.sortOrder !== null) return 1
+    return a.stageId - b.stageId
+  })
 }
 
 /** The board is another projection of the same filtered page the grid shows — same rows, same paging. */
-export function OpportunitiesBoard({ rows, refreshing, page, hasNext, loadedCount, onPageChange, returnTo }: OpportunitiesBoardProps) {
+export function OpportunitiesBoard({ rows, configuredStages, refreshing, page, hasNext, loadedCount, onPageChange, returnTo }: OpportunitiesBoardProps) {
   const { t } = useTranslation('opportunities')
-  const columns = useMemo(() => toColumns(rows), [rows])
+  const columns = useMemo(() => toColumns(rows, configuredStages), [rows, configuredStages])
 
   return (
     <div className="flex flex-col gap-3">

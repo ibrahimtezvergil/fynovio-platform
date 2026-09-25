@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/common/PageHeader'
 import { SegmentedControl, type Segment } from '@/components/common/SegmentedControl'
 import { Button } from '@/components/ui/button'
 import { paths } from '@/routes/paths'
-import { usePartyNames, usePipelineStageNames, useOpportunityList, stageKey, type OpportunityListFilter } from '../api'
+import { useDefaultPipelineStages, usePartyNames, usePipelineStageNames, useOpportunityList, stageKey, type OpportunityListFilter } from '../api'
 import { OpportunitiesBoard } from '../components/OpportunitiesBoard'
 import { OpportunitiesFilters } from '../components/OpportunitiesFilters'
 import { OpportunitiesGrid } from '../components/OpportunitiesGrid'
@@ -19,7 +19,7 @@ type StatusFilter = OpportunityStatus | 'all'
 type ListView = 'grid' | 'board'
 
 /** The view rides in the URL, so a reload or a shared link lands on the same one; the grid is the default and stays out of it. */
-const readView = (params: URLSearchParams): ListView => (params.get('view') === 'board' ? 'board' : 'grid')
+const readView = (params: URLSearchParams): ListView => (params.get('view') === 'board' || params.get('view') === 'boar' ? 'board' : 'grid')
 
 function readFilter(params: URLSearchParams): OpportunityListFilter {
   const status = params.get('status')
@@ -47,6 +47,7 @@ export default function OpportunitiesPage() {
   const filter = readFilter(searchParams)
   const view = readView(searchParams)
   const list = useOpportunityList(filter)
+  const defaultStages = useDefaultPipelineStages(view === 'board')
   const rowFilters = readRowFilters(searchParams)
 
   const items = list.data?.items
@@ -95,7 +96,7 @@ export default function OpportunitiesPage() {
   let body: React.ReactNode
   if (list.isError) {
     body = <QueryProblemState error={list.error} onRetry={() => void list.refetch()} retrying={list.isFetching} />
-  } else if (list.data && list.data.items.length === 0) {
+  } else if (list.data && list.data.items.length === 0 && view !== 'board') {
     body = (
       <EmptyState
         icon={Inbox}
@@ -122,6 +123,7 @@ export default function OpportunitiesPage() {
         ) : (
           <OpportunitiesBoard
             rows={rows}
+            configuredStages={defaultStages.data ?? []}
             refreshing={list.isFetching && list.data !== undefined}
             page={filter.page}
             hasNext={list.data?.hasNext ?? false}

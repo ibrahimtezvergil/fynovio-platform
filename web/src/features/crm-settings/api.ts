@@ -19,7 +19,7 @@ export function useUpdateCrmSettings() {
     const { idempotencyKey, expectedVersion, defaultPrincipal, ...settings } = values
     await apiClient.put(endpoints.crmSettings.root, { ...settings, expectedVersion,
       defaultPrincipalIssuer: defaultPrincipal?.issuer || null, defaultPrincipalSubject: defaultPrincipal?.subject || null }, { headers: { 'Idempotency-Key': idempotencyKey } })
-  }, invalidateKeys: () => [key(tenantId)] })
+  }, invalidateKeys: () => [key(tenantId), ['crm-pipeline-stages', tenantId, 'default']] })
 }
 
 export function useCreatePipelineDraft() {

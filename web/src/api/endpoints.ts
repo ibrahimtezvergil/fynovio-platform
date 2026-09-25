@@ -35,6 +35,7 @@ export const endpoints = {
   },
   pipelines: {
     stages: (versionId: number) => `/pipelines/${versionId}/stages`,
+    defaultStages: '/pipelines/default/stages',
   },
   crmSettings: {
     root: '/crm/settings',
