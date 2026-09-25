@@ -210,9 +210,9 @@
     "semantic_hash": "6ca7e70257293d4d05980caa81d01d29"
   },
   "src/Modules/CRM/Persistence/Migrations/CrmDbContextModelSnapshot.cs": {
-    "mtime": 1790279341.5957496,
-    "seen": 1790281032.399431,
-    "ast_hash": "44d5b4a1844bfc40f75e638c00c4ef1a",
+    "mtime": 1790321142.0566945,
+    "seen": 1790321880.76209,
+    "ast_hash": "df62c5a34b7f4163025dfcdca6fdfefb",
     "semantic_hash": ""
   },
   "src/Modules/MasterData/MasterData.csproj": {
@@ -360,9 +360,9 @@
     "semantic_hash": ""
   },
   "docs/schema/crm-sales-schema.md": {
-    "mtime": 1790279450.2688901,
-    "seen": 1790281032.400106,
-    "ast_hash": "fb20d8dc6d5014d33ccaadfc144db017",
+    "mtime": 1790321101.3491058,
+    "seen": 1790321880.762752,
+    "ast_hash": "f290d5f41f7c4d99e66a37a639053678",
     "semantic_hash": ""
   },
   "README.md": {
@@ -6522,15 +6522,15 @@
     "semantic_hash": ""
   },
   "web/src/locales/en/opportunities.ts": {
-    "mtime": 1790287013.7562263,
-    "seen": 1790287712.9673972,
-    "ast_hash": "8685aa8b6437e6a1fe8b994229c511d9",
+    "mtime": 1790321081.1317434,
+    "seen": 1790321880.76267,
+    "ast_hash": "53f450672135a2f66c11d7ab27b0df7d",
     "semantic_hash": ""
   },
   "web/src/locales/tr/opportunities.ts": {
-    "mtime": 1790287013.740619,
-    "seen": 1790287712.967415,
-    "ast_hash": "3422342fbf9a2fd6b86674fb4fa495d5",
+    "mtime": 1790321089.810774,
+    "seen": 1790321880.762686,
+    "ast_hash": "e0c76325f8c87456074f2ec345bf490e",
     "semantic_hash": ""
   },
   "web/src/test/opportunities.ts": {
@@ -8304,9 +8304,9 @@
     "semantic_hash": ""
   },
   "src/Host/Endpoints/CrmSettingsEndpoints.cs": {
-    "mtime": 1790260560.9074588,
-    "seen": 1790281032.3992279,
-    "ast_hash": "feacfb50126efdaf1b862f22cb4f3ca8",
+    "mtime": 1790321034.5898385,
+    "seen": 1790321880.761879,
+    "ast_hash": "0c77ada19a726c31539e6c22dadd266e",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/EnsureTenantAdministratorActionsHandler.cs": {
@@ -8322,15 +8322,15 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/CrmSettingsDtos.cs": {
-    "mtime": 1790242363.421549,
-    "seen": 1790281032.3993459,
-    "ast_hash": "e32f2753f170856ad887f182f8d86aa6",
+    "mtime": 1790321034.5582402,
+    "seen": 1790321880.761996,
+    "ast_hash": "aa45b452cac4a6c833a28db5348a9e36",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/GetCrmSettingsHandler.cs": {
-    "mtime": 1790242363.439635,
-    "seen": 1790281032.3993459,
-    "ast_hash": "a56020cef656fbc9fec67846585ca7bc",
+    "mtime": 1790320995.3092363,
+    "seen": 1790321880.761997,
+    "ast_hash": "8e90480437137c7f6345fd7f6d37d99c",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/ManageCrmCatalogHandler.cs": {
@@ -8358,9 +8358,9 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/UpdateCrmSettingsHandler.cs": {
-    "mtime": 1790242916.6855476,
-    "seen": 1790281032.3993778,
-    "ast_hash": "bb7e5aae1ac177d866071e903b50ac36",
+    "mtime": 1790321034.5749853,
+    "seen": 1790321880.7620301,
+    "ast_hash": "4fbf02ed129a6a01fcbfd8f389f2304f",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/ValidatePipelineDraftHandler.cs": {
@@ -8376,9 +8376,9 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Domain/CrmSettings.cs": {
-    "mtime": 1790238659.7067244,
-    "seen": 1790281032.399384,
-    "ast_hash": "02ae2fb3a97a3c346629a478c1470a01",
+    "mtime": 1790321011.1185935,
+    "seen": 1790321880.762036,
+    "ast_hash": "bb3fd484fd1854c0b7aec980ba9b486d",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Domain/LostReason.cs": {
@@ -8400,9 +8400,9 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Persistence/Configurations/CrmSettingsConfiguration.cs": {
-    "mtime": 1790239533.4066246,
-    "seen": 1790281032.399392,
-    "ast_hash": "2879c3da056d06968240055dc2654831",
+    "mtime": 1790321129.0663502,
+    "seen": 1790321880.7620459,
+    "ast_hash": "414f9623c00223bb4166398b0fd4403c",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Persistence/Configurations/LostReasonConfiguration.cs": {
@@ -8550,9 +8550,9 @@
     "semantic_hash": ""
   },
   "web/src/features/crm-settings/api.ts": {
-    "mtime": 1790260690.8345537,
-    "seen": 1790281032.3998,
-    "ast_hash": "e365b7ab9423731f90f6048c6bac8f67",
+    "mtime": 1790321071.5952861,
+    "seen": 1790321880.76244,
+    "ast_hash": "0d4c44f20bc683a8040ac11588b31e2e",
     "semantic_hash": ""
   },
   "web/src/features/crm-settings/nav.ts": {
@@ -8568,9 +8568,9 @@
     "semantic_hash": ""
   },
   "web/src/features/crm-settings/pages/CrmSettingsPage.tsx": {
-    "mtime": 1790260606.1719477,
-    "seen": 1790281032.3998022,
-    "ast_hash": "32a5085f22fbd80144affb2bbca276df",
+    "mtime": 1790321530.720342,
+    "seen": 1790321880.7624419,
+    "ast_hash": "37c7c49e11abc93a9595d79d0849a7e2",
     "semantic_hash": ""
   },
   "web/src/features/crm-settings/routes.ts": {
@@ -8580,9 +8580,9 @@
     "semantic_hash": ""
   },
   "web/src/features/crm-settings/schema.ts": {
-    "mtime": 1790238302.7721028,
-    "seen": 1790281032.399803,
-    "ast_hash": "9218bc26d8516ed8b2606b23a5908721",
+    "mtime": 1790321071.5787158,
+    "seen": 1790321880.762443,
+    "ast_hash": "146be384d28fb1d410b839b20c9b7b40",
     "semantic_hash": ""
   },
   "docs/CRM_Settings_Kilitli_Kararlar_UIUX_Raporu.pdf": {
@@ -8601,6 +8601,24 @@
     "mtime": 1790287898.056951,
     "seen": 1790287997.446125,
     "ast_hash": "55871db4b8c60153736d7040e33c9053",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Domain/OpportunityCreationStep.cs": {
+    "mtime": 1790320982.2804558,
+    "seen": 1790321880.762039,
+    "ast_hash": "f6c4a9b9cc3d6465765ad0870c6b495a",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Persistence/Migrations/20260925072542_ConfigureOpportunityCreationSteps.Designer.cs": {
+    "mtime": 1790321142.0565746,
+    "seen": 1790321880.7620878,
+    "ast_hash": "be394a3a5ea112b0d7bad7c9b2cc90bf",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Persistence/Migrations/20260925072542_ConfigureOpportunityCreationSteps.cs": {
+    "mtime": 1790321142.056328,
+    "seen": 1790321880.762089,
+    "ast_hash": "05aa19ff253b323b0f5d7c843df40537",
     "semantic_hash": ""
   }
 }
