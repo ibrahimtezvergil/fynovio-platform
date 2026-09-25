@@ -7,6 +7,7 @@ public sealed record CrmSettingsDto(
     long? DefaultPipelineDefinitionId, string OpportunityCreationMode, long? DefaultOpportunityTypeId,
     bool RequireLostReason, bool RequireWonLine, string DefaultAssignmentMode, string AssignmentPolicy,
     PrincipalRef? DefaultPrincipal, long? DefaultTeamId, long? DefaultTerritoryId, long RowVersion,
+    IReadOnlyList<string> OpportunityCreationSteps,
     IReadOnlyList<PipelineDefinitionDto> Pipelines,
     IReadOnlyList<CrmConfigurationItemDto> OpportunityTypes, IReadOnlyList<CrmConfigurationItemDto> LostReasons,
     IReadOnlyList<CustomerNeedDto> CustomerNeeds);
@@ -22,7 +23,8 @@ public sealed record UpdateCrmSettingsCommand(
     TenantId TenantId, PrincipalRef Principal, long ExpectedVersion, long? DefaultPipelineDefinitionId,
     OpportunityCreationMode OpportunityCreationMode, long? DefaultOpportunityTypeId, bool RequireLostReason, bool RequireWonLine,
     AssignmentMode DefaultAssignmentMode, AssignmentPolicy AssignmentPolicy, PrincipalRef? DefaultPrincipal,
-    long? DefaultTeamId, long? DefaultTerritoryId, string IdempotencyKey, Guid CorrelationId);
+    long? DefaultTeamId, long? DefaultTerritoryId, string IdempotencyKey, Guid CorrelationId,
+    IReadOnlyList<string>? OpportunityCreationSteps = null);
 
 public sealed record UpdateCrmSettingsResult(CrmSettingsDto Settings, bool Replayed);
 public sealed record GetCrmSettingsQuery(TenantId TenantId, PrincipalRef Principal, Guid CorrelationId);

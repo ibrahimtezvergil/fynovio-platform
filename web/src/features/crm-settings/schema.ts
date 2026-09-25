@@ -6,6 +6,7 @@ const pipelineVersion = z.object({ id: z.number().int().positive(), versionNumbe
 export const crmSettingsSchema = z.object({
   defaultPipelineDefinitionId: z.number().int().positive().nullable(),
   opportunityCreationMode: z.enum(['Form', 'Wizard']),
+  opportunityCreationSteps: z.array(z.enum(['Customer', 'Needs', 'Products'])).min(1).max(3).default(['Customer', 'Needs', 'Products']),
   defaultOpportunityTypeId: z.number().int().positive().nullable(),
   requireLostReason: z.boolean(), requireWonLine: z.boolean(),
   defaultAssignmentMode: z.enum(['Manual', 'DefaultPrincipal', 'Team', 'Territory']),

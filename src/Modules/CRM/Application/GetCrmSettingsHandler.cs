@@ -48,6 +48,7 @@ internal static class CrmSettingsMapper
             (settings?.AssignmentPolicy ?? CRM.Domain.AssignmentPolicy.AnyAssignablePrincipal).ToString(),
             settings?.DefaultPrincipalIssuer is { } issuer && settings.DefaultPrincipalSubject is { } subject ? new PrincipalRef(issuer, subject) : null,
             settings?.DefaultTeamId, settings?.DefaultTerritoryId, settings?.RowVersion ?? 0,
+            (settings?.OpportunityCreationSteps ?? [CRM.Domain.OpportunityCreationStep.Customer, CRM.Domain.OpportunityCreationStep.Needs, CRM.Domain.OpportunityCreationStep.Products]).Select(x => x.ToString()).ToArray(),
             pipelines, types.Select(x => new CrmConfigurationItemDto(x.Id, x.Key, x.Name, x.Status.ToString(), x.RowVersion)).ToList(),
             reasons.Select(x => new CrmConfigurationItemDto(x.Id, x.Key, x.Name, x.Status.ToString(), x.RowVersion)).ToList(),
             needs.Select(x => new CustomerNeedDto(x.Id, x.Name, x.Category, x.AveragePrice, x.Status.ToString(), x.RowVersion)).ToList());

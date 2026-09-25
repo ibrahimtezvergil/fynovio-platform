@@ -1,4 +1,4 @@
-import { GitBranch, ListChecks, LoaderCircle, RotateCcw, Settings2, XCircle, type LucideIcon } from 'lucide-react'
+import { ArrowDown, ArrowUp, GripVertical, GitBranch, ListChecks, LoaderCircle, PanelsTopLeft, RotateCcw, Settings2, X, XCircle, type LucideIcon } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
@@ -22,10 +22,10 @@ import type { CrmSettings } from '../schema'
 
 type StageForm = { id?: number; name: string; sortOrder: number; isEntry: boolean; isActive: boolean; isArchived?: boolean }
 const initialStage = (): StageForm => ({ name: '', sortOrder: 1, isEntry: true, isActive: true })
-type Section = 'general' | 'pipelines' | 'reasons' | 'needs'
-const sectionIcons: Record<Section, LucideIcon> = { general: Settings2, pipelines: GitBranch, reasons: XCircle, needs: ListChecks }
+type Section = 'general' | 'creation' | 'pipelines' | 'reasons' | 'needs'
+const sectionIcons: Record<Section, LucideIcon> = { general: Settings2, creation: PanelsTopLeft, pipelines: GitBranch, reasons: XCircle, needs: ListChecks }
 const settingsValues = (value: CrmSettings) => ({ defaultPipelineDefinitionId: value.defaultPipelineDefinitionId,
-  opportunityCreationMode: value.opportunityCreationMode, defaultOpportunityTypeId: value.defaultOpportunityTypeId,
+  opportunityCreationMode: value.opportunityCreationMode, opportunityCreationSteps: value.opportunityCreationSteps, defaultOpportunityTypeId: value.defaultOpportunityTypeId,
   requireLostReason: value.requireLostReason, requireWonLine: value.requireWonLine, defaultAssignmentMode: value.defaultAssignmentMode,
   assignmentPolicy: value.assignmentPolicy, defaultPrincipal: value.defaultPrincipal, defaultTeamId: value.defaultTeamId,
   defaultTerritoryId: value.defaultTerritoryId })
@@ -37,7 +37,7 @@ function SectionHeading({ title, description }: { title: string; description: st
 export default function CrmSettingsPage() {
   const { t } = useTranslation('opportunities')
   const { section: routeSection } = useParams<{ section?: string }>()
-  const section: Section = routeSection === 'pipelines' || routeSection === 'reasons' || routeSection === 'needs' ? routeSection : 'general'
+  const section: Section = routeSection === 'creation' || routeSection === 'pipelines' || routeSection === 'reasons' || routeSection === 'needs' ? routeSection : 'general'
   const sections: readonly PageNavItem[] = (Object.keys(sectionIcons) as Section[]).map((item) => ({
     to: item === 'general' ? paths.crmSettings : paths.crmSettingsSection(item), label: t(`settings.sections.${item}`), icon: sectionIcons[item],
   }))
@@ -49,6 +49,7 @@ export default function CrmSettingsPage() {
   const lifecycle = useSetPipelineLifecycle()
   const keys = useAttemptKeys()
   const [form, setForm] = useState<CrmSettings | null>(null)
+  const pointerDraggedStep = useRef<CrmSettings['opportunityCreationSteps'][number] | null>(null)
   const [pipelineId, setPipelineId] = useState<number | null>(null)
   const [pipelineName, setPipelineName] = useState('')
   const [stages, setStages] = useState<StageForm[]>([initialStage()])
@@ -72,6 +73,12 @@ export default function CrmSettingsPage() {
 
   useEffect(() => { setForm(null); setPipelineId(null); setPipelineBaseline(null); selectedEditorPipeline.current = null; setMessage(''); setErrorMessage('') }, [activeTenantId])
   useEffect(() => { if (query.data && !isSettingsDirty) setForm(query.data) }, [query.data, isSettingsDirty])
+  useEffect(() => {
+    const clearPointerDrag = () => { pointerDraggedStep.current = null }
+    window.addEventListener('pointerup', clearPointerDrag)
+    window.addEventListener('pointercancel', clearPointerDrag)
+    return () => { window.removeEventListener('pointerup', clearPointerDrag); window.removeEventListener('pointercancel', clearPointerDrag) }
+  }, [])
   const confirmTenantSwitch = useCallback(() => {
     if (!hasUnsavedChanges || pendingSwitch.current) return Promise.resolve(!pendingSwitch.current)
     return new Promise<boolean>((resolve) => { pendingSwitch.current = resolve; setSwitchConfirmationOpen(true) })
@@ -114,6 +121,7 @@ export default function CrmSettingsPage() {
   const mutateSettings = async (event: FormEvent) => {
     event.preventDefault(); if (!form) return
     const payload = { defaultPipelineDefinitionId: form.defaultPipelineDefinitionId, opportunityCreationMode: form.opportunityCreationMode,
+      opportunityCreationSteps: form.opportunityCreationSteps,
       defaultOpportunityTypeId: form.defaultOpportunityTypeId, requireLostReason: form.requireLostReason, requireWonLine: form.requireWonLine,
       defaultAssignmentMode: form.defaultAssignmentMode, assignmentPolicy: form.assignmentPolicy, defaultPrincipal: form.defaultPrincipal,
       defaultTeamId: form.defaultTeamId, defaultTerritoryId: form.defaultTerritoryId, expectedVersion: form.rowVersion }
@@ -169,13 +177,71 @@ export default function CrmSettingsPage() {
       <div className="flex min-w-0 flex-col gap-4">
     {message && <Alert variant="success"><AlertTitle>{message}</AlertTitle></Alert>}
     {errorMessage && <Alert variant="destructive"><AlertTitle>{errorMessage}</AlertTitle><AlertDescription><Button type="button" variant="outline" size="sm" onClick={() => void query.refetch()}>{t('settings.reload')}</Button></AlertDescription></Alert>}
-    {section === 'general' && <form onSubmit={mutateSettings} className="flex flex-col gap-4">
+    {(section === 'general' || section === 'creation') && <form onSubmit={mutateSettings} className="flex flex-col gap-4">
+      {section === 'general' && <>
       <Card className="scroll-mt-24 gap-5 px-6 pt-[22px] pb-6"><SectionHeading title={t('settings.opportunity.title')} description={t('settings.opportunity.description')} />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t('settings.defaultPipeline')}>{(props) => <Select {...props} value={form.defaultPipelineDefinitionId ?? ''} onChange={(e) => set('defaultPipelineDefinitionId', e.target.value ? Number(e.target.value) : null)}><option value="">{t('settings.noDefault')}</option>{form.pipelines.filter((p) => p.isActive && !p.isArchived).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select>}</Field>
         </div>
         <p className="text-muted-foreground rounded-[var(--nx-r-ctl)] bg-muted/40 px-4 py-3 text-sm">{t('settings.lifecycleReportingHint')}</p>
       </Card>
+      </>}
+      {section === 'creation' && <Card className="gap-4 px-6 py-6">
+        <SectionHeading title={t('settings.creation.title')} description={t('settings.creation.description')} />
+        <p className="text-muted-foreground text-sm">{t('settings.creation.hint')}</p>
+        <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label={t('settings.creation.title')}>
+          {(['Form', 'Wizard'] as const).map((mode) => {
+            const selected = form.opportunityCreationMode === mode
+            const option = mode === 'Form' ? 'form' : 'wizard'
+            return <button key={mode} type="button" role="radio" aria-checked={selected} onClick={() => set('opportunityCreationMode', mode)} className={`flex min-h-36 flex-col items-start gap-2 rounded-[var(--nx-r-card)] border p-5 text-left transition-colors ${selected ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:border-primary/50 hover:bg-muted/40'}`}>
+              <span className="flex w-full items-center justify-between gap-3"><span className="font-heading text-base font-semibold">{t(`settings.creation.${option}.title`)}</span><span aria-hidden="true" className={`flex size-5 items-center justify-center rounded-full border ${selected ? 'border-primary' : 'border-muted-foreground/50'}`}>{selected && <span className="size-2.5 rounded-full bg-primary" />}</span></span>
+              <span className="text-muted-foreground text-sm">{t(`settings.creation.${option}.description`)}</span>
+            </button>
+          })}
+        </div>
+        {form.opportunityCreationMode === 'Wizard' && <div className="mt-2 border-t pt-5">
+          <div className="mb-3"><h3 className="font-heading text-sm font-semibold">{t('settings.creation.stepsTitle')}</h3><p className="text-muted-foreground mt-1 text-xs">{t('settings.creation.stepsDescription')}</p></div>
+          <ol className="flex flex-col gap-2" aria-label={t('settings.creation.stepsTitle')} onPointerUp={() => { pointerDraggedStep.current = null }} onPointerCancel={() => { pointerDraggedStep.current = null }}>
+            {form.opportunityCreationSteps.map((stepName, index) => {
+              const stepKey = stepName === 'Customer' ? 'customer' : stepName === 'Needs' ? 'needs' : 'products'
+              const label = t(`settings.creation.step.${stepKey}`)
+              return <li key={stepName} data-creation-step={stepName} onPointerEnter={() => {
+                const moving = pointerDraggedStep.current
+                if (!moving || moving === 'Customer' || stepName === 'Customer' || moving === stepName) return
+                const from = form.opportunityCreationSteps.indexOf(moving)
+                const to = form.opportunityCreationSteps.indexOf(stepName)
+                if (from < 0 || to < 1) return
+                const reordered = [...form.opportunityCreationSteps]
+                reordered.splice(from, 1); reordered.splice(to, 0, moving)
+                set('opportunityCreationSteps', reordered)
+              }} draggable={stepName !== 'Customer'} onDragStart={(event) => { event.dataTransfer.setData('text/plain', stepName); event.dataTransfer.effectAllowed = 'move' }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'move' }} onDrop={(event) => {
+                event.preventDefault()
+                const moving = event.dataTransfer.getData('text/plain') as typeof stepName
+                const from = form.opportunityCreationSteps.indexOf(moving)
+                if (from < 0 || moving === 'Customer' || index === 0) return
+                const reordered = [...form.opportunityCreationSteps]
+                reordered.splice(from, 1); reordered.splice(index, 0, moving)
+                set('opportunityCreationSteps', reordered)
+              }} className="flex items-center gap-3 rounded-[var(--nx-r-ctl)] border bg-background px-3 py-3">
+                <GripVertical aria-hidden onPointerDown={() => { if (stepName !== 'Customer') pointerDraggedStep.current = stepName }} className={`text-muted-foreground size-4 touch-none ${stepName === 'Customer' ? 'opacity-40' : 'cursor-grab active:cursor-grabbing'}`} />
+                <span className="flex-1 text-sm font-medium">{label}</span>
+                {stepName === 'Customer' ? <span className="text-muted-foreground text-xs">{t('settings.creation.requiredStep')}</span> : <>
+                  <Button type="button" variant="ghost" size="icon" aria-label={t('settings.creation.moveUp')} disabled={index <= 1} onClick={() => { const next = [...form.opportunityCreationSteps]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; set('opportunityCreationSteps', next) }}><ArrowUp aria-hidden /></Button>
+                  <Button type="button" variant="ghost" size="icon" aria-label={t('settings.creation.moveDown')} disabled={index === form.opportunityCreationSteps.length - 1} onClick={() => { const next = [...form.opportunityCreationSteps]; [next[index], next[index + 1]] = [next[index + 1], next[index]]; set('opportunityCreationSteps', next) }}><ArrowDown aria-hidden /></Button>
+                  <Button type="button" variant="ghost" size="icon" aria-label={t('settings.creation.removeStep', { step: label })} onClick={() => set('opportunityCreationSteps', form.opportunityCreationSteps.filter((item) => item !== stepName))}><X aria-hidden /></Button>
+                </>}
+              </li>
+            })}
+          </ol>
+          {(['Needs', 'Products'] as const).filter((stepName) => !form.opportunityCreationSteps.includes(stepName)).length > 0 && <div className="mt-3 flex flex-wrap gap-2">
+            {(['Needs', 'Products'] as const).filter((stepName) => !form.opportunityCreationSteps.includes(stepName)).map((stepName) => {
+              const stepKey = stepName === 'Needs' ? 'needs' : 'products'
+              return <Button key={stepName} type="button" variant="outline" onClick={() => set('opportunityCreationSteps', [...form.opportunityCreationSteps, stepName])}>+ {t('settings.creation.addStep', { step: t(`settings.creation.step.${stepKey}`) })}</Button>
+            })}
+          </div>}
+        </div>}
+      </Card>}
+      {section === 'general' && <>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card className="gap-4 px-6 pt-[22px] pb-6"><SectionHeading title={t('settings.wonRulesTitle')} description={t('settings.wonRulesDescription')} />
           <label className="flex items-start gap-3"><Checkbox checked={form.requireWonLine} onChange={(event) => set('requireWonLine', event.currentTarget.checked)} aria-describedby="crm-won-rule-help" /><span className="text-sm">{t('settings.requireWonLine')}<span id="crm-won-rule-help" className="text-muted-foreground mt-1 block text-xs">{t('settings.wonRuleHelp')}</span></span></label>
@@ -185,6 +251,7 @@ export default function CrmSettingsPage() {
         </Card>
       </div>
       <Card className="gap-3 px-6 pt-[22px] pb-6"><SectionHeading title={t('settings.assignmentSummaryTitle')} description={t('settings.assignmentSummaryDescription')} /><p className="text-sm font-medium">{form.defaultAssignmentMode === 'Manual' ? t('settings.creatorOwnsOpportunity') : t('settings.legacyAssignmentNotice')}</p></Card>
+      </>}
       <div className="nx-material sticky bottom-4 z-[4] flex flex-wrap items-center gap-3 rounded-[var(--nx-r-card)] px-5 py-3.5">
         <span aria-live="polite" className="text-muted-foreground flex-1 text-[12.5px]">{isSettingsDirty ? t('settings.unsaved') : t('settings.allSaved')}</span>
         <Button type="button" variant="ghost" disabled={!isSettingsDirty || update.isPending} onClick={() => { setForm(query.data ?? null); setErrorMessage('') }}><RotateCcw aria-hidden strokeWidth={1.8} />{t('settings.discard')}</Button>

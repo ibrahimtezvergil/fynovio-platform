@@ -54,7 +54,9 @@ public sealed class UpdateCrmSettingsHandler(CrmDbContext context, IAuthorizer a
         }
         else if (settings.RowVersion != command.ExpectedVersion) throw new CrmSettingsConcurrencyConflictException();
 
-        settings.Replace(command.DefaultPipelineDefinitionId, command.OpportunityCreationMode, command.DefaultOpportunityTypeId, command.RequireLostReason, command.RequireWonLine, command.DefaultAssignmentMode, command.AssignmentPolicy, command.DefaultPrincipal, command.DefaultTeamId, command.DefaultTerritoryId);
+        var creationSteps = (command.OpportunityCreationSteps ?? ["Customer", "Needs", "Products"])
+            .Select(step => Enum.Parse<CRM.Domain.OpportunityCreationStep>(step, ignoreCase: false)).ToArray();
+        settings.Replace(command.DefaultPipelineDefinitionId, command.OpportunityCreationMode, command.DefaultOpportunityTypeId, command.RequireLostReason, command.RequireWonLine, command.DefaultAssignmentMode, command.AssignmentPolicy, command.DefaultPrincipal, command.DefaultTeamId, command.DefaultTerritoryId, creationSteps);
         var response = new UpdateCrmSettingsResult(CrmSettingsMapper.Map(settings, [], [], [], []), false);
         context.OutboxMessages.Add(OutboxMessage.Create(command.TenantId, "CrmSettings", command.TenantId.Value, settings.RowVersion, "enterprise.crm.settings.changed.v1", "crm", $"crm-settings/{command.TenantId.Value}", command.CorrelationId, null, JsonSerializer.Serialize(new { tenantId = command.TenantId.Value, rowVersion = settings.RowVersion })));
         context.EvidenceRecords.Add(EvidenceRecord.Create(command.TenantId, "CrmSettings", command.TenantId.Value, settings.RowVersion, command.Principal,

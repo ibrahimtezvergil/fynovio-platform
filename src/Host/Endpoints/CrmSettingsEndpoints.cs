@@ -29,7 +29,8 @@ public static class CrmSettingsEndpoints
                 request.DefaultPipelineDefinitionId, ParseEnum<OpportunityCreationMode>(request.OpportunityCreationMode), request.DefaultOpportunityTypeId, request.RequireLostReason,
                 request.RequireWonLine, ParseEnum<AssignmentMode>(request.DefaultAssignmentMode), ParseEnum<AssignmentPolicy>(request.AssignmentPolicy),
                 request.DefaultPrincipalIssuer is { Length: > 0 } issuer && request.DefaultPrincipalSubject is { Length: > 0 } subject ? new PrincipalRef(issuer, subject) : null,
-                request.DefaultTeamId, request.DefaultTerritoryId, idempotencyKey, actor.CorrelationId), cancellationToken);
+                request.DefaultTeamId, request.DefaultTerritoryId, idempotencyKey, actor.CorrelationId,
+                request.OpportunityCreationSteps ?? ["Customer", "Needs", "Products"]), cancellationToken);
             return Results.Ok(result);
         });
         group.MapPost("/pipelines/drafts", async (CreatePipelineDraftRequest request, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
@@ -102,7 +103,7 @@ public sealed record CrmSettingsRequest(
     long ExpectedVersion, long? DefaultPipelineDefinitionId, string OpportunityCreationMode,
     long? DefaultOpportunityTypeId, bool RequireLostReason, bool RequireWonLine, string DefaultAssignmentMode,
     string AssignmentPolicy, string? DefaultPrincipalIssuer, string? DefaultPrincipalSubject,
-    long? DefaultTeamId, long? DefaultTerritoryId);
+    long? DefaultTeamId, long? DefaultTerritoryId, IReadOnlyList<string>? OpportunityCreationSteps = null);
 
 public sealed record CreatePipelineDraftRequest(long? PipelineDefinitionId, string Name, long ExpectedRowVersion, int ExpectedLatestVersionNumber,
     IReadOnlyList<PipelineStageInput> Stages, bool EnforceAllowedTransitions, IReadOnlyList<PipelineTransitionInput> AllowedTransitions);

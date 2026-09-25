@@ -15,7 +15,7 @@ export function useCrmSettings() {
 }
 export function useUpdateCrmSettings() {
   const tenantId = useSessionStore((state) => state.activeTenantId)
-  return useAppMutation({ name: 'crmSettings.update', mutationFn: async (values: Pick<CrmSettings, 'defaultPipelineDefinitionId' | 'opportunityCreationMode' | 'defaultOpportunityTypeId' | 'requireLostReason' | 'requireWonLine' | 'defaultAssignmentMode' | 'assignmentPolicy' | 'defaultPrincipal' | 'defaultTeamId' | 'defaultTerritoryId'> & { expectedVersion: number; idempotencyKey: string }) => {
+  return useAppMutation({ name: 'crmSettings.update', mutationFn: async (values: Pick<CrmSettings, 'defaultPipelineDefinitionId' | 'opportunityCreationMode' | 'opportunityCreationSteps' | 'defaultOpportunityTypeId' | 'requireLostReason' | 'requireWonLine' | 'defaultAssignmentMode' | 'assignmentPolicy' | 'defaultPrincipal' | 'defaultTeamId' | 'defaultTerritoryId'> & { expectedVersion: number; idempotencyKey: string }) => {
     const { idempotencyKey, expectedVersion, defaultPrincipal, ...settings } = values
     await apiClient.put(endpoints.crmSettings.root, { ...settings, expectedVersion,
       defaultPrincipalIssuer: defaultPrincipal?.issuer || null, defaultPrincipalSubject: defaultPrincipal?.subject || null }, { headers: { 'Idempotency-Key': idempotencyKey } })
