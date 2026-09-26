@@ -7062,9 +7062,9 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/pages/OpportunitiesPage.tsx": {
-    "mtime": 1790322104.59957,
-    "seen": 1790322164.788722,
-    "ast_hash": "3889b0e7e69e8c0db9ffd6284e47f329",
+    "mtime": 1790325316.8739083,
+    "seen": 1790384201.4683578,
+    "ast_hash": "5d7874a69b799e037e9f255dec653ef6",
     "semantic_hash": ""
   },
   "web/src/routes/shellSurfaces.test.ts": {
