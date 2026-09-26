@@ -8,7 +8,9 @@ namespace Access.Tests.Integration;
 /// <summary>Test TimeProvider that can be advanced for testing expiry scenarios.</summary>
 public sealed class TestTimeProvider : TimeProvider
 {
-    private DateTimeOffset _utcNow = DateTimeOffset.UtcNow;
+    // Starts on a whole microsecond — PostgreSQL's timestamptz precision — so values read back compare equal to the
+    // provider's own clock on platforms whose system clock has sub-microsecond resolution (Linux).
+    private DateTimeOffset _utcNow = new(DateTimeOffset.UtcNow.UtcTicks / 10 * 10, TimeSpan.Zero);
 
     public override DateTimeOffset GetUtcNow() => _utcNow;
 
