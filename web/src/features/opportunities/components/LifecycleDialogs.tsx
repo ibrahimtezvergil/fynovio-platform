@@ -5,7 +5,9 @@ import { useTranslation } from 'react-i18next'
 import { Field } from '@/components/common/Field'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { useCrmSettings } from '@/features/crm-settings/api'
 import { useLoseOpportunity, useOpenOpportunity, useWinOpportunity } from '../api'
 import { useKeyedCommand } from '../lib/useKeyedCommand'
 import { endOfLocalDay, openFormSchema, reasonFormSchema, type OpenValues, type Opportunity, type ReasonValues } from '../schema'
@@ -105,6 +107,9 @@ export function LoseDialog({ opportunity, onClose, onReload }: LifecycleDialogPr
     handleSubmit,
     formState: { errors },
   } = useForm<ReasonValues>({ resolver: zodResolver(schema), defaultValues: { reason: '' } })
+  // A tenant that maintains a lost-reason catalog only accepts one of its active entries (matched by key).
+  const settings = useCrmSettings()
+  const reasons = settings.data?.lostReasons.filter((reason) => reason.status === 'Active') ?? []
 
   const submit = handleSubmit(async ({ reason }) => {
     const result = await command.run({ id: opportunity.id, expectedVersion: opportunity.rowVersion, lostReason: reason })
@@ -125,7 +130,20 @@ export function LoseDialog({ opportunity, onClose, onReload }: LifecycleDialogPr
       onSubmit={submit}
     >
       <Field label={t('lose.reason.label')} error={errors.reason?.message}>
-        {(props) => <Textarea {...props} rows={3} {...register('reason')} />}
+        {(props) =>
+          reasons.length > 0 ? (
+            <Select {...props} {...register('reason')}>
+              <option value="">{t('lose.reason.placeholder')}</option>
+              {reasons.map((reason) => (
+                <option key={reason.id} value={reason.key}>
+                  {reason.name}
+                </option>
+              ))}
+            </Select>
+          ) : (
+            <Textarea {...props} rows={3} {...register('reason')} />
+          )
+        }
       </Field>
     </CommandDialog>
   )

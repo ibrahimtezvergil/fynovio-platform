@@ -234,7 +234,7 @@ export default {
     description: 'Fırsat kaybedildi olarak kapatılır. Yeniden açılamaz.',
     submit: 'Kaybedildi olarak işaretle',
     submitting: 'Kaydediliyor…',
-    reason: { label: 'Kayıp nedeni' },
+    reason: { label: 'Kayıp nedeni', placeholder: 'Bir neden seçin' },
   },
   reason: { required: 'Bir neden girin.' },
   toast: {

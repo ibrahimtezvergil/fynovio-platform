@@ -234,7 +234,7 @@ export default {
     description: 'This closes the opportunity as lost. It cannot be reopened.',
     submit: 'Mark as lost',
     submitting: 'Saving…',
-    reason: { label: 'Reason for loss' },
+    reason: { label: 'Reason for loss', placeholder: 'Select a reason' },
   },
   reason: { required: 'Enter a reason.' },
   toast: {
