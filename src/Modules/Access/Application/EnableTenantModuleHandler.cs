@@ -44,7 +44,14 @@ public sealed class EnableTenantModuleHandler(AccessDbContext context, ModuleCap
 
         var conflict = await FindKeyConflictAsync(command.TenantId, manifest, cancellationToken);
         if (conflict is not null)
+        {
+            // A concurrent enable of this module may have committed between the enablement check and the key check;
+            // its keys are then ours, not a conflict (read committed: this re-read sees that commit).
+            var committed = await FindEnablementAsync(command.TenantId, manifest.ModuleKey, cancellationToken);
+            if (committed is not null)
+                return AlreadyEnabled(manifest, committed);
             return new EnableTenantModuleResult(EnableTenantModuleStatus.TemplateKeyConflict, manifest.ModuleKey, LatestVersion: manifest.Version, Detail: conflict);
+        }
 
         try
         {
