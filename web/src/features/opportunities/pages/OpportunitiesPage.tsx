@@ -13,9 +13,8 @@ import { OpportunitiesFilters } from '../components/OpportunitiesFilters'
 import { OpportunitiesGrid } from '../components/OpportunitiesGrid'
 import { QueryProblemState } from '../components/QueryProblemState'
 import { NO_ROW_FILTERS, filterRows, hasRowFilters, toRows, totalAmountLabel, type RowFilters } from '../lib/rows'
-import { OPPORTUNITY_STATUSES, type OpportunityStatus } from '../schema'
+import { OPPORTUNITY_STATUSES } from '../schema'
 
-type StatusFilter = OpportunityStatus | 'all'
 type ListView = 'grid' | 'board'
 
 /** The view rides in the URL, so a reload or a shared link lands on the same one; the grid is the default and stays out of it. */
@@ -60,11 +59,6 @@ export default function OpportunitiesPage() {
   const rows = useMemo(() => filterRows(loadedRows, rowFilters), [loadedRows, rowFilters])
   const owners = useMemo(() => [...new Set(loadedRows.flatMap((row) => (row.owner ? [row.owner] : [])))].toSorted(), [loadedRows])
   const total = totalAmountLabel(rows)
-
-  const segments = useMemo<readonly Segment<StatusFilter>[]>(
-    () => [{ value: 'all', label: t('list.filter.all') }, ...OPPORTUNITY_STATUSES.filter((status) => !filter.archivedOnly || status === 'Draft' || status === 'Open').map((status) => ({ value: status, label: t(`status.${status}`) }))],
-    [t, filter.archivedOnly],
-  )
 
   const viewSegments = useMemo<readonly Segment<ListView>[]>(
     () => [{ value: 'grid', label: t('list.view.grid') }, { value: 'board', label: t('list.view.board') }],
@@ -156,12 +150,6 @@ export default function OpportunitiesPage() {
             {!filter.archivedOnly && createAction}
           </>
         } />
-      <SegmentedControl<StatusFilter>
-        aria-label={t('list.filter.label')}
-        segments={segments}
-        value={filter.status ?? 'all'}
-        onChange={(value) => goTo({ status: value === 'all' ? undefined : value, page: 0 })}
-      />
       {body}
     </div>
   )
