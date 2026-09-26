@@ -120,7 +120,7 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
     public async Task Authorized_caller_with_a_tenant_wide_grant_can_create_an_opportunity_over_http()
     {
         var tenantId = 5001;
-        var (subject, _) = await SeedGrantAsync(tenantId, "crm.opportunity.create", relation: null);
+        var (subject, _) = await SeedGrantAsync(tenantId, "crm.opportunity.create", relation: null, AssigneeActions);
         var partyId = await SeedPartyAsync(tenantId, "Acme");
 
         using var client = AuthorizedClient(subject, tenantId);
@@ -204,7 +204,7 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
     public async Task Creating_an_opportunity_with_an_invalid_currency_is_a_validation_error()
     {
         var tenantId = 5005;
-        var (subject, _) = await SeedGrantAsync(tenantId, "crm.opportunity.create", relation: null);
+        var (subject, _) = await SeedGrantAsync(tenantId, "crm.opportunity.create", relation: null, AssigneeActions);
         var partyId = await SeedPartyAsync(tenantId, "Acme");
 
         using var client = AuthorizedClient(subject, tenantId);
@@ -310,6 +310,9 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
         return client;
     }
 
+    /// <summary>The creator becomes the owner, and an owner must be assignable (CrmAssignmentPolicy.RequiredAssigneeActions).</summary>
+    private static readonly string[] AssigneeActions = ["crm.opportunity.read", "crm.opportunity.change_stage"];
+
     /// <summary>Seeds Account/ExternalIdentity/active TenantMembership/Role/PermissionSet/
     /// RoleAssignment/TenantAccessState granting `actionKey` (tenant-wide when `relation`
     /// is null, owner-scoped for `PermissionSetItem.OwnerRelation`). The action itself is
@@ -317,7 +320,7 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
     /// triggered the first time this WebApplicationFactory's Services are touched — see
     /// InitializeAsync's migration-ordering note) — this only adds the grant, never the
     /// action-registry row. Returns the JWT `sub` to mint a token for.</summary>
-    private async Task<(string Subject, long AccountId)> SeedGrantAsync(long tenantId, string actionKey, string? relation)
+    private async Task<(string Subject, long AccountId)> SeedGrantAsync(long tenantId, string actionKey, string? relation, params string[] additionalActionKeys)
     {
         var tenant = new TenantId(tenantId);
         var subject = $"caller-{Guid.NewGuid():N}";
@@ -337,6 +340,8 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
 
         var permissionSet = PermissionSet.Create(tenant, $"host_test_permission_set_{suffix}", "Host Test Permission Set");
         permissionSet.Grant(actionKey, relation);
+        foreach (var additionalActionKey in additionalActionKeys)
+            permissionSet.Grant(additionalActionKey, relation);
         access.PermissionSets.Add(permissionSet);
 
         var role = Role.Create(tenant, $"host_test_role_{suffix}", $"Host Test Role {suffix}");

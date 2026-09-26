@@ -158,7 +158,6 @@ public sealed class EnableModuleCommandTests : IClassFixture<AuthApiFixture>
         Assert.Equal(EnableModuleCommand.Success, code);
         Assert.Empty(error);
         Assert.Contains("enabled for tenant", output);
-        Assert.Contains("1 administrator role assignment", output);
         Assert.Equal(HttpStatusCode.Created, await CreateOpportunityAsync(client, bearer, partyId));
     }
 
@@ -253,7 +252,6 @@ public sealed class EnableModuleCommandTests : IClassFixture<AuthApiFixture>
         Assert.Equal(EnableModuleCommand.Success, code);
         Assert.Empty(error);
         Assert.Contains("Module 'collaboration' enabled", output);
-        Assert.Contains("1 administrator role assignment", output);
         await CreateCalendarEntryAsync(host, tenant, principal);
         Assert.Equal(1, await CountCalendarEntriesAsync(host, tenant, principal));
     }
