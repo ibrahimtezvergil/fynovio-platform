@@ -106,6 +106,17 @@ public sealed class EnableTenantModuleHandler(AccessDbContext context, ModuleCap
             }
         }
 
+        // The tenant administrator role holds the module's full vocabulary through its bootstrap permission set, so
+        // revoking the administrator role also removes these grants (no hidden per-module administrator roles).
+        var administratorSet = await context.PermissionSets.Include(set => set.Items)
+            .SingleOrDefaultAsync(set => set.TenantId == tenantId
+                && set.Key == BootstrapTenantAccessHandler.TenantAdministratorPermissionSetKey
+                && set.Origin == PermissionSet.OriginSystemTemplate, cancellationToken);
+        if (administratorSet is not null)
+            foreach (var (actionKey, relation) in ModuleCapabilityCatalog.AdministratorGrants(manifest)
+                         .Where(grant => administratorSet.Items.All(item => item.ActionKey != grant.ActionKey)))
+                administratorSet.Grant(actionKey, relation);
+
         var enablement = TenantModuleEnablement.Enable(tenantId, manifest.ModuleKey, manifest.Version, now);
         context.TenantModuleEnablements.Add(enablement);
 

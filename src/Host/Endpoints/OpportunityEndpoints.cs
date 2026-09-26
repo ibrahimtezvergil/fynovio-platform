@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Contracts;
-using Access.Application;
 using CRM.Application;
 using Host.Authentication;
 using Microsoft.AspNetCore.Mvc;
@@ -102,12 +101,10 @@ public static class OpportunityEndpoints
 
         group.MapPost("/{id:long}/archive", async (
             long id, OpportunityArchiveRequest request, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
-            SetOpportunityArchiveHandler handler, EnsureTenantAdministratorActionsHandler ensureAdministratorActions,
+            SetOpportunityArchiveHandler handler,
             HttpContext httpContext, CancellationToken cancellationToken) =>
         {
             var actor = httpContext.GetActorContext();
-            await ensureAdministratorActions.HandleAsync(new EnsureTenantAdministratorActionsCommand(
-                actor.TenantId, actor.Principal, [CrmActionKeys.OpportunityArchive, CrmActionKeys.OpportunityRestore], actor.CorrelationId), cancellationToken);
             var command = new SetOpportunityArchiveCommand(actor.TenantId, id, actor.Principal, request.ExpectedVersion,
                 Archive: true, request.ConfirmOpenOpportunity, RestoreStageId: null, idempotencyKey, actor.CorrelationId);
             return Results.Ok(await handler.HandleAsync(command, cancellationToken));
@@ -115,12 +112,10 @@ public static class OpportunityEndpoints
 
         group.MapPost("/{id:long}/restore", async (
             long id, OpportunityRestoreRequest request, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
-            SetOpportunityArchiveHandler handler, EnsureTenantAdministratorActionsHandler ensureAdministratorActions,
+            SetOpportunityArchiveHandler handler,
             HttpContext httpContext, CancellationToken cancellationToken) =>
         {
             var actor = httpContext.GetActorContext();
-            await ensureAdministratorActions.HandleAsync(new EnsureTenantAdministratorActionsCommand(
-                actor.TenantId, actor.Principal, [CrmActionKeys.OpportunityArchive, CrmActionKeys.OpportunityRestore], actor.CorrelationId), cancellationToken);
             var command = new SetOpportunityArchiveCommand(actor.TenantId, id, actor.Principal, request.ExpectedVersion,
                 Archive: false, ConfirmOpenArchive: false, request.StageId, idempotencyKey, actor.CorrelationId);
             return Results.Ok(await handler.HandleAsync(command, cancellationToken));
@@ -153,13 +148,10 @@ public static class OpportunityEndpoints
         });
 
         group.MapGet("/{id:long}/actions", async (
-            long id, GetOpportunityAvailableActionsHandler handler, EnsureTenantAdministratorActionsHandler ensureAdministratorActions,
+            long id, GetOpportunityAvailableActionsHandler handler,
             HttpContext httpContext, CancellationToken cancellationToken) =>
         {
             var actor = httpContext.GetActorContext();
-            await ensureAdministratorActions.HandleAsync(new EnsureTenantAdministratorActionsCommand(
-                actor.TenantId, actor.Principal,
-                [CrmActionKeys.OpportunityArchive, CrmActionKeys.OpportunityRestore], actor.CorrelationId), cancellationToken);
             var dto = await handler.HandleAsync(new GetOpportunityAvailableActionsQuery(actor.TenantId, id, actor.Principal, actor.CorrelationId), cancellationToken);
             return dto is null ? Results.NotFound() : Results.Ok(dto);
         });

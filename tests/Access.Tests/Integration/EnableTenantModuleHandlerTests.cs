@@ -131,6 +131,28 @@ public sealed class EnableTenantModuleHandlerTests : IClassFixture<PostgresFixtu
     }
 
     [Fact]
+    public async Task Module_actions_reach_the_administrator_set_only_on_enablement_and_keep_their_relation()
+    {
+        var (tenant, _, _) = await BootstrappedTenantAsync();
+        var ownerScoped = DemoV1 with { PermissionSets = [new PermissionSetTemplate("demo_owner", "Demo owner", [new(Read), new(Edit, "owner")])], Roles = [] };
+
+        await using (var before = _fixture.CreateAdminContext())
+            Assert.Empty(await AdministratorGrantsAsync(before, tenant));
+
+        await using (var context = _fixture.CreateAdminContext())
+            Assert.Equal(EnableTenantModuleStatus.Enabled, (await HandlerFor(context, ownerScoped).HandleAsync(Command(tenant))).Status);
+
+        await using var verify = _fixture.CreateAdminContext();
+        Assert.Equal([(Edit, "owner"), (Read, (string?)null)], await AdministratorGrantsAsync(verify, tenant));
+    }
+
+    private static async Task<List<(string ActionKey, string? Relation)>> AdministratorGrantsAsync(AccessDbContext context, TenantId tenant) =>
+        (await context.PermissionSets.Where(set => set.TenantId == tenant && set.Key == "tenant_administration")
+            .SelectMany(set => set.Items).Where(item => item.ActionKey == Read || item.ActionKey == Edit)
+            .Select(item => new { item.ActionKey, item.Relation }).ToListAsync())
+        .Select(item => (item.ActionKey, item.Relation)).OrderBy(item => item.ActionKey).ToList();
+
+    [Fact]
     public async Task Enable_bumps_the_access_revision_and_writes_one_evidence_and_one_outbox_row()
     {
         var (tenant, _, _) = await BootstrappedTenantAsync();

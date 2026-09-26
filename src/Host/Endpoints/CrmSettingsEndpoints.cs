@@ -1,5 +1,4 @@
 using Contracts;
-using Access.Application;
 using CRM.Application;
 using CRM.Domain;
 using Host.Authentication;
@@ -12,12 +11,9 @@ public static class CrmSettingsEndpoints
     public static void MapCrmSettingsEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/crm/settings").RequireAuthorization();
-        group.MapGet("", async (HttpContext httpContext, GetCrmSettingsHandler handler,
-            EnsureTenantAdministratorActionsHandler ensureAdministratorActions, CancellationToken cancellationToken) =>
+        group.MapGet("", async (HttpContext httpContext, GetCrmSettingsHandler handler, CancellationToken cancellationToken) =>
         {
             var actor = httpContext.GetActorContext();
-            await ensureAdministratorActions.HandleAsync(new EnsureTenantAdministratorActionsCommand(
-                actor.TenantId, actor.Principal, [CrmActionKeys.SettingsRead, CrmActionKeys.SettingsUpdate], actor.CorrelationId), cancellationToken);
             return Results.Ok(await handler.HandleAsync(new GetCrmSettingsQuery(actor.TenantId, actor.Principal, actor.CorrelationId), cancellationToken));
         });
         group.MapPut("", async (CrmSettingsRequest request, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,

@@ -25,4 +25,13 @@ public sealed class ModuleCapabilityCatalog
     public IReadOnlyList<ModuleCapabilityManifest> Modules { get; }
 
     public ModuleCapabilityManifest? Find(string moduleKey) => _byKey.GetValueOrDefault(moduleKey);
+
+    /// <summary>The union of a module's permission-set templates as one grant per action — what the tenant
+    /// administrator receives on enablement. A template's relation (e.g. `owner` on private calendar entries) is
+    /// kept; it is dropped only when another template grants the same action without one.</summary>
+    public static IReadOnlyList<(string ActionKey, string? Relation)> AdministratorGrants(ModuleCapabilityManifest manifest) =>
+        manifest.PermissionSets.SelectMany(set => set.Items)
+            .GroupBy(item => item.ActionKey, StringComparer.Ordinal)
+            .Select(group => (group.Key, group.Any(item => item.Relation is null) ? null : group.First().Relation))
+            .ToList();
 }
