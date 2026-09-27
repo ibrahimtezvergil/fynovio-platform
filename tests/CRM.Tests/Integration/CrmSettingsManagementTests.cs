@@ -127,6 +127,14 @@ public sealed class CrmSettingsManagementTests(PostgresFixture fixture)
             var retained = await context.Opportunities.SingleAsync(x => x.PipelineDefinitionVersionId == first.VersionId);
             Assert.Equal(originalStageId, retained.PipelineStageId);
         }
+        // Create a second active pipeline so the first can be deactivated
+        await using (var context = fixture.CreateAdminContext())
+        {
+            var secondDefinition = PipelineDefinition.Create(tenant, "Secondary");
+            context.PipelineDefinitions.Add(secondDefinition);
+            await context.SaveChangesAsync();
+        }
+
         SetPipelineLifecycleCommand lifecycle;
         await using (var context = fixture.CreateAdminContext())
         {

@@ -41,6 +41,13 @@ public sealed class SetPipelineLifecycleHandler(CrmDbContext context, IAuthorize
         {
             if (await context.CrmSettings.AnyAsync(x => x.TenantId == command.TenantId && x.DefaultPipelineDefinitionId == definition.Id, cancellationToken))
                 throw new InvalidOperationException("Select another default pipeline before deactivating or archiving this pipeline.");
+            // No CrmSettings row does not mean "no guard needed" — a tenant with none
+            // configured yet can still be relying on this being its only pipeline (doc
+            // 2026-09-27 §6.1/§5 item 7.c: closes the reopen-the-gap path).
+            var otherActivePipelineExists = await context.PipelineDefinitions.AnyAsync(
+                x => x.TenantId == command.TenantId && x.Id != definition.Id && x.IsActive && !x.IsArchived, cancellationToken);
+            if (!otherActivePipelineExists)
+                throw new InvalidOperationException("A tenant must always keep at least one active pipeline.");
         }
         if (command.Archive) definition.Archive();
         else if (command.Restore) definition.Restore();
