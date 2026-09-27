@@ -14,6 +14,7 @@ public sealed class PipelineStageConfiguration : IEntityTypeConfiguration<Pipeli
             table.HasCheckConstraint("ck_pipeline_stages_sort_order_non_negative", "sort_order >= 0");
             table.HasCheckConstraint("ck_pipeline_stages_name_non_empty", "length(btrim(name)) > 0");
             table.HasCheckConstraint("ck_pipeline_stages_archived_inactive", "NOT is_archived OR NOT is_active");
+            table.HasCheckConstraint("ck_pipeline_stages_kind", "kind IN ('open','won','lost')");
         });
 
         builder.HasKey(s => s.Id);
@@ -27,6 +28,12 @@ public sealed class PipelineStageConfiguration : IEntityTypeConfiguration<Pipeli
         builder.Property(s => s.IsActive).HasDefaultValue(true).IsRequired();
         builder.Property(s => s.IsArchived).HasDefaultValue(false).IsRequired();
         builder.Property(s => s.IsEntry).HasDefaultValue(false).IsRequired();
+
+        builder.Property(s => s.Kind)
+            .HasConversion(k => ToDb(k), v => FromDb(v))
+            .HasMaxLength(8)
+            .HasDefaultValue(PipelineStageKind.Open)
+            .IsRequired();
 
         builder.HasOne<PipelineDefinitionVersion>()
             .WithMany()
@@ -44,8 +51,21 @@ public sealed class PipelineStageConfiguration : IEntityTypeConfiguration<Pipeli
             .HasDatabaseName("ux_pipeline_stages_one_entry_per_version")
             .IsUnique()
             .HasFilter("is_entry = true");
-
-        // Kind will be configured in Task 2 with proper column type and CHECK constraint
-        builder.Ignore(s => s.Kind);
     }
+
+    private static string ToDb(PipelineStageKind kind) => kind switch
+    {
+        PipelineStageKind.Open => "open",
+        PipelineStageKind.Won => "won",
+        PipelineStageKind.Lost => "lost",
+        _ => throw new ArgumentOutOfRangeException(nameof(kind))
+    };
+
+    private static PipelineStageKind FromDb(string value) => value switch
+    {
+        "open" => PipelineStageKind.Open,
+        "won" => PipelineStageKind.Won,
+        "lost" => PipelineStageKind.Lost,
+        _ => throw new ArgumentOutOfRangeException(nameof(value))
+    };
 }
