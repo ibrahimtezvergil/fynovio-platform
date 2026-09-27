@@ -44,5 +44,8 @@ public sealed class PipelineStageConfiguration : IEntityTypeConfiguration<Pipeli
             .HasDatabaseName("ux_pipeline_stages_one_entry_per_version")
             .IsUnique()
             .HasFilter("is_entry = true");
+
+        // Kind will be configured in Task 2 with proper column type and CHECK constraint
+        builder.Ignore(s => s.Kind);
     }
 }
