@@ -1,6 +1,16 @@
+using System.Runtime.CompilerServices;
 using Contracts;
 
+[assembly: InternalsVisibleTo("CRM.Tests")]
+
 namespace CRM.Domain;
+
+public enum PipelineStageKind
+{
+    Open,
+    Won,
+    Lost
+}
 
 public sealed class PipelineStage
 {
@@ -12,11 +22,12 @@ public sealed class PipelineStage
     public bool IsActive { get; private set; } = true;
     public bool IsArchived { get; private set; }
     public bool IsEntry { get; private set; }
+    public PipelineStageKind Kind { get; private set; } = PipelineStageKind.Open;
     public DateTimeOffset CreatedAt { get; private set; }
 
     private PipelineStage() { }
 
-    internal static PipelineStage Create(TenantId tenantId, long pipelineDefinitionVersionId, string name, int sortOrder, bool isEntry)
+    internal static PipelineStage Create(TenantId tenantId, long pipelineDefinitionVersionId, string name, int sortOrder, bool isEntry, PipelineStageKind kind = PipelineStageKind.Open)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name is required.", nameof(name));
@@ -31,6 +42,7 @@ public sealed class PipelineStage
             SortOrder = sortOrder,
             IsActive = true,
             IsEntry = isEntry,
+            Kind = kind,
             CreatedAt = DateTimeOffset.UtcNow
         };
     }
