@@ -221,7 +221,7 @@ Independently verified: 229/229 passing; `psql \d crm.pipeline_stages` confirms 
 
 This resolves a gap the architecture doc's §5 item 6.a did not itself specify a mechanism for: `AddStage` (and therefore any normal stage-adding path) already refuses to run unless `Status == Draft` (`PipelineDefinitionVersion.cs`, existing code: `if (Status != PipelineVersionStatus.Draft) throw new InvalidOperationException("Only a draft pipeline version can be edited.");`). The one-time backfill in Phase D must add Won/Lost stages to **already-`Published`/`Superseded`** versions, which that guard forbids. `BackfillSystemStage` below is the doc's own "deliberate, one-time exception to 4.3's immutable stage set" (§5 item 6.a), made explicit and narrow — it can never be reached from any normal HTTP-facing code path.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to `tests/CRM.Tests/Domain/PipelineDefinitionVersionTests.cs`:
 
@@ -286,7 +286,7 @@ Add to `tests/CRM.Tests/Domain/PipelineDefinitionVersionTests.cs`:
 Run: `dotnet test tests/CRM.Tests --filter PipelineDefinitionVersionTests`
 Expected: FAIL — `AddWonStage`/`AddLostStage`/`BackfillSystemStage` don't exist yet.
 
-- [ ] **Step 2: Implement the three methods**
+- [x] **Step 2: Implement the three methods**
 
 Add to `src/Modules/CRM/Domain/PipelineDefinitionVersion.cs`, after `AddStage`:
 
@@ -326,17 +326,19 @@ Add to `src/Modules/CRM/Domain/PipelineDefinitionVersion.cs`, after `AddStage`:
     }
 ```
 
-- [ ] **Step 3: Run tests to verify they pass**
+- [x] **Step 3: Run tests to verify they pass**
 
 Run: `dotnet test tests/CRM.Tests --filter PipelineDefinitionVersionTests`
 Expected: PASS (5 new tests).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/Modules/CRM/Domain/PipelineDefinitionVersion.cs tests/CRM.Tests/Domain/PipelineDefinitionVersionTests.cs
 git commit -m "feat(crm): add Won/Lost system-stage creation, including the one-time backfill exception"
 ```
+→ Commit: `9790201` "feat(crm): add Won/Lost system-stage creation, including the one-time backfill exception"
+Independently verified: full suite 234/234 passing (229 baseline + 5 new). Escalated code-quality review specifically confirmed the two guard directions (Draft-only vs Published/Superseded-only) are airtight and non-overlapping against all 4 `PipelineVersionStatus` values, and that `BackfillSystemStage` has zero callers outside its own tests at this point in the plan. "Ready to merge: Yes."
 
 **Escalate for review here** — this task adds the one deliberate exception to an otherwise-absolute domain invariant ("only a draft version can be edited"). Per this project's own effort-escalation rule (state-machine invariants), get this specific task reviewed before moving on, even though the rest of Phase A doesn't need it.
 
