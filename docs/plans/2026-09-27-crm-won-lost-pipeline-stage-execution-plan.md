@@ -576,7 +576,7 @@ Independently verified: 237/237 passing. Code-quality review confirmed the guard
 
 This is deliberately separate from `CrmDevSeed` (`src/Host/Authentication/CrmDevSeed.cs`), which is dev-only and never runs in production — Task 8 needs a production-appropriate default that both the CLI/bootstrap path and `CrmDevSeed` can share going forward, so the two never drift.
 
-- [ ] **Step 1: Create the file**
+- [x] **Step 1: Create the file**
 
 ```csharp
 namespace Host.Bootstrap;
@@ -593,12 +593,14 @@ public static class CrmDefaultPipelineSeed
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/Host/Bootstrap/CrmDefaultPipelineSeed.cs
 git commit -m "feat(crm): define the minimal default pipeline seed for auto-provisioning"
 ```
+→ Commit: `091760e` "feat(crm): define the minimal default pipeline seed for auto-provisioning"
+Exact match to spec, verified via diff inspection; skipped a separate code-quality subagent review given the trivial, logic-free nature of this task.
 
 ### Task 8: Auto-provision on CRM module enablement, at the Host level
 
