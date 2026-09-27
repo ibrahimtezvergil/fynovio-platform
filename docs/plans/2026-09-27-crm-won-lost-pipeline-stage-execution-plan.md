@@ -151,7 +151,7 @@ Independently verified: 229/229 passing. Code-quality review: approved, no issue
 - Modify: `src/Modules/CRM/Persistence/Configurations/PipelineStageConfiguration.cs`
 - Create: `src/Modules/CRM/Persistence/Migrations/<timestamp>_AddPipelineStageKind.cs` (generated)
 
-- [ ] **Step 1: Add the property conversion to `PipelineStageConfiguration.cs`**
+- [x] **Step 1: Add the property conversion to `PipelineStageConfiguration.cs`**
 
 Add inside `Configure`, next to the other `builder.Property(...)` calls:
 
@@ -189,27 +189,29 @@ Add the two private conversion methods at the bottom of the class, mirroring `Op
     };
 ```
 
-- [ ] **Step 2: Generate the migration**
+- [x] **Step 2: Generate the migration**
 
 Run: `dotnet ef migrations add AddPipelineStageKind --project src/Modules/CRM --startup-project src/Host`
 Expected: a new `<timestamp>_AddPipelineStageKind.cs`/`.Designer.cs` pair under `src/Modules/CRM/Persistence/Migrations/`, adding a `kind varchar(8) NOT NULL DEFAULT 'open'` column plus the CHECK constraint on `pipeline_stages`.
 
-- [ ] **Step 3: Apply it to the local dev database and verify**
+- [x] **Step 3: Apply it to the local dev database and verify**
 
 Run: `dotnet ef database update --project src/Modules/CRM --startup-project src/Host`
 Expected: succeeds; `\d pipeline_stages` in `psql` shows the new `kind` column and `ck_pipeline_stages_kind` constraint.
 
-- [ ] **Step 4: Run the full CRM.Tests suite**
+- [x] **Step 4: Run the full CRM.Tests suite**
 
 Run: `dotnet test tests/CRM.Tests`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Persistence/Configurations/PipelineStageConfiguration.cs src/Modules/CRM/Persistence/Migrations/
 git commit -m "feat(crm): persist PipelineStage.Kind"
 ```
+→ Commit: `4e69a4b` "feat(crm): persist PipelineStage.Kind"
+Independently verified: 229/229 passing; `psql \d crm.pipeline_stages` confirms the `kind varchar(8) NOT NULL DEFAULT 'open'` column and `ck_pipeline_stages_kind` CHECK constraint. Code-quality review: approved, no issues, "Ready to merge: Yes."
 
 ### Task 3: `PipelineDefinitionVersion.AddWonStage`/`AddLostStage`/`BackfillSystemStage`
 
