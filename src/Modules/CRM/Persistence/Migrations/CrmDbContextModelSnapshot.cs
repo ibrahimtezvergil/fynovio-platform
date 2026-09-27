@@ -760,10 +760,6 @@ namespace CRM.Persistence.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("is_entry");
 
-                    b.Property<int>("Kind")
-                        .HasColumnType("integer")
-                        .HasColumnName("kind");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
