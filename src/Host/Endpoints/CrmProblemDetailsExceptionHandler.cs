@@ -30,6 +30,7 @@ public sealed class CrmProblemDetailsExceptionHandler : IExceptionHandler
             OpportunityRestoreStageInvalidException => (StatusCodes.Status422UnprocessableEntity, "restore_stage_invalid", exception.Message),
             InvalidPipelineTransitionException => (StatusCodes.Status409Conflict, "invalid_pipeline_transition", exception.Message),
             PipelineConfigurationInvalidException => (StatusCodes.Status409Conflict, "invalid_pipeline_configuration", exception.Message),
+            PipelineNotProvisionedException => (StatusCodes.Status409Conflict, "pipeline_not_provisioned", exception.Message),
             CrmSettingsConcurrencyConflictException => (StatusCodes.Status409Conflict, "concurrency_conflict", exception.Message),
             CrmCatalogKeyConflictException => (StatusCodes.Status409Conflict, "catalog_key_conflict", exception.Message),
             CrmPipelineNameConflictException => (StatusCodes.Status409Conflict, "pipeline_name_conflict", exception.Message),
