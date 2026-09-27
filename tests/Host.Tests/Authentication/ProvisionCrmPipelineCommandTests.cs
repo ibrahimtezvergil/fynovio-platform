@@ -132,8 +132,9 @@ public sealed class ProvisionCrmPipelineCommandTests : IClassFixture<AuthApiFixt
         Assert.Equal(2, await StageCountAsync(host, tenant));
     }
 
-    /// <summary>The point of P1: a tenant set up the production way (bootstrap + CRM module + this command) — no seed —
-    /// opens an opportunity into the operator's entry stage and moves it to the next stage.</summary>
+    /// <summary>The point of P1: a tenant set up the production way (bootstrap + custom pipeline provisioning + CRM module) — no seed —
+    /// opens an opportunity into the operator's entry stage and moves it to the next stage. The custom pipeline must be provisioned
+    /// BEFORE enabling the CRM module, so it doesn't get overridden by the auto-provisioned default.</summary>
     [Fact]
     public async Task A_production_provisioned_tenant_can_open_an_opportunity_into_its_entry_stage_and_move_it_on()
     {
@@ -141,12 +142,25 @@ public sealed class ProvisionCrmPipelineCommandTests : IClassFixture<AuthApiFixt
         var email = AuthApiFixture.NewEmail();
         using var host = await _fixture.StartHostAsync(Enabled);
         using var client = host.CreateClient();
-        var bootstrap = await BootstrapAsync(host, tenant, email, "--modules", "crm");
+
+        // Bootstrap WITHOUT CRM enabled — we'll enable it after provisioning the custom pipeline
+        var bootstrap = await BootstrapAsync(host, tenant, email);
         Assert.Equal(BootstrapCommand.Success, bootstrap.Code);
+
+        // Provision custom stages BEFORE enabling CRM — so it's the sole pipeline, not overridden by the auto-provisioned default
         var (code, output, error) = await RunAsync(host, "--tenant-id", tenant.ToString(), "--name", "Sales", "--stages", "Lead,Quote,Contract");
         Assert.Equal(ProvisionCrmPipelineCommand.Success, code);
         Assert.Empty(error);
         Assert.Contains("entry stage: Lead", output);
+
+        // Enable CRM after the custom pipeline already exists — Task 8's auto-provisioning must be a no-op here
+        // (this is the documented, intended order: provision custom stages BEFORE enabling the module, if you want them
+        // instead of the generic default).
+        await using (var scope = host.Services.CreateAsyncScope())
+        {
+            var enableExitCode = await EnableModuleCommand.EnableAsync(scope.ServiceProvider, new TenantId(tenant), "crm", new StringWriter(), new StringWriter(), CancellationToken.None);
+            Assert.Equal(EnableModuleCommand.Success, enableExitCode);
+        }
 
         var resetToken = Uri.UnescapeDataString(Regex.Match(bootstrap.Output, "#token=(\\S+)").Groups[1].Value);
         Assert.Equal(HttpStatusCode.NoContent, (await Reset(client, resetToken, NewPassword)).StatusCode);

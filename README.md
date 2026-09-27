@@ -251,6 +251,8 @@ A tenant with the CRM module still cannot Open or move an opportunity until it h
 Bootstrap__Enabled=true dotnet Host.dll provision-crm-pipeline --tenant-id 1 --name "Sales pipeline" --stages "Qualification,Proposal,Negotiation"
 ```
 
+**Important:** To use custom stages, run `provision-crm-pipeline` **before** `enable-tenant-module crm`. Enabling CRM now auto-provisions a minimal one-stage "Sales pipeline" (safety net, so a tenant is never pipeline-less); if you provision custom stages first, that auto-provisioning becomes a no-op. Running `provision-crm-pipeline` after CRM is enabled succeeds with no changes (idempotent by state, same as running it twice).
+
 It creates pipeline version 1 in one transaction under the tenant's RLS context. Like module enablement it is idempotent by state and never edits what exists: a tenant that already has a pipeline gets `already has a pipeline; nothing changed` (exit `0`), even when different stages are passed. A tenant that is not bootstrapped is refused (a typo in `--tenant-id` must not create configuration for a tenant that does not exist). Exit codes: `0` provisioned/already provisioned, `2` not enabled by configuration, `4` tenant not bootstrapped, `64` bad arguments (missing values, duplicate stage names ignoring case, more than 50 stages, names over 100 characters). Changing a pipeline afterwards has no path yet.
 
 ### Customers (Parties) and opportunities
