@@ -610,7 +610,7 @@ Exact match to spec, verified via diff inspection; skipped a separate code-quali
 
 This is deliberately **not** added inside `EnableTenantModuleHandler` (`src/Modules/Access/Application/`) — Access must never depend on CRM application code (module-boundary rule). `EnableModuleCommand.EnableAsync` is the one shared Host-level entry point both the `enable-tenant-module` CLI command and `bootstrap-tenant-admin --modules` already go through, so hooking it here covers both callers.
 
-- [ ] **Step 1: Add the CRM module key constant and provisioning call**
+- [x] **Step 1: Add the CRM module key constant and provisioning call**
 
 In `src/Host/Bootstrap/EnableModuleCommand.cs`, add a constant near the top of the class:
 
@@ -646,7 +646,7 @@ Change the `EnableTenantModuleStatus.Enabled` case inside `EnableAsync`:
                 return Success;
 ```
 
-- [ ] **Step 2: Compile and run the Host test suite**
+- [x] **Step 2: Compile and run the Host test suite**
 
 Run: `dotnet build src/Host`
 Expected: succeeds (adds a `using CRM.Application;` if the compiler flags the fully-qualified names as unnecessary — either form is fine, the plan uses fully-qualified names above to avoid ambiguity with `Access.Application`, already imported in this file).
@@ -671,22 +671,26 @@ Expected: PASS on existing tests; if none currently assert on CRM specifically, 
 
 (Adapt `BootstrapTenantAsync`/`Output`/`Error` to whatever this test class's existing fixture already exposes — check the top of the file housing the current `EnableModuleCommand` tests before adding this.)
 
-- [ ] **Step 3: Run it**
+- [x] **Step 3: Run it**
 
 Run: `dotnet test tests/Host.Tests --filter EnableAsync_provisions_a_default_pipeline_when_enabling_crm`
 Expected: PASS.
 
-- [ ] **Step 4: Manually verify against the local dev database**
+- [x] **Step 4: Manually verify against the local dev database**
 
 Run: `dotnet run --project src/Host -- enable-tenant-module --tenant-id <a bootstrapped tenant with CRM not yet enabled> --module crm`
 Expected output includes both the "Module 'crm' enabled..." line and "Default pipeline provisioned (version N)." Then confirm: `psql fynovio_platform -c "select * from pipeline_definitions where tenant_id = <id>;"` shows one row.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Host/Bootstrap/EnableModuleCommand.cs tests/Host.Tests/
 git commit -m "feat(crm): auto-provision a default pipeline when the CRM module is enabled"
 ```
+→ Commit: `05f1154` "feat(crm): auto-provision a default pipeline when the CRM module is enabled"
+(follow-up fix: `e588da4` "fix(crm): provision-crm-pipeline must run before enabling CRM to get custom stages")
+
+**Deviation, owner-decided (not a silent fix):** this auto-provisioning collided with a prior, explicit 2026-09-20 decision ("pipeline provisioning without inventing a stage template — the operator supplies the stages," `provision-crm-pipeline`). Discovered via a real regression in `ProvisionCrmPipelineCommandTests.A_production_provisioned_tenant_can_open_an_opportunity_into_its_entry_stage_and_move_it_on` (auto-provisioning made the operator's explicit custom-stage provisioning a silent no-op). Presented three options to the owner; **chosen: keep both mechanisms unchanged, fix only the required order** — `provision-crm-pipeline` must run *before* `enable-tenant-module crm` to get custom stages; the auto-provisioned default is a safety net for tenants nobody explicitly configures, not a replacement for the explicit path. Fixed the test to the new order and documented it in `README.md` (§"Giving a tenant its first sales pipeline"). Independently verified: the full Host.Tests failing-test-name set after the fix is byte-for-byte identical to the pre-existing 26-name baseline (not just a matching count) — confirmed no other test relying on the old bootstrap-with-modules-then-provision order was missed, and cross-checked `CrmDevSeed`'s own provisioning path (calls `EnableTenantModuleHandler` directly, bypassing `EnableModuleCommand.EnableAsync` entirely) is unaffected by this change.
 
 ### Task 9: One-time provisioning pass for tenants already stuck pipeline-less
 
@@ -814,6 +818,8 @@ git commit -m "feat(crm): one-time operator pass to provision pipelines for alre
 - Modify: `src/Modules/CRM/Application/ProvisionPipelineHandler.cs:36-51`
 - Modify: `src/Modules/CRM/Application/CreatePipelineDraftHandler.cs:56-64` (the stage-building block inside `HandleAsync`)
 - Test: `tests/CRM.Tests/Application/ProvisionPipelineHandlerTests.cs`, `tests/CRM.Tests/Application/CreatePipelineDraftHandlerTests.cs`
+
+**Known collateral from Task 8 — check before running the full suite:** `tests/Host.Tests/Authentication/ProvisionCrmPipelineCommandTests.cs` has two assertions that this task will break and that must be updated deliberately, not rationalized as pre-existing noise: line ~185's exact `["Lead", "Quote", "Contract"]` stage-name list (will gain Won/Lost stages appended) and `Running_it_again_is_a_no_op_that_still_succeeds`'s `StageCount == 2` assertion (will need to account for the two new system stages). Update both explicitly as part of this task.
 
 - [ ] **Step 1: Write the failing tests**
 
