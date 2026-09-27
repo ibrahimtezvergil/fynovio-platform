@@ -355,7 +355,7 @@ Implements doc §5 item 7 / §6.1. This phase is independent of Phase C and coul
 - Modify: `src/Host/Endpoints/CrmProblemDetailsExceptionHandler.cs`
 - Test: `tests/CRM.Tests/Application/OpenOpportunityHandlerTests.cs` (extend — written against this exception in Task 5)
 
-- [ ] **Step 1: Create the exception**
+- [x] **Step 1: Create the exception**
 
 ```csharp
 namespace CRM.Application;
@@ -371,7 +371,7 @@ public sealed class PipelineNotProvisionedException() : InvalidOperationExceptio
     "This tenant has no usable sales pipeline yet. Provisioning should have happened automatically when CRM was enabled — contact an operator if this persists.");
 ```
 
-- [ ] **Step 2: Add the HTTP mapping**
+- [x] **Step 2: Add the HTTP mapping**
 
 In `src/Host/Endpoints/CrmProblemDetailsExceptionHandler.cs`, add a new arm to the `switch`, next to `PipelineConfigurationInvalidException`:
 
@@ -379,12 +379,14 @@ In `src/Host/Endpoints/CrmProblemDetailsExceptionHandler.cs`, add a new arm to t
             PipelineNotProvisionedException => (StatusCodes.Status409Conflict, "pipeline_not_provisioned", exception.Message),
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/PipelineNotProvisionedException.cs src/Host/Endpoints/CrmProblemDetailsExceptionHandler.cs
 git commit -m "feat(crm): add PipelineNotProvisionedException and its 409 mapping"
 ```
+→ Commit: `7339640` "feat(crm): add PipelineNotProvisionedException and its 409 mapping"
+Independently verified via diff inspection: CRM.Tests 234/234 unchanged, Host.Tests 363/389 with the same 26 pre-existing failures (unrelated to this plan) — no regressions. Small, mechanical, exact match to spec; skipped a separate code-quality subagent review given the low risk.
 
 ### Task 5: `OpenOpportunityHandler` throws instead of silently opening with a null stage
 
