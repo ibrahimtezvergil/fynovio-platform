@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Access.Persistence;
 using Collaboration.Application;
 using Contracts;
+using CRM.Persistence;
 using Host.Bootstrap;
 using Host.Tests.Fixtures;
 using Microsoft.EntityFrameworkCore;
@@ -177,6 +178,27 @@ public sealed class EnableModuleCommandTests : IClassFixture<AuthApiFixture>
         await using var scope = host.Services.CreateAsyncScope();
         var access = scope.ServiceProvider.GetRequiredService<AccessDbContext>();
         Assert.Equal(1, await CountEnablementsAsync(access, tenant));
+    }
+
+    [Fact]
+    public async Task Enabling_crm_provisions_a_default_pipeline()
+    {
+        var tenant = AuthApiFixture.NewTenantId();
+        var tenantId = new TenantId(tenant);
+        using var host = await _fixture.StartHostAsync(Enabled);
+        Assert.Equal(BootstrapCommand.Success, (await RunBootstrapAsync(host, tenant, AuthApiFixture.NewEmail())).Code);
+
+        var (code, output, error) = await RunEnableAsync(host, "--tenant-id", tenant.ToString(), "--module", "crm");
+
+        Assert.Equal(EnableModuleCommand.Success, code);
+        Assert.Empty(error);
+        Assert.Contains("Default pipeline provisioned", output);
+
+        await using var scope = host.Services.CreateAsyncScope();
+        var crmContext = scope.ServiceProvider.GetRequiredService<CrmDbContext>();
+        await using var transaction = await crmContext.Database.BeginTransactionAsync();
+        await crmContext.SetTenantContextAsync(tenantId, CancellationToken.None);
+        Assert.True(await crmContext.PipelineDefinitions.AnyAsync(p => p.TenantId == tenantId && p.Name == "Sales pipeline"));
     }
 
     [Fact]

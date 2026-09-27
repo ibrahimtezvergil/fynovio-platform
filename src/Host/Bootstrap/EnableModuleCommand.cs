@@ -1,5 +1,6 @@
 using Access.Application;
 using Contracts;
+using CRM.Application;
 
 namespace Host.Bootstrap;
 
@@ -11,6 +12,7 @@ namespace Host.Bootstrap;
 public static class EnableModuleCommand
 {
     public const string Name = "enable-tenant-module";
+    private const string CrmModuleKey = "crm";
 
     public const int Success = 0;
     public const int NotPermitted = BootstrapCommand.NotPermitted;
@@ -62,6 +64,25 @@ public static class EnableModuleCommand
                 await output.WriteLineAsync(
                     $"Module '{moduleKey}' enabled for tenant {tenantId.Value} (template v{result.EnabledVersion}); "
                     + $"{result.GrantedAssignments} administrator role assignment(s) created.");
+
+                // Auto-provision a default pipeline when CRM is enabled.
+                if (string.Equals(moduleKey, CrmModuleKey, StringComparison.OrdinalIgnoreCase))
+                {
+                    var provisionHandler = scopedServices.GetRequiredService<ProvisionPipelineHandler>();
+                    var provisionResult = await provisionHandler.HandleAsync(
+                        new ProvisionPipelineCommand(
+                            tenantId,
+                            CrmDefaultPipelineSeed.PipelineName,
+                            CrmDefaultPipelineSeed.ActiveStageNames,
+                            RetiredStageNames: []),
+                        cancellationToken);
+
+                    var pipelineMessage = provisionResult.Status == ProvisionPipelineStatus.Provisioned
+                        ? "Default pipeline provisioned."
+                        : "Tenant already has a pipeline; skipped provisioning.";
+                    await output.WriteLineAsync(pipelineMessage);
+                }
+
                 return Success;
 
             case EnableTenantModuleStatus.AlreadyEnabled:
