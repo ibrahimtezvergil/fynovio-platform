@@ -394,7 +394,7 @@ Independently verified via diff inspection: CRM.Tests 234/234 unchanged, Host.Te
 - Modify: `src/Modules/CRM/Application/OpenOpportunityHandler.cs:118-151` (the `ResolveEntryStageAsync` method)
 - Test: `tests/CRM.Tests/Application/OpenOpportunityHandlerTests.cs`
 
-- [ ] **Step 1: Write the failing integration tests**
+- [x] **Step 1: Write the failing integration tests**
 
 Add to `tests/CRM.Tests/Application/OpenOpportunityHandlerTests.cs` (follow that file's existing fixture/seeding conventions — check the top of the file for its `SeedAsync`-style helper before writing these):
 
@@ -433,7 +433,7 @@ Add to `tests/CRM.Tests/Application/OpenOpportunityHandlerTests.cs` (follow that
 Run: `dotnet test tests/CRM.Tests --filter OpenOpportunityHandlerTests`
 Expected: FAIL — `ResolveEntryStageAsync` still returns `(null, null)`, so `Open()` succeeds instead of throwing.
 
-- [ ] **Step 2: Change `ResolveEntryStageAsync`**
+- [x] **Step 2: Change `ResolveEntryStageAsync`**
 
 Replace the two early `return (null, null);` lines in `src/Modules/CRM/Application/OpenOpportunityHandler.cs`:
 
@@ -474,22 +474,25 @@ Update the method's doc comment (currently says "Returns (null, null) if the ten
     /// resolution's binding invariant, unchanged by this amendment).</summary>
 ```
 
-- [ ] **Step 3: Run tests to verify they pass**
+- [x] **Step 3: Run tests to verify they pass**
 
 Run: `dotnet test tests/CRM.Tests --filter OpenOpportunityHandlerTests`
 Expected: PASS.
 
-- [ ] **Step 4: Run the full CRM.Tests suite**
+- [x] **Step 4: Run the full CRM.Tests suite**
 
 Run: `dotnet test tests/CRM.Tests`
 Expected: PASS. If any other existing test relied on opening an opportunity for a tenant with no pipeline (check `tests/CRM.Tests` for any `Open` test seeding zero `PipelineDefinition`s), update that test to seed a minimal published pipeline first — that test was exercising the exact behavior this task deliberately removes.
+One pre-existing test (`Opening_leaves_pipeline_fields_null_when_the_tenant_has_no_pipeline`) needed exactly this fix; reviewer confirmed via broad search it was the only one.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/OpenOpportunityHandler.cs tests/CRM.Tests/Application/OpenOpportunityHandlerTests.cs
 git commit -m "fix(crm): OpenOpportunity fails loudly instead of opening with a null pipeline stage"
 ```
+→ Commit: `37d73b6` "fix(crm): OpenOpportunity fails loudly instead of opening with a null pipeline stage"
+Independently verified (the implementer's own report couldn't run tests in-session; I re-ran them myself): 236/236 passing (234 baseline + 2 new). Escalated attention given this reverses a documented 2026-09-19 decision — code-quality review confirmed the three-way exception split is intact (`PipelineNotProvisionedException` for the two "nothing provisioned" cases, unchanged `PipelineConfigurationInvalidException` for "configured but invalid") and swept the whole test tree for other latent old-behavior assertions (found none). "Ready to merge: Yes."
 
 ### Task 6: `SetPipelineLifecycleHandler` — never let a tenant archive its last active pipeline
 
