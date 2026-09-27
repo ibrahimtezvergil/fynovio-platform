@@ -16,6 +16,15 @@ public sealed class StubPrincipalDirectory(IReadOnlyList<PrincipalDirectoryEntry
     public List<(string? Search, int Take)> Listings { get; } = [];
     public int Calls => AskedActions.Count;
 
+    public Task<IReadOnlyDictionary<PrincipalRef, string>> ResolveDisplayNamesAsync(
+        TenantId tenantId, IReadOnlyCollection<PrincipalRef> principals, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyDictionary<PrincipalRef, string> names = permitted
+            .Where(entry => principals.Contains(entry.Principal))
+            .ToDictionary(entry => entry.Principal, entry => entry.DisplayName);
+        return Task.FromResult(names);
+    }
+
     public Task<IReadOnlyList<PrincipalDirectoryEntry>> ListPermittedPrincipalsAsync(
         TenantId tenantId, IReadOnlyCollection<ActionKey> requiredActions, string? search, int take, CancellationToken cancellationToken = default)
     {
