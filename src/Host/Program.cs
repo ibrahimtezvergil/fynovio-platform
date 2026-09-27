@@ -373,6 +373,8 @@ if (EnableModuleCommand.IsRequested(args))
     return await EnableModuleCommand.RunAsync(app.Services, app.Configuration, args, Console.Out, Console.Error);
 if (ProvisionCrmPipelineCommand.IsRequested(args))
     return await ProvisionCrmPipelineCommand.RunAsync(app.Services, app.Configuration, args, Console.Out, Console.Error);
+if (BackfillCrmPipelinesCommand.IsRequested(args))
+    return await BackfillCrmPipelinesCommand.RunAsync(app.Services, app.Configuration, args, Console.Out, Console.Error);
 
 if (!app.Environment.IsDevelopment() && !emailOptions.Smtp.Enabled)
     app.Logger.LogWarning("Email:Smtp:Enabled is false: invitation and password-reset e-mails will not be delivered.");
