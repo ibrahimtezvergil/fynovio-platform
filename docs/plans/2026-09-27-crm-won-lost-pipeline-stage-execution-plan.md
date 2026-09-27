@@ -500,7 +500,7 @@ Independently verified (the implementer's own report couldn't run tests in-sessi
 - Modify: `src/Modules/CRM/Application/SetPipelineLifecycleHandler.cs:40-44`
 - Test: `tests/CRM.Tests/Application/SetPipelineLifecycleHandlerTests.cs` (extend)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```csharp
     [Fact]
@@ -522,7 +522,7 @@ Independently verified (the implementer's own report couldn't run tests in-sessi
 Run: `dotnet test tests/CRM.Tests --filter SetPipelineLifecycleHandlerTests`
 Expected: FAIL — today this archives successfully because no `CrmSettings` row exists to trigger the existing guard.
 
-- [ ] **Step 2: Widen the guard**
+- [x] **Step 2: Widen the guard**
 
 Replace lines 40–44 of `src/Modules/CRM/Application/SetPipelineLifecycleHandler.cs`:
 
@@ -549,22 +549,25 @@ Replace lines 40–44 of `src/Modules/CRM/Application/SetPipelineLifecycleHandle
         }
 ```
 
-- [ ] **Step 3: Run tests to verify they pass**
+- [x] **Step 3: Run tests to verify they pass**
 
 Run: `dotnet test tests/CRM.Tests --filter SetPipelineLifecycleHandlerTests`
 Expected: PASS.
 
-- [ ] **Step 4: Run the full CRM.Tests suite**
+- [x] **Step 4: Run the full CRM.Tests suite**
 
 Run: `dotnet test tests/CRM.Tests`
 Expected: PASS — check especially any existing test that archives a pipeline in a tenant seeded with only one; it may now need a second pipeline seeded first if it wasn't already exercising the default-pipeline guard.
+One pre-existing test (`CrmSettingsManagementTests.Pipeline_is_published_as_a_new_version_without_mutating_prior_version`) needed a second active pipeline seeded first; reviewer confirmed via broad search it was the only one.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/SetPipelineLifecycleHandler.cs tests/CRM.Tests/Application/SetPipelineLifecycleHandlerTests.cs
 git commit -m "fix(crm): a tenant can never archive or deactivate its only active pipeline"
 ```
+→ Commit: `1c045ab` "fix(crm): a tenant can never archive or deactivate its only active pipeline"
+Independently verified: 237/237 passing. Code-quality review confirmed the guard's placement is correct (cannot fire on Restore or activation) and cross-checked domain semantics of `IsActive`/`IsArchived` against `PipelineDefinition.cs`. "Ready to merge: Yes."
 
 ### Task 7: Default pipeline seed constants for production auto-provisioning
 
