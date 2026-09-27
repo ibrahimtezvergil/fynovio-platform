@@ -54,6 +54,11 @@ public sealed class OpenOpportunityHandlerTests
         Assert.Equal(entryStage.Id, reloaded.PipelineStageId);
     }
 
+    /// <summary>Legacy test amended 2026-09-27: previously tested silent null-stage opening
+    /// when no pipeline existed. Now seeds a pipeline first (as Task 8 EnableModuleCommand
+    /// guarantees all CRM tenants have one) and verifies successful opening with the
+    /// resolved entry stage. The old silent-null behavior is now tested explicitly as a
+    /// hard error in the new PipelineNotProvisionedException tests.</summary>
     [Fact]
     public async Task Opening_leaves_pipeline_fields_null_when_the_tenant_has_no_pipeline()
     {
@@ -61,6 +66,19 @@ public sealed class OpenOpportunityHandlerTests
         await using var seed = _fixture.CreateAdminContext();
         await using var seedMasterData = _fixture.CreateMasterDataContext();
         var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
+
+        // Seed a minimal published pipeline (as Task 8 guarantees)
+        var definition = PipelineDefinition.Create(tenant, "Sales");
+        seed.PipelineDefinitions.Add(definition);
+        await seed.SaveChangesAsync();
+        var version = definition.AddVersion(1);
+        seed.PipelineDefinitionVersions.Add(version);
+        await seed.SaveChangesAsync();
+        var entryStage = version.AddStage("Entry Stage", 0);
+        seed.PipelineStages.Add(entryStage);
+        version.Publish();
+        await seed.SaveChangesAsync();
+
         var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
         opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
         seed.Opportunities.Add(opportunity);
@@ -73,7 +91,8 @@ public sealed class OpenOpportunityHandlerTests
         await using var context = _fixture.CreateAdminContext();
         var result = await new OpenOpportunityHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command);
 
-        Assert.Null(result.PipelineStageId);
+        Assert.NotNull(result.PipelineStageId);
+        Assert.Equal(entryStage.Id, result.PipelineStageId);
     }
 
     /// <summary>Test-gap audit §9 (2026-09-19): ResolveEntryStageAsync's documented
@@ -254,5 +273,53 @@ public sealed class OpenOpportunityHandlerTests
 
         var untouched = await context.Opportunities.AsNoTracking().SingleAsync(o => o.Id == opportunity.Id);
         Assert.Equal(OpportunityStatus.Draft, untouched.Status);
+    }
+
+    [Fact]
+    public async Task HandleAsync_throws_when_the_tenant_has_no_pipeline_definition_at_all()
+    {
+        var tenant = TestData.NextTenant();
+        await using var seed = _fixture.CreateAdminContext();
+        await using var seedMasterData = _fixture.CreateMasterDataContext();
+        var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
+        // no PipelineDefinition seeded for this tenant at all
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
+        opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
+        seed.Opportunities.Add(opportunity);
+        await seed.SaveChangesAsync();
+
+        var command = new OpenOpportunityCommand(
+            tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion,
+            DateTimeOffset.UtcNow.AddDays(7), Guid.NewGuid().ToString(), Guid.NewGuid());
+
+        await using var context = _fixture.CreateAdminContext();
+        await Assert.ThrowsAsync<PipelineNotProvisionedException>(() =>
+            new OpenOpportunityHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command));
+    }
+
+    [Fact]
+    public async Task HandleAsync_throws_when_the_pipeline_definition_has_no_published_version()
+    {
+        var tenant = TestData.NextTenant();
+        await using var seed = _fixture.CreateAdminContext();
+        await using var seedMasterData = _fixture.CreateMasterDataContext();
+        var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
+
+        var definition = PipelineDefinition.Create(tenant, "Sales");
+        seed.PipelineDefinitions.Add(definition);
+        await seed.SaveChangesAsync();
+        // definition.Id assigned, no version added — stays unpublished
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
+        opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
+        seed.Opportunities.Add(opportunity);
+        await seed.SaveChangesAsync();
+
+        var command = new OpenOpportunityCommand(
+            tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion,
+            DateTimeOffset.UtcNow.AddDays(7), Guid.NewGuid().ToString(), Guid.NewGuid());
+
+        await using var context = _fixture.CreateAdminContext();
+        await Assert.ThrowsAsync<PipelineNotProvisionedException>(() =>
+            new OpenOpportunityHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command));
     }
 }

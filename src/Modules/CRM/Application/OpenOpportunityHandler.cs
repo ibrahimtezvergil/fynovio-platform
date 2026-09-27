@@ -109,12 +109,14 @@ public sealed class OpenOpportunityHandler(CrmDbContext context, IAuthorizer aut
 
     /// <summary>Resolves the tenant's single Opportunity pipeline, per this plan's own
     /// scope note: oldest PipelineDefinition, its highest-numbered version, that
-    /// version's IsEntry stage. Returns (null, null) if the tenant has no
-    /// PipelineDefinition/PipelineDefinitionVersion configured at all — Open() already
-    /// treats that as valid. Once a version is resolved, it must have exactly one usable
-    /// (IsEntry, IsActive) stage or opening is a hard error — a configured-but-invalid
-    /// pipeline is a different case from "nothing configured yet" and must never silently
-    /// open with a null stage (2026-09-19 entry-stage resolution's binding invariant).</summary>
+    /// version's IsEntry stage. Throws PipelineNotProvisionedException if the tenant has
+    /// no PipelineDefinition or no Published version at all — amended 2026-09-27; every
+    /// CRM-enabled tenant is now guaranteed one by EnableModuleCommand (Task 8), so this
+    /// is a real error, not an expected state, if it's ever hit. Once a version is
+    /// resolved, it must have exactly one usable (IsEntry, IsActive) stage or opening is a
+    /// hard error — a configured-but-invalid pipeline is a different case from "nothing
+    /// provisioned" and must never silently open with a null stage (2026-09-19 entry-stage
+    /// resolution's binding invariant, unchanged by this amendment).</summary>
     private async Task<(long? PipelineDefinitionVersionId, long? PipelineStageId)> ResolveEntryStageAsync(
         TenantId tenantId, CancellationToken cancellationToken)
     {
@@ -130,7 +132,7 @@ public sealed class OpenOpportunityHandler(CrmDbContext context, IAuthorizer aut
             .Select(p => (long?)p.Id)
             .FirstOrDefaultAsync(cancellationToken);
         if (definitionId is not { } resolvedDefinitionId)
-            return (null, null);
+            throw new PipelineNotProvisionedException();
 
         var versionId = await context.PipelineDefinitionVersions
             .Where(v => v.TenantId == tenantId && v.PipelineDefinitionId == resolvedDefinitionId && v.Status == PipelineVersionStatus.Published)
@@ -138,7 +140,7 @@ public sealed class OpenOpportunityHandler(CrmDbContext context, IAuthorizer aut
             .Select(v => (long?)v.Id)
             .FirstOrDefaultAsync(cancellationToken);
         if (versionId is not { } resolvedVersionId)
-            return (null, null);
+            throw new PipelineNotProvisionedException();
 
         var stageId = await context.PipelineStages
             .Where(s => s.TenantId == tenantId && s.PipelineDefinitionVersionId == resolvedVersionId && s.IsEntry && s.IsActive)
