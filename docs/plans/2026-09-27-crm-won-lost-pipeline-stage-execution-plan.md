@@ -700,6 +700,12 @@ git commit -m "feat(crm): auto-provision a default pipeline when the CRM module 
 
 This command has two idempotent sub-steps and is reused unchanged in Phase D (Task 19) for the actual Won/Lost backfill — written once, extended there, not duplicated.
 
+**Corrected design (discovered and fixed during Task 9 implementation, 2026-09-28 — do not reintroduce the original auto-discovery approach below the line):**
+
+The original plan text (superseded) assumed `RunAsync` could enumerate "every CRM-enabled tenant" by querying `AccessDbContext` unscoped, then loop, setting tenant context per tenant. **This is impossible under this project's RLS architecture.** Every tenant-scoped table (`access.tenant_access_state`, `access.tenant_module_enablements`, `crm.pipeline_definitions`, etc.) has `FORCE ROW LEVEL SECURITY` (AGENTS.md fitness function FF03), and the app's runtime role `fynovio_app` is provisioned `NOSUPERUSER NOBYPASSRLS` specifically so it can never bypass it — with no tenant context set, `current_setting('app.tenant_id', true)` is null and the policy matches zero rows, for every tenant-scoped table, unconditionally. There is no non-RLS tenant registry anywhere in this codebase, and no existing precedent for cross-tenant enumeration in production code (`Worker/OutboxDispatcherService.cs` has the identical latent bug — an unscoped cross-tenant `OutboxMessages` query that would also see zero rows under `fynovio_app`; that's a separate, pre-existing, out-of-scope issue, not a pattern to copy). Confirmed by direct inspection of `TenantLifecycleDbContextTenantExtensions.SetTenantContextAsync`, which explicitly throws `InvalidOperationException("Tenant context must be set inside an explicit transaction.")` if called outside a transaction — reinforcing that tenant context is inherently a per-transaction, per-known-tenant thing, never a discovery mechanism.
+
+**Fix: the command takes explicit tenant IDs from the operator**, exactly like every other bootstrap command in this codebase already does (`provision-crm-pipeline --tenant-id`, `enable-tenant-module --tenant-id`, `bootstrap-tenant-admin --tenant-id`) — Task 9's original "auto-discover everyone" design was the outlier, not these. This does not reverse any prior owner decision (§6.2 says "one-time pass," not "auto-discovering pass") and needs no owner sign-off; noted here for the record.
+
 - [ ] **Step 1: Create the command with just the provisioning sub-step (the backfill sub-step is added in Task 19)**
 
 ```csharp
@@ -709,18 +715,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Host.Bootstrap;
 
-/// <summary>`dotnet Host.dll backfill-crm-pipelines` — a one-time operator command with two
-/// idempotent sub-steps, run once each in the order the design doc requires
+/// <summary>`dotnet Host.dll backfill-crm-pipelines --tenant-ids "1,2,3"` — a one-time operator
+/// command with two idempotent sub-steps, run once each in the order the design doc requires
 /// (docs/architecture-analysis/2026-09-27-crm-opportunity-pipeline-won-lost-stage-integration.md
-/// §6.2): (1) provision a default pipeline for any CRM-enabled tenant that still has none
-/// (closes the gap Task 8's auto-provision doesn't cover retroactively), then (2, added in
-/// a later task) backfill Won/Lost stages and stage-less opportunities. Safe to re-run —
-/// each sub-step only acts on tenants/rows still needing it.</summary>
+/// §6.2): (1) provision a default pipeline for any of the given CRM-enabled tenants that still
+/// has none (closes the gap Task 8's auto-provision doesn't cover retroactively), then (2, added
+/// in a later task) backfill Won/Lost stages and stage-less opportunities for the same tenants.
+/// Safe to re-run — each sub-step only acts on rows still needing it. Takes explicit tenant IDs,
+/// not auto-discovery: every tenant-scoped table has FORCE ROW LEVEL SECURITY and the app's
+/// runtime role cannot bypass it, so there is no way to enumerate "every tenant" from inside this
+/// process — the operator (who created every tenant via bootstrap-tenant-admin) supplies the
+/// list, same as every other bootstrap command in this codebase already requires.</summary>
 public static class BackfillCrmPipelinesCommand
 {
     public const string Name = "backfill-crm-pipelines";
     public const int Success = 0;
     public const int NotPermitted = BootstrapCommand.NotPermitted;
+    public const int BadArguments = 64;
 
     public static bool IsRequested(string[] args) => args.Length > 0 && args[0] == Name;
 
@@ -733,41 +744,70 @@ public static class BackfillCrmPipelinesCommand
             return NotPermitted;
         }
 
+        var tenantIds = ParseTenantIds(args);
+        if (tenantIds is null || tenantIds.Count == 0)
+        {
+            await error.WriteLineAsync("Usage: backfill-crm-pipelines --tenant-ids \"1,2,3\"");
+            return BadArguments;
+        }
+
         await using var scope = services.CreateAsyncScope();
-        var provisioned = await ProvisionMissingPipelinesAsync(scope.ServiceProvider, cancellationToken);
+        var provisioned = 0;
+        foreach (var tenantId in tenantIds)
+        {
+            // One transaction per tenant covers every sub-step for that tenant (this one, plus
+            // the Won/Lost backfill sub-step Task 19 adds later) — SetTenantContextAsync requires
+            // an open transaction, and RLS means every query below must run inside one scoped to
+            // this specific tenant.
+            var crmContext = scope.ServiceProvider.GetRequiredService<CRM.Persistence.CrmDbContext>();
+            await using var transaction = await crmContext.Database.BeginTransactionAsync(cancellationToken);
+            await crmContext.SetTenantContextAsync(tenantId, cancellationToken);
+
+            provisioned += await ProvisionMissingPipelineAsync(scope.ServiceProvider, crmContext, tenantId, cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+
         await output.WriteLineAsync($"Provisioned a default pipeline for {provisioned} tenant(s) that had none.");
         return Success;
     }
 
-    private static async Task<int> ProvisionMissingPipelinesAsync(IServiceProvider scopedServices, CancellationToken cancellationToken)
+    private static List<TenantId>? ParseTenantIds(string[] args)
     {
-        var accessContext = scopedServices.GetRequiredService<Access.Persistence.AccessDbContext>();
-        var pipelineHandler = scopedServices.GetRequiredService<ProvisionPipelineHandler>();
-        var crmContext = scopedServices.GetRequiredService<CRM.Persistence.CrmDbContext>();
-
-        var crmEnabledTenantIds = await accessContext.EnabledModules
-            .Where(m => m.ModuleKey == "crm")
-            .Select(m => m.TenantId)
-            .ToListAsync(cancellationToken);
-
-        var provisionedCount = 0;
-        foreach (var tenantId in crmEnabledTenantIds)
+        for (var i = 1; i < args.Length - 1; i++)
         {
-            await crmContext.SetTenantContextAsync(tenantId, cancellationToken);
-            var alreadyHasOne = await crmContext.PipelineDefinitions.AnyAsync(p => p.TenantId == tenantId, cancellationToken);
-            if (alreadyHasOne) continue;
-
-            var result = await pipelineHandler.HandleAsync(
-                new ProvisionPipelineCommand(tenantId, CrmDefaultPipelineSeed.PipelineName, CrmDefaultPipelineSeed.ActiveStageNames, RetiredStageNames: []),
-                cancellationToken);
-            if (result.Status == ProvisionPipelineStatus.Provisioned) provisionedCount++;
+            if (args[i] != "--tenant-ids") continue;
+            var raw = args[i + 1].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            var ids = new List<TenantId>();
+            foreach (var token in raw)
+            {
+                if (!long.TryParse(token, out var value) || value <= 0) return null;
+                ids.Add(new TenantId(value));
+            }
+            return ids.Count == 0 ? null : ids;
         }
-        return provisionedCount;
+        return null;
+    }
+
+    private static async Task<int> ProvisionMissingPipelineAsync(
+        IServiceProvider scopedServices, CRM.Persistence.CrmDbContext crmContext, TenantId tenantId, CancellationToken cancellationToken)
+    {
+        var pipelineHandler = scopedServices.GetRequiredService<ProvisionPipelineHandler>();
+
+        var alreadyHasOne = await crmContext.PipelineDefinitions.AnyAsync(p => p.TenantId == tenantId, cancellationToken);
+        if (alreadyHasOne) return 0;
+
+        var result = await pipelineHandler.HandleAsync(
+            new ProvisionPipelineCommand(tenantId, CrmDefaultPipelineSeed.PipelineName, CrmDefaultPipelineSeed.ActiveStageNames, RetiredStageNames: []),
+            cancellationToken);
+        return result.Status == ProvisionPipelineStatus.Provisioned ? 1 : 0;
     }
 }
 ```
 
-**Check before running this task's tests:** the exact entity/property names `Access.Persistence.AccessDbContext.EnabledModules` and its `ModuleKey`/`TenantId` shape are assumed from `EnableTenantModuleHandler`'s domain — confirm the real names with `grep -n "EnabledModule" src/Modules/Access/Domain/*.cs src/Modules/Access/Persistence/AccessDbContext.cs` before writing this step's final code; adjust the query above to match whatever that grep turns up if it differs.
+This shape is illustrative — the implementer should verify `ProvisionPipelineHandler`'s exact constructor/result shape (already confirmed real in Task 8) and adjust the argument-parsing style if this codebase's other multi-value CLI args (e.g. `provision-crm-pipeline --stages "A,B,C"`) use a different helper worth reusing instead of hand-rolling `ParseTenantIds`.
+
+This command does **not** need to know which tenants have CRM enabled *before* being told about them — it takes whatever tenant IDs the operator supplies and, for the provisioning sub-step, simply no-ops (via `ProvisionPipelineHandler`'s own idempotency) on one that already has a pipeline. If a later Won/Lost backfill sub-step needs to distinguish "this tenant has CRM enabled" from "it doesn't," it can check `crmContext.PipelineDefinitions`/`CrmSettings` existence directly (already tenant-scoped and available once `SetTenantContextAsync` has run for that tenant) rather than querying Access's module-enablement table at all.
 
 - [ ] **Step 2: Wire the command into `Program.cs`'s dispatch**
 
@@ -775,28 +815,43 @@ Find where `EnableModuleCommand.IsRequested(args)` is checked in `src/Host/Progr
 
 - [ ] **Step 3: Write a test**
 
+Delete child rows before the parent if `PipelineStage`/`PipelineDefinitionVersion` have `Restrict` (not `Cascade`) delete behavior against `PipelineDefinition` — check the real `OnDelete` configuration first; the sketch below assumes `Cascade` and must be adjusted if that's wrong.
+
 ```csharp
     [Fact]
-    public async Task RunAsync_provisions_a_pipeline_for_a_crm_enabled_tenant_with_none()
+    public async Task RunAsync_provisions_a_pipeline_for_a_crm_enabled_tenant_stuck_pipeline_less()
     {
         var tenantId = await BootstrapTenantAsync();
         await using var scope = Services.CreateAsyncScope();
         await EnableModuleCommand.EnableAsync(scope.ServiceProvider, tenantId, "crm", Output, Error, CancellationToken.None);
         // simulate the pre-Task-8 gap: delete the auto-provisioned pipeline directly for this test
+        // (this must run inside its own transaction with tenant context set, same as any other
+        // tenant-scoped write in this codebase — RLS applies here too)
         var crmContext = scope.ServiceProvider.GetRequiredService<CrmDbContext>();
-        crmContext.PipelineDefinitions.RemoveRange(crmContext.PipelineDefinitions.Where(p => p.TenantId == tenantId));
-        await crmContext.SaveChangesAsync();
+        await using (var deleteTransaction = await crmContext.Database.BeginTransactionAsync())
+        {
+            await crmContext.SetTenantContextAsync(tenantId, CancellationToken.None);
+            crmContext.PipelineDefinitions.RemoveRange(crmContext.PipelineDefinitions.Where(p => p.TenantId == tenantId));
+            await crmContext.SaveChangesAsync();
+            await deleteTransaction.CommitAsync();
+        }
 
-        var exitCode = await BackfillCrmPipelinesCommand.RunAsync(Services, Configuration, ["backfill-crm-pipelines"], Output, Error, CancellationToken.None);
+        var exitCode = await BackfillCrmPipelinesCommand.RunAsync(Services, Configuration, ["backfill-crm-pipelines", "--tenant-ids", tenantId.Value.ToString()], Output, Error, CancellationToken.None);
 
         Assert.Equal(BackfillCrmPipelinesCommand.Success, exitCode);
-        Assert.True(await crmContext.PipelineDefinitions.AnyAsync(p => p.TenantId == tenantId));
+        await using (var verifyTransaction = await crmContext.Database.BeginTransactionAsync())
+        {
+            await crmContext.SetTenantContextAsync(tenantId, CancellationToken.None);
+            Assert.True(await crmContext.PipelineDefinitions.AnyAsync(p => p.TenantId == tenantId));
+        }
     }
 ```
 
+Also add (or keep, adjusted) a no-op test proving the idempotent path: a tenant that already has a pipeline (e.g. via Task 8's auto-provision on enable) passed to `--tenant-ids` yields `"Provisioned a default pipeline for 0 tenant(s)"` — this must prove "0 because it already has one," not "0 because the tenant was invisible," which was the bug in the original (superseded) design.
+
 - [ ] **Step 4: Run it**
 
-Run: `dotnet test tests/Host.Tests --filter RunAsync_provisions_a_pipeline_for_a_crm_enabled_tenant_with_none`
+Run: `dotnet test tests/Host.Tests --filter RunAsync_provisions_a_pipeline_for_a_crm_enabled_tenant_stuck_pipeline_less`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1878,6 +1933,8 @@ Runs only after Phase B and Phase C are both merged — the doc's required order
 - Modify: `src/Host/Bootstrap/BackfillCrmPipelinesCommand.cs`
 - Test: `tests/Host.Tests/`
 
+**RLS constraint, inherited from Task 9's corrected design — read before writing this task's code:** `BackfillCrmPipelinesCommand` takes explicit `--tenant-ids` (Task 9 no longer auto-discovers — every tenant-scoped table has `FORCE ROW LEVEL SECURITY` and the app's runtime role cannot bypass it). This sub-step must iterate `PipelineDefinitionVersions`/`Opportunities` **per tenant from that same explicit list**, inside the same per-tenant transaction Task 9's `RunAsync` already opens (do not query `PipelineDefinitionVersions`/`Opportunities` unscoped across all tenants at once — it will silently see zero rows under RLS, exactly like the bug found and fixed in Task 9). Add this sub-step's logic as a second private method called from inside Task 9's existing per-tenant loop, after `ProvisionMissingPipelineAsync` — not as a second unscoped top-level pass over "every version" or "every opportunity."
+
 - [ ] **Step 1: Write the failing test**
 
 ```csharp
@@ -2053,6 +2110,8 @@ git commit -m "feat(crm): backfill Won/Lost stages onto existing pipeline versio
 - Test: `tests/Host.Tests/`
 
 **Run this task only after Task 9 (Phase B's pipeline-less-tenant provisioning pass) and Task 17 have both run against the target database once** — doc §6.2's required order. Under that order this sub-step is expected to touch close to zero real rows; it still needs to exist for correctness.
+
+**Same RLS constraint as Task 17** (see that task's note): iterate `Opportunities`/`CrmSettings` per tenant from the same explicit `--tenant-ids` list Task 9 parses, inside that same per-tenant transaction, as a third private method called after the Won/Lost backfill sub-step — never an unscoped cross-tenant query. Make the "unresolved" count in Step 5's manual verification per-tenant too (or at least confirmed against the specific `--tenant-ids` passed), not a global count that could read as zero for the wrong reason (e.g. a tenant simply not included in the list, rather than genuinely having nothing left to resolve).
 
 - [ ] **Step 1: Write the failing test**
 
