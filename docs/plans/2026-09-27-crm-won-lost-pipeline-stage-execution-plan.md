@@ -49,7 +49,7 @@
 - Modify: `src/Modules/CRM/Domain/PipelineStage.cs`
 - Test: `tests/CRM.Tests/Domain/PipelineStageTests.cs` (create if it doesn't already exist — check first)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```csharp
 using Contracts;
@@ -81,7 +81,7 @@ public sealed class PipelineStageKindTests
 Run: `dotnet test tests/CRM.Tests --filter PipelineStageKindTests`
 Expected: FAIL — `PipelineStageKind` and the 6-argument `Create` overload do not exist yet.
 
-- [ ] **Step 2: Add the enum and the property**
+- [x] **Step 2: Add the enum and the property**
 
 In `src/Modules/CRM/Domain/PipelineStage.cs`, add above the class:
 
@@ -124,22 +124,26 @@ Change the factory signature (existing signature grows an optional trailing para
     }
 ```
 
-- [ ] **Step 3: Run test to verify it passes**
+- [x] **Step 3: Run test to verify it passes**
 
 Run: `dotnet test tests/CRM.Tests --filter PipelineStageKindTests`
 Expected: PASS
 
-- [ ] **Step 4: Run the full CRM.Tests suite to confirm no existing test broke**
+- [x] **Step 4: Run the full CRM.Tests suite to confirm no existing test broke**
 
 Run: `dotnet test tests/CRM.Tests`
 Expected: PASS, same count as before this task plus 2.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Domain/PipelineStage.cs tests/CRM.Tests/Domain/PipelineStageKindTests.cs
 git commit -m "feat(crm): add PipelineStage.Kind (Open/Won/Lost)"
 ```
+→ Commit: `1c6a6ec` "feat(crm): add PipelineStage.Kind (Open/Won/Lost)"
+(follow-up fix: `c88b0ff` "fix(crm): remove out-of-scope EF migration from Task 1 (belongs to Task 2)" — the implementer initially also generated an EF migration/model-snapshot change, which is Task 2's job with a different column shape; caught on spec review, removed)
+(follow-up fix: `d138074` "fix(crm): ignore Kind property in EF configuration until Task 2" — added `builder.Ignore(s => s.Kind)` in `PipelineStageConfiguration.cs`, not in the original plan text, to stop EF's default convention from silently mapping the new property as an int column before Task 2's real configuration; code-quality-reviewed and approved. **Task 2's implementer must remove this `Ignore` line before adding the real `Property(...)` configuration.**)
+Independently verified: 229/229 passing. Code-quality review: approved, no issues, "Ready to merge: YES."
 
 ### Task 2: Persist `Kind`, add the EF configuration and migration
 
