@@ -121,4 +121,60 @@ public sealed class PipelineDefinitionVersionTests
         Assert.False(first.IsEntry);
         Assert.True(second.IsEntry);
     }
+
+    [Fact]
+    public void AddWonStage_adds_a_won_kind_stage_to_a_draft_version()
+    {
+        var definition = PipelineDefinition.Create(TestData.NextTenant(), "Sales");
+        var version = definition.AddVersion(1);
+
+        var stage = version.AddWonStage("Won", 990);
+
+        Assert.Equal(PipelineStageKind.Won, stage.Kind);
+        Assert.Contains(stage, version.Stages);
+    }
+
+    [Fact]
+    public void AddWonStage_rejects_a_second_won_stage()
+    {
+        var definition = PipelineDefinition.Create(TestData.NextTenant(), "Sales");
+        var version = definition.AddVersion(1);
+        version.AddWonStage("Won", 990);
+
+        Assert.Throws<InvalidOperationException>(() => version.AddWonStage("Won again", 991));
+    }
+
+    [Fact]
+    public void BackfillSystemStage_rejects_a_draft_version()
+    {
+        var definition = PipelineDefinition.Create(TestData.NextTenant(), "Sales");
+        var version = definition.AddVersion(1);
+
+        Assert.Throws<InvalidOperationException>(() => version.BackfillSystemStage(PipelineStageKind.Won, "Won", 990));
+    }
+
+    [Fact]
+    public void BackfillSystemStage_rejects_kind_open()
+    {
+        var definition = PipelineDefinition.Create(TestData.NextTenant(), "Sales");
+        var version = definition.AddVersion(1);
+        version.AddStage("Qualification", 10);
+        version.Publish();
+
+        Assert.Throws<ArgumentException>(() => version.BackfillSystemStage(PipelineStageKind.Open, "Whatever", 990));
+    }
+
+    [Fact]
+    public void BackfillSystemStage_adds_a_won_stage_to_a_published_version()
+    {
+        var definition = PipelineDefinition.Create(TestData.NextTenant(), "Sales");
+        var version = definition.AddVersion(1);
+        version.AddStage("Qualification", 10);
+        version.Publish();
+
+        var stage = version.BackfillSystemStage(PipelineStageKind.Won, "Won", 990);
+
+        Assert.Equal(PipelineStageKind.Won, stage.Kind);
+        Assert.False(stage.IsEntry);
+    }
 }

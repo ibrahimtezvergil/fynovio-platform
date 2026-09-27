@@ -56,6 +56,40 @@ public sealed class PipelineDefinitionVersion
         return stage;
     }
 
+    public PipelineStage AddWonStage(string name, int sortOrder) => AddSystemStage(PipelineStageKind.Won, name, sortOrder);
+
+    public PipelineStage AddLostStage(string name, int sortOrder) => AddSystemStage(PipelineStageKind.Lost, name, sortOrder);
+
+    private PipelineStage AddSystemStage(PipelineStageKind kind, string name, int sortOrder)
+    {
+        if (Status != PipelineVersionStatus.Draft) throw new InvalidOperationException("Only a draft pipeline version can be edited.");
+        if (_stages.Any(s => s.Kind == kind)) throw new InvalidOperationException($"This version already has a {kind} stage.");
+        if (_stages.Any(s => s.SortOrder == sortOrder)) throw new InvalidOperationException($"Sort order {sortOrder} is already used on this version.");
+
+        var stage = PipelineStage.Create(TenantId, Id, name, sortOrder, isEntry: false, kind);
+        _stages.Add(stage);
+        return stage;
+    }
+
+    /// <summary>One-time migration exception
+    /// (docs/architecture-analysis/2026-09-27-crm-opportunity-pipeline-won-lost-stage-integration.md
+    /// §5 item 6.a) — adds a system Won/Lost stage to an ALREADY Published or Superseded
+    /// version, which every other mutation on this aggregate forbids. Never call this from
+    /// normal application code; it exists solely for the one-time backfill operator command
+    /// (Host.Bootstrap.BackfillCrmPipelinesCommand).</summary>
+    public PipelineStage BackfillSystemStage(PipelineStageKind kind, string name, int sortOrder)
+    {
+        if (kind == PipelineStageKind.Open) throw new ArgumentException("Only Won/Lost system stages can be backfilled.", nameof(kind));
+        if (Status is not (PipelineVersionStatus.Published or PipelineVersionStatus.Superseded))
+            throw new InvalidOperationException("Backfill only targets a published or superseded version.");
+        if (_stages.Any(s => s.Kind == kind)) throw new InvalidOperationException($"This version already has a {kind} stage.");
+        if (_stages.Any(s => s.SortOrder == sortOrder)) throw new InvalidOperationException($"Sort order {sortOrder} is already used on this version.");
+
+        var stage = PipelineStage.Create(TenantId, Id, name, sortOrder, isEntry: false, kind);
+        _stages.Add(stage);
+        return stage;
+    }
+
     /// <summary>Enforces "exactly one entry stage per version" (architecture plan §2.3) —
     /// a cross-row invariant within this aggregate's own child collection, same pattern
     /// as Opportunity.Win()'s billable-line invariant.
