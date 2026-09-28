@@ -1132,7 +1132,7 @@ Independently verified: CRM.Tests 242/242 both before and after the fix. Spec-co
 
 The new stage parameters are **optional and default to a no-op** (leave `PipelineStageId` exactly as it was), so every existing `.Win(...)`/`.Lose(...)` call in the current test suite keeps compiling and passing unchanged — only the handlers (which now always resolve a real value) exercise the new behavior. This is a deliberate choice: the aggregate shouldn't force dozens of unrelated existing tests (line handling, money rounding, row-version bumps) to start caring about pipeline plumbing they were never testing.
 
-- [ ] **Step 1: Write the failing domain tests**
+- [x] **Step 1: Write the failing domain tests**
 
 Add to `tests/CRM.Tests/Domain/OpportunityStateMachineTests.cs`:
 
@@ -1189,7 +1189,7 @@ Add to `tests/CRM.Tests/Domain/OpportunityStateMachineTests.cs`:
 Run: `dotnet test tests/CRM.Tests --filter OpportunityStateMachineTests`
 Expected: FAIL — `Win`/`Lose` don't accept a stage argument yet.
 
-- [ ] **Step 2: Change the aggregate methods**
+- [x] **Step 2: Change the aggregate methods**
 
 Replace in `src/Modules/CRM/Domain/Opportunity.cs`:
 
@@ -1279,12 +1279,12 @@ Replace in `src/Modules/CRM/Domain/Opportunity.cs`:
     }
 ```
 
-- [ ] **Step 3: Run the domain tests**
+- [x] **Step 3: Run the domain tests**
 
 Run: `dotnet test tests/CRM.Tests --filter OpportunityStateMachineTests`
 Expected: PASS.
 
-- [ ] **Step 4: Wire the handlers to resolve and pass a real stage id — write the failing handler tests first**
+- [x] **Step 4: Wire the handlers to resolve and pass a real stage id — write the failing handler tests first**
 
 ```csharp
     // WinOpportunityHandlerTests.cs
@@ -1310,7 +1310,7 @@ Expected: PASS.
 Run: `dotnet test tests/CRM.Tests --filter "WinOpportunityHandlerTests|LoseOpportunityHandlerTests"`
 Expected: FAIL — the handlers still call `opportunity.Win(requireWonLine)`/`opportunity.Lose(resolvedReason ?? command.LostReason)` with no stage.
 
-- [ ] **Step 5: Fix `WinOpportunityHandler`**
+- [x] **Step 5: Fix `WinOpportunityHandler`**
 
 Replace:
 
@@ -1336,7 +1336,7 @@ Replace:
         opportunity.Win(wonStageId, requireWonLine);
 ```
 
-- [ ] **Step 6: Fix `LoseOpportunityHandler`**
+- [x] **Step 6: Fix `LoseOpportunityHandler`**
 
 Replace `opportunity.Lose(resolvedReason ?? command.LostReason);` with:
 
@@ -1350,24 +1350,31 @@ Replace `opportunity.Lose(resolvedReason ?? command.LostReason);` with:
         opportunity.Lose(resolvedReason ?? command.LostReason, lostStageId);
 ```
 
-- [ ] **Step 7: Run tests to verify they pass**
+- [x] **Step 7: Run tests to verify they pass**
 
 Run: `dotnet test tests/CRM.Tests --filter "WinOpportunityHandlerTests|LoseOpportunityHandlerTests"`
 Expected: PASS.
 
-- [ ] **Step 8: Run the full CRM.Tests suite**
+- [x] **Step 8: Run the full CRM.Tests suite**
 
 Run: `dotnet test tests/CRM.Tests`
 Expected: PASS.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/Modules/CRM/Domain/Opportunity.cs src/Modules/CRM/Application/WinOpportunityHandler.cs src/Modules/CRM/Application/LoseOpportunityHandler.cs tests/CRM.Tests/
 git commit -m "feat(crm): Win/Lose move the opportunity onto the pipeline's Won/Lost stage"
 ```
+→ Commit: `efdd9b9` "feat(crm): Win/Lose move the opportunity onto the pipeline's Won/Lost stage"
+(follow-up fix: `0ef22db` "fix(crm): Opportunity.Lose enforces its own Draft-never-had-a-stage invariant" — code-quality review (escalated, as required) found `Lose(lostReason, lostStageId)` relied entirely on the handler's caller-side `Status == Open` check instead of enforcing the Draft-never-had-a-pipeline invariant in the aggregate itself; a future direct call to `Lose()` with a stage id on a Draft opportunity would have silently populated both stage fields. Added an `ArgumentException` guard + a domain test + a handler-level Draft→Lost test that was missing even before this task.)
 
 **Escalate for review here** — this task changes the state-machine invariants of `Win`/`Lose`, the two commands with the strictest existing rules (line validation, rounding, lost-reason requirement). Get it reviewed before Task 14.
+
+Independently verified: CRM.Tests 253/253 after the follow-up fix (251 from the implementer + 2 new tests from the fix). Spec-compliance review: ✅ compliant. Code-quality review (escalated per this task's own flag): request-changes → fixed → the two required items landed (domain guard, Draft→Lost handler test). Two items from that review were deliberately NOT acted on:
+- **Rejected as incorrect**: the review's suggested `Win_without_a_stage_argument_...` assertion (`ClosedFromStageId` should be null) — verified against the code and it's wrong: `Win` captures `ClosedFromStageId = PipelineStageId` unconditionally on every call, so the correct value is the pre-win stage (7 in that test), not null. Test now asserts the correct value instead, with a comment explaining why.
+- **Deferred, not fixed here**: the review flagged (as "Critical, not independently verified") that no DB-level unique index guarantees exactly one Won/Lost stage per pipeline version — confirmed true (`PipelineStageConfiguration.cs` has a partial unique index for `is_entry = true` but none for `Kind`). This is real but out of scope for Task 13/Phase C: `PublishPipelineVersionHandler.Validate` (Task 11) already enforces exactly-one-Won/Lost at publish time, before any opportunity can ever reference that version, and this plan's own architecture note explicitly defers hard DB-level constraints to Phase E ("the CHECK constraint... that only make sense once A–D are in place") — see the `AddStageRequiredOnceOpenCheck` migration referenced later in this plan. Not a Task 13 regression; flagging here for whoever picks up Phase E.
+- Two more review suggestions (a version-scoping test proving stage ids don't cross pipeline versions; a no-Won-stage-fallback test) were left as non-blocking recommendations, not implemented — both exercise pre-existing Task 3/10 behavior, not new logic introduced by this task.
 
 ### Task 14: Board drag onto Won/Lost must never become `ChangePipelineStage`
 
