@@ -240,6 +240,7 @@ builder.Services.AddScoped<AddOpportunityLineHandler>();
 builder.Services.AddScoped<CancelOpportunityLineHandler>();
 builder.Services.AddScoped<OpenOpportunityHandler>();
 builder.Services.AddScoped<ChangePipelineStageHandler>();
+builder.Services.AddScoped<MoveOpportunityToPipelineHandler>();
 builder.Services.AddScoped<WinOpportunityHandler>();
 builder.Services.AddScoped<LoseOpportunityHandler>();
 builder.Services.AddScoped<ReassignOpportunityHandler>();

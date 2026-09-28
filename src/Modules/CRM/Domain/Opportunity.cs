@@ -215,6 +215,23 @@ public sealed class Opportunity : IHasRowVersion
         Touch();
     }
 
+    /// <summary>Moves an open opportunity to a different pipeline entirely (not just a stage
+    /// change within the same one, which is ChangeStage's job). Cross-aggregate facts like
+    /// whether the target pipeline version exists, is published, and whether the target stage
+    /// belongs to that version and is active, are validated by MoveOpportunityToPipelineHandler
+    /// before calling this (architecture plan §7/§9: the domain layer doesn't query another
+    /// aggregate's table).</summary>
+    public void MoveToPipeline(long pipelineDefinitionVersionId, long pipelineStageId)
+    {
+        EnsureNotArchived();
+        if (Status != OpportunityStatus.Open)
+            throw new InvalidOperationException($"Cannot move an opportunity to a different pipeline in status {Status}. It must be open.");
+
+        PipelineDefinitionVersionId = pipelineDefinitionVersionId;
+        PipelineStageId = pipelineStageId;
+        Touch();
+    }
+
     public void Archive(bool confirmOpenOpportunity)
     {
         if (Status is OpportunityStatus.Won or OpportunityStatus.Lost)

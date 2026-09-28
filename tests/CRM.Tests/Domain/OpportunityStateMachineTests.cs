@@ -363,4 +363,38 @@ public sealed class OpportunityStateMachineTests
 
         Assert.Throws<ArgumentException>(() => opportunity.Lose("hiç açılmadı", lostStageId: 100));
     }
+
+    [Fact]
+    public void MoveToPipeline_changes_both_pipeline_version_and_stage()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: 1, pipelineStageId: 10);
+
+        opportunity.MoveToPipeline(pipelineDefinitionVersionId: 2, pipelineStageId: 20);
+
+        Assert.Equal(2, opportunity.PipelineDefinitionVersionId);
+        Assert.Equal(20, opportunity.PipelineStageId);
+        Assert.Equal(OpportunityStatus.Open, opportunity.Status);
+    }
+
+    [Fact]
+    public void MoveToPipeline_rejects_non_open_opportunities()
+    {
+        var opportunity = NewDraftOpportunity();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            opportunity.MoveToPipeline(pipelineDefinitionVersionId: 2, pipelineStageId: 20));
+    }
+
+    [Fact]
+    public void MoveToPipeline_increments_row_version()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: 1, pipelineStageId: 10);
+        var beforeVersion = opportunity.RowVersion;
+
+        opportunity.MoveToPipeline(pipelineDefinitionVersionId: 2, pipelineStageId: 20);
+
+        Assert.True(opportunity.RowVersion > beforeVersion);
+    }
 }

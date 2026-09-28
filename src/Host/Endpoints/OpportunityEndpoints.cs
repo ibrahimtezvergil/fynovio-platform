@@ -70,6 +70,16 @@ public static class OpportunityEndpoints
             return Results.Ok(await handler.HandleAsync(command, cancellationToken));
         });
 
+        group.MapPost("/{id:long}/move-pipeline", async (
+            long id, MoveOpportunityToPipelineRequest request, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
+            MoveOpportunityToPipelineHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
+        {
+            var actor = httpContext.GetActorContext();
+            var command = new MoveOpportunityToPipelineCommand(
+                actor.TenantId, id, actor.Principal, request.ExpectedVersion, request.TargetPipelineDefinitionVersionId, request.TargetStageId, idempotencyKey, actor.CorrelationId);
+            return Results.Ok(await handler.HandleAsync(command, cancellationToken));
+        });
+
         group.MapPost("/{id:long}/win", async (
             long id, WinOpportunityRequest request, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
             WinOpportunityHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
@@ -228,6 +238,7 @@ public sealed record AddOpportunityLineRequest(long ExpectedVersion, long Produc
 public sealed record CancelOpportunityLineRequest(long ExpectedVersion, string CancelReason);
 public sealed record OpenOpportunityRequest(long ExpectedVersion, DateTimeOffset ExpiryDate);
 public sealed record ChangePipelineStageRequest(long ExpectedVersion, long TargetStageId);
+public sealed record MoveOpportunityToPipelineRequest(long ExpectedVersion, long TargetPipelineDefinitionVersionId, long TargetStageId);
 public sealed record WinOpportunityRequest(long ExpectedVersion);
 public sealed record LoseOpportunityRequest(long ExpectedVersion, string LostReason);
 public sealed record ReassignOpportunityRequest(long ExpectedVersion, string NewPrincipalIssuer, string NewPrincipalSubject);
