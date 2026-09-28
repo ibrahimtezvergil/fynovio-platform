@@ -62,6 +62,9 @@ public sealed class OpenOpportunityHandler(CrmDbContext context, IAuthorizer aut
         var (pipelineDefinitionVersionId, pipelineStageId) = await ResolveEntryStageAsync(command.TenantId, cancellationToken);
         opportunity.Open(command.ExpiryDate, pipelineDefinitionVersionId, pipelineStageId);
 
+        if (pipelineStageId is { } openedStageId && pipelineDefinitionVersionId is { } versionId)
+            context.OpportunityStageHistory.Add(OpportunityStageHistoryEntry.Open(command.TenantId, opportunity.Id, versionId, openedStageId));
+
         var payload = new OpenedPayload(opportunity.Id, pipelineDefinitionVersionId, pipelineStageId);
         var payloadJson = JsonSerializer.Serialize(payload);
 

@@ -322,4 +322,40 @@ public sealed class OpenOpportunityHandlerTests
         await Assert.ThrowsAsync<PipelineNotProvisionedException>(() =>
             new OpenOpportunityHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command));
     }
+
+    [Fact]
+    public async Task HandleAsync_opens_a_stage_history_entry()
+    {
+        var tenant = TestData.NextTenant();
+        await using var seed = _fixture.CreateAdminContext();
+        await using var seedMasterData = _fixture.CreateMasterDataContext();
+        var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
+
+        var definition = PipelineDefinition.Create(tenant, "Sales");
+        seed.PipelineDefinitions.Add(definition);
+        await seed.SaveChangesAsync();
+        var version = definition.AddVersion(1);
+        seed.PipelineDefinitionVersions.Add(version);
+        await seed.SaveChangesAsync();
+        var entryStage = version.AddStage("Entry Stage", 0);
+        seed.PipelineStages.Add(entryStage);
+        version.Publish();
+        await seed.SaveChangesAsync();
+
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
+        opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
+        seed.Opportunities.Add(opportunity);
+        await seed.SaveChangesAsync();
+
+        var command = new OpenOpportunityCommand(
+            tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion,
+            DateTimeOffset.UtcNow.AddDays(7), "key-stage-history", Guid.NewGuid());
+
+        await using var context = _fixture.CreateAdminContext();
+        await new OpenOpportunityHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command);
+
+        var entry = await context.OpportunityStageHistory.SingleAsync(h => h.OpportunityId == opportunity.Id);
+        Assert.Equal(entryStage.Id, entry.PipelineStageId);
+        Assert.Null(entry.ExitedAt);
+    }
 }

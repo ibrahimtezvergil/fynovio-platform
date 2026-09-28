@@ -173,4 +173,47 @@ public sealed class ChangePipelineStageHandlerTests
 
         return (tenant, opportunity.Id, version, wonStage.Id);
     }
+
+    [Fact]
+    public async Task HandleAsync_closes_the_open_stage_history_entry_and_opens_a_new_one()
+    {
+        var tenant = TestData.NextTenant();
+        await using var seed = _fixture.CreateAdminContext();
+        await using var seedMasterData = _fixture.CreateMasterDataContext();
+        var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
+
+        var definition = PipelineDefinition.Create(tenant, "Sales");
+        seed.PipelineDefinitions.Add(definition);
+        await seed.SaveChangesAsync();
+        var version = definition.AddVersion(1);
+        seed.PipelineDefinitionVersions.Add(version);
+        await seed.SaveChangesAsync();
+        var entryStage = version.AddStage("Entry", 0);
+        var middleStage = version.AddStage("Middle", 1);
+        seed.PipelineStages.AddRange(entryStage, middleStage);
+        version.Publish();
+        await seed.SaveChangesAsync();
+
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
+        opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: version.Id, pipelineStageId: entryStage.Id);
+        seed.Opportunities.Add(opportunity);
+        await seed.SaveChangesAsync();
+
+        var command = new ChangePipelineStageCommand(
+            tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion, middleStage.Id, "key-change", Guid.NewGuid());
+
+        await using var context = _fixture.CreateAdminContext();
+        await new ChangePipelineStageHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command);
+
+        var entries = await context.OpportunityStageHistory
+            .Where(h => h.OpportunityId == opportunity.Id)
+            .OrderBy(h => h.Id)
+            .ToListAsync();
+        Assert.Equal(2, entries.Count);
+        Assert.Equal(entryStage.Id, entries[0].PipelineStageId);
+        Assert.NotNull(entries[0].ExitedAt);
+        Assert.Equal(middleStage.Id, entries[1].PipelineStageId);
+        Assert.Null(entries[1].ExitedAt);
+    }
 }

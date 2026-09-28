@@ -78,6 +78,14 @@ public sealed class LoseOpportunityHandler(CrmDbContext context, IAuthorizer aut
             : null;
         opportunity.Lose(resolvedReason ?? command.LostReason, lostStageId);
 
+        if (lostStageId is { } resolvedLostStageId && opportunity.PipelineDefinitionVersionId is { } resolvedVersionId)
+        {
+            var openEntry = await context.OpportunityStageHistory.SingleOrDefaultAsync(
+                h => h.TenantId == command.TenantId && h.OpportunityId == opportunity.Id && h.ExitedAt == null, cancellationToken);
+            openEntry?.Close();
+            context.OpportunityStageHistory.Add(OpportunityStageHistoryEntry.Open(command.TenantId, opportunity.Id, resolvedVersionId, resolvedLostStageId));
+        }
+
         // Written for audit/outbox purposes only — the idempotency-replay branches below
         // rebuild the result from command fields instead of deserializing this back, since
         // LoseOpportunityResult carries nothing server-computed beyond what's in the command.

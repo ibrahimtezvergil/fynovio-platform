@@ -92,6 +92,15 @@ public sealed class ChangePipelineStageHandler(CrmDbContext context, IAuthorizer
         var fromStageId = opportunity.PipelineStageId;
         opportunity.ChangeStage(command.TargetStageId);
 
+        if (fromStageId is { } previousStageId && opportunity.PipelineDefinitionVersionId is { } versionId)
+        {
+            var openEntry = await context.OpportunityStageHistory.SingleOrDefaultAsync(
+                h => h.TenantId == command.TenantId && h.OpportunityId == opportunity.Id && h.PipelineStageId == previousStageId && h.ExitedAt == null, cancellationToken);
+            openEntry?.Close();
+        }
+        if (opportunity.PipelineDefinitionVersionId is { } targetVersionId)
+            context.OpportunityStageHistory.Add(OpportunityStageHistoryEntry.Open(command.TenantId, opportunity.Id, targetVersionId, command.TargetStageId));
+
         var payload = new StageChangedPayload(opportunity.Id, fromStageId, command.TargetStageId);
         var payloadJson = JsonSerializer.Serialize(payload);
 

@@ -183,4 +183,26 @@ public sealed class MoveOpportunityToPipelineHandlerTests
         await using var context = _fixture.CreateAdminContext();
         return await context.Opportunities.AsNoTracking().SingleAsync(o => o.Id == opportunityId);
     }
+
+    [Fact]
+    public async Task Moving_closes_the_open_stage_history_entry_and_opens_a_new_one_for_target_stage()
+    {
+        var (tenant, opportunityId, targetVersionId, targetStageId, _, sourceStageId) = await SeedAsync();
+        var opportunity = await LoadAsync(tenant, opportunityId);
+        var command = new MoveOpportunityToPipelineCommand(
+            tenant, opportunityId, TestData.Seller, opportunity.RowVersion, targetVersionId, targetStageId, "key-move-history", Guid.NewGuid());
+
+        await using var context = _fixture.CreateAdminContext();
+        await new MoveOpportunityToPipelineHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command);
+
+        var entries = await context.OpportunityStageHistory
+            .Where(h => h.OpportunityId == opportunityId)
+            .OrderBy(h => h.Id)
+            .ToListAsync();
+        Assert.Equal(2, entries.Count);
+        Assert.Equal(sourceStageId, entries[0].PipelineStageId);
+        Assert.NotNull(entries[0].ExitedAt);
+        Assert.Equal(targetStageId, entries[1].PipelineStageId);
+        Assert.Null(entries[1].ExitedAt);
+    }
 }

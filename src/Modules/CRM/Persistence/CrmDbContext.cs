@@ -26,6 +26,7 @@ public sealed class CrmDbContext : DbContext
     public DbSet<Opportunity> Opportunities => Set<Opportunity>();
     public DbSet<OpportunityLine> OpportunityLines => Set<OpportunityLine>();
     public DbSet<OpportunityNeed> OpportunityNeeds => Set<OpportunityNeed>();
+    public DbSet<OpportunityStageHistoryEntry> OpportunityStageHistory => Set<OpportunityStageHistoryEntry>();
     public DbSet<TenantFieldDefinition> TenantFieldDefinitions => Set<TenantFieldDefinition>();
     public DbSet<PipelineDefinition> PipelineDefinitions => Set<PipelineDefinition>();
     public DbSet<PipelineDefinitionVersion> PipelineDefinitionVersions => Set<PipelineDefinitionVersion>();

@@ -78,6 +78,11 @@ public sealed class MoveOpportunityToPipelineHandler(CrmDbContext context, IAuth
 
         opportunity.MoveToPipeline(command.TargetPipelineDefinitionVersionId, command.TargetStageId);
 
+        var openEntry = await context.OpportunityStageHistory.SingleOrDefaultAsync(
+            h => h.TenantId == command.TenantId && h.OpportunityId == opportunity.Id && h.ExitedAt == null, cancellationToken);
+        openEntry?.Close();
+        context.OpportunityStageHistory.Add(OpportunityStageHistoryEntry.Open(command.TenantId, opportunity.Id, command.TargetPipelineDefinitionVersionId, command.TargetStageId));
+
         var payload = new { opportunity.Id, command.TargetPipelineDefinitionVersionId, command.TargetStageId };
         var payloadJson = JsonSerializer.Serialize(payload);
 

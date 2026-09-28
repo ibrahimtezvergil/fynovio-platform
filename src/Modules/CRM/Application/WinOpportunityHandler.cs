@@ -82,6 +82,14 @@ public sealed class WinOpportunityHandler(CrmDbContext context, IAuthorizer auth
             : null;
         opportunity.Win(wonStageId, requireWonLine);
 
+        if (wonStageId is { } resolvedWonStageId && opportunity.PipelineDefinitionVersionId is { } resolvedVersionId)
+        {
+            var openEntry = await context.OpportunityStageHistory.SingleOrDefaultAsync(
+                h => h.TenantId == command.TenantId && h.OpportunityId == opportunity.Id && h.ExitedAt == null, cancellationToken);
+            openEntry?.Close();
+            context.OpportunityStageHistory.Add(OpportunityStageHistoryEntry.Open(command.TenantId, opportunity.Id, resolvedVersionId, resolvedWonStageId));
+        }
+
         var payload = new WonPayload(
             opportunity.Id,
             opportunity.TotalAmount ?? throw new InvalidOperationException("A won opportunity must carry a total."),

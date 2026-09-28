@@ -150,4 +150,22 @@ public sealed class LoseOpportunityHandlerTests
         await seed.SaveChangesAsync();
         return (tenant, opportunity.Id, opportunity.RowVersion);
     }
+
+    [Fact]
+    public async Task HandleAsync_closes_the_open_stage_history_entry_and_opens_a_lost_entry()
+    {
+        var (tenant, opportunityId, version) = await SeedOpenOpportunityAsync();
+        var command = new LoseOpportunityCommand(tenant, opportunityId, TestData.Seller, version, "Lost reason", "key-lose-history", Guid.NewGuid());
+
+        await using var context = _fixture.CreateAdminContext();
+        await new LoseOpportunityHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command);
+
+        var entries = await context.OpportunityStageHistory
+            .Where(h => h.OpportunityId == opportunityId)
+            .OrderBy(h => h.Id)
+            .ToListAsync();
+        Assert.Equal(2, entries.Count);
+        Assert.NotNull(entries[0].ExitedAt);
+        Assert.Null(entries[1].ExitedAt);
+    }
 }
