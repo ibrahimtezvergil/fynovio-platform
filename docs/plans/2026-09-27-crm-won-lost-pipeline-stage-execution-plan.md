@@ -880,7 +880,7 @@ Independently verified: exact 26-name pre-existing Host.Tests failure set unchan
 
 **Known collateral from Task 8 — check before running the full suite:** `tests/Host.Tests/Authentication/ProvisionCrmPipelineCommandTests.cs` has two assertions that this task will break and that must be updated deliberately, not rationalized as pre-existing noise: line ~185's exact `["Lead", "Quote", "Contract"]` stage-name list (will gain Won/Lost stages appended) and `Running_it_again_is_a_no_op_that_still_succeeds`'s `StageCount == 2` assertion (will need to account for the two new system stages). Update both explicitly as part of this task.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```csharp
     // ProvisionPipelineHandlerTests.cs
@@ -914,7 +914,7 @@ Independently verified: exact 26-name pre-existing Host.Tests failure set unchan
 Run: `dotnet test tests/CRM.Tests --filter "ProvisionPipelineHandlerTests|CreatePipelineDraftHandlerTests"`
 Expected: FAIL — neither handler creates Won/Lost stages yet.
 
-- [ ] **Step 2: Fix `ProvisionPipelineHandler`**
+- [x] **Step 2: Fix `ProvisionPipelineHandler`**
 
 In `src/Modules/CRM/Application/ProvisionPipelineHandler.cs`, right before `version.Publish();`:
 
@@ -944,7 +944,7 @@ In `src/Modules/CRM/Application/ProvisionPipelineHandler.cs`, right before `vers
         version.Publish();
 ```
 
-- [ ] **Step 3: Fix `CreatePipelineDraftHandler`**
+- [x] **Step 3: Fix `CreatePipelineDraftHandler`**
 
 In `src/Modules/CRM/Application/CreatePipelineDraftHandler.cs`, after the existing stage-building block (right after the line `version.MarkEntry(stages[...]);` and before `context.PipelineStages.AddRange(stages);`), add:
 
@@ -969,22 +969,26 @@ Also allocate their configuration ids the same way every other stage in this han
         context.Entry(lostStage).Property(x => x.Id).CurrentValue = await context.AllocateConfigurationIdAsync<PipelineStage>(cancellationToken);
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `dotnet test tests/CRM.Tests --filter "ProvisionPipelineHandlerTests|CreatePipelineDraftHandlerTests"`
 Expected: PASS.
 
-- [ ] **Step 5: Run the full CRM.Tests suite**
+- [x] **Step 5: Run the full CRM.Tests suite**
 
 Run: `dotnet test tests/CRM.Tests`
 Expected: PASS — this is a good place to check whether any existing test asserts an exact `PipelineStages.Count()` for a provisioned/drafted pipeline (it would now be 2 higher); update those counts rather than treat them as unrelated failures.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/ProvisionPipelineHandler.cs src/Modules/CRM/Application/CreatePipelineDraftHandler.cs tests/CRM.Tests/Application/ProvisionPipelineHandlerTests.cs tests/CRM.Tests/Application/CreatePipelineDraftHandlerTests.cs
 git commit -m "feat(crm): every provisioned or drafted pipeline gets a Won and a Lost stage"
 ```
+→ Commit: `b364771` "feat(crm): every provisioned or drafted pipeline gets a Won and a Lost stage"
+(follow-up fix: `ba1b894` "fix(crm): DevSeederTests stage-count assertion missed Won/Lost from Task 10" — the implementer only re-verified two named Host.Tests classes, not the full suite; caught on independent full-suite verification, a third stage-count assertion in `DevSeederTests` was still broken)
+(follow-up fix: `4df7720` "fix(crm): reject operator-supplied stages named Won or Lost in CreatePipelineDraft" — code-quality review found an operator naming a stage "Won"/"Lost" would crash `CreatePipelineDraftHandler` with an unhandled dictionary-key-collision exception instead of a clean validation error; fixed with a `Validate()` guard + test)
+Independently verified: CRM.Tests 240/240, Host.Tests exact 26-name pre-existing failure set unchanged (diffed by name). Code-quality review: approved after the reserved-name fix landed, also independently swept the whole `tests/` tree for other stage-count assertions and found none remaining.
 
 ### Task 11: `PublishPipelineVersionHandler.Validate` enforces the Won/Lost shape
 
