@@ -48,6 +48,12 @@ public sealed class ProvisionPipelineHandler(CrmDbContext context)
             sortOrder += 10;
         }
 
+        var wonStage = version.AddWonStage("Won", sortOrder);
+        context.PipelineStages.Add(wonStage);
+        sortOrder += 10;
+        var lostStage = version.AddLostStage("Lost", sortOrder);
+        context.PipelineStages.Add(lostStage);
+
         version.Publish();
 
         await context.SaveChangesAsync(cancellationToken);

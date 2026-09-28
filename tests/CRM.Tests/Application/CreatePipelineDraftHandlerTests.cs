@@ -1,0 +1,43 @@
+using Contracts;
+using CRM.Application;
+using CRM.Domain;
+using CRM.Tests.Integration;
+using Microsoft.EntityFrameworkCore;
+using Xunit;
+
+namespace CRM.Tests.Application;
+
+[Collection(nameof(PostgresCollection))]
+public sealed class CreatePipelineDraftHandlerTests
+{
+    private readonly PostgresFixture _fixture;
+
+    public CreatePipelineDraftHandlerTests(PostgresFixture fixture) => _fixture = fixture;
+
+    private static readonly PrincipalRef Administrator = new("https://identity.test", "admin");
+
+    [Fact]
+    public async Task Publishing_a_new_draft_always_includes_won_and_lost_stages()
+    {
+        var tenantId = TestData.NextTenant();
+        var correlationId = Guid.NewGuid();
+        CreatePipelineDraftResult draft;
+        await using (var context = _fixture.CreateAdminContext())
+        {
+            draft = await new CreatePipelineDraftHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(
+                Draft(tenantId, correlationId, null, 0, 0, "draft-with-stages",
+                    [new("Entry", 1, true, true)]));
+        }
+
+        var versionId = draft.VersionId;
+        await using var read = _fixture.CreateAdminContext();
+        var stages = await read.PipelineStages.Where(s => s.TenantId == tenantId && s.PipelineDefinitionVersionId == versionId).ToListAsync();
+        Assert.Single(stages, s => s.Kind == PipelineStageKind.Won);
+        Assert.Single(stages, s => s.Kind == PipelineStageKind.Lost);
+    }
+
+    private CreatePipelineDraftCommand Draft(TenantId tenant, Guid correlationId, long? pipelineId, long expectedRowVersion,
+        int expectedLatest, string key, IReadOnlyList<PipelineStageInput> stages,
+        IReadOnlyList<PipelineTransitionInput>? transitions = null) => new(tenant, Administrator, pipelineId,
+        "Sales", expectedRowVersion, expectedLatest, stages, transitions is { Count: > 0 }, transitions ?? [], key, correlationId);
+}

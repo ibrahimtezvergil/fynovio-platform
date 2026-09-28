@@ -1,5 +1,6 @@
 using Contracts;
 using CRM.Application;
+using CRM.Domain;
 using CRM.Tests.Integration;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -34,9 +35,9 @@ public sealed class ProvisionPipelineHandlerTests
         Assert.Equal(1, version.VersionNumber);
         Assert.Equal(version.Id, result.PipelineDefinitionVersionId);
         var stages = await read.PipelineStages.AsNoTracking().Where(s => s.TenantId == tenant).OrderBy(s => s.SortOrder).ToListAsync();
-        Assert.Equal(["Qualification", "Proposal", "Negotiation"], stages.Select(s => s.Name));
-        Assert.Equal([true, false, false], stages.Select(s => s.IsEntry));
-        Assert.All(stages, s => Assert.True(s.IsActive));
+        Assert.Equal(["Qualification", "Proposal", "Negotiation", "Won", "Lost"], stages.Select(s => s.Name));
+        Assert.Equal([true, false, false, false, false], stages.Select(s => s.IsEntry));
+        Assert.Equal([true, true, true, true, true], stages.Select(s => s.IsActive));
     }
 
     [Fact]
@@ -50,7 +51,7 @@ public sealed class ProvisionPipelineHandlerTests
         Assert.Equal(ProvisionPipelineStatus.AlreadyProvisioned, again.Status);
         await using var read = _fixture.CreateAdminContext();
         Assert.Equal("Sales", (await read.PipelineDefinitions.AsNoTracking().SingleAsync(p => p.TenantId == tenant)).Name);
-        Assert.Equal(["A", "B"], (await read.PipelineStages.AsNoTracking().Where(s => s.TenantId == tenant).OrderBy(s => s.SortOrder).ToListAsync()).Select(s => s.Name));
+        Assert.Equal(["A", "B", "Won", "Lost"], (await read.PipelineStages.AsNoTracking().Where(s => s.TenantId == tenant).OrderBy(s => s.SortOrder).ToListAsync()).Select(s => s.Name));
     }
 
     [Fact]
@@ -62,9 +63,9 @@ public sealed class ProvisionPipelineHandlerTests
 
         await using var read = _fixture.CreateAdminContext();
         var stages = await read.PipelineStages.AsNoTracking().Where(s => s.TenantId == tenant).OrderBy(s => s.SortOrder).ToListAsync();
-        Assert.Equal(["A", "B", "Legacy"], stages.Select(s => s.Name));
-        Assert.Equal([true, true, false], stages.Select(s => s.IsActive));
-        Assert.Equal([true, false, false], stages.Select(s => s.IsEntry));
+        Assert.Equal(["A", "B", "Legacy", "Won", "Lost"], stages.Select(s => s.Name));
+        Assert.Equal([true, true, false, true, true], stages.Select(s => s.IsActive));
+        Assert.Equal([true, false, false, false, false], stages.Select(s => s.IsEntry));
     }
 
     [Theory]
@@ -104,5 +105,20 @@ public sealed class ProvisionPipelineHandlerTests
         await using var read = _fixture.CreateAdminContext();
         Assert.Equal(["First"], (await read.PipelineDefinitions.AsNoTracking().Where(p => p.TenantId == first).ToListAsync()).Select(p => p.Name));
         Assert.Equal(["Second"], (await read.PipelineDefinitions.AsNoTracking().Where(p => p.TenantId == second).ToListAsync()).Select(p => p.Name));
+    }
+
+    [Fact]
+    public async Task HandleAsync_gives_the_new_pipeline_a_won_and_a_lost_stage()
+    {
+        var tenant = TestData.NextTenant();
+        var handler = new ProvisionPipelineHandler(_fixture.CreateAdminContext());
+
+        var result = await handler.HandleAsync(new ProvisionPipelineCommand(tenant, "Sales", ["Open"], RetiredStageNames: []));
+
+        Assert.Equal(ProvisionPipelineStatus.Provisioned, result.Status);
+        await using var read = _fixture.CreateAdminContext();
+        var stages = await read.PipelineStages.Where(s => s.TenantId == tenant && s.PipelineDefinitionVersionId == result.PipelineDefinitionVersionId).ToListAsync();
+        Assert.Contains(stages, s => s.Kind == PipelineStageKind.Won);
+        Assert.Contains(stages, s => s.Kind == PipelineStageKind.Lost);
     }
 }

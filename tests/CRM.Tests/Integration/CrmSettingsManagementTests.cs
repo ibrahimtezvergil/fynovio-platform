@@ -56,7 +56,7 @@ public sealed class CrmSettingsManagementTests(PostgresFixture fixture)
         }
         await using var verify = fixture.CreateAdminContext();
         Assert.Single(await verify.CustomerNeeds.Where(x => x.TenantId == tenant).ToListAsync());
-        Assert.Single(await verify.PipelineStages.Where(x => x.TenantId == tenant).ToListAsync());
+        Assert.Equal(3, await verify.PipelineStages.Where(x => x.TenantId == tenant).CountAsync());
         Assert.Equal(2, await verify.OutboxMessages.CountAsync(x => x.TenantId == tenant));
         Assert.Equal(2, await verify.EvidenceRecords.CountAsync(x => x.TenantId == tenant));
     }
@@ -123,7 +123,7 @@ public sealed class CrmSettingsManagementTests(PostgresFixture fixture)
             Assert.Equal(1, published.OpportunitiesRetainedOnPriorVersions);
             Assert.Equal(PipelineVersionStatus.Superseded, (await context.PipelineDefinitionVersions.SingleAsync(x => x.Id == first.VersionId)).Status);
             Assert.Equal(PipelineVersionStatus.Published, (await context.PipelineDefinitionVersions.SingleAsync(x => x.Id == second.VersionId)).Status);
-            Assert.Equal(2, await context.PipelineStages.CountAsync(x => x.PipelineDefinitionVersionId == second.VersionId));
+            Assert.Equal(4, await context.PipelineStages.CountAsync(x => x.PipelineDefinitionVersionId == second.VersionId));
             var retained = await context.Opportunities.SingleAsync(x => x.PipelineDefinitionVersionId == first.VersionId);
             Assert.Equal(originalStageId, retained.PipelineStageId);
         }

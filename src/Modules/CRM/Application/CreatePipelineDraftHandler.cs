@@ -61,6 +61,15 @@ public sealed class CreatePipelineDraftHandler(CrmDbContext context, IAuthorizer
             context.Entry(stage).Property(x => x.Id).CurrentValue = await context.AllocateConfigurationIdAsync<PipelineStage>(cancellationToken);
         }
         version.MarkEntry(stages[command.Stages.OrderBy(x => x.SortOrder).ToList().FindIndex(x => x.IsEntry)]);
+
+        var systemSortOrder = stages.Max(s => s.SortOrder) + 10;
+        var wonStage = version.AddWonStage("Won", systemSortOrder);
+        var lostStage = version.AddLostStage("Lost", systemSortOrder + 10);
+        context.Entry(wonStage).Property(x => x.Id).CurrentValue = await context.AllocateConfigurationIdAsync<PipelineStage>(cancellationToken);
+        context.Entry(lostStage).Property(x => x.Id).CurrentValue = await context.AllocateConfigurationIdAsync<PipelineStage>(cancellationToken);
+
+        stages.Add(wonStage);
+        stages.Add(lostStage);
         context.PipelineStages.AddRange(stages);
 
         var stagesByName = stages.ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);

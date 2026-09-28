@@ -129,7 +129,7 @@ public sealed class ProvisionCrmPipelineCommandTests : IClassFixture<AuthApiFixt
 
         Assert.Equal(ProvisionCrmPipelineCommand.Success, code);
         Assert.Contains("already has a pipeline", output);
-        Assert.Equal(2, await StageCountAsync(host, tenant));
+        Assert.Equal(4, await StageCountAsync(host, tenant));
     }
 
     /// <summary>The point of P1: a tenant set up the production way (bootstrap + custom pipeline provisioning + CRM module) — no seed —
@@ -196,7 +196,7 @@ public sealed class ProvisionCrmPipelineCommandTests : IClassFixture<AuthApiFixt
         var stagesRequest = new HttpRequestMessage(HttpMethod.Get, $"/pipelines/{versionId}/stages");
         stagesRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearer);
         var stages = (await Json(await client.SendAsync(stagesRequest))).EnumerateArray().ToList();
-        Assert.Equal(["Lead", "Quote", "Contract"], stages.Select(s => s.GetProperty("name").GetString()));
+        Assert.Equal(["Lead", "Quote", "Contract", "Won", "Lost"], stages.Select(s => s.GetProperty("name").GetString()));
         Assert.Equal(entryStageId, stages[0].GetProperty("id").GetInt64());
 
         var moved = await client.SendAsync(Post($"/opportunities/{id}/stage",
