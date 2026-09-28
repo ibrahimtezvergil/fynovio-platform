@@ -1448,7 +1448,7 @@ Independently verified: CRM.Tests 254/254. Spec-compliance review: ✅ compliant
 - Modify: `src/Host/Program.cs`, `src/Host/Endpoints/OpportunityEndpoints.cs`
 - Test: `tests/CRM.Tests/Application/MoveOpportunityToPipelineHandlerTests.cs`
 
-- [ ] **Step 1: Write the failing domain test**
+- [x] **Step 1: Write the failing domain test**
 
 ```csharp
     [Fact]
@@ -1475,7 +1475,7 @@ Independently verified: CRM.Tests 254/254. Spec-compliance review: ✅ compliant
 Run: `dotnet test tests/CRM.Tests --filter OpportunityStateMachineTests`
 Expected: FAIL — `MoveToPipeline` doesn't exist.
 
-- [ ] **Step 2: Add the aggregate method**
+- [x] **Step 2: Add the aggregate method**
 
 Add to `src/Modules/CRM/Domain/Opportunity.cs`, after `ChangeStage`:
 
@@ -1497,12 +1497,12 @@ Add to `src/Modules/CRM/Domain/Opportunity.cs`, after `ChangeStage`:
     }
 ```
 
-- [ ] **Step 3: Run the domain test**
+- [x] **Step 3: Run the domain test**
 
 Run: `dotnet test tests/CRM.Tests --filter OpportunityStateMachineTests`
 Expected: PASS.
 
-- [ ] **Step 4: Create the command/result records**
+- [x] **Step 4: Create the command/result records**
 
 ```csharp
 // MoveOpportunityToPipelineCommand.cs
@@ -1522,7 +1522,7 @@ namespace CRM.Application;
 public sealed record MoveOpportunityToPipelineResult(long OpportunityId, long TargetPipelineDefinitionVersionId, long TargetStageId, bool Replayed);
 ```
 
-- [ ] **Step 5: Write the failing handler tests**
+- [x] **Step 5: Write the failing handler tests**
 
 ```csharp
     [Fact]
@@ -1556,7 +1556,7 @@ public sealed record MoveOpportunityToPipelineResult(long OpportunityId, long Ta
 Run: `dotnet test tests/CRM.Tests --filter MoveOpportunityToPipelineHandlerTests`
 Expected: FAIL — the handler doesn't exist yet.
 
-- [ ] **Step 6: Implement the handler**
+- [x] **Step 6: Implement the handler**
 
 Follow `ChangePipelineStageHandler.cs`'s exact template (idempotency, concurrency, unique-violation replay), with a new action key and the cross-pipeline-specific validation:
 
@@ -1694,12 +1694,12 @@ public sealed class MoveOpportunityToPipelineHandler(CrmDbContext context, IAuth
 }
 ```
 
-- [ ] **Step 7: Run tests to verify they pass**
+- [x] **Step 7: Run tests to verify they pass**
 
 Run: `dotnet test tests/CRM.Tests --filter MoveOpportunityToPipelineHandlerTests`
 Expected: PASS.
 
-- [ ] **Step 8: Register the handler and add the endpoint**
+- [x] **Step 8: Register the handler and add the endpoint**
 
 In `src/Host/Program.cs`, next to the other `AddScoped<...Handler>()` registrations for CRM:
 
@@ -1727,17 +1727,24 @@ Add the request record next to `ChangePipelineStageRequest`:
 public sealed record MoveOpportunityToPipelineRequest(long ExpectedVersion, long TargetPipelineDefinitionVersionId, long TargetStageId);
 ```
 
-- [ ] **Step 9: Run the full CRM.Tests and Host.Tests suites**
+- [x] **Step 9: Run the full CRM.Tests and Host.Tests suites**
 
 Run: `dotnet test tests/CRM.Tests tests/Host.Tests`
 Expected: PASS.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/MoveOpportunityToPipeline*.cs src/Modules/CRM/Domain/Opportunity.cs src/Host/Program.cs src/Host/Endpoints/OpportunityEndpoints.cs tests/CRM.Tests/
 git commit -m "feat(crm): add MoveOpportunityToPipeline for cross-pipeline moves"
 ```
+
+→ Commit: `99bb581` "feat(crm): add MoveOpportunityToPipeline for cross-pipeline moves"
+(follow-up fix: `8e0c31c` "test(crm): cover MoveOpportunityToPipeline rejecting a stage from another version" — code-quality review found the stage-belongs-to-another-version branch untested; a second review finding, that idempotency replay should deserialize the stored payload instead of returning `command` values, was checked and rejected: RequestHash verification already guarantees the replayed request's parameters match the original exactly, so the two approaches are equivalent, and returning from `command` matches the plan's own snippet for this handler.)
+
+Spec-compliance review: ✅ compliant (one cosmetic note: `MoveOpportunityToPipelineCommand`'s parameter order has `OpportunityId`/`Principal` swapped vs. the plan's snippet — zero functional impact, not changed).
+
+Full suite: 263/263 (CRM.Tests) passing after the follow-up fix.
 
 ### Task 16: `OpportunityStageHistory`
 
