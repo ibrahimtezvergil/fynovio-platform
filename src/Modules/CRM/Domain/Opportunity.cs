@@ -122,7 +122,7 @@ public sealed class Opportunity : IHasRowVersion
     /// active (non-lost), required (non-optional) line must exist. The total is derived
     /// from those lines here — optional lines are unselected alternatives and do not count —
     /// and this is the single declared rounding point (17 §3.4).</summary>
-    public void Win(bool requireActiveRequiredLine = true)
+    public void Win(long? wonStageId = null, bool requireActiveRequiredLine = true)
     {
         EnsureNotArchived();
         if (Status != OpportunityStatus.Open)
@@ -135,6 +135,12 @@ public sealed class Opportunity : IHasRowVersion
         // line_total is NULL on rows persisted before it was computed; derive it rather than count it as zero.
         var computedTotal = billableLines.Sum(line => line.LineTotal ?? line.Quantity * line.UnitPrice);
 
+        // Doc 2026-09-27 §5 item 3: record where it closed from before overwriting the
+        // live stage. wonStageId defaults to null, which leaves PipelineStageId untouched
+        // (today's behavior) — only WinOpportunityHandler passes a real resolved value.
+        ClosedFromStageId = PipelineStageId;
+        PipelineStageId = wonStageId ?? PipelineStageId;
+
         Status = OpportunityStatus.Won;
         // Single declared rounding point (17 §3.4): 4dp computed total rounds to the
         // currency's 2dp minor unit exactly once, here.
@@ -143,13 +149,19 @@ public sealed class Opportunity : IHasRowVersion
         Touch();
     }
 
-    public void Lose(string lostReason)
+    public void Lose(string lostReason, long? lostStageId = null)
     {
         EnsureNotArchived();
         if (Status is OpportunityStatus.Won or OpportunityStatus.Lost)
             throw new InvalidOperationException($"Cannot lose an opportunity in status {Status}.");
         if (string.IsNullOrWhiteSpace(lostReason))
             throw new ArgumentException("Lost reason is required.", nameof(lostReason));
+
+        // Doc 2026-09-27 §4.1: a Draft->Lost opportunity never entered a pipeline, so both
+        // stage fields correctly stay null here — lostStageId is null in that path because
+        // LoseOpportunityHandler only resolves one when Status is already Open.
+        ClosedFromStageId = PipelineStageId;
+        PipelineStageId = lostStageId ?? PipelineStageId;
 
         Status = OpportunityStatus.Lost;
         LostReason = lostReason;

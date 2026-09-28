@@ -74,7 +74,13 @@ public sealed class WinOpportunityHandler(CrmDbContext context, IAuthorizer auth
             .Where(settings => settings.TenantId == command.TenantId)
             .Select(settings => (bool?)settings.RequireWonLine)
             .SingleOrDefaultAsync(cancellationToken) ?? true;
-        opportunity.Win(requireWonLine);
+        var wonStageId = opportunity.PipelineDefinitionVersionId is { } versionId
+            ? await context.PipelineStages.AsNoTracking()
+                .Where(s => s.TenantId == command.TenantId && s.PipelineDefinitionVersionId == versionId && s.Kind == PipelineStageKind.Won)
+                .Select(s => (long?)s.Id)
+                .SingleOrDefaultAsync(cancellationToken)
+            : null;
+        opportunity.Win(wonStageId, requireWonLine);
 
         var payload = new WonPayload(
             opportunity.Id,

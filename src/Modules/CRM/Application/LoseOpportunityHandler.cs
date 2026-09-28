@@ -70,7 +70,13 @@ public sealed class LoseOpportunityHandler(CrmDbContext context, IAuthorizer aut
         if (activeReasons.Count > 0 && resolvedReason is null)
             throw new ArgumentException("Choose an active lost reason configured by this tenant.", nameof(command));
 
-        opportunity.Lose(resolvedReason ?? command.LostReason);
+        var lostStageId = opportunity.Status == OpportunityStatus.Open && opportunity.PipelineDefinitionVersionId is { } versionId
+            ? await context.PipelineStages.AsNoTracking()
+                .Where(s => s.TenantId == command.TenantId && s.PipelineDefinitionVersionId == versionId && s.Kind == PipelineStageKind.Lost)
+                .Select(s => (long?)s.Id)
+                .SingleOrDefaultAsync(cancellationToken)
+            : null;
+        opportunity.Lose(resolvedReason ?? command.LostReason, lostStageId);
 
         // Written for audit/outbox purposes only — the idempotency-replay branches below
         // rebuild the result from command fields instead of deserializing this back, since

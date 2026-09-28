@@ -301,4 +301,52 @@ public sealed class OpportunityStateMachineTests
         opportunity.Win();
         return opportunity;
     }
+
+    [Fact]
+    public void Win_sets_the_won_stage_and_records_where_it_closed_from()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: 1, pipelineStageId: 7);
+
+        opportunity.Win(wonStageId: 99);
+
+        Assert.Equal(99, opportunity.PipelineStageId);
+        Assert.Equal(7, opportunity.ClosedFromStageId);
+    }
+
+    [Fact]
+    public void Win_without_a_stage_argument_leaves_the_pipeline_stage_untouched()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: 1, pipelineStageId: 7);
+
+        opportunity.Win();
+
+        Assert.Equal(7, opportunity.PipelineStageId);
+    }
+
+    [Fact]
+    public void Lose_from_open_sets_the_lost_stage_and_records_where_it_closed_from()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: 1, pipelineStageId: 7);
+
+        opportunity.Lose("müşteri vazgeçti", lostStageId: 100);
+
+        Assert.Equal(100, opportunity.PipelineStageId);
+        Assert.Equal(7, opportunity.ClosedFromStageId);
+    }
+
+    [Fact]
+    public void Lose_from_draft_leaves_both_stage_fields_null()
+    {
+        var opportunity = NewDraftOpportunity();
+
+        opportunity.Lose("hiç açılmadı");
+
+        Assert.Null(opportunity.PipelineStageId);
+        Assert.Null(opportunity.ClosedFromStageId);
+    }
 }
