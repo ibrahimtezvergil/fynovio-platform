@@ -23,6 +23,7 @@ public sealed class Opportunity : IHasRowVersion
     public long? OpportunityTypeId { get; private set; }
     public long? PipelineDefinitionVersionId { get; private set; }
     public long? PipelineStageId { get; private set; }
+    public long? ClosedFromStageId { get; private set; }
     public string AssignedPrincipalIssuer { get; private set; } = null!;
     public string AssignedPrincipalSubject { get; private set; } = null!;
     public OpportunityStatus Status { get; private set; }

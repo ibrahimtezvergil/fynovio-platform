@@ -61,6 +61,13 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
 
+        builder.HasOne<PipelineStage>()
+            .WithMany()
+            .HasForeignKey(o => o.ClosedFromStageId)
+            .HasPrincipalKey(s => s.Id)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
         builder.HasMany(o => o.Lines)
             .WithOne()
             .HasForeignKey(l => new { l.TenantId, l.OpportunityId })
