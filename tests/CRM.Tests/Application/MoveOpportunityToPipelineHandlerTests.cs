@@ -18,7 +18,7 @@ public sealed class MoveOpportunityToPipelineHandlerTests
     [Fact]
     public async Task Moving_to_a_different_published_pipeline_with_an_active_open_stage_succeeds()
     {
-        var (tenant, opportunityId, targetVersionId, targetStageId, _) = await SeedAsync();
+        var (tenant, opportunityId, targetVersionId, targetStageId, _, _) = await SeedAsync();
         var opportunity = await LoadAsync(tenant, opportunityId);
         var command = new MoveOpportunityToPipelineCommand(
             tenant, opportunityId, TestData.Seller, opportunity.RowVersion, targetVersionId, targetStageId, "key-move-1", Guid.NewGuid());
@@ -35,7 +35,7 @@ public sealed class MoveOpportunityToPipelineHandlerTests
     [Fact]
     public async Task Moving_to_an_unpublished_pipeline_is_rejected()
     {
-        var (tenant, opportunityId, _, _, unpublishedVersionId) = await SeedAsync();
+        var (tenant, opportunityId, _, _, unpublishedVersionId, _) = await SeedAsync();
         var opportunity = await LoadAsync(tenant, opportunityId);
 
         await using var seed = _fixture.CreateAdminContext();
@@ -56,7 +56,7 @@ public sealed class MoveOpportunityToPipelineHandlerTests
     [Fact]
     public async Task Moving_to_an_inactive_stage_in_the_target_pipeline_is_rejected()
     {
-        var (tenant, opportunityId, targetVersionId, targetStageId, _) = await SeedAsync();
+        var (tenant, opportunityId, targetVersionId, targetStageId, _, _) = await SeedAsync();
         var opportunity = await LoadAsync(tenant, opportunityId);
 
         await using var seed = _fixture.CreateAdminContext();
@@ -77,7 +77,7 @@ public sealed class MoveOpportunityToPipelineHandlerTests
     [Fact]
     public async Task Moving_to_a_won_stage_is_rejected()
     {
-        var (tenant, opportunityId, targetVersionId, _, _) = await SeedAsync();
+        var (tenant, opportunityId, targetVersionId, _, _, _) = await SeedAsync();
         var opportunity = await LoadAsync(tenant, opportunityId);
 
         await using var seed = _fixture.CreateAdminContext();
@@ -96,7 +96,7 @@ public sealed class MoveOpportunityToPipelineHandlerTests
     [Fact]
     public async Task Moving_a_closed_opportunity_is_rejected()
     {
-        var (tenant, opportunityId, targetVersionId, targetStageId, _) = await SeedAsync();
+        var (tenant, opportunityId, targetVersionId, targetStageId, _, _) = await SeedAsync();
         var opportunity = await LoadAsync(tenant, opportunityId);
 
         // Lose the opportunity first
@@ -113,7 +113,22 @@ public sealed class MoveOpportunityToPipelineHandlerTests
             new MoveOpportunityToPipelineHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command));
     }
 
-    private async Task<(TenantId TenantId, long OpportunityId, long TargetVersionId, long TargetStageId, long UnpublishedVersionId)> SeedAsync()
+    [Fact]
+    public async Task Moving_to_a_stage_that_belongs_to_a_different_pipeline_version_is_rejected()
+    {
+        var (tenant, opportunityId, targetVersionId, _, _, sourceStageId) = await SeedAsync();
+        var opportunity = await LoadAsync(tenant, opportunityId);
+
+        // sourceStageId belongs to the source pipeline version, not targetVersionId.
+        var command = new MoveOpportunityToPipelineCommand(
+            tenant, opportunityId, TestData.Seller, opportunity.RowVersion, targetVersionId, sourceStageId, "key-wrong-version", Guid.NewGuid());
+
+        await using var context = _fixture.CreateAdminContext();
+        await Assert.ThrowsAsync<InvalidPipelineTransitionException>(() =>
+            new MoveOpportunityToPipelineHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command));
+    }
+
+    private async Task<(TenantId TenantId, long OpportunityId, long TargetVersionId, long TargetStageId, long UnpublishedVersionId, long SourceStageId)> SeedAsync()
     {
         var tenant = TestData.NextTenant();
         await using var seed = _fixture.CreateAdminContext();
@@ -160,7 +175,7 @@ public sealed class MoveOpportunityToPipelineHandlerTests
         seed.Opportunities.Add(opportunity);
         await seed.SaveChangesAsync();
 
-        return (tenant, opportunity.Id, targetVersion.Id, targetStage.Id, unpublishedVersion.Id);
+        return (tenant, opportunity.Id, targetVersion.Id, targetStage.Id, unpublishedVersion.Id, sourceStage.Id);
     }
 
     private async Task<Opportunity> LoadAsync(TenantId tenant, long opportunityId)
