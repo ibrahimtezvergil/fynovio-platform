@@ -61,10 +61,14 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
 
+        // ClosedFromStageId always mirrors PipelineDefinitionVersionId at the moment it's set
+        // (Win/Lose copy PipelineStageId into it before overwriting) — same tenant-scoped
+        // composite shape as the PipelineStageId FK above, not a bare PipelineStage.Id
+        // reference, so a future bug can't silently link to another tenant's stage.
         builder.HasOne<PipelineStage>()
             .WithMany()
-            .HasForeignKey(o => o.ClosedFromStageId)
-            .HasPrincipalKey(s => s.Id)
+            .HasForeignKey(o => new { o.TenantId, o.PipelineDefinitionVersionId, o.ClosedFromStageId })
+            .HasPrincipalKey(s => new { s.TenantId, s.PipelineDefinitionVersionId, s.Id })
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
 

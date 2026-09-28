@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM.Persistence.Migrations
 {
     [DbContext(typeof(CrmDbContext))]
-    [Migration("20260928072401_AddOpportunityClosedFromStage")]
+    [Migration("20260928073330_AddOpportunityClosedFromStage")]
     partial class AddOpportunityClosedFromStage
     {
         /// <inheritdoc />
@@ -413,9 +413,6 @@ namespace CRM.Persistence.Migrations
                     b.HasAlternateKey("TenantId", "Id")
                         .HasName("ak_opportunities_tenant_id_id");
 
-                    b.HasIndex("ClosedFromStageId")
-                        .HasDatabaseName("ix_opportunities_closed_from_stage_id");
-
                     b.HasIndex("TenantId", "CreatedAt")
                         .HasDatabaseName("ix_opportunities_tenant_id_created_at");
 
@@ -433,6 +430,9 @@ namespace CRM.Persistence.Migrations
 
                     b.HasIndex("TenantId", "IsArchived", "CreatedAt")
                         .HasDatabaseName("ix_opportunities_tenant_id_is_archived_created_at");
+
+                    b.HasIndex("TenantId", "PipelineDefinitionVersionId", "ClosedFromStageId")
+                        .HasDatabaseName("ix_opportunities_tenant_id_pipeline_definition_version_id_clos");
 
                     b.HasIndex("TenantId", "PipelineDefinitionVersionId", "PipelineStageId")
                         .HasDatabaseName("ix_opportunities_tenant_id_pipeline_definition_version_id_pipe");
@@ -1088,12 +1088,6 @@ namespace CRM.Persistence.Migrations
 
             modelBuilder.Entity("CRM.Domain.Opportunity", b =>
                 {
-                    b.HasOne("CRM.Domain.PipelineStage", null)
-                        .WithMany()
-                        .HasForeignKey("ClosedFromStageId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_opportunities_pipeline_stages_closed_from_stage_id");
-
                     b.HasOne("CRM.Domain.OpportunityType", null)
                         .WithMany()
                         .HasForeignKey("TenantId", "OpportunityTypeId")
@@ -1110,10 +1104,17 @@ namespace CRM.Persistence.Migrations
 
                     b.HasOne("CRM.Domain.PipelineStage", null)
                         .WithMany()
-                        .HasForeignKey("TenantId", "PipelineDefinitionVersionId", "PipelineStageId")
+                        .HasForeignKey("TenantId", "PipelineDefinitionVersionId", "ClosedFromStageId")
                         .HasPrincipalKey("TenantId", "PipelineDefinitionVersionId", "Id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_opportunities_pipeline_stages_tenant_id_pipeline_definition");
+
+                    b.HasOne("CRM.Domain.PipelineStage", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PipelineDefinitionVersionId", "PipelineStageId")
+                        .HasPrincipalKey("TenantId", "PipelineDefinitionVersionId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_opportunities_pipeline_stages_tenant_id_pipeline_definition1");
                 });
 
             modelBuilder.Entity("CRM.Domain.OpportunityLine", b =>
