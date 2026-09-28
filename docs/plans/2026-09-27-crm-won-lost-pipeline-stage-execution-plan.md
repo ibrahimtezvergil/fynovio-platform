@@ -1068,7 +1068,7 @@ Verified: `Validate` unit-tested directly via `PipelineDefinition`/`PipelineDefi
 - Modify: `src/Modules/CRM/Persistence/Configurations/OpportunityConfiguration.cs`
 - Test: `tests/CRM.Tests/Domain/OpportunityStateMachineTests.cs`
 
-- [ ] **Step 1: Add the property**
+- [x] **Step 1: Add the property**
 
 In `src/Modules/CRM/Domain/Opportunity.cs`, add next to `PipelineStageId`:
 
@@ -1076,7 +1076,7 @@ In `src/Modules/CRM/Domain/Opportunity.cs`, add next to `PipelineStageId`:
     public long? ClosedFromStageId { get; private set; }
 ```
 
-- [ ] **Step 2: Add the EF mapping and FK**
+- [x] **Step 2: Add the EF mapping and FK**
 
 In `src/Modules/CRM/Persistence/Configurations/OpportunityConfiguration.cs`, add after the existing `PipelineStage` `HasOne` block:
 
@@ -1089,23 +1089,38 @@ In `src/Modules/CRM/Persistence/Configurations/OpportunityConfiguration.cs`, add
             .IsRequired(false);
 ```
 
-- [ ] **Step 3: Generate and apply the migration**
+**Correction (found in code-quality review, see follow-up fix below):** this snippet is wrong — it's a bare, non-tenant-scoped FK on `PipelineStage.Id` alone, which breaks the tenant-scoped composite-FK pattern every other FK in this file uses (including the sibling `PipelineStageId` FK immediately above it). The actually-implemented mapping is:
+```csharp
+        builder.HasOne<PipelineStage>()
+            .WithMany()
+            .HasForeignKey(o => new { o.TenantId, o.PipelineDefinitionVersionId, o.ClosedFromStageId })
+            .HasPrincipalKey(s => new { s.TenantId, s.PipelineDefinitionVersionId, s.Id })
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+```
+
+- [x] **Step 3: Generate and apply the migration**
 
 Run: `dotnet ef migrations add AddOpportunityClosedFromStage --project src/Modules/CRM --startup-project src/Host`
 Run: `dotnet ef database update --project src/Modules/CRM --startup-project src/Host`
 Expected: a nullable `closed_from_stage_id bigint` column with an FK to `pipeline_stages(id)`.
 
-- [ ] **Step 4: Run the full CRM.Tests suite**
+**Correction:** `--startup-project src/Host` fails in this repo ("doesn't reference Microsoft.EntityFrameworkCore.Design") — this plan's migration commands throughout (Tasks 2, 12, 17, 21) should read `--project src/Modules/CRM/CRM.csproj --startup-project src/Modules/CRM/CRM.csproj`, matching `docs/dotnet-guide.md` §5 (the CRM module has its own design-time `CrmDbContextFactory`; Task 2 apparently got this right in practice even though its written step also says `src/Host`).
+
+- [x] **Step 4: Run the full CRM.Tests suite**
 
 Run: `dotnet test tests/CRM.Tests`
 Expected: PASS (this task adds no new tests on its own — Task 13 exercises the field through `Win`/`Lose`).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Domain/Opportunity.cs src/Modules/CRM/Persistence/Configurations/OpportunityConfiguration.cs src/Modules/CRM/Persistence/Migrations/
 git commit -m "feat(crm): add Opportunity.ClosedFromStageId"
 ```
+→ Commit: `42908af` "feat(crm): add Opportunity.ClosedFromStageId"
+(follow-up fix: `02a5d7e` "fix(crm): ClosedFromStageId uses the tenant-scoped composite FK, not a bare PipelineStage.Id reference" — code-quality review (and the controller's own read of the diff) found the FK as originally specified by this plan bypassed the tenant-isolation-hardening pattern every other FK in `OpportunityConfiguration.cs` follows; not currently exploitable (the field is only ever set internally from an already-tenant-validated `PipelineStageId`) but a real defense-in-depth regression per this project's own RLS/tenant-isolation escalation rule. Migration regenerated with the corrected 3-column composite FK.)
+Independently verified: CRM.Tests 242/242 both before and after the fix. Spec-compliance review: ✅ compliant (against the plan's original, since-corrected snippet). Code-quality review: approved after the FK fix landed.
 
 ### Task 13: `Win`/`Lose` resolve and set the tenant's Won/Lost stage
 
