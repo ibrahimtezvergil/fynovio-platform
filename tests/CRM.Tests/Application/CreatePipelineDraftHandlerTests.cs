@@ -36,6 +36,28 @@ public sealed class CreatePipelineDraftHandlerTests
         Assert.Single(stages, s => s.Kind == PipelineStageKind.Lost);
     }
 
+    [Fact]
+    public async Task Validate_rejects_an_operator_supplied_stage_named_won_or_lost()
+    {
+        var tenantId = TestData.NextTenant();
+        await using var context = _fixture.CreateAdminContext();
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            new CreatePipelineDraftHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(
+                Draft(tenantId, Guid.NewGuid(), null, 0, 0, "draft-won-stage",
+                    [new("Won", 1, true, true)])));
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            new CreatePipelineDraftHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(
+                Draft(tenantId, Guid.NewGuid(), null, 0, 0, "draft-lost-stage",
+                    [new("Lost", 1, true, true)])));
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            new CreatePipelineDraftHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(
+                Draft(tenantId, Guid.NewGuid(), null, 0, 0, "draft-won-case-insensitive",
+                    [new("won", 1, true, true)])));
+    }
+
     private CreatePipelineDraftCommand Draft(TenantId tenant, Guid correlationId, long? pipelineId, long expectedRowVersion,
         int expectedLatest, string key, IReadOnlyList<PipelineStageInput> stages,
         IReadOnlyList<PipelineTransitionInput>? transitions = null) => new(tenant, Administrator, pipelineId,

@@ -121,6 +121,8 @@ public sealed class CreatePipelineDraftHandler(CrmDbContext context, IAuthorizer
         if (command.Stages is not { Count: > 0 and <= 50 } || command.Stages.Count(x => x.IsEntry) != 1) throw new ArgumentException("A pipeline draft needs 1–50 stages and exactly one explicit entry stage.");
         if (command.Stages.Any(x => string.IsNullOrWhiteSpace(x.Name) || x.Name.Trim().Length > 100 || x.SortOrder < 0 || x.IsArchived && x.IsActive)) throw new ArgumentException("Stage names, lifecycle and sort orders are invalid.");
         if (command.Stages.Select(x => x.Name.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() != command.Stages.Count || command.Stages.Select(x => x.SortOrder).Distinct().Count() != command.Stages.Count) throw new ArgumentException("Stage names and sort orders must be unique.");
+        if (command.Stages.Any(x => x.Name.Trim().Equals("Won", StringComparison.OrdinalIgnoreCase) || x.Name.Trim().Equals("Lost", StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException("\"Won\" and \"Lost\" are reserved stage names managed by the system.");
         var active = command.Stages.Where(x => x.IsActive).Select(x => x.Name.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
         if (!active.Contains(command.Stages.Single(x => x.IsEntry).Name.Trim())) throw new ArgumentException("The entry stage must be active.");
         var names = command.Stages.Select(x => x.Name.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
