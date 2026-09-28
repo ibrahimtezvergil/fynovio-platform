@@ -123,9 +123,54 @@ public sealed class ChangePipelineStageHandlerTests
         return (tenant, opportunity.Id, version, entryStage.Id, otherActiveStage.Id, inactiveStage.Id);
     }
 
+    [Fact]
+    public async Task HandleAsync_rejects_targeting_the_wons_stage_even_with_authorization_granted()
+    {
+        var (tenant, opportunityId, version, wonStageId) = await SeedAsyncWithWonStageAsync();
+        var opportunity = await LoadAsync(tenant, opportunityId);
+
+        await using var context = _fixture.CreateAdminContext();
+        var handler = new ChangePipelineStageHandler(context, StubAuthorizer.AlwaysAllow);
+        var command = new ChangePipelineStageCommand(
+            tenant, opportunityId, TestData.Seller, opportunity.RowVersion, wonStageId, "key-won", Guid.NewGuid());
+
+        await Assert.ThrowsAsync<InvalidPipelineTransitionException>(() =>
+            handler.HandleAsync(command));
+
+        var reloaded = await context.Opportunities.AsNoTracking().SingleAsync(o => o.Id == opportunityId);
+        Assert.Equal(OpportunityStatus.Open, reloaded.Status);
+    }
+
     private async Task<Opportunity> LoadAsync(TenantId tenant, long opportunityId)
     {
         await using var context = _fixture.CreateAdminContext();
         return await context.Opportunities.AsNoTracking().SingleAsync(o => o.Id == opportunityId);
+    }
+
+    private async Task<(TenantId TenantId, long OpportunityId, PipelineDefinitionVersion Version, long WonStageId)> SeedAsyncWithWonStageAsync()
+    {
+        var tenant = TestData.NextTenant();
+        await using var seed = _fixture.CreateAdminContext();
+        await using var seedMasterData = _fixture.CreateMasterDataContext();
+        var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
+
+        var definition = PipelineDefinition.Create(tenant, "Sales");
+        seed.PipelineDefinitions.Add(definition);
+        await seed.SaveChangesAsync();
+        var version = definition.AddVersion(1);
+        seed.PipelineDefinitionVersions.Add(version);
+        await seed.SaveChangesAsync();
+        var entryStage = version.AddStage("Bekliyor", 0);
+        var wonStage = version.AddWonStage("Won", 1);
+        seed.PipelineStages.AddRange(entryStage, wonStage);
+        await seed.SaveChangesAsync();
+
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
+        opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: version.Id, pipelineStageId: entryStage.Id);
+        seed.Opportunities.Add(opportunity);
+        await seed.SaveChangesAsync();
+
+        return (tenant, opportunity.Id, version, wonStage.Id);
     }
 }
