@@ -200,7 +200,7 @@ public sealed class DevSeederTests : IClassFixture<AuthApiFixture>
             var byName = stages.EnumerateArray().ToDictionary(s => s.GetProperty("name").GetString()!);
             Assert.Equal(entryStageId, byName["Qualification"].GetProperty("id").GetInt64());
             Assert.True(byName["Qualification"].GetProperty("isEntry").GetBoolean());
-            Assert.Equal(CrmDevSeed.ActiveStageNames.Count + 1, byName.Count);
+            Assert.Equal(CrmDevSeed.ActiveStageNames.Count + 1 + 2, byName.Count); // +1 retired stage, +2 system Won/Lost stages
             Assert.False(byName[CrmDevSeed.RetiredStageName].GetProperty("isActive").GetBoolean());
         }
     }
