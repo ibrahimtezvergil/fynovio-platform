@@ -405,4 +405,20 @@ public sealed class OpportunityStateMachineTests
 
         Assert.Throws<InvalidOperationException>(() => opportunity.BackfillClosedStage(null, 99));
     }
+
+    [Fact]
+    public void BackfillClosedStage_reassigns_the_stage_fields_of_a_won_opportunity()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.AddLine(TestData.ProductRef(opportunity.TenantId), quantity: 1, unitPrice: 100m);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: 1, pipelineStageId: 10);
+        opportunity.Win(wonStageId: null);
+        var beforeVersion = opportunity.RowVersion;
+
+        opportunity.BackfillClosedStage(closedFromStageId: 10, targetStageId: 20);
+
+        Assert.Equal(10, opportunity.ClosedFromStageId);
+        Assert.Equal(20, opportunity.PipelineStageId);
+        Assert.True(opportunity.RowVersion > beforeVersion);
+    }
 }
