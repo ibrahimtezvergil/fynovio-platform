@@ -2173,7 +2173,7 @@ Independently verified: CRM.Tests 273/273, Host.Tests exact 26-name pre-existing
 
 **Same RLS constraint as Task 17** (see that task's note): iterate `Opportunities`/`CrmSettings` per tenant from the same explicit `--tenant-ids` list Task 9 parses, inside that same per-tenant transaction, as a third private method called after the Won/Lost backfill sub-step — never an unscoped cross-tenant query. Make the "unresolved" count in Step 5's manual verification per-tenant too (or at least confirmed against the specific `--tenant-ids` passed), not a global count that could read as zero for the wrong reason (e.g. a tenant simply not included in the list, rather than genuinely having nothing left to resolve).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```csharp
     [Fact]
@@ -2206,7 +2206,9 @@ Independently verified: CRM.Tests 273/273, Host.Tests exact 26-name pre-existing
 Run: `dotnet test tests/Host.Tests --filter "RunAsync_assigns_a_stage_to_an_open_stageless_opportunity|RunAsync_falls_back_to_the_tenants_default_pipeline"`
 Expected: FAIL.
 
-- [ ] **Step 2: Add the sub-step**
+- [x] **Step 2: Add the sub-step**
+
+Deviation, verified correct against this codebase's Task 9/17 RLS convention (not a gap, same correction as Task 17): the actual `BackfillStagelessOpenOpportunitiesAsync` takes an explicit `tenantId` parameter and is called once per tenant inside `RunAsync`'s existing loop, rather than deriving its own tenant list via the unscoped `Opportunities.Select(o => o.TenantId).Distinct()` query shown below — that query would silently see zero rows under `FORCE ROW LEVEL SECURITY`.
 
 Extend `RunAsync` in `src/Host/Bootstrap/BackfillCrmPipelinesCommand.cs`:
 
@@ -2308,21 +2310,29 @@ With its own test:
     }
 ```
 
-- [ ] **Step 3: Run tests to verify they pass**
+- [x] **Step 3: Run tests to verify they pass**
 
 Run: `dotnet test tests/Host.Tests --filter "RunAsync_assigns_a_stage_to_an_open_stageless_opportunity|RunAsync_falls_back_to_the_tenants_default_pipeline"`
 Run: `dotnet test tests/CRM.Tests --filter BackfillStagelessOpen_is_rejected_when_a_stage_is_already_set`
-Expected: PASS.
+Expected: PASS. — Confirmed PASS (independently re-run: 8/8 in `BackfillCrmPipelinesCommandTests`, including both new Task 18 tests).
 
-- [ ] **Step 4: Run the full test suite**
+Also added, beyond the plan's spec (same pattern established for `BackfillClosedStage` in Task 17 after a review finding): `BackfillStagelessOpen_assigns_both_fields_to_a_stageless_open_opportunity`, a positive-case unit test verifying the method sets both fields and increments `RowVersion`.
+
+- [x] **Step 4: Run the full test suite**
 
 Run: `dotnet test tests/CRM.Tests tests/Host.Tests`
-Expected: PASS.
+Expected: PASS. — Independently verified: CRM.Tests 275/275. Host.Tests 372/398, with the exact same 26 pre-existing failure names as the documented baseline (diffed name-for-name against Task 17's baseline capture, not just count — only timestamps differ).
+
+→ Commit: `2d73b11` "feat(crm): backfill stage-less open opportunities, preferring their own pipeline version". Code-quality review: approved ("Ready to merge: Yes") — confirmed RLS-safe per-tenant scoping, correct transaction atomicity, idempotency, fallback-logic correctness, and (a specific point of scrutiny) that the second integration test's `CrmSettings.Create(...)` seeding is genuinely deterministic and not incidentally lucky — verified `CrmSettings` has `TenantId` as its sole primary key and that `EnableModuleCommand`/`EnableTenantModuleHandler`'s CRM auto-provisioning never creates a `CrmSettings` row, so no prior row exists to conflict with. One non-blocking minor note: an N+1 query pattern per stage-less opportunity, acceptable for a one-time operator backfill.
+
+**Known deviation, not corrected:** the commit's `Co-Authored-By` trailer reads "Claude Haiku 4.5" rather than this session's standard "Claude Sonnet 5" attribution — the implementer subagent self-attributed by its own running model rather than following the instructed trailer text. Left as-is (no history rewrite without the user's say-so); flagging here for visibility.
 
 - [ ] **Step 5: Run it for real against the local dev database and read the output before trusting it**
 
 Run: `dotnet run --project src/Host -- backfill-crm-pipelines`
 Expected: the "unresolved" count is 0 (confirms doc §6.2's prediction). If it isn't 0, stop — investigate those specific rows manually before touching Task 19; do not proceed to the `CHECK` constraint with unresolved rows outstanding.
+
+**Not yet run** — this is a mutating operator command against a real database; deliberately left for the user (or an explicit go-ahead) rather than run unprompted against local dev data.
 
 - [ ] **Step 6: Commit**
 
@@ -2331,7 +2341,9 @@ git add src/Host/Bootstrap/BackfillCrmPipelinesCommand.cs src/Modules/CRM/Domain
 git commit -m "feat(crm): backfill stage-less open opportunities, preferring their own pipeline version"
 ```
 
-**Phase D is now complete.** Do not proceed to Phase E until Task 18's Step 5 has been run against every environment that matters and reports zero unresolved rows.
+Superseded — the code for this task was already committed in Step 4's commit (`2d73b11`) since the implementer bundled Steps 1-2's changes into one commit ahead of Step 5's manual verification. Nothing further to commit here once Step 5 is run; if Step 5 surfaces unresolved rows requiring a code fix, that fix gets its own commit at that time.
+
+**Phase D's code is complete and tested; do not proceed to Phase E until Task 18's Step 5 has actually been run against every environment that matters and reports zero unresolved rows.**
 
 ---
 
