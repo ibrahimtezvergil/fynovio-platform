@@ -71,6 +71,9 @@ public sealed class ChangePipelineStageHandler(CrmDbContext context, IAuthorizer
             throw new InvalidPipelineTransitionException(opportunity.Id, command.TargetStageId, "stage does not belong to this opportunity's current pipeline version");
         if (!targetStage.IsActive)
             throw new InvalidPipelineTransitionException(opportunity.Id, command.TargetStageId, "stage is retired and not a valid target for new transitions");
+        // Unconditional — not gated by EnforceAllowedTransitions below. Doc §4.2: this is an
+        // authorization boundary (board drag must never silently win/lose an opportunity),
+        // not a configurable transition rule.
         if (targetStage.Kind != PipelineStageKind.Open)
             throw new InvalidPipelineTransitionException(opportunity.Id, command.TargetStageId, "Won and Lost stages can only be reached through the Win/Lose commands, never ChangePipelineStage");
 
