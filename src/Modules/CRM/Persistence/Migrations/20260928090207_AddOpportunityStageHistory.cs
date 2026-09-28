@@ -56,11 +56,28 @@ namespace CRM.Persistence.Migrations
                 schema: "crm",
                 table: "opportunity_stage_history",
                 columns: new[] { "tenant_id", "pipeline_definition_version_id", "pipeline_stage_id" });
+
+            // Same hand-written pattern as EnableRowLevelSecurityOnPipelineTables/
+            // AddCrmSettingsConfiguration (AGENTS.md's named RLS exception; RLS has no EF
+            // Core model representation) — a new tenant-scoped table must get RLS in the
+            // same migration that creates it, or `fynovio_app` has unfiltered cross-tenant
+            // access to it from the moment it ships.
+            migrationBuilder.Sql("ALTER TABLE crm.opportunity_stage_history ENABLE ROW LEVEL SECURITY;");
+            migrationBuilder.Sql("ALTER TABLE crm.opportunity_stage_history FORCE ROW LEVEL SECURITY;");
+            migrationBuilder.Sql("""
+                CREATE POLICY tenant_isolation ON crm.opportunity_stage_history
+                    USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::bigint)
+                    WITH CHECK (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::bigint);
+                """);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql("DROP POLICY IF EXISTS tenant_isolation ON crm.opportunity_stage_history;");
+            migrationBuilder.Sql("ALTER TABLE crm.opportunity_stage_history NO FORCE ROW LEVEL SECURITY;");
+            migrationBuilder.Sql("ALTER TABLE crm.opportunity_stage_history DISABLE ROW LEVEL SECURITY;");
+
             migrationBuilder.DropTable(
                 name: "opportunity_stage_history",
                 schema: "crm");

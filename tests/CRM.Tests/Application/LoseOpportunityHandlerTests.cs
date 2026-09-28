@@ -154,18 +154,51 @@ public sealed class LoseOpportunityHandlerTests
     [Fact]
     public async Task HandleAsync_closes_the_open_stage_history_entry_and_opens_a_lost_entry()
     {
-        var (tenant, opportunityId, version) = await SeedOpenOpportunityAsync();
-        var command = new LoseOpportunityCommand(tenant, opportunityId, TestData.Seller, version, "Lost reason", "key-lose-history", Guid.NewGuid());
+        var tenant = TestData.NextTenant();
+        await using var seed = _fixture.CreateAdminContext();
+        await using var seedMasterData = _fixture.CreateMasterDataContext();
+        var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
+
+        var definition = PipelineDefinition.Create(tenant, "Sales");
+        seed.PipelineDefinitions.Add(definition);
+        await seed.SaveChangesAsync();
+        var version = definition.AddVersion(1);
+        seed.PipelineDefinitionVersions.Add(version);
+        await seed.SaveChangesAsync();
+        var entryStage = version.AddStage("Bekliyor", 0);
+        seed.PipelineStages.Add(entryStage);
+        var lostStage = version.AddLostStage("Kaybedildi", 1);
+        seed.PipelineStages.Add(lostStage);
+        version.Publish();
+        await seed.SaveChangesAsync();
+
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
+        opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
+        seed.Opportunities.Add(opportunity);
+        await seed.SaveChangesAsync();
+
+        var openCommand = new OpenOpportunityCommand(
+            tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion,
+            DateTimeOffset.UtcNow.AddDays(7), "open-key-history", Guid.NewGuid());
+        await using (var openContext = _fixture.CreateAdminContext())
+            await new OpenOpportunityHandler(openContext, StubAuthorizer.AlwaysAllow).HandleAsync(openCommand);
+
+        await using var reload = _fixture.CreateAdminContext();
+        var reloaded = await reload.Opportunities.SingleAsync(o => o.Id == opportunity.Id);
+
+        var command = new LoseOpportunityCommand(tenant, opportunity.Id, TestData.Seller, reloaded.RowVersion, "Lost reason", "key-lose-history", Guid.NewGuid());
 
         await using var context = _fixture.CreateAdminContext();
         await new LoseOpportunityHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command);
 
         var entries = await context.OpportunityStageHistory
-            .Where(h => h.OpportunityId == opportunityId)
+            .Where(h => h.OpportunityId == opportunity.Id)
             .OrderBy(h => h.Id)
             .ToListAsync();
         Assert.Equal(2, entries.Count);
+        Assert.Equal(entryStage.Id, entries[0].PipelineStageId);
         Assert.NotNull(entries[0].ExitedAt);
+        Assert.Equal(lostStage.Id, entries[1].PipelineStageId);
         Assert.Null(entries[1].ExitedAt);
     }
 }

@@ -192,6 +192,16 @@ public sealed class MoveOpportunityToPipelineHandlerTests
         var command = new MoveOpportunityToPipelineCommand(
             tenant, opportunityId, TestData.Seller, opportunity.RowVersion, targetVersionId, targetStageId, "key-move-history", Guid.NewGuid());
 
+        // Opportunity.Open() in SeedAsync was called directly, not through
+        // OpenOpportunityHandler, so the "entered the source stage" history row it would
+        // have written doesn't exist yet — seed it manually so the handler has something to close.
+        await using (var seed = _fixture.CreateAdminContext())
+        {
+            seed.OpportunityStageHistory.Add(OpportunityStageHistoryEntry.Open(
+                tenant, opportunityId, opportunity.PipelineDefinitionVersionId!.Value, sourceStageId));
+            await seed.SaveChangesAsync();
+        }
+
         await using var context = _fixture.CreateAdminContext();
         await new MoveOpportunityToPipelineHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command);
 

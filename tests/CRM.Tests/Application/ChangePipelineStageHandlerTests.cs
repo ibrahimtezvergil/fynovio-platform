@@ -199,6 +199,11 @@ public sealed class ChangePipelineStageHandlerTests
         opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: version.Id, pipelineStageId: entryStage.Id);
         seed.Opportunities.Add(opportunity);
         await seed.SaveChangesAsync();
+        // Opportunity.Open() was called directly here, not through OpenOpportunityHandler,
+        // so the "entered the entry stage" history row it would have written doesn't exist
+        // yet — seed it manually so ChangePipelineStageHandler has something to close.
+        seed.OpportunityStageHistory.Add(OpportunityStageHistoryEntry.Open(tenant, opportunity.Id, version.Id, entryStage.Id));
+        await seed.SaveChangesAsync();
 
         var command = new ChangePipelineStageCommand(
             tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion, middleStage.Id, "key-change", Guid.NewGuid());
