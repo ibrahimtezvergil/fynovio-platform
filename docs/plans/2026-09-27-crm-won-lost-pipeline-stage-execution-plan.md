@@ -1988,7 +1988,9 @@ Runs only after Phase B and Phase C are both merged — the doc's required order
 
 **RLS constraint, inherited from Task 9's corrected design — read before writing this task's code:** `BackfillCrmPipelinesCommand` takes explicit `--tenant-ids` (Task 9 no longer auto-discovers — every tenant-scoped table has `FORCE ROW LEVEL SECURITY` and the app's runtime role cannot bypass it). This sub-step must iterate `PipelineDefinitionVersions`/`Opportunities` **per tenant from that same explicit list**, inside the same per-tenant transaction Task 9's `RunAsync` already opens (do not query `PipelineDefinitionVersions`/`Opportunities` unscoped across all tenants at once — it will silently see zero rows under RLS, exactly like the bug found and fixed in Task 9). Add this sub-step's logic as a second private method called from inside Task 9's existing per-tenant loop, after `ProvisionMissingPipelineAsync` — not as a second unscoped top-level pass over "every version" or "every opportunity."
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
+
+Deviation, caught by spec-compliance review and corrected before code-quality review: the implementer's first attempt seeded the pipeline via `EnableCrmAsync` (Task 8's auto-provisioning through `ProvisionPipelineHandler`), which already adds Won/Lost stages during normal provisioning — so the seeded version never actually lacked a Won/Lost stage, and the stage-adding code path (`BackfillSystemStage`) went completely unexercised. Fixed by building the version directly via domain calls (`PipelineDefinition.Create` → `AddVersion` → `AddStage` for the entry stage only, no `AddWonStage`/`AddLostStage` → `Publish`), genuinely simulating pre-feature data as the plan intended.
 
 ```csharp
     [Fact]
@@ -2014,7 +2016,9 @@ Runs only after Phase B and Phase C are both merged — the doc's required order
 Run: `dotnet test tests/Host.Tests --filter RunAsync_adds_won_and_lost_stages_to_a_pre_existing_published_version_and_reassigns_closed_opportunities`
 Expected: FAIL.
 
-- [ ] **Step 2: Extend `BackfillCrmPipelinesCommand`**
+- [x] **Step 2: Extend `BackfillCrmPipelinesCommand`**
+
+Deviation, verified correct against this codebase's Task 9 RLS convention (not a gap): the actual implementation adapts the snippet below into a **per-tenant-scoped** method (`BackfillWonLostStagesAsync(scopedServices, tenantId, cancellationToken)`) called once per tenant inside `RunAsync`'s existing `foreach (var tenantId in tenantIds)` loop, right after `ProvisionMissingPipelineAsync` — not the single unscoped-query version shown below, which would silently see zero rows under `FORCE ROW LEVEL SECURITY` exactly like the bug Task 9 already fixed. Each per-tenant call opens its own transaction, calls `SetTenantContextAsync(tenantId, ...)` once, filters `PipelineDefinitionVersions` by `v.TenantId == tenantId` explicitly, and commits once at the end.
 
 Add a second private method and call it from `RunAsync` after the provisioning pass:
 
@@ -2138,23 +2142,26 @@ Add its own small unit test in `OpportunityStateMachineTests.cs`:
     }
 ```
 
-- [ ] **Step 3: Run tests to verify they pass**
+- [x] **Step 3: Run tests to verify they pass**
 
 Run: `dotnet test tests/Host.Tests --filter RunAsync_adds_won_and_lost_stages_to_a_pre_existing_published_version_and_reassigns_closed_opportunities`
 Run: `dotnet test tests/CRM.Tests --filter BackfillClosedStage_is_rejected_when_not_closed`
-Expected: PASS.
+Expected: PASS. — Confirmed PASS (independently re-run, not just trusted from the subagent's self-report).
 
-- [ ] **Step 4: Run the full test suite**
+- [x] **Step 4: Run the full test suite**
 
 Run: `dotnet test tests/CRM.Tests tests/Host.Tests`
-Expected: PASS.
+Expected: PASS. — Independently verified: CRM.Tests 273/273. Host.Tests 370/396 with the exact same 26 pre-existing failure names as the documented baseline (diffed by name, not just count) — `PartyReferencesEndpointTests`, `EnableModuleCommandTests`, `DevSeederTests`, `AssignablePrincipalsEndpointTests`, `OpportunityEndpointsTests`, `CalendarLinkEndpointsTests`, `CalendarEndpointsTests`; none touch pipeline stages.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Host/Bootstrap/BackfillCrmPipelinesCommand.cs src/Modules/CRM/Domain/Opportunity.cs tests/
 git commit -m "feat(crm): backfill Won/Lost stages onto existing pipeline versions and reassign already-closed opportunities"
 ```
+→ Commit: `a5cae48` "feat(crm): backfill Won/Lost stages onto existing pipeline versions and reassign already-closed opportunities" (follow-up fix: `119d2b8` "fix(crm): Task 17 backfill test now exercises the stage-adding path" — spec-compliance review caught that the first test cut never exercised `BackfillSystemStage`, see Step 1's deviation note) (follow-up fix: `bc57fc5` "test(crm): add positive-case coverage for BackfillClosedStage" — code-quality review flagged `BackfillClosedStage` had only rejection-path unit coverage; a reviewer finding claiming the method lacked an XML doc comment was independently checked against the actual file and found incorrect — the doc comment was already present at lines 235-238 — and rejected)
+
+Independently verified: CRM.Tests 273/273, Host.Tests exact 26-name pre-existing failure set unchanged. Code-quality review: approved ("Ready to merge: Yes") — confirmed RLS-safe per-tenant scoping, transaction correctness (single commit per tenant, no partial-application risk), idempotency (guard checks on both the stage-adding and opportunity-reassignment passes), and `EvidenceRecord`'s `RowVersion` capture matches the established `WinOpportunityHandler`/`LoseOpportunityHandler` convention (read after the domain mutation, not before).
 
 ### Task 18: Backfill sub-step 3 — stage-less `Open` opportunities (doc §5 item 6.c / §6.2)
 
