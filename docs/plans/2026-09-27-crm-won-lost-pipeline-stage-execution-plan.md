@@ -1384,7 +1384,7 @@ Independently verified: CRM.Tests 253/253 after the follow-up fix (251 from the 
 
 Implements doc §4.2 — the authorization-boundary requirement. This is the test the doc's own review specifically demanded.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```csharp
     [Fact]
@@ -1405,7 +1405,7 @@ Implements doc §4.2 — the authorization-boundary requirement. This is the tes
 Run: `dotnet test tests/CRM.Tests --filter HandleAsync_rejects_targeting_the_wons_stage_even_with_authorization_granted`
 Expected: FAIL — today `ChangePipelineStageHandler` happily moves the opportunity onto any active stage in its version, Won/Lost included, and never calls `Win`/`Lose`.
 
-- [ ] **Step 2: Add the rejection**
+- [x] **Step 2: Add the rejection**
 
 In `src/Modules/CRM/Application/ChangePipelineStageHandler.cs`, right after the existing `if (!targetStage.IsActive) throw ...` check and before the `EnforceAllowedTransitions` block:
 
@@ -1418,22 +1418,25 @@ In `src/Modules/CRM/Application/ChangePipelineStageHandler.cs`, right after the 
 
 (This check is unconditional — it runs regardless of the tenant's `EnforceAllowedTransitions` setting, deliberately, per doc §4.2: that flag must never be able to turn off this specific rule.)
 
-- [ ] **Step 3: Run tests to verify they pass**
+- [x] **Step 3: Run tests to verify they pass**
 
 Run: `dotnet test tests/CRM.Tests --filter HandleAsync_rejects_targeting_the_wons_stage_even_with_authorization_granted`
 Expected: PASS.
 
-- [ ] **Step 4: Run the full CRM.Tests suite**
+- [x] **Step 4: Run the full CRM.Tests suite**
 
 Run: `dotnet test tests/CRM.Tests`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/ChangePipelineStageHandler.cs tests/CRM.Tests/Application/ChangePipelineStageHandlerTests.cs
 git commit -m "fix(crm): ChangePipelineStage can never move an opportunity onto a Won/Lost stage"
 ```
+→ Commit: `a1cac11` "fix(crm): ChangePipelineStage can never move an opportunity onto a Won/Lost stage"
+(follow-up fix: `a574fd3` "fix(crm): explain why the Won/Lost stage-kind check is unconditional" — code-quality review asked for a one-line comment explaining why this check is an authorization boundary, not a configurable transition rule, so a future maintainer doesn't mistake it for redundant validation and remove it.)
+Independently verified: CRM.Tests 254/254. Spec-compliance review: ✅ compliant (unconditional placement, `StubAuthorizer.AlwaysAllow` correctly isolates the stage-kind check from authorization, `Status` confirmed unchanged, no pre-existing test broken, `SeedAsyncWithWonStageAsync` seeds a real Won stage via `AddWonStage`). Code-quality review: approved with one minor comment addition (above); test-helper duplication flagged as acceptable/no-action.
 
 ### Task 15: `MoveOpportunityToPipeline` command (cross-pipeline move, doc §3.3/§5 item 5)
 
