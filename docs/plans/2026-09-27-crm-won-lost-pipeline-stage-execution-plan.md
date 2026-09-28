@@ -2357,47 +2357,40 @@ Superseded — the code for this task was already committed in Step 4's commit (
 - Modify: `src/Modules/CRM/Persistence/Configurations/OpportunityConfiguration.cs:70-87`
 - Test: manual verification (a `CHECK` constraint isn't unit-testable in isolation the way a handler is — verify via a raw SQL attempt, per Step 3 below)
 
-- [ ] **Step 1: Add the constraint**
+- [x] **Step 1: Add the constraint**
 
-In `src/Modules/CRM/Persistence/Configurations/OpportunityConfiguration.cs`, inside the existing `builder.ToTable(t => { ... })` block, add alongside the other `t.HasCheckConstraint(...)` calls:
+In `src/Modules/CRM/Persistence/Configurations/OpportunityConfiguration.cs`, inside the existing `builder.ToTable(t => { ... })` block, added alongside the other `t.HasCheckConstraint(...)` calls exactly as planned.
 
-```csharp
-            t.HasCheckConstraint(
-                "ck_opportunities_stage_required_once_open",
-                "status <> 'open' OR pipeline_stage_id IS NOT NULL");
-```
+- [x] **Step 2: Generate and apply the migration**
 
-- [ ] **Step 2: Generate and apply the migration**
+**Deviation from the plan's exact command:** `--startup-project src/Host` failed with "Your startup project 'Host' doesn't reference Microsoft.EntityFrameworkCore.Design" (Host only gets the package transitively through its module `ProjectReference`s, which doesn't satisfy the EF tool's direct-reference check). Used AGENTS.md's own documented command instead — `--project src/Modules/CRM/CRM.csproj --startup-project src/Modules/CRM/CRM.csproj --output-dir Persistence/Migrations` — which is CRM's standard self-contained migration invocation. Generated `20260928222656_AddStageRequiredOnceOpenCheck` and applied it to the local dev database with `dotnet ef database update`. It applied cleanly on the first try — direct confirmation that Task 18's backfill left zero unresolved rows in every environment that matters (local dev).
 
-Run: `dotnet ef migrations add AddStageRequiredOnceOpenCheck --project src/Modules/CRM --startup-project src/Host`
-Run: `dotnet ef database update --project src/Modules/CRM --startup-project src/Host`
+- [x] **Step 3: Manually verify the constraint is live**
 
-**If this migration fails to apply** (Postgres refuses a `CHECK` addition when existing rows violate it), Task 18's backfill did not actually finish cleanly — stop, re-run `backfill-crm-pipelines`, and confirm zero unresolved rows before retrying this migration. Do not weaken the constraint to work around leftover bad data.
-
-- [ ] **Step 3: Manually verify the constraint is live**
-
-In `psql`:
-
+Ran (with `crm.opportunities`, the schema-qualified name, not the plan's unqualified `opportunities`) inside a `BEGIN; ... ROLLBACK;` so no data was touched:
 ```sql
--- This must fail with a check-constraint violation:
-UPDATE opportunities SET pipeline_stage_id = NULL WHERE status = 'open' LIMIT 1;
+UPDATE crm.opportunities SET pipeline_stage_id = NULL
+WHERE id = (SELECT id FROM crm.opportunities WHERE status = 'open' LIMIT 1);
 ```
+Got exactly the expected error: `ERROR: new row for relation "opportunities" violates check constraint "ck_opportunities_stage_required_once_open"`.
 
-Expected: `ERROR: new row for relation "opportunities" violates check constraint "ck_opportunities_stage_required_once_open"`.
+- [x] **Step 4: Run the full CRM.Tests and Host.Tests suites one final time**
 
-- [ ] **Step 4: Run the full CRM.Tests and Host.Tests suites one final time**
+The constraint immediately exposed every test seed helper that opened an opportunity with a null pipeline stage while flushing it to Postgres in `open` status — legal before this task (`Opportunity.Open()` only requires a stage's version when a stage is given, never the reverse) and now correctly rejected. This was the constraint doing its job, not a defect in it. Fixed:
+- **CRM.Tests** (`AddOpportunityLineHandlerTests`, `GetOpportunityAvailableActionsHandlerTests`, `LoseOpportunityHandlerTests`, `OpportunityAuthorizationTests`, `OpportunityConcurrencyTests`, `OpportunityPersistenceTests`, `WinOpportunityHandlerTests`): added `TestData.CreatePublishedPipelineWithEntryStageAsync` (definition → version → entry stage → publish, the same three-`SaveChangesAsync` pattern Task 17/18's tests already used) and pointed each failing seed helper's `Open(...)` call at it instead of `pipelineDefinitionVersionId: null, pipelineStageId: null`.
+- **`LegacyMigrationFixture`**: this fixture proves a real upgrade path through raw EF migrations (not domain calls), and its `legacy-offered` row predates the "stage mandatory once open" invariant entirely, with no application-level path to backfill it before this migration is reached. Split the final `MigrateAsync()` into "migrate to the last pre-constraint migration" → simulate the Task 18 backfill (insert a minimal pipeline + entry stage via raw SQL, assign it to the `legacy-offered` row) → "migrate the rest of the way to the tip", matching the order a real production upgrade must run in.
+- **`Host.Tests/OpportunityEndpointsTests.SeedOpenOpportunityAsync`**: same fix as the CRM.Tests helpers, inlined (Host.Tests has no access to CRM.Tests' `TestData`).
+- **`Host.Tests/BackfillCrmPipelinesCommandTests`**' two "stageless open opportunity" tests: these seed data that must predate the constraint *by definition* — that's the scenario the backfill command exists to fix. The app's runtime role doesn't own `crm.opportunities` and can't `ALTER` it, so each test opens a superuser connection (`AuthTestFixture.CreateCrmContext(_fixture.AdminConnectionString)`) to `DROP` the constraint before seeding and `ADD` it back only *after* `RunBackfillAsync` has fixed the row — re-adding it any earlier fails, since `ADD CONSTRAINT` revalidates every existing row and the seeded row is still broken at that point. The `DROP`/insert/commit and the backfill run/`ADD` are also intentionally on opposite sides of the seed transaction's own commit: re-adding while that transaction was still open deadlocked (`ALTER TABLE` needs an `ACCESS EXCLUSIVE` lock that conflicts with the transaction's own uncommitted row lock on the same table).
 
-Run: `dotnet test tests/CRM.Tests tests/Host.Tests`
-Expected: PASS.
+Final independently-verified result: **CRM.Tests 275/275**, **Host.Tests 372/398** with the exact same 26 pre-existing failure names as every prior baseline capture in this plan (diffed name-for-name via `comm`, not just count).
 
-- [ ] **Step 5: Commit**
+→ Commit: `45c0e51` "feat(crm): enforce stage-required-once-open with a real CHECK constraint" — bundles Steps 1, 2, and all of Step 4's test fixes into one commit (Step 3's verification was manual/interactive and produced no file changes to commit).
 
-```bash
-git add src/Modules/CRM/Persistence/Configurations/OpportunityConfiguration.cs src/Modules/CRM/Persistence/Migrations/
-git commit -m "feat(crm): enforce stage-required-once-open with a real CHECK constraint"
-```
+- [x] **Step 5: Commit**
 
-**This is the last task in the plan.** At this point every decision in `docs/architecture-analysis/2026-09-27-crm-opportunity-pipeline-won-lost-stage-integration.md` — both the first-round §3 decisions and the second-round §6 amendments — is implemented, tested, and enforced at the database level.
+Already covered by the Step 4 commit above (`45c0e51`) — no separate commit needed.
+
+**This is the last task in the plan — the plan is now complete.** Every decision in `docs/architecture-analysis/2026-09-27-crm-opportunity-pipeline-won-lost-stage-integration.md` — both the first-round §3 decisions and the second-round §6 amendments — is implemented, tested, and enforced at the database level.
 
 ---
 
