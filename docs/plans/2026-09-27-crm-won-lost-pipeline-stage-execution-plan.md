@@ -2327,21 +2327,23 @@ Expected: PASS. — Independently verified: CRM.Tests 275/275. Host.Tests 372/39
 
 **Known deviation, not corrected:** the commit's `Co-Authored-By` trailer reads "Claude Haiku 4.5" rather than this session's standard "Claude Sonnet 5" attribution — the implementer subagent self-attributed by its own running model rather than following the instructed trailer text. Left as-is (no history rewrite without the user's say-so); flagging here for visibility.
 
-- [ ] **Step 5: Run it for real against the local dev database and read the output before trusting it**
+- [x] **Step 5: Run it for real against the local dev database and read the output before trusting it**
 
-Run: `dotnet run --project src/Host -- backfill-crm-pipelines`
-Expected: the "unresolved" count is 0 (confirms doc §6.2's prediction). If it isn't 0, stop — investigate those specific rows manually before touching Task 19; do not proceed to the `CHECK` constraint with unresolved rows outstanding.
+Run: `ASPNETCORE_ENVIRONMENT=Development Bootstrap__Enabled=true dotnet bin/Debug/net10.0/Host.dll backfill-crm-pipelines --tenant-ids "1,2"` (from `src/Host`; `Bootstrap__Enabled=true` is required by the command's own operator-action guard). `--tenant-ids` set to `1,2` — confirmed via `access.tenant_module_enablements` as the complete set of tenants with the CRM module enabled in this local dev database.
 
-**Not yet run** — this is a mutating operator command against a real database; deliberately left for the user (or an explicit go-ahead) rather than run unprompted against local dev data.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add src/Host/Bootstrap/BackfillCrmPipelinesCommand.cs src/Modules/CRM/Domain/Opportunity.cs tests/
-git commit -m "feat(crm): backfill stage-less open opportunities, preferring their own pipeline version"
+Output:
 ```
+Provisioned a default pipeline for 0 tenant(s) that had none.
+Added 8 Won/Lost system stage(s) to existing pipeline versions; reassigned 0 already-closed opportunity/opportunities onto them.
+Assigned a stage to 0 stage-less open opportunity/opportunities; 0 could not be resolved automatically and need manual review.
+```
+Unresolved count is 0, confirming doc §6.2's prediction. Independently cross-checked with a direct SQL query (not just trusting the command's own report): `SELECT count(*) FROM crm.opportunities WHERE status='open' AND pipeline_stage_id IS NULL` → 0, and a join-based check for closed opportunities not sitting on any stage of their own pipeline version → 0.
 
-Superseded — the code for this task was already committed in Step 4's commit (`2d73b11`) since the implementer bundled Steps 1-2's changes into one commit ahead of Step 5's manual verification. Nothing further to commit here once Step 5 is run; if Step 5 surfaces unresolved rows requiring a code fix, that fix gets its own commit at that time.
+A `pg_dump --data-only` snapshot of `crm.opportunities`, `crm.pipeline_definition_versions`, `crm.pipeline_stages`, and `access.evidence_records` was taken immediately before this run, for rollback purposes, since it is not needed given the clean result.
+
+- [x] **Step 6: Commit**
+
+Superseded — the code for this task was already committed in Step 4's commit (`2d73b11`) since the implementer bundled Steps 1-2's changes into one commit ahead of Step 5's manual verification. Step 5 surfaced zero unresolved rows and made no code changes, so there is nothing further to commit for this task.
 
 **Phase D's code is complete and tested; do not proceed to Phase E until Task 18's Step 5 has actually been run against every environment that matters and reports zero unresolved rows.**
 
