@@ -996,7 +996,7 @@ Independently verified: CRM.Tests 240/240, Host.Tests exact 26-name pre-existing
 - Modify: `src/Modules/CRM/Application/CreatePipelineDraftHandler.cs:219-227` (`PublishPipelineVersionHandler.Validate`)
 - Test: `tests/CRM.Tests/Application/CreatePipelineDraftHandlerTests.cs` (the `PublishPipelineVersionHandler.Validate` unit tests, if any exist as a separate `internal` test target — check; otherwise add via the public `PublishPipelineVersionHandler.HandleAsync` path)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```csharp
     [Fact]
@@ -1014,7 +1014,7 @@ Independently verified: CRM.Tests 240/240, Host.Tests exact 26-name pre-existing
 Run: `dotnet test tests/CRM.Tests --filter Validate_rejects_a_version_missing_a_lost_stage`
 Expected: FAIL — `Validate` doesn't check for Won/Lost shape yet.
 
-- [ ] **Step 2: Extend `Validate`**
+- [x] **Step 2: Extend `Validate`**
 
 Replace the body of `internal static List<string> Validate(...)` in `src/Modules/CRM/Application/CreatePipelineDraftHandler.cs`:
 
@@ -1042,22 +1042,24 @@ Replace the body of `internal static List<string> Validate(...)` in `src/Modules
     }
 ```
 
-- [ ] **Step 3: Run tests to verify they pass**
+- [x] **Step 3: Run tests to verify they pass**
 
 Run: `dotnet test tests/CRM.Tests --filter Validate_rejects_a_version_missing_a_lost_stage`
 Expected: PASS.
 
-- [ ] **Step 4: Run the full CRM.Tests suite**
+- [x] **Step 4: Run the full CRM.Tests suite**
 
 Run: `dotnet test tests/CRM.Tests`
 Expected: PASS — since Task 10 already guarantees every drafted/provisioned pipeline has both stages, this should not break any test that goes through the normal handlers; it would only catch a test that hand-builds an invalid version directly.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Modules/CRM/Application/CreatePipelineDraftHandler.cs tests/CRM.Tests/Application/CreatePipelineDraftHandlerTests.cs
 git commit -m "feat(crm): PublishPipelineVersion enforces exactly one Won and one Lost stage, correctly shaped"
 ```
+→ Commit: `069055a` "feat(crm): PublishPipelineVersion enforces exactly one Won and one Lost stage, correctly shaped"
+Verified: `Validate` unit-tested directly via `PipelineDefinition`/`PipelineDefinitionVersion` domain builders (no DB needed — pure function). Full suite: CRM.Tests 242/242 passed (dotnet test hung inside the sandbox's testhost connection — see Task 11 sandbox note below; ran with the sandbox disabled instead, per repo AGENTS.md guidance to fall back only on confirmed sandbox-caused failures).
 
 ### Task 12: `Opportunity.ClosedFromStageId`
 
