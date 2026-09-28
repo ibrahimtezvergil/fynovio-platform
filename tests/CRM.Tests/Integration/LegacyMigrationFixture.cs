@@ -21,6 +21,14 @@ public sealed class LegacyMigrationFixture : IAsyncLifetime
 {
     private const string PreRenameMigration = "20260916081636_EnableRowLevelSecurity";
 
+    /// <summary>The last migration before `ck_opportunities_stage_required_once_open`
+    /// (docs/plans/2026-09-27 Task 19) goes live. A real upgrade must run the
+    /// `backfill-crm-pipelines` operator command (Task 18) between this point and the
+    /// tip — the seeded `legacy-offered` row predates the "stage mandatory once open"
+    /// invariant and has no pipeline stage of its own, exactly the scenario that command
+    /// exists to fix.</summary>
+    private const string PreStageRequiredCheckMigration = "20260928090207_AddOpportunityStageHistory";
+
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:17-alpine")
         .WithDatabase("fynovio_platform_legacy_test")
         .WithUsername("postgres")
@@ -53,7 +61,55 @@ public sealed class LegacyMigrationFixture : IAsyncLifetime
         await SeedLegacyRowsAsync();
 
         await using (var crmContext = CreateCrmContext())
+        {
+            var migrator = crmContext.GetInfrastructure().GetRequiredService<IMigrator>();
+            await migrator.MigrateAsync(PreStageRequiredCheckMigration);
+        }
+
+        await BackfillLegacyOfferedStageAsync();
+
+        await using (var crmContext = CreateCrmContext())
             await crmContext.Database.MigrateAsync();
+    }
+
+    /// <summary>Simulates the one-time `backfill-crm-pipelines` operator command (Task 18)
+    /// against the `legacy-offered` row, which the real command would resolve the same way:
+    /// no pipeline of its own, so it falls onto a pipeline's entry stage.</summary>
+    private async Task BackfillLegacyOfferedStageAsync()
+    {
+        await using var context = CreateCrmContext();
+
+        await context.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO crm.pipeline_definitions (tenant_id, name, created_at, updated_at)
+            VALUES ({Tenant.Value}, 'Legacy Pipeline', now(), now());
+            """);
+
+        await context.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO crm.pipeline_definition_versions
+                (tenant_id, pipeline_definition_id, version_number, created_at, status, published_at)
+            SELECT {Tenant.Value}, d.id, 1, now(), 'Published', now()
+            FROM crm.pipeline_definitions d
+            WHERE d.tenant_id = {Tenant.Value} AND d.name = 'Legacy Pipeline';
+            """);
+
+        await context.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO crm.pipeline_stages
+                (tenant_id, pipeline_definition_version_id, name, sort_order, created_at, is_entry, kind)
+            SELECT {Tenant.Value}, v.id, 'Open', 0, now(), true, 'open'
+            FROM crm.pipeline_definition_versions v
+            JOIN crm.pipeline_definitions d ON d.id = v.pipeline_definition_id AND d.tenant_id = v.tenant_id
+            WHERE v.tenant_id = {Tenant.Value} AND d.name = 'Legacy Pipeline';
+            """);
+
+        await context.Database.ExecuteSqlInterpolatedAsync($"""
+            UPDATE crm.opportunities o
+            SET pipeline_definition_version_id = v.id, pipeline_stage_id = s.id
+            FROM crm.pipeline_definition_versions v
+            JOIN crm.pipeline_definitions d ON d.id = v.pipeline_definition_id AND d.tenant_id = v.tenant_id
+            JOIN crm.pipeline_stages s ON s.pipeline_definition_version_id = v.id AND s.tenant_id = v.tenant_id
+            WHERE o.tenant_id = {Tenant.Value} AND o.assigned_principal_subject = 'legacy-offered'
+              AND d.tenant_id = {Tenant.Value} AND d.name = 'Legacy Pipeline';
+            """);
     }
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();

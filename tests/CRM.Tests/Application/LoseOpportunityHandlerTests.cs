@@ -143,9 +143,10 @@ public sealed class LoseOpportunityHandlerTests
         await using var seed = _fixture.CreateAdminContext();
         await using var seedMasterData = _fixture.CreateMasterDataContext();
         var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
+        var (versionId, stageId) = await TestData.CreatePublishedPipelineWithEntryStageAsync(seed, tenant);
         var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
         opportunity.AddLine(TestData.ProductRef(tenant), 1, 1000m);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), versionId, stageId);
         seed.Opportunities.Add(opportunity);
         await seed.SaveChangesAsync();
         return (tenant, opportunity.Id, opportunity.RowVersion);

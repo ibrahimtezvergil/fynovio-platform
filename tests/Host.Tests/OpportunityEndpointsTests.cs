@@ -368,9 +368,24 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
         var partyId = await SeedPartyAsync(tenantId, "Acme");
 
         await using var crm = CreateCrmContext(_connectionString);
+
+        // Minimal published pipeline (one entry stage) so the opportunity can satisfy
+        // ck_opportunities_stage_required_once_open (Task 19) once it's opened. A Guid
+        // suffix keeps the name unique per (tenant_id, name) across repeated seed calls.
+        var definition = PipelineDefinition.Create(tenant, $"Test Pipeline {Guid.NewGuid():N}");
+        crm.PipelineDefinitions.Add(definition);
+        await crm.SaveChangesAsync();
+        var version = definition.AddVersion(1);
+        crm.PipelineDefinitionVersions.Add(version);
+        await crm.SaveChangesAsync();
+        var entryStage = version.AddStage("Open", 10);
+        version.Publish();
+        crm.PipelineStages.Add(entryStage);
+        await crm.SaveChangesAsync();
+
         var opportunity = Opportunity.Create(tenant, new PartyRef(tenant, partyId), owner, "TRY", 100m);
         opportunity.AddLine(new EntityRef(tenant, "masterdata", "product", 1), quantity: 1, unitPrice: 100m);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), version.Id, entryStage.Id);
         crm.Opportunities.Add(opportunity);
         await crm.SaveChangesAsync();
         return opportunity.Id;

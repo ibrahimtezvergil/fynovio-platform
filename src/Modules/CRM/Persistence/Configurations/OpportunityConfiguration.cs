@@ -95,6 +95,9 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
             t.HasCheckConstraint("ck_opportunities_party_ref_party_id_positive", "party_ref_party_id > 0");
             t.HasCheckConstraint("ck_opportunities_archive_timestamp", "(is_archived AND archived_at IS NOT NULL) OR (NOT is_archived AND archived_at IS NULL)");
             t.HasCheckConstraint("ck_opportunities_archive_nonterminal", "NOT is_archived OR status IN ('draft','open')");
+            t.HasCheckConstraint(
+                "ck_opportunities_stage_required_once_open",
+                "status <> 'open' OR pipeline_stage_id IS NOT NULL");
         });
 
         builder.HasIndex(o => new { o.TenantId, o.Status });

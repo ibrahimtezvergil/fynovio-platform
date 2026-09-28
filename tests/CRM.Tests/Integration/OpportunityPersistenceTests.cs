@@ -41,8 +41,9 @@ public sealed class OpportunityPersistenceTests
 
         var partyRef = await TestData.CreatePartyAsync(masterDataContext, tenant, "Acme");
 
+        var (versionId, stageId) = await TestData.CreatePublishedPipelineWithEntryStageAsync(crmContext, tenant);
         var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), versionId, stageId);
         crmContext.Opportunities.Add(opportunity);
         await crmContext.SaveChangesAsync();
 

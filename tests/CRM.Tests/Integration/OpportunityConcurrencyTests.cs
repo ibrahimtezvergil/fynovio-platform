@@ -26,9 +26,10 @@ public sealed class OpportunityConcurrencyTests
         {
             var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
 
+            var (versionId, stageId) = await TestData.CreatePublishedPipelineWithEntryStageAsync(seedCrm, tenant);
             var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
             opportunity.AddLine(TestData.ProductRef(tenant), quantity: 1, unitPrice: 100m);
-            opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
+            opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), versionId, stageId);
             seedCrm.Opportunities.Add(opportunity);
             await seedCrm.SaveChangesAsync();
             opportunityId = opportunity.Id;

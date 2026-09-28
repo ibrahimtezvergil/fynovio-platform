@@ -133,9 +133,10 @@ public sealed class WinOpportunityHandlerTests
 
         var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenantId, "Acme");
 
+        var (versionId, stageId) = await TestData.CreatePublishedPipelineWithEntryStageAsync(seedCrm, tenantId);
         var opportunity = Opportunity.Create(tenantId, partyRef, TestData.Seller, "TRY", 100m);
         opportunity.AddLine(TestData.ProductRef(tenantId), quantity: 1, unitPrice: 100m);
-        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), versionId, stageId);
         seedCrm.Opportunities.Add(opportunity);
         await seedCrm.SaveChangesAsync();
 

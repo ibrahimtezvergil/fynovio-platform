@@ -337,21 +337,42 @@ public sealed class BackfillCrmPipelinesCommandTests : IClassFixture<AuthApiFixt
                 quantity: 1,
                 unitPrice: 1000m);
 
-            // Open with version ID but NO stage ID (simulating pre-fix data)
+            // Open with version ID but NO stage ID (simulating pre-fix data). This row
+            // predates ck_opportunities_stage_required_once_open (Task 19), which a live
+            // Postgres CHECK constraint enforces on every INSERT with no way to opt out per
+            // statement — and re-validates every EXISTING row on ADD CONSTRAINT, so the
+            // constraint can't come back until the backfill below has actually fixed this
+            // row. The app's runtime role (crmContext) doesn't own the table and can't ALTER
+            // it, so drop it on a separate superuser connection, matching the real order a
+            // production upgrade runs in: the constraint (Task 19) never exists until after
+            // the backfill (Task 18) has cleaned up rows that predate it.
             opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: versionId, pipelineStageId: null);
 
+            await using (var adminContext = AuthTestFixture.CreateCrmContext(_fixture.AdminConnectionString))
+                await adminContext.Database.ExecuteSqlRawAsync(
+                    "ALTER TABLE crm.opportunities DROP CONSTRAINT ck_opportunities_stage_required_once_open");
             crmContext.Opportunities.Add(opportunity);
             await crmContext.SaveChangesAsync();
-
             stagelessOpportunityId = opportunity.Id;
             await seedTransaction.CommitAsync();
         }
 
-        // Run the backfill command
-        var (exitCode, output, _) = await RunBackfillAsync(host, "--tenant-ids", tenantId.ToString());
+        try
+        {
+            // Run the backfill command
+            var (exitCode, output, _) = await RunBackfillAsync(host, "--tenant-ids", tenantId.ToString());
 
-        Assert.Equal(BackfillCrmPipelinesCommand.Success, exitCode);
-        Assert.Contains("Assigned a stage to", output);
+            Assert.Equal(BackfillCrmPipelinesCommand.Success, exitCode);
+            Assert.Contains("Assigned a stage to", output);
+        }
+        finally
+        {
+            // Re-add now that the backfill has fixed the row — succeeds because ADD
+            // CONSTRAINT validates existing rows, and this row now satisfies it.
+            await using var adminContext = AuthTestFixture.CreateCrmContext(_fixture.AdminConnectionString);
+            await adminContext.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE crm.opportunities ADD CONSTRAINT ck_opportunities_stage_required_once_open CHECK (status <> 'open' OR pipeline_stage_id IS NOT NULL)");
+        }
 
         // Verify the opportunity now has the entry stage assigned
         await using (var verifyScope = host.Services.CreateAsyncScope())
@@ -449,21 +470,34 @@ public sealed class BackfillCrmPipelinesCommandTests : IClassFixture<AuthApiFixt
                 quantity: 1,
                 unitPrice: 2000m);
 
-            // Open with BOTH version ID and stage ID null (pre-fix data without default assignment)
+            // Open with BOTH version ID and stage ID null (pre-fix data without default
+            // assignment). See the drop/re-add note above — same reason, same pattern: the
+            // constraint can't come back until the backfill below has fixed this row.
             opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
 
+            await using (var adminContext = AuthTestFixture.CreateCrmContext(_fixture.AdminConnectionString))
+                await adminContext.Database.ExecuteSqlRawAsync(
+                    "ALTER TABLE crm.opportunities DROP CONSTRAINT ck_opportunities_stage_required_once_open");
             crmContext.Opportunities.Add(opportunity);
             await crmContext.SaveChangesAsync();
-
             stagelessOpportunityId = opportunity.Id;
             await seedTransaction.CommitAsync();
         }
 
-        // Run the backfill command
-        var (exitCode, output, _) = await RunBackfillAsync(host, "--tenant-ids", tenantId.ToString());
+        try
+        {
+            // Run the backfill command
+            var (exitCode, output, _) = await RunBackfillAsync(host, "--tenant-ids", tenantId.ToString());
 
-        Assert.Equal(BackfillCrmPipelinesCommand.Success, exitCode);
-        Assert.Contains("Assigned a stage to", output);
+            Assert.Equal(BackfillCrmPipelinesCommand.Success, exitCode);
+            Assert.Contains("Assigned a stage to", output);
+        }
+        finally
+        {
+            await using var adminContext = AuthTestFixture.CreateCrmContext(_fixture.AdminConnectionString);
+            await adminContext.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE crm.opportunities ADD CONSTRAINT ck_opportunities_stage_required_once_open CHECK (status <> 'open' OR pipeline_stage_id IS NOT NULL)");
+        }
 
         // Verify the opportunity was assigned the tenant's default pipeline and stage
         await using (var verifyScope = host.Services.CreateAsyncScope())
