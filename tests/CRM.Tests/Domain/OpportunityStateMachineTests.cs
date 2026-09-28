@@ -421,4 +421,27 @@ public sealed class OpportunityStateMachineTests
         Assert.Equal(20, opportunity.PipelineStageId);
         Assert.True(opportunity.RowVersion > beforeVersion);
     }
+
+    [Fact]
+    public void BackfillStagelessOpen_is_rejected_when_a_stage_is_already_set()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), 1, 7);
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.BackfillStagelessOpen(2, 99));
+    }
+
+    [Fact]
+    public void BackfillStagelessOpen_assigns_both_fields_to_a_stageless_open_opportunity()
+    {
+        var opportunity = NewDraftOpportunity();
+        opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
+        var beforeVersion = opportunity.RowVersion;
+
+        opportunity.BackfillStagelessOpen(pipelineDefinitionVersionId: 2, pipelineStageId: 20);
+
+        Assert.Equal(2, opportunity.PipelineDefinitionVersionId);
+        Assert.Equal(20, opportunity.PipelineStageId);
+        Assert.True(opportunity.RowVersion > beforeVersion);
+    }
 }

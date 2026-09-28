@@ -45,16 +45,22 @@ public static class BackfillCrmPipelinesCommand
         var provisioned = 0;
         var stagesAdded = 0;
         var opportunitiesReassigned = 0;
+        var stagelessFixed = 0;
+        var stagelessUnresolved = 0;
         foreach (var tenantId in tenantIds)
         {
             provisioned += await ProvisionMissingPipelineAsync(scope.ServiceProvider, tenantId, cancellationToken);
             var (stageCount, oppCount) = await BackfillWonLostStagesAsync(scope.ServiceProvider, tenantId, cancellationToken);
             stagesAdded += stageCount;
             opportunitiesReassigned += oppCount;
+            var (fixed_, unresolved) = await BackfillStagelessOpenOpportunitiesAsync(scope.ServiceProvider, tenantId, cancellationToken);
+            stagelessFixed += fixed_;
+            stagelessUnresolved += unresolved;
         }
 
         await output.WriteLineAsync($"Provisioned a default pipeline for {provisioned} tenant(s) that had none.");
         await output.WriteLineAsync($"Added {stagesAdded} Won/Lost system stage(s) to existing pipeline versions; reassigned {opportunitiesReassigned} already-closed opportunity/opportunities onto them.");
+        await output.WriteLineAsync($"Assigned a stage to {stagelessFixed} stage-less open opportunity/opportunities; {stagelessUnresolved} could not be resolved automatically and need manual review.");
         return Success;
     }
 
@@ -170,5 +176,54 @@ public static class BackfillCrmPipelinesCommand
 
         await transaction.CommitAsync(cancellationToken);
         return (stagesAdded, opportunitiesReassigned);
+    }
+
+    /// <summary>Doc 2026-09-27 §5 item 6.c/§6.2 — deterministic fallback, never a manual
+    /// per-row review at migration time: prefer the opportunity's own pipeline version's
+    /// entry stage; only fall back to the tenant's CrmSettings default pipeline when the
+    /// opportunity's own version is also null. Run only after BackfillWonLostStagesAsync
+    /// and Task 9's pipeline provisioning pass — under that order this is expected to
+    /// resolve every row; anything it can't resolve is counted, not guessed at.</summary>
+    private static async Task<(int Fixed, int Unresolved)> BackfillStagelessOpenOpportunitiesAsync(
+        IServiceProvider scopedServices, TenantId tenantId, CancellationToken cancellationToken)
+    {
+        var crmContext = scopedServices.GetRequiredService<CrmDbContext>();
+
+        await using var transaction = await crmContext.Database.BeginTransactionAsync(cancellationToken);
+        await crmContext.SetTenantContextAsync(tenantId, cancellationToken);
+
+        var stageless = await crmContext.Opportunities
+            .Where(o => o.TenantId == tenantId && o.Status == CRM.Domain.OpportunityStatus.Open && o.PipelineStageId == null)
+            .ToListAsync(cancellationToken);
+
+        var defaultPipelineId = await crmContext.CrmSettings.AsNoTracking()
+            .Where(s => s.TenantId == tenantId).Select(s => s.DefaultPipelineDefinitionId).SingleOrDefaultAsync(cancellationToken);
+
+        var fixedCount = 0;
+        var unresolvedCount = 0;
+
+        foreach (var opportunity in stageless)
+        {
+            var resolveVersionId = opportunity.PipelineDefinitionVersionId;
+            if (resolveVersionId is null && defaultPipelineId is { } fallbackPipelineId)
+            {
+                resolveVersionId = await crmContext.PipelineDefinitionVersions.AsNoTracking()
+                    .Where(v => v.TenantId == tenantId && v.PipelineDefinitionId == fallbackPipelineId && v.Status == CRM.Domain.PipelineVersionStatus.Published)
+                    .OrderByDescending(v => v.VersionNumber).Select(v => (long?)v.Id).FirstOrDefaultAsync(cancellationToken);
+            }
+            if (resolveVersionId is null) { unresolvedCount++; continue; }
+
+            var entryStageId = await crmContext.PipelineStages.AsNoTracking()
+                .Where(s => s.TenantId == tenantId && s.PipelineDefinitionVersionId == resolveVersionId && s.IsEntry && s.IsActive)
+                .Select(s => (long?)s.Id).SingleOrDefaultAsync(cancellationToken);
+            if (entryStageId is null) { unresolvedCount++; continue; }
+
+            opportunity.BackfillStagelessOpen(resolveVersionId.Value, entryStageId.Value);
+            fixedCount++;
+        }
+        await crmContext.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+        return (fixedCount, unresolvedCount);
     }
 }

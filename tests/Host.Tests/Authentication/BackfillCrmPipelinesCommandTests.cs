@@ -281,4 +281,202 @@ public sealed class BackfillCrmPipelinesCommandTests : IClassFixture<AuthApiFixt
             await verifyTransaction.CommitAsync();
         }
     }
+
+    [Fact]
+    public async Task RunAsync_assigns_a_stage_to_an_open_stageless_opportunity_preferring_its_own_version()
+    {
+        var tenantId = AuthApiFixture.NewTenantId();
+        var tenantIdObject = new TenantId(tenantId);
+        using var host = await _fixture.StartHostAsync(Enabled);
+
+        // Bootstrap and enable CRM
+        Assert.Equal(BootstrapCommand.Success, (await BootstrapAsync(host, tenantId, AuthApiFixture.NewEmail())).Code);
+        await EnableCrmAsync(host, tenantId);
+
+        long entryStageId = 0;
+        long versionId = 0;
+        long stagelessOpportunityId = 0;
+
+        // Seed an Open opportunity with PipelineDefinitionVersionId set but PipelineStageId null
+        await using (var seedScope = host.Services.CreateAsyncScope())
+        {
+            var crmContext = seedScope.ServiceProvider.GetRequiredService<CrmDbContext>();
+            await using var seedTransaction = await crmContext.Database.BeginTransactionAsync();
+            await crmContext.SetTenantContextAsync(tenantIdObject, CancellationToken.None);
+
+            // Create pipeline definition
+            var definition = CRM.Domain.PipelineDefinition.Create(tenantIdObject, "Test Pipeline");
+            crmContext.PipelineDefinitions.Add(definition);
+            await crmContext.SaveChangesAsync();
+
+            // Add version
+            var version = definition.AddVersion(1);
+            crmContext.PipelineDefinitionVersions.Add(version);
+            await crmContext.SaveChangesAsync();
+
+            // Add entry stage (first stage is automatically entry and active)
+            var entryStage = version.AddStage("Open", 10);
+            version.Publish();
+
+            crmContext.PipelineStages.Add(entryStage);
+            await crmContext.SaveChangesAsync();
+
+            entryStageId = entryStage.Id;
+            versionId = version.Id;
+
+            // Create an Open opportunity with PipelineDefinitionVersionId set but NO PipelineStageId
+            var opportunity = CRM.Domain.Opportunity.Create(
+                tenantIdObject,
+                new Contracts.PartyRef(tenantIdObject, 1),
+                new Contracts.PrincipalRef("https://idp.local", "test-seller"),
+                "TRY",
+                estimatedAmount: 1000m);
+
+            opportunity.AddLine(
+                new Contracts.EntityRef(tenantIdObject, "MasterData", "Product", 1),
+                quantity: 1,
+                unitPrice: 1000m);
+
+            // Open with version ID but NO stage ID (simulating pre-fix data)
+            opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: versionId, pipelineStageId: null);
+
+            crmContext.Opportunities.Add(opportunity);
+            await crmContext.SaveChangesAsync();
+
+            stagelessOpportunityId = opportunity.Id;
+            await seedTransaction.CommitAsync();
+        }
+
+        // Run the backfill command
+        var (exitCode, output, _) = await RunBackfillAsync(host, "--tenant-ids", tenantId.ToString());
+
+        Assert.Equal(BackfillCrmPipelinesCommand.Success, exitCode);
+        Assert.Contains("Assigned a stage to", output);
+
+        // Verify the opportunity now has the entry stage assigned
+        await using (var verifyScope = host.Services.CreateAsyncScope())
+        {
+            var crmContext = verifyScope.ServiceProvider.GetRequiredService<CrmDbContext>();
+            await using var verifyTransaction = await crmContext.Database.BeginTransactionAsync();
+            await crmContext.SetTenantContextAsync(tenantIdObject, CancellationToken.None);
+
+            var reloaded = await crmContext.Opportunities.SingleAsync(o => o.Id == stagelessOpportunityId);
+            Assert.Equal(versionId, reloaded.PipelineDefinitionVersionId);
+            Assert.Equal(entryStageId, reloaded.PipelineStageId);
+
+            await verifyTransaction.CommitAsync();
+        }
+    }
+
+    [Fact]
+    public async Task RunAsync_falls_back_to_the_tenants_default_pipeline_when_the_opportunitys_own_version_is_null()
+    {
+        var tenantId = AuthApiFixture.NewTenantId();
+        var tenantIdObject = new TenantId(tenantId);
+        using var host = await _fixture.StartHostAsync(Enabled);
+
+        // Bootstrap and enable CRM
+        Assert.Equal(BootstrapCommand.Success, (await BootstrapAsync(host, tenantId, AuthApiFixture.NewEmail())).Code);
+        await EnableCrmAsync(host, tenantId);
+
+        long tenantDefaultVersionId = 0;
+        long tenantDefaultEntryStageId = 0;
+        long stagelessOpportunityId = 0;
+
+        // Seed a default pipeline for the tenant
+        await using (var seedScope = host.Services.CreateAsyncScope())
+        {
+            var crmContext = seedScope.ServiceProvider.GetRequiredService<CrmDbContext>();
+            await using var seedTransaction = await crmContext.Database.BeginTransactionAsync();
+            await crmContext.SetTenantContextAsync(tenantIdObject, CancellationToken.None);
+
+            // Create a default pipeline
+            var defaultDefinition = CRM.Domain.PipelineDefinition.Create(tenantIdObject, "Default Pipeline");
+            crmContext.PipelineDefinitions.Add(defaultDefinition);
+            await crmContext.SaveChangesAsync();
+
+            // Add a published version
+            var defaultVersion = defaultDefinition.AddVersion(1);
+            crmContext.PipelineDefinitionVersions.Add(defaultVersion);
+            await crmContext.SaveChangesAsync();
+
+            // Add entry stage (first stage is automatically entry and active)
+            var defaultEntryStage = defaultVersion.AddStage("Open", 10);
+            defaultVersion.Publish();
+
+            crmContext.PipelineStages.Add(defaultEntryStage);
+            await crmContext.SaveChangesAsync();
+
+            tenantDefaultVersionId = defaultVersion.Id;
+            tenantDefaultEntryStageId = defaultEntryStage.Id;
+
+            // Set this as the tenant's default pipeline
+            var crmSettings = CRM.Domain.CrmSettings.Create(tenantIdObject);
+            crmSettings.Replace(
+                defaultPipelineDefinitionId: defaultDefinition.Id,
+                creationMode: CRM.Domain.OpportunityCreationMode.Wizard,
+                defaultOpportunityTypeId: null,
+                requireLostReason: false,
+                requireWonLine: true,
+                assignmentMode: CRM.Domain.AssignmentMode.Manual,
+                assignmentPolicy: CRM.Domain.AssignmentPolicy.AnyAssignablePrincipal,
+                defaultPrincipal: null,
+                defaultTeamId: null,
+                defaultTerritoryId: null);
+
+            crmContext.CrmSettings.Add(crmSettings);
+            await crmContext.SaveChangesAsync();
+
+            await seedTransaction.CommitAsync();
+        }
+
+        // Seed a stageless opportunity with BOTH VersionId and StageId null
+        await using (var seedScope = host.Services.CreateAsyncScope())
+        {
+            var crmContext = seedScope.ServiceProvider.GetRequiredService<CrmDbContext>();
+            await using var seedTransaction = await crmContext.Database.BeginTransactionAsync();
+            await crmContext.SetTenantContextAsync(tenantIdObject, CancellationToken.None);
+
+            var opportunity = CRM.Domain.Opportunity.Create(
+                tenantIdObject,
+                new Contracts.PartyRef(tenantIdObject, 2),
+                new Contracts.PrincipalRef("https://idp.local", "test-seller-2"),
+                "EUR",
+                estimatedAmount: 2000m);
+
+            opportunity.AddLine(
+                new Contracts.EntityRef(tenantIdObject, "MasterData", "Product", 1),
+                quantity: 1,
+                unitPrice: 2000m);
+
+            // Open with BOTH version ID and stage ID null (pre-fix data without default assignment)
+            opportunity.Open(DateTimeOffset.UtcNow.AddDays(7), pipelineDefinitionVersionId: null, pipelineStageId: null);
+
+            crmContext.Opportunities.Add(opportunity);
+            await crmContext.SaveChangesAsync();
+
+            stagelessOpportunityId = opportunity.Id;
+            await seedTransaction.CommitAsync();
+        }
+
+        // Run the backfill command
+        var (exitCode, output, _) = await RunBackfillAsync(host, "--tenant-ids", tenantId.ToString());
+
+        Assert.Equal(BackfillCrmPipelinesCommand.Success, exitCode);
+        Assert.Contains("Assigned a stage to", output);
+
+        // Verify the opportunity was assigned the tenant's default pipeline and stage
+        await using (var verifyScope = host.Services.CreateAsyncScope())
+        {
+            var crmContext = verifyScope.ServiceProvider.GetRequiredService<CrmDbContext>();
+            await using var verifyTransaction = await crmContext.Database.BeginTransactionAsync();
+            await crmContext.SetTenantContextAsync(tenantIdObject, CancellationToken.None);
+
+            var reloaded = await crmContext.Opportunities.SingleAsync(o => o.Id == stagelessOpportunityId);
+            Assert.Equal(tenantDefaultVersionId, reloaded.PipelineDefinitionVersionId);
+            Assert.Equal(tenantDefaultEntryStageId, reloaded.PipelineStageId);
+
+            await verifyTransaction.CommitAsync();
+        }
+    }
 }

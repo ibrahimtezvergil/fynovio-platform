@@ -246,6 +246,21 @@ public sealed class Opportunity : IHasRowVersion
         Touch();
     }
 
+    /// <summary>One-time backfill exception (doc 2026-09-27 §5 item 6.c) — assigns a
+    /// pipeline/stage to an already-Open opportunity that predates the "stage mandatory
+    /// once Open" invariant. Never call this from normal application code.</summary>
+    public void BackfillStagelessOpen(long pipelineDefinitionVersionId, long pipelineStageId)
+    {
+        if (Status != OpportunityStatus.Open)
+            throw new InvalidOperationException($"Cannot backfill a pipeline stage onto an opportunity in status {Status}.");
+        if (PipelineStageId is not null)
+            throw new InvalidOperationException("This opportunity already has a pipeline stage.");
+
+        PipelineDefinitionVersionId = pipelineDefinitionVersionId;
+        PipelineStageId = pipelineStageId;
+        Touch();
+    }
+
     public void Archive(bool confirmOpenOpportunity)
     {
         if (Status is OpportunityStatus.Won or OpportunityStatus.Lost)
