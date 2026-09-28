@@ -706,7 +706,7 @@ The original plan text (superseded) assumed `RunAsync` could enumerate "every CR
 
 **Fix: the command takes explicit tenant IDs from the operator**, exactly like every other bootstrap command in this codebase already does (`provision-crm-pipeline --tenant-id`, `enable-tenant-module --tenant-id`, `bootstrap-tenant-admin --tenant-id`) — Task 9's original "auto-discover everyone" design was the outlier, not these. This does not reverse any prior owner decision (§6.2 says "one-time pass," not "auto-discovering pass") and needs no owner sign-off; noted here for the record.
 
-- [ ] **Step 1: Create the command with just the provisioning sub-step (the backfill sub-step is added in Task 19)**
+- [x] **Step 1: Create the command with just the provisioning sub-step (the backfill sub-step is added in Task 19)**
 
 ```csharp
 using Contracts;
@@ -809,11 +809,11 @@ This shape is illustrative — the implementer should verify `ProvisionPipelineH
 
 This command does **not** need to know which tenants have CRM enabled *before* being told about them — it takes whatever tenant IDs the operator supplies and, for the provisioning sub-step, simply no-ops (via `ProvisionPipelineHandler`'s own idempotency) on one that already has a pipeline. If a later Won/Lost backfill sub-step needs to distinguish "this tenant has CRM enabled" from "it doesn't," it can check `crmContext.PipelineDefinitions`/`CrmSettings` existence directly (already tenant-scoped and available once `SetTenantContextAsync` has run for that tenant) rather than querying Access's module-enablement table at all.
 
-- [ ] **Step 2: Wire the command into `Program.cs`'s dispatch**
+- [x] **Step 2: Wire the command into `Program.cs`'s dispatch**
 
 Find where `EnableModuleCommand.IsRequested(args)` is checked in `src/Host/Program.cs` (search for `EnableModuleCommand.IsRequested`) and add a sibling branch immediately after it, calling `BackfillCrmPipelinesCommand.IsRequested`/`RunAsync` the same way.
 
-- [ ] **Step 3: Write a test**
+- [x] **Step 3: Write a test**
 
 Delete child rows before the parent if `PipelineStage`/`PipelineDefinitionVersion` have `Restrict` (not `Cascade`) delete behavior against `PipelineDefinition` — check the real `OnDelete` configuration first; the sketch below assumes `Cascade` and must be adjusted if that's wrong.
 
@@ -854,12 +854,16 @@ Also add (or keep, adjusted) a no-op test proving the idempotent path: a tenant 
 Run: `dotnet test tests/Host.Tests --filter RunAsync_provisions_a_pipeline_for_a_crm_enabled_tenant_stuck_pipeline_less`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Host/Bootstrap/BackfillCrmPipelinesCommand.cs src/Host/Program.cs tests/Host.Tests/
 git commit -m "feat(crm): one-time operator pass to provision pipelines for already-enabled tenants that have none"
 ```
+→ Commit: `97e08fc` "feat(crm): one-time operator pass to provision pipelines for already-enabled tenants that have none"
+(follow-up: `3e001ae` "test(crm): add basic tests for backfill command infrastructure" — initial tests were CLI-plumbing only, missing the actual gap-closure scenario; caught on review)
+(follow-up fix: `61d4533` "fix(crm): backfill command takes explicit --tenant-ids instead of auto-discovering (RLS-aware design)" — the first implementation attempted cross-tenant auto-discovery, impossible under this project's `FORCE ROW LEVEL SECURITY` architecture; see "Corrected design" note above Step 1. Also added the real gap-simulation test, `RunAsync_provisions_a_pipeline_for_a_crm_enabled_tenant_stuck_pipeline_less`.)
+Independently verified: exact 26-name pre-existing Host.Tests failure set unchanged, CRM.Tests 237/237. Code-quality review: approved, no issues, "Ready to merge: Yes" — specifically confirmed the check-then-rollback / handler-owns-its-own-transaction pattern is sound (avoids a nested-transaction conflict my original one-long-transaction sketch would have risked).
 
 **Phase B is now complete and independently shippable.** Nothing in Phase C depends on anything below this line being merged first, but the plan's required ordering (doc §6.2) still means Phase C should land before Phase D's backfill runs.
 
