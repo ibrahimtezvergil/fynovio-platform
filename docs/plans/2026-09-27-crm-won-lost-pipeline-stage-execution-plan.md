@@ -1757,7 +1757,7 @@ Full suite: 263/263 (CRM.Tests) passing after the follow-up fix.
 
 This is additive reporting infrastructure — no existing behavior depends on it, so it's safe to add last within Phase C.
 
-- [ ] **Step 1: Write the failing domain test**
+- [x] **Step 1: Write the failing domain test**
 
 ```csharp
 using Contracts;
@@ -1804,7 +1804,7 @@ public sealed class OpportunityStageHistoryEntryTests
 Run: `dotnet test tests/CRM.Tests --filter OpportunityStageHistoryEntryTests`
 Expected: FAIL — the type doesn't exist.
 
-- [ ] **Step 2: Create the domain entity**
+- [x] **Step 2: Create the domain entity**
 
 ```csharp
 using Contracts;
@@ -1842,12 +1842,12 @@ public sealed class OpportunityStageHistoryEntry
 }
 ```
 
-- [ ] **Step 3: Run the domain test**
+- [x] **Step 3: Run the domain test**
 
 Run: `dotnet test tests/CRM.Tests --filter OpportunityStageHistoryEntryTests`
 Expected: PASS.
 
-- [ ] **Step 4: EF configuration and migration**
+- [x] **Step 4: EF configuration and migration**
 
 ```csharp
 using Contracts;
@@ -1892,7 +1892,7 @@ Add to `src/Modules/CRM/Persistence/CrmDbContext.cs`, next to the other `DbSet<.
 Run: `dotnet ef migrations add AddOpportunityStageHistory --project src/Modules/CRM --startup-project src/Host`
 Run: `dotnet ef database update --project src/Modules/CRM --startup-project src/Host`
 
-- [ ] **Step 5: Wire it into every transition handler — write the failing tests first**
+- [x] **Step 5: Wire it into every transition handler — write the failing tests first**
 
 For each of `OpenOpportunityHandler`, `ChangePipelineStageHandler`, `WinOpportunityHandler`, `LoseOpportunityHandler`, `MoveOpportunityToPipelineHandler`, add one test asserting a history row is written/closed, e.g.:
 
@@ -1909,7 +1909,7 @@ For each of `OpenOpportunityHandler`, `ChangePipelineStageHandler`, `WinOpportun
 
 Run each handler's test filter to confirm the new assertion fails first.
 
-- [ ] **Step 6: Implement — same pattern in every handler**
+- [x] **Step 6: Implement — same pattern in every handler**
 
 In `OpenOpportunityHandler.HandleAsync`, right after `opportunity.Open(...)`, only when a stage was actually assigned:
 
@@ -1944,22 +1944,33 @@ In `WinOpportunityHandler.HandleAsync`, right after `opportunity.Win(wonStageId,
 
 `LoseOpportunityHandler` and `MoveOpportunityToPipelineHandler` follow the identical shape (close the currently-open entry if one exists, open a new one for the destination stage) — apply the same two-line pattern used above at the corresponding point in each, right after the aggregate mutation call.
 
-- [ ] **Step 7: Run each handler's test suite**
+- [x] **Step 7: Run each handler's test suite**
 
 Run: `dotnet test tests/CRM.Tests --filter "OpenOpportunityHandlerTests|ChangePipelineStageHandlerTests|WinOpportunityHandlerTests|LoseOpportunityHandlerTests|MoveOpportunityToPipelineHandlerTests"`
 Expected: PASS.
 
-- [ ] **Step 8: Run the full CRM.Tests suite**
+- [x] **Step 8: Run the full CRM.Tests suite**
 
 Run: `dotnet test tests/CRM.Tests`
 Expected: PASS.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/Modules/CRM/Domain/OpportunityStageHistoryEntry.cs src/Modules/CRM/Persistence/ tests/CRM.Tests/
 git commit -m "feat(crm): record stage-entry history for funnel/time-in-stage reporting"
 ```
+
+→ Commit: `3357b66` "feat(crm): record stage-entry history for funnel/time-in-stage reporting"
+(follow-up fix: `b27906b` "fix(crm): enable RLS on opportunity_stage_history and fix its handler tests" — the implementer reported DONE without running the test suite, blocked by a tool-classifier error; independent verification found the migration shipped the new table with no RLS at all (caught by `PipelineRlsTests`), and 3 of the 5 new handler tests seeded their opportunity via `Opportunity.Open()` directly instead of through `OpenOpportunityHandler`, so the history row that handler would have written never existed and the handler under test had nothing to close.)
+
+Deviations from the plan's own Task 16 snippet, all intentional and verified correct against this codebase's established tenant-scoping conventions (not gaps): `OpportunityStageHistoryEntry` carries an extra `PipelineDefinitionVersionId` so its FK to `PipelineStage` can be the same tenant-scoped composite shape (`{TenantId, PipelineDefinitionVersionId, Id}`) used everywhere else in this codebase, instead of the plan's bare non-tenant-scoped FK; the FK to `Opportunity` is likewise tenant-scoped composite; and the migration adds the RLS `ENABLE`/`FORCE`/`CREATE POLICY` block every other tenant-scoped table gets in its creating migration (the plan's snippet omitted this entirely).
+
+Spec-compliance review: ✅ compliant. Code-quality review: ✅ APPROVE, no issues found.
+
+Full suite: 271/271 (CRM.Tests) passing.
+
+**Known pre-existing, out-of-scope issue found during verification:** a full `dotnet test tests/Host.Tests` run has 26 failures spanning unrelated areas (party references, calendar, module enablement — none touch pipeline stages or stage history). Confirmed via a temporary worktree at commit `7903f3f` (immediately after Task 15, before Task 16 started) that these failures already exist there — they predate this task and are not caused by it. Left unfixed as out of scope for this request; flagged here for whoever picks up the next phase.
 
 **Phase C is now complete.**
 
