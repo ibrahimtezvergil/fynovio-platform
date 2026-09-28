@@ -234,6 +234,18 @@ public sealed class PublishPipelineVersionHandler(CrmDbContext context, IAuthori
         if (stages.Count(x => x.IsEntry && x.IsActive) != 1) errors.Add("Exactly one active entry stage is required.");
         var ids = stages.Where(x => x.IsActive).Select(x => x.Id).ToHashSet();
         if (version.EnforceAllowedTransitions && transitions.Any(x => !ids.Contains(x.FromStageId) || !ids.Contains(x.ToStageId))) errors.Add("Every allowed transition must connect active stages in this version.");
+
+        var wonStages = stages.Where(x => x.Kind == PipelineStageKind.Won).ToList();
+        var lostStages = stages.Where(x => x.Kind == PipelineStageKind.Lost).ToList();
+        if (wonStages.Count != 1) errors.Add("Exactly one Won-kind stage is required.");
+        if (lostStages.Count != 1) errors.Add("Exactly one Lost-kind stage is required.");
+        if (wonStages.Concat(lostStages).Any(x => !x.IsActive)) errors.Add("The Won and Lost stages must be active.");
+        if (wonStages.Concat(lostStages).Any(x => x.IsEntry)) errors.Add("The Won and Lost stages cannot be the entry stage.");
+        var lastOpenSortOrder = stages.Where(x => x.Kind == PipelineStageKind.Open).Select(x => (int?)x.SortOrder).Max() ?? -1;
+        if (wonStages.Concat(lostStages).Any(x => x.SortOrder <= lastOpenSortOrder)) errors.Add("The Won and Lost stages must sort after every Open-kind stage.");
+        if (version.EnforceAllowedTransitions && transitions.Any(x => wonStages.Concat(lostStages).Any(system => system.Id == x.ToStageId)))
+            errors.Add("No configured transition may target a Won or Lost stage — Win/Lose are dedicated commands, not pipeline-stage moves.");
+
         return errors;
     }
 }

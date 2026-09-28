@@ -58,6 +58,37 @@ public sealed class CreatePipelineDraftHandlerTests
                     [new("won", 1, true, true)])));
     }
 
+    [Fact]
+    public void Validate_rejects_a_version_missing_a_lost_stage()
+    {
+        var tenant = TestData.NextTenant();
+        var definition = PipelineDefinition.Create(tenant, "Sales");
+        var version = definition.AddVersion(1);
+        var entry = version.AddStage("Open", 10);
+        var won = version.AddWonStage("Won", 990);
+        var stages = new List<PipelineStage> { entry, won };
+
+        var errors = PublishPipelineVersionHandler.Validate(version, stages, transitions: []);
+
+        Assert.Contains(errors, e => e.Contains("Lost", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Validate_accepts_a_correctly_shaped_version()
+    {
+        var tenant = TestData.NextTenant();
+        var definition = PipelineDefinition.Create(tenant, "Sales");
+        var version = definition.AddVersion(1);
+        var entry = version.AddStage("Open", 10);
+        var won = version.AddWonStage("Won", 990);
+        var lost = version.AddLostStage("Lost", 1000);
+        var stages = new List<PipelineStage> { entry, won, lost };
+
+        var errors = PublishPipelineVersionHandler.Validate(version, stages, transitions: []);
+
+        Assert.Empty(errors);
+    }
+
     private CreatePipelineDraftCommand Draft(TenantId tenant, Guid correlationId, long? pipelineId, long expectedRowVersion,
         int expectedLatest, string key, IReadOnlyList<PipelineStageInput> stages,
         IReadOnlyList<PipelineTransitionInput>? transitions = null) => new(tenant, Administrator, pipelineId,
