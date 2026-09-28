@@ -64,6 +64,29 @@ public sealed class LoseOpportunityHandlerTests
     }
 
     [Fact]
+    public async Task HandleAsync_loses_a_draft_opportunity_without_assigning_a_stage()
+    {
+        var tenant = TestData.NextTenant();
+        await using var seed = _fixture.CreateAdminContext();
+        await using var seedMasterData = _fixture.CreateMasterDataContext();
+        var partyRef = await TestData.CreatePartyAsync(seedMasterData, tenant, "Acme");
+        var opportunity = Opportunity.Create(tenant, partyRef, TestData.Seller, "TRY", 1000m);
+        seed.Opportunities.Add(opportunity);
+        await seed.SaveChangesAsync();
+
+        var command = new LoseOpportunityCommand(tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion, "hiç açılmadı", "key-draft-lose", Guid.NewGuid());
+
+        await using var context = _fixture.CreateAdminContext();
+        var result = await new LoseOpportunityHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command);
+
+        Assert.False(result.Replayed);
+        var reloaded = await context.Opportunities.AsNoTracking().SingleAsync(o => o.Id == opportunity.Id);
+        Assert.Equal(OpportunityStatus.Lost, reloaded.Status);
+        Assert.Null(reloaded.PipelineStageId);
+        Assert.Null(reloaded.ClosedFromStageId);
+    }
+
+    [Fact]
     public async Task Losing_persists_the_reason_and_writes_evidence_and_outbox()
     {
         var (tenant, opportunityId, version) = await SeedOpenOpportunityAsync();

@@ -156,10 +156,13 @@ public sealed class Opportunity : IHasRowVersion
             throw new InvalidOperationException($"Cannot lose an opportunity in status {Status}.");
         if (string.IsNullOrWhiteSpace(lostReason))
             throw new ArgumentException("Lost reason is required.", nameof(lostReason));
+        // Doc 2026-09-27 §4.1: a Draft->Lost opportunity never entered a pipeline, so it can
+        // never have a stage to close from. Enforced here, not just left to the caller
+        // (LoseOpportunityHandler only ever resolves a real id when Status is already Open),
+        // because the aggregate — not its callers — owns this invariant.
+        if (lostStageId is not null && Status != OpportunityStatus.Open)
+            throw new ArgumentException("A lost stage can only be recorded for an opportunity that was open.", nameof(lostStageId));
 
-        // Doc 2026-09-27 §4.1: a Draft->Lost opportunity never entered a pipeline, so both
-        // stage fields correctly stay null here — lostStageId is null in that path because
-        // LoseOpportunityHandler only resolves one when Status is already Open.
         ClosedFromStageId = PipelineStageId;
         PipelineStageId = lostStageId ?? PipelineStageId;
 

@@ -325,6 +325,12 @@ public sealed class OpportunityStateMachineTests
         opportunity.Win();
 
         Assert.Equal(7, opportunity.PipelineStageId);
+        // ClosedFromStageId is captured unconditionally on every Win/Lose call, regardless of
+        // whether a new stage overwrites the live one — "where it was when it closed" is
+        // still 7 here, not null. (A prior code-quality-review suggestion assumed this should
+        // be null; verified against Win's actual unconditional `ClosedFromStageId =
+        // PipelineStageId` line and confirmed that assumption was wrong.)
+        Assert.Equal(7, opportunity.ClosedFromStageId);
     }
 
     [Fact]
@@ -348,5 +354,13 @@ public sealed class OpportunityStateMachineTests
 
         Assert.Null(opportunity.PipelineStageId);
         Assert.Null(opportunity.ClosedFromStageId);
+    }
+
+    [Fact]
+    public void Lose_rejects_a_stage_id_for_an_opportunity_that_was_never_open()
+    {
+        var opportunity = NewDraftOpportunity();
+
+        Assert.Throws<ArgumentException>(() => opportunity.Lose("hiç açılmadı", lostStageId: 100));
     }
 }
