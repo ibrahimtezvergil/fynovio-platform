@@ -171,7 +171,7 @@ public sealed class BackfillCrmPipelinesCommandTests : IClassFixture<AuthApiFixt
         var tenantIdObject = new TenantId(tenantId);
         using var host = await _fixture.StartHostAsync(Enabled);
 
-        // Bootstrap and enable CRM (which auto-provisions a pipeline)
+        // Bootstrap and enable CRM to ensure tenant is CRM-enabled
         Assert.Equal(BootstrapCommand.Success, (await BootstrapAsync(host, tenantId, AuthApiFixture.NewEmail())).Code);
         await EnableCrmAsync(host, tenantId);
 
@@ -180,7 +180,7 @@ public sealed class BackfillCrmPipelinesCommandTests : IClassFixture<AuthApiFixt
         long wonOpportunityId = 0;
 
         // Seed a tenant with a Published PipelineDefinitionVersion built the OLD way
-        // (directly via version.AddStage + Publish, bypassing Task 10/11's handlers)
+        // (directly via AddStage + Publish, WITHOUT AddWonStage/AddLostStage)
         // so it has no Won/Lost stage — simulating data from before this feature.
         await using (var seedScope = host.Services.CreateAsyncScope())
         {
@@ -188,26 +188,37 @@ public sealed class BackfillCrmPipelinesCommandTests : IClassFixture<AuthApiFixt
             await using var seedTransaction = await crmContext.Database.BeginTransactionAsync();
             await crmContext.SetTenantContextAsync(tenantIdObject, CancellationToken.None);
 
-            // Get the existing Published version
-            var version = await crmContext.PipelineDefinitionVersions
-                .Where(v => v.Status == CRM.Domain.PipelineVersionStatus.Published)
-                .FirstOrDefaultAsync();
+            // Create pipeline definition the old way
+            var definition = CRM.Domain.PipelineDefinition.Create(tenantIdObject, "Old Pipeline");
+            crmContext.PipelineDefinitions.Add(definition);
+            await crmContext.SaveChangesAsync();
 
-            Assert.NotNull(version);
-            versionId = version!.Id;
+            // Add version
+            var version = definition.AddVersion(1);
+            crmContext.PipelineDefinitionVersions.Add(version);
+            await crmContext.SaveChangesAsync();
 
-            // Get the open stage for this version
-            var openStage = await crmContext.PipelineStages
-                .Where(s => s.PipelineDefinitionVersionId == versionId && s.Kind == CRM.Domain.PipelineStageKind.Open)
-                .FirstOrDefaultAsync();
+            // Now add the entry stage after version is saved
+            var openStage = version.AddStage("Open", 10);
+            version.Publish();
 
-            Assert.NotNull(openStage);
-            openStageId = openStage!.Id;
+            // Add stage to context and save
+            crmContext.PipelineStages.Add(openStage);
+            await crmContext.SaveChangesAsync();
+
+            openStageId = openStage.Id;
+            versionId = version.Id;
+
+            // Verify the version has no Won/Lost stages before backfill
+            var stageCount = await crmContext.PipelineStages
+                .Where(s => s.PipelineDefinitionVersionId == versionId)
+                .CountAsync();
+            Assert.Equal(1, stageCount); // Only the Open stage
 
             await seedTransaction.CommitAsync();
         }
 
-        // Now seed a Won opportunity whose PipelineStageId still points at the version's only Open stage
+        // Now seed a Won opportunity whose PipelineStageId points at the version's only Open stage
         await using (var seedScope = host.Services.CreateAsyncScope())
         {
             var crmContext = seedScope.ServiceProvider.GetRequiredService<CrmDbContext>();
@@ -231,7 +242,7 @@ public sealed class BackfillCrmPipelinesCommandTests : IClassFixture<AuthApiFixt
                 pipelineDefinitionVersionId: versionId,
                 pipelineStageId: openStageId);
 
-            // Win the opportunity WITHOUT specifying a won stage (old behavior before Task 16)
+            // Win the opportunity (it stays on the Open stage, as would happen before the feature)
             opportunity.Win(wonStageId: null, requireActiveRequiredLine: true);
 
             crmContext.Opportunities.Add(opportunity);
@@ -245,7 +256,7 @@ public sealed class BackfillCrmPipelinesCommandTests : IClassFixture<AuthApiFixt
         var (exitCode, output, _) = await RunBackfillAsync(host, "--tenant-ids", tenantId.ToString());
 
         Assert.Equal(BackfillCrmPipelinesCommand.Success, exitCode);
-        Assert.Contains("Won/Lost system stage", output);
+        Assert.Contains("Added 2 Won/Lost system stage(s)", output); // Exactly 2: one Won, one Lost
 
         // Verify the Won/Lost stages were added
         await using (var verifyScope = host.Services.CreateAsyncScope())
@@ -254,8 +265,13 @@ public sealed class BackfillCrmPipelinesCommandTests : IClassFixture<AuthApiFixt
             await using var verifyTransaction = await crmContext.Database.BeginTransactionAsync();
             await crmContext.SetTenantContextAsync(tenantIdObject, CancellationToken.None);
 
+            // Verify both Won and Lost stages now exist
             var wonStage = await crmContext.PipelineStages
                 .SingleAsync(s => s.PipelineDefinitionVersionId == versionId && s.Kind == CRM.Domain.PipelineStageKind.Won);
+            var lostStage = await crmContext.PipelineStages
+                .SingleAsync(s => s.PipelineDefinitionVersionId == versionId && s.Kind == CRM.Domain.PipelineStageKind.Lost);
+
+            // Verify the opportunity was reassigned to the Won stage
             var reloadedOpportunity = await crmContext.Opportunities
                 .SingleAsync(o => o.Id == wonOpportunityId);
 
