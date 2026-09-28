@@ -397,4 +397,12 @@ public sealed class OpportunityStateMachineTests
 
         Assert.True(opportunity.RowVersion > beforeVersion);
     }
+
+    [Fact]
+    public void BackfillClosedStage_is_rejected_when_not_closed()
+    {
+        var opportunity = NewDraftOpportunity();
+
+        Assert.Throws<InvalidOperationException>(() => opportunity.BackfillClosedStage(null, 99));
+    }
 }

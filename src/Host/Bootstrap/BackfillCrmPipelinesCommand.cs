@@ -43,12 +43,18 @@ public static class BackfillCrmPipelinesCommand
 
         await using var scope = services.CreateAsyncScope();
         var provisioned = 0;
+        var stagesAdded = 0;
+        var opportunitiesReassigned = 0;
         foreach (var tenantId in tenantIds)
         {
             provisioned += await ProvisionMissingPipelineAsync(scope.ServiceProvider, tenantId, cancellationToken);
+            var (stageCount, oppCount) = await BackfillWonLostStagesAsync(scope.ServiceProvider, tenantId, cancellationToken);
+            stagesAdded += stageCount;
+            opportunitiesReassigned += oppCount;
         }
 
         await output.WriteLineAsync($"Provisioned a default pipeline for {provisioned} tenant(s) that had none.");
+        await output.WriteLineAsync($"Added {stagesAdded} Won/Lost system stage(s) to existing pipeline versions; reassigned {opportunitiesReassigned} already-closed opportunity/opportunities onto them.");
         return Success;
     }
 
@@ -87,5 +93,82 @@ public static class BackfillCrmPipelinesCommand
             new ProvisionPipelineCommand(tenantId, CrmDefaultPipelineSeed.PipelineName, CrmDefaultPipelineSeed.ActiveStageNames, RetiredStageNames: []),
             cancellationToken);
         return result.Status == ProvisionPipelineStatus.Provisioned ? 1 : 0;
+    }
+
+    /// <summary>Doc 2026-09-27 §5 item 6.a/b — every PipelineDefinitionVersion that predates
+    /// this feature has no Won/Lost stage yet. Uses PipelineDefinitionVersion.BackfillSystemStage,
+    /// the one deliberate exception to "only a draft version can be edited" (Task 3). Idempotent:
+    /// skips a version that already has both kinds. Adapted from the plan's illustrative snippet
+    /// to be per-tenant scoped, consistent with how ProvisionMissingPipelineAsync already calls
+    /// SetTenantContextAsync per tenant before querying.</summary>
+    private static async Task<(int StagesAdded, int OpportunitiesReassigned)> BackfillWonLostStagesAsync(
+        IServiceProvider scopedServices, TenantId tenantId, CancellationToken cancellationToken)
+    {
+        var crmContext = scopedServices.GetRequiredService<CrmDbContext>();
+        var operatorPrincipal = new Contracts.PrincipalRef(
+            scopedServices.GetRequiredService<Access.Application.Authentication.SessionOptions>().PlatformIssuer, "operator:" + BackfillCrmPipelinesCommand.Name);
+
+        await using var transaction = await crmContext.Database.BeginTransactionAsync(cancellationToken);
+        await crmContext.SetTenantContextAsync(tenantId, cancellationToken);
+
+        var candidateVersions = await crmContext.PipelineDefinitionVersions
+            .Where(v => v.TenantId == tenantId &&
+                   (v.Status == CRM.Domain.PipelineVersionStatus.Published || v.Status == CRM.Domain.PipelineVersionStatus.Superseded))
+            .ToListAsync(cancellationToken);
+
+        var stagesAdded = 0;
+        foreach (var version in candidateVersions)
+        {
+            var versionStages = await crmContext.PipelineStages
+                .Where(s => s.PipelineDefinitionVersionId == version.Id)
+                .ToListAsync(cancellationToken);
+            var maxSortOrder = versionStages.Count == 0 ? 0 : versionStages.Max(s => s.SortOrder);
+
+            if (!versionStages.Any(s => s.Kind == CRM.Domain.PipelineStageKind.Won))
+            {
+                var won = version.BackfillSystemStage(CRM.Domain.PipelineStageKind.Won, "Won", maxSortOrder + 10);
+                crmContext.PipelineStages.Add(won);
+                stagesAdded++;
+            }
+            if (!versionStages.Any(s => s.Kind == CRM.Domain.PipelineStageKind.Lost))
+            {
+                var lost = version.BackfillSystemStage(CRM.Domain.PipelineStageKind.Lost, "Lost", maxSortOrder + 20);
+                crmContext.PipelineStages.Add(lost);
+                stagesAdded++;
+            }
+            await crmContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var opportunitiesReassigned = 0;
+        foreach (var version in candidateVersions)
+        {
+            var wonStageId = await crmContext.PipelineStages.AsNoTracking()
+                .Where(s => s.PipelineDefinitionVersionId == version.Id && s.Kind == CRM.Domain.PipelineStageKind.Won)
+                .Select(s => s.Id).SingleAsync(cancellationToken);
+            var lostStageId = await crmContext.PipelineStages.AsNoTracking()
+                .Where(s => s.PipelineDefinitionVersionId == version.Id && s.Kind == CRM.Domain.PipelineStageKind.Lost)
+                .Select(s => s.Id).SingleAsync(cancellationToken);
+
+            var closedOpportunities = await crmContext.Opportunities
+                .Where(o => o.PipelineDefinitionVersionId == version.Id
+                    && (o.Status == CRM.Domain.OpportunityStatus.Won || o.Status == CRM.Domain.OpportunityStatus.Lost)
+                    && o.PipelineStageId != wonStageId && o.PipelineStageId != lostStageId)
+                .ToListAsync(cancellationToken);
+
+            foreach (var opportunity in closedOpportunities)
+            {
+                var targetStageId = opportunity.Status == CRM.Domain.OpportunityStatus.Won ? wonStageId : lostStageId;
+                var closedFromStageId = opportunity.PipelineStageId;
+                opportunity.BackfillClosedStage(closedFromStageId, targetStageId);
+                crmContext.EvidenceRecords.Add(CRM.Evidence.EvidenceRecord.Create(
+                    tenantId, nameof(CRM.Domain.Opportunity), opportunity.Id, opportunity.RowVersion, operatorPrincipal,
+                    "Opportunity.BackfillClosedStage", System.Text.Json.JsonSerializer.Serialize(new { closedFromStageId, targetStageId }), Guid.NewGuid()));
+                opportunitiesReassigned++;
+            }
+            await crmContext.SaveChangesAsync(cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        return (stagesAdded, opportunitiesReassigned);
     }
 }

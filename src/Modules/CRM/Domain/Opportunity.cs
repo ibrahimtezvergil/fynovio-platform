@@ -232,6 +232,20 @@ public sealed class Opportunity : IHasRowVersion
         Touch();
     }
 
+    /// <summary>One-time backfill exception (doc 2026-09-27 §5 item 6.b) — reassigns an
+    /// ALREADY-closed opportunity's stage fields onto its version's new Won/Lost system
+    /// stage. Never call this from normal application code; Win()/Lose() do this at the
+    /// moment of closing for every opportunity closed from here on.</summary>
+    public void BackfillClosedStage(long? closedFromStageId, long targetStageId)
+    {
+        if (Status is not (OpportunityStatus.Won or OpportunityStatus.Lost))
+            throw new InvalidOperationException($"Cannot backfill the closed stage of an opportunity in status {Status}.");
+
+        ClosedFromStageId = closedFromStageId;
+        PipelineStageId = targetStageId;
+        Touch();
+    }
+
     public void Archive(bool confirmOpenOpportunity)
     {
         if (Status is OpportunityStatus.Won or OpportunityStatus.Lost)
