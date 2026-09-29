@@ -110,6 +110,74 @@ describe('CrmSettingsPage', () => {
     expect(name).toHaveValue('Sales revised')
   })
 
+  describe('Won and Lost system stages', () => {
+    const withSystemStages = { ...settings, pipelines: [{ ...settings.pipelines[0], versions: [{ ...settings.pipelines[0].versions[0], stages: [
+      { id: 31, name: 'Qualified', sortOrder: 1, isActive: true, isEntry: true, isArchived: false, kind: 0 },
+      { id: 32, name: 'Won', sortOrder: 11, isActive: true, isEntry: false, isArchived: false, kind: 1 },
+      { id: 33, name: 'Lost', sortOrder: 21, isActive: true, isEntry: false, isArchived: false, kind: 2 },
+    ] }] }] }
+    const t = (key: string) => tr(key, undefined, 'opportunities')
+    const open = async () => {
+      server.use(http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(withSystemStages)))
+      renderSettings('/crm/settings/pipelines')
+      fireEvent.change(await screen.findByLabelText(t('settings.selectPipeline')), { target: { value: '10' } })
+    }
+
+    it('shows them as pinned system rows whose only control is the label', async () => {
+      await open()
+
+      const won = await screen.findByLabelText(t('settings.systemStage.won'))
+      expect(won).toHaveValue('Won')
+      expect(screen.getByLabelText(t('settings.systemStage.lost'))).toHaveValue('Lost')
+      // One ordinary stage: its entry + active checkboxes and the enforce-transitions checkbox — nothing for the system rows.
+      expect(screen.getAllByRole('checkbox')).toHaveLength(3)
+      expect(screen.getAllByText(t('settings.systemStage.badge'))).toHaveLength(2)
+    })
+
+    it('saves the renamed labels as Won/Lost-kind stages behind the ordinary ones, new stages inserted above them', async () => {
+      let posted: unknown
+      server.use(http.post(url(endpoints.crmSettings.pipelineDrafts), async ({ request }) => {
+        posted = await request.json()
+        return HttpResponse.json({ pipelineDefinitionId: 10, versionId: 23, versionNumber: 2, rowVersion: 3, replayed: false }, { status: 201 })
+      }))
+      await open()
+
+      fireEvent.change(await screen.findByLabelText(t('settings.systemStage.won')), { target: { value: 'Kazanıldı' } })
+      fireEvent.change(screen.getByLabelText(t('settings.systemStage.lost')), { target: { value: 'Kaybedildi' } })
+      fireEvent.click(screen.getByRole('button', { name: t('settings.addStage') }))
+      fireEvent.change(screen.getByLabelText(`${t('settings.stage')} 2`), { target: { value: 'Teklif' } })
+      fireEvent.click(screen.getByRole('button', { name: t('settings.saveDraft') }))
+
+      await waitFor(() => expect(posted).toBeDefined())
+      expect((posted as { stages: unknown[] }).stages).toEqual([
+        { name: 'Qualified', sortOrder: 1, isEntry: true, isActive: true, isArchived: false, kind: 0 },
+        { name: 'Teklif', sortOrder: 2, isEntry: false, isActive: true, isArchived: false, kind: 0 },
+        { name: 'Kazanıldı', sortOrder: 3, isEntry: false, isActive: true, isArchived: false, kind: 1 },
+        { name: 'Kaybedildi', sortOrder: 4, isEntry: false, isActive: true, isArchived: false, kind: 2 },
+      ])
+    })
+
+    it('removes an ordinary stage from the draft, and keeps the last one', async () => {
+      await open()
+      fireEvent.click(await screen.findByRole('button', { name: t('settings.addStage') }))
+      fireEvent.change(screen.getByLabelText(`${t('settings.stage')} 2`), { target: { value: 'Extra' } })
+
+      fireEvent.click(screen.getAllByRole('button', { name: t('settings.removeStage') })[1])
+
+      await waitFor(() => expect(screen.queryByLabelText(`${t('settings.stage')} 2`)).not.toBeInTheDocument())
+      expect(screen.getByRole('button', { name: t('settings.removeStage') })).toBeDisabled()
+    })
+
+    it('tells the person what to fix when the server rejects the pipeline, not that CRM settings failed', async () => {
+      server.use(http.post(url(endpoints.crmSettings.pipelineDrafts), () => HttpResponse.json({ status: 400, type: 'validation_error', title: 'Stage names must be unique' }, { status: 400 })))
+      await open()
+
+      fireEvent.click(await screen.findByRole('button', { name: t('settings.saveDraft') }))
+
+      expect(await screen.findByText(t('settings.pipelineInvalid'))).toBeInTheDocument()
+    })
+  })
+
   it('explains why the default pipeline cannot be archived', async () => {
     server.use(http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(settings)))
     renderSettings('/crm/settings/pipelines')

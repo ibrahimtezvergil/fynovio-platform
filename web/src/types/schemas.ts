@@ -35,3 +35,16 @@ export const userSchema: z.ZodType<User> = z.object({
   role: z.enum(userRoles),
   initials: z.string(),
 })
+
+/**
+ * A pipeline stage's kind. Won and Lost are the system's closing stages (reached only through the win/lose commands);
+ * every other stage is Open. The API sends the integer ordinal — a name is accepted too — and an absent kind reads as Open.
+ */
+export const PIPELINE_STAGE_KINDS = ['Open', 'Won', 'Lost'] as const
+export type PipelineStageKind = (typeof PIPELINE_STAGE_KINDS)[number]
+export const pipelineStageKindSchema = z
+  .union([z.number().int().min(0).max(2), z.enum(PIPELINE_STAGE_KINDS)])
+  .default('Open')
+  .transform((wire): PipelineStageKind => (typeof wire === 'number' ? PIPELINE_STAGE_KINDS[wire] : wire))
+/** The ordinal a request body carries for a kind (the API binds enums as integers). */
+export const pipelineStageKindWire = (kind: PipelineStageKind): number => PIPELINE_STAGE_KINDS.indexOf(kind)

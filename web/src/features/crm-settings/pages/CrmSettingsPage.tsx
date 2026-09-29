@@ -1,5 +1,5 @@
-import { ArrowDown, ArrowUp, GripVertical, GitBranch, ListChecks, LoaderCircle, PanelsTopLeft, RotateCcw, Settings2, X, XCircle, type LucideIcon } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { ArrowDown, ArrowUp, GripVertical, GitBranch, ListChecks, LoaderCircle, PanelsTopLeft, RotateCcw, Settings2, Trash2, X, XCircle, type LucideIcon } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { PageHeader } from '@/components/common/PageHeader'
@@ -17,11 +17,21 @@ import { useAttemptKeys } from '@/lib/mutations/attemptKey'
 import { useSessionStore, useTenantSwitchGuard } from '@/lib/auth'
 import { paths } from '@/routes/paths'
 import type { ApiError } from '@/types'
+import { pipelineStageKindWire, type PipelineStageKind } from '@/types/schemas'
 import { useCreatePipelineDraft, useCrmSettings, useManageCrmCatalog, usePublishPipelineVersion, useSetPipelineLifecycle, useUpdateCrmSettings, useValidatePipelineDraft, type CrmCatalogKind } from '../api'
 import type { CrmSettings } from '../schema'
 
-type StageForm = { id?: number; name: string; sortOrder: number; isEntry: boolean; isActive: boolean; isArchived?: boolean }
-const initialStage = (): StageForm => ({ name: '', sortOrder: 1, isEntry: true, isActive: true })
+type StageForm = { id?: number; name: string; sortOrder: number; isEntry: boolean; isActive: boolean; isArchived?: boolean; kind: PipelineStageKind }
+const initialStage = (): StageForm => ({ name: '', sortOrder: 1, isEntry: true, isActive: true, kind: 'Open' })
+type SystemKind = Exclude<PipelineStageKind, 'Open'>
+type SystemLabels = Record<SystemKind, string>
+/** Won and Lost are the system's closing stages: exactly one of each, pinned after the open stages; only their label is the tenant's. */
+function withSystemStages(stages: readonly StageForm[], defaults: SystemLabels): StageForm[] {
+  const open = stages.filter((stage) => stage.kind === 'Open')
+  const system = (['Won', 'Lost'] as const).map((kind): StageForm => stages.find((stage) => stage.kind === kind) ?? { name: defaults[kind], sortOrder: 0, isEntry: false, isActive: true, kind })
+  return [...open, ...system.map((stage, index) => ({ ...stage, sortOrder: open.length + index + 1 }))]
+}
+const openStage = (name: string, index: number): StageForm => ({ name, sortOrder: index + 1, isEntry: index === 0, isActive: true, kind: 'Open' })
 type Section = 'general' | 'creation' | 'pipelines' | 'reasons' | 'needs'
 const sectionIcons: Record<Section, LucideIcon> = { general: Settings2, creation: PanelsTopLeft, pipelines: GitBranch, reasons: XCircle, needs: ListChecks }
 const settingsValues = (value: CrmSettings) => ({ defaultPipelineDefinitionId: value.defaultPipelineDefinitionId,
@@ -29,6 +39,13 @@ const settingsValues = (value: CrmSettings) => ({ defaultPipelineDefinitionId: v
   requireLostReason: value.requireLostReason, requireWonLine: value.requireWonLine, defaultAssignmentMode: value.defaultAssignmentMode,
   assignmentPolicy: value.assignmentPolicy, defaultPrincipal: value.defaultPrincipal, defaultTeamId: value.defaultTeamId,
   defaultTerritoryId: value.defaultTerritoryId })
+
+function SystemStageRow({ stage, label, hint, badge, onRename }: { stage: StageForm; label: string; hint: string; badge: string; onRename: (name: string) => void }) {
+  return <div className="bg-muted/30 grid items-end gap-2 rounded-[var(--nx-r-ctl)] border border-dashed p-3 lg:grid-cols-[1fr_auto]" data-stage-kind={stage.kind}>
+    <Field label={label} hint={hint}>{(props) => <Input {...props} value={stage.name} required maxLength={100} onChange={(event) => onRename(event.target.value)} />}</Field>
+    <Badge variant="secondary" className="mb-2 self-start lg:self-end">{badge}</Badge>
+  </div>
+}
 
 function SectionHeading({ title, description }: { title: string; description: string }) {
   return <div className="flex min-w-0 flex-col gap-0.5"><h2 className="font-heading text-[17px] leading-tight font-[620] tracking-[-0.024em]">{title}</h2><p className="text-muted-foreground text-[12.5px]">{description}</p></div>
@@ -52,7 +69,8 @@ export default function CrmSettingsPage() {
   const pointerDraggedStep = useRef<CrmSettings['opportunityCreationSteps'][number] | null>(null)
   const [pipelineId, setPipelineId] = useState<number | null>(null)
   const [pipelineName, setPipelineName] = useState('')
-  const [stages, setStages] = useState<StageForm[]>([initialStage()])
+  const systemLabels = useMemo<SystemLabels>(() => ({ Won: t('settings.systemStage.defaultWon'), Lost: t('settings.systemStage.defaultLost') }), [t])
+  const [stages, setStages] = useState<StageForm[]>(() => withSystemStages([initialStage()], systemLabels))
   const [enforceTransitions, setEnforceTransitions] = useState(false)
   const [transitions, setTransitions] = useState<Record<string, boolean>>({})
   const [pipelineBaseline, setPipelineBaseline] = useState<string | null>(null)
@@ -103,7 +121,7 @@ export default function CrmSettingsPage() {
     const nextName = selected?.name ?? ''
     const draft = selected?.versions.find((item) => item.status === 'Draft')
     const basis = draft ?? selected?.versions.find((item) => item.status === 'Published')
-    const nextStages = basis ? basis.stages.map((stage) => ({ id: stage.id, name: stage.name, sortOrder: stage.sortOrder, isEntry: stage.isEntry, isActive: stage.isActive, isArchived: stage.isArchived })) : [initialStage()]
+    const nextStages = withSystemStages(basis ? basis.stages.map((stage) => ({ id: stage.id, name: stage.name, sortOrder: stage.sortOrder, isEntry: stage.isEntry, isActive: stage.isActive, isArchived: stage.isArchived, kind: stage.kind })) : [initialStage()], systemLabels)
     const nextTransitions = basis ? (() => {
       const stageNames = new Map(basis.stages.map((stage) => [stage.id, stage.name]))
       return Object.fromEntries(basis.allowedTransitions.flatMap((edge) => {
@@ -116,7 +134,7 @@ export default function CrmSettingsPage() {
     setEnforceTransitions(basis?.enforceAllowedTransitions ?? false)
     setTransitions(nextTransitions)
     setPipelineBaseline(JSON.stringify({ pipelineName: nextName, stages: nextStages, enforceTransitions: basis?.enforceAllowedTransitions ?? false, transitions: nextTransitions }))
-  }, [pipelineId, query.data, isPipelineDirty])
+  }, [pipelineId, query.data, isPipelineDirty, systemLabels])
 
   const mutateSettings = async (event: FormEvent) => {
     event.preventDefault(); if (!form) return
@@ -132,14 +150,15 @@ export default function CrmSettingsPage() {
 
   const saveDraft = async (event: FormEvent) => {
     event.preventDefault()
-    const cleanStages = stages.filter((stage) => stage.name.trim()).map((stage, index) => ({ ...stage, sortOrder: index + 1 }))
+    const openStages = stages.filter((stage) => stage.kind === 'Open' && stage.name.trim()).map((stage, index) => ({ ...stage, sortOrder: index + 1 }))
+    const systemStages = stages.filter((stage) => stage.kind !== 'Open').map((stage, index) => ({ ...stage, name: stage.name.trim() || systemLabels[stage.kind as SystemKind], sortOrder: openStages.length + index + 1, isEntry: false, isActive: true, isArchived: false }))
     const body = { pipelineDefinitionId: pipelineId, name: pipelineName.trim(), expectedRowVersion: query.data?.pipelines.find((p) => p.id === pipelineId)?.rowVersion ?? 0,
       expectedLatestVersionNumber: Math.max(0, ...(query.data?.pipelines.find((p) => p.id === pipelineId)?.versions.map((v) => v.versionNumber) ?? [])),
-      stages: cleanStages.map(({ name, sortOrder, isEntry, isActive, isArchived }) => ({ name, sortOrder, isEntry, isActive: isArchived ? false : isActive, isArchived: Boolean(isArchived) })), enforceAllowedTransitions: enforceTransitions,
-      allowedTransitions: enforceTransitions ? cleanStages.flatMap((from) => cleanStages.filter((to) => from.name !== to.name && transitions[`${from.name}:${to.name}`]).map((to) => ({ fromStageName: from.name, toStageName: to.name }))) : [] }
+      stages: [...openStages, ...systemStages].map(({ name, sortOrder, isEntry, isActive, isArchived, kind }) => ({ name, sortOrder, isEntry, isActive: isArchived ? false : isActive, isArchived: Boolean(isArchived), kind: pipelineStageKindWire(kind) })), enforceAllowedTransitions: enforceTransitions,
+      allowedTransitions: enforceTransitions ? openStages.flatMap((from) => openStages.filter((to) => from.name !== to.name && transitions[`${from.name}:${to.name}`]).map((to) => ({ fromStageName: from.name, toStageName: to.name }))) : [] }
     const key = keys.begin(body)
     try { const result = await createDraft.mutateAsync({ ...body, idempotencyKey: key }); setPipelineBaseline(pipelineSignature); setPipelineId(result.pipelineDefinitionId); keys.settle(null); setErrorMessage(''); setMessage(t('settings.draftSaved')) }
-    catch (error) { keys.settle(error as ApiError); setMessage(''); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : t('settings.saveError')) }
+    catch (error) { keys.settle(error as ApiError); setMessage(''); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : (error as ApiError).status === 400 ? t('settings.pipelineInvalid') : t('settings.saveError')) }
   }
 
   if (query.isPending || (!form && !query.isError)) return <div className="mx-auto w-full max-w-[1320px] animate-pulse space-y-5" aria-label={t('settings.loading')}><div className="h-16 w-80 rounded-[var(--nx-r-card)] bg-muted" /><div className="h-72 rounded-[var(--nx-r-card)] bg-muted" /></div>
@@ -152,6 +171,8 @@ export default function CrmSettingsPage() {
   }
   const set = <K extends keyof CrmSettings>(field: K, value: CrmSettings[K]) => setForm((current) => current ? { ...current, [field]: value } : current)
   const selectedPipeline = form.pipelines.find((item) => item.id === pipelineId)
+  const openStages = stages.filter((stage) => stage.kind === 'Open')
+  const openStageCount = openStages.length
 
   const executePipelineLifecycle = async (archive: boolean, restore = false) => {
     if (!selectedPipeline) return
@@ -265,20 +286,21 @@ export default function CrmSettingsPage() {
       {selectedPipeline?.isArchived && <Alert variant="info"><AlertDescription>{t('settings.archivedPipelineReadOnly')}</AlertDescription></Alert>}
       <form onSubmit={saveDraft}><fieldset disabled={Boolean(selectedPipeline?.isArchived)} className="flex flex-col gap-4"><Field label={t('settings.pipelineName')}>{(props) => <Input {...props} value={pipelineName} required onChange={(e) => setPipelineName(e.target.value)} />}</Field>
         {!selectedPipeline && <div className="flex flex-wrap gap-2" aria-label={t('settings.pipelineTemplatesLabel')}>
-          <Button type="button" variant="outline" onClick={() => setStages([{ name: t('settings.templates.quick.first'), sortOrder: 1, isEntry: true, isActive: true }, { name: t('settings.templates.quick.second'), sortOrder: 2, isEntry: false, isActive: true }])}>{t('settings.templates.quick.label')}</Button>
-          <Button type="button" variant="outline" onClick={() => setStages([{ name: t('settings.templates.enterprise.first'), sortOrder: 1, isEntry: true, isActive: true }, { name: t('settings.templates.enterprise.second'), sortOrder: 2, isEntry: false, isActive: true }, { name: t('settings.templates.enterprise.third'), sortOrder: 3, isEntry: false, isActive: true }])}>{t('settings.templates.enterprise.label')}</Button>
-          <Button type="button" variant="outline" onClick={() => setStages([{ name: t('settings.templates.renewal.first'), sortOrder: 1, isEntry: true, isActive: true }, { name: t('settings.templates.renewal.second'), sortOrder: 2, isEntry: false, isActive: true }, { name: t('settings.templates.renewal.third'), sortOrder: 3, isEntry: false, isActive: true }])}>{t('settings.templates.renewal.label')}</Button>
+          <Button type="button" variant="outline" onClick={() => setStages(withSystemStages([t('settings.templates.quick.first'), t('settings.templates.quick.second')].map(openStage), systemLabels))}>{t('settings.templates.quick.label')}</Button>
+          <Button type="button" variant="outline" onClick={() => setStages(withSystemStages([t('settings.templates.enterprise.first'), t('settings.templates.enterprise.second'), t('settings.templates.enterprise.third')].map(openStage), systemLabels))}>{t('settings.templates.enterprise.label')}</Button>
+          <Button type="button" variant="outline" onClick={() => setStages(withSystemStages([t('settings.templates.renewal.first'), t('settings.templates.renewal.second'), t('settings.templates.renewal.third')].map(openStage), systemLabels))}>{t('settings.templates.renewal.label')}</Button>
         </div>}
-        <div className="flex flex-col gap-3">{stages.map((stage, index) => <div key={index} className="grid items-end gap-2 rounded-[var(--nx-r-ctl)] border p-3 lg:grid-cols-[1fr_auto_auto_auto_auto]">
+        <div className="flex flex-col gap-3">{stages.map((stage, index) => stage.kind !== 'Open' ? <SystemStageRow key={stage.kind} stage={stage} label={t(`settings.systemStage.${stage.kind === 'Won' ? 'won' : 'lost'}`)} hint={t(`settings.systemStage.${stage.kind === 'Won' ? 'wonHint' : 'lostHint'}`)} badge={t('settings.systemStage.badge')} onRename={(name) => setStages((all) => all.map((item, i) => i === index ? { ...item, name } : item))} /> : <div key={index} className="grid items-end gap-2 rounded-[var(--nx-r-ctl)] border p-3 lg:grid-cols-[1fr_auto_auto_auto_auto_auto]">
           <Field label={`${t('settings.stage')} ${index + 1}`}>{(props) => <Input {...props} value={stage.name} required onChange={(e) => setStages((all) => all.map((item, i) => i === index ? { ...item, name: e.target.value } : item))} />}</Field>
-          <div className="flex gap-1 pb-1"><Button type="button" variant="outline" disabled={index === 0} aria-label={t('settings.moveUp')} onClick={() => setStages((all) => { const next = [...all]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; return next })}>↑</Button><Button type="button" variant="outline" disabled={index === stages.length - 1} aria-label={t('settings.moveDown')} onClick={() => setStages((all) => { const next = [...all]; [next[index], next[index + 1]] = [next[index + 1], next[index]]; return next })}>↓</Button></div>
+          <div className="flex gap-1 pb-1"><Button type="button" variant="outline" disabled={index === 0} aria-label={t('settings.moveUp')} onClick={() => setStages((all) => { const next = [...all]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; return next })}>↑</Button><Button type="button" variant="outline" disabled={index === openStageCount - 1} aria-label={t('settings.moveDown')} onClick={() => setStages((all) => { const next = [...all]; [next[index], next[index + 1]] = [next[index + 1], next[index]]; return next })}>↓</Button></div>
           <label className="flex items-center gap-2 pb-2"><Checkbox checked={stage.isEntry} onChange={(event) => { const checked = event.currentTarget.checked; setStages((all) => all.map((item, i) => ({ ...item, isEntry: checked && i === index }))) }} />{t('settings.entryStage')}</label>
           <label className="flex items-center gap-2 pb-2"><Checkbox checked={stage.isActive} onChange={(event) => { const checked = event.currentTarget.checked; setStages((all) => all.map((item, i) => i === index ? { ...item, isActive: checked } : item)) }} />{t('settings.active')}</label>
           <Button type="button" variant="outline" disabled={Boolean(stage.isArchived)} onClick={() => setStages((all) => all.map((item, i) => i === index ? { ...item, isArchived: true, isActive: false, isEntry: false } : item))}>{stage.isArchived ? t('settings.archived') : t('settings.archive')}</Button>
+          <Button type="button" variant="outline" size="icon" disabled={openStageCount <= 1} aria-label={t('settings.removeStage')} onClick={() => setStages((all) => { const kept = all.filter((_, i) => i !== index); const firstOpen = kept.findIndex((item) => item.kind === 'Open'); return kept.some((item) => item.kind === 'Open' && item.isEntry) ? kept : kept.map((item, i) => i === firstOpen ? { ...item, isEntry: true, isActive: true, isArchived: false } : item) })}><Trash2 aria-hidden strokeWidth={1.7} /></Button>
         </div>)}</div>
-        <div className="flex flex-wrap gap-3"><Button type="button" variant="outline" onClick={() => setStages((all) => [...all, { name: '', sortOrder: all.length + 1, isEntry: false, isActive: true }])}>{t('settings.addStage')}</Button>
+        <div className="flex flex-wrap gap-3"><Button type="button" variant="outline" onClick={() => setStages((all) => [...all.filter((item) => item.kind === 'Open'), { name: '', sortOrder: openStageCount + 1, isEntry: false, isActive: true, kind: 'Open' }, ...all.filter((item) => item.kind !== 'Open')])}>{t('settings.addStage')}</Button>
           <label className="flex items-center gap-2"><Checkbox checked={enforceTransitions} onChange={(event) => setEnforceTransitions(event.currentTarget.checked)} />{t('settings.enforceTransitions')}</label></div>
-        {enforceTransitions && <div className="grid gap-2 sm:grid-cols-2">{stages.flatMap((from) => stages.filter((to) => from.name && to.name && from.name !== to.name).map((to) => { const key = `${from.name}:${to.name}`; return <label key={key} className="flex items-center gap-2"><Checkbox checked={Boolean(transitions[key])} onChange={(event) => { const checked = event.currentTarget.checked; setTransitions((all) => ({ ...all, [key]: checked })) }} />{from.name} → {to.name}</label> }))}</div>}
+        {enforceTransitions && <div className="grid gap-2 sm:grid-cols-2">{openStages.flatMap((from) => openStages.filter((to) => from.name && to.name && from.name !== to.name).map((to) => { const key = `${from.name}:${to.name}`; return <label key={key} className="flex items-center gap-2"><Checkbox checked={Boolean(transitions[key])} onChange={(event) => { const checked = event.currentTarget.checked; setTransitions((all) => ({ ...all, [key]: checked })) }} />{from.name} → {to.name}</label> }))}</div>}
         <Button type="submit" disabled={createDraft.isPending || Boolean(selectedPipeline?.isArchived)}>{t('settings.saveDraft')}</Button>
       </fieldset></form>
       <Alert variant="info"><AlertDescription>{t('settings.pipelineVersionImpact')}</AlertDescription></Alert>
