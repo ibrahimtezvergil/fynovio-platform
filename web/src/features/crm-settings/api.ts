@@ -15,12 +15,13 @@ export function useCrmSettings() {
   })
 }
 export function useUpdateCrmSettings() {
+  const { t } = useTranslation('opportunities')
   const tenantId = useSessionStore((state) => state.activeTenantId)
   return useAppMutation({ name: 'crmSettings.update', mutationFn: async (values: Pick<CrmSettings, 'defaultPipelineDefinitionId' | 'opportunityCreationMode' | 'opportunityCreationSteps' | 'defaultOpportunityTypeId' | 'requireLostReason' | 'requireWonLine' | 'defaultAssignmentMode' | 'assignmentPolicy' | 'defaultPrincipal' | 'defaultTeamId' | 'defaultTerritoryId'> & { expectedVersion: number; idempotencyKey: string }) => {
     const { idempotencyKey, expectedVersion, defaultPrincipal, ...settings } = values
     await apiClient.put(endpoints.crmSettings.root, { ...settings, expectedVersion,
       defaultPrincipalIssuer: defaultPrincipal?.issuer || null, defaultPrincipalSubject: defaultPrincipal?.subject || null }, { headers: { 'Idempotency-Key': idempotencyKey } })
-  }, invalidateKeys: () => [key(tenantId), ['crm-pipeline-stages', tenantId, 'default']] })
+  }, successToast: () => ({ title: t('settings.saved') }), invalidateKeys: () => [key(tenantId), ['crm-pipeline-stages', tenantId, 'default']] })
 }
 
 export function useCreatePipelineDraft() {
@@ -49,11 +50,12 @@ export function useDiscardPipelineDraft() {
   }, successToast: () => ({ title: t('settings.versionStrip.discarded') }), invalidateKeys: () => [key(tenantId), ['crm-pipeline-stages', tenantId, 'default']] })
 }
 export function useSetPipelineLifecycle() {
+  const { t } = useTranslation('opportunities')
   const tenantId = useSessionStore((state) => state.activeTenantId)
   return useAppMutation({ name: 'crmSettings.pipelineLifecycle', mutationFn: async ({ pipelineId, ...body }: { pipelineId: number; expectedRowVersion: number; isActive: boolean; archive: boolean; restore: boolean; idempotencyKey: string }) => {
     const { idempotencyKey, ...request } = body
     await apiClient.put(endpoints.crmSettings.pipelineLifecycle(pipelineId), request, { headers: { 'Idempotency-Key': idempotencyKey } })
-  }, invalidateKeys: () => [key(tenantId)] })
+  }, successToast: (_data, { archive, restore }) => ({ title: t(archive ? 'settings.archivedMessage' : restore ? 'settings.restoredMessage' : 'settings.saved') }), invalidateKeys: () => [key(tenantId)] })
 }
 export function useValidatePipelineDraft(pipelineId: number | null, versionId: number | null) {
   const tenantId = useSessionStore((state) => state.activeTenantId)

@@ -69,7 +69,6 @@ export default function CrmSettingsPage() {
   const [transitions, setTransitions] = useState<Record<string, boolean>>({})
   const [pipelineBaseline, setPipelineBaseline] = useState<string | null>(null)
   const selectedEditorPipeline = useRef<number | null>(null)
-  const [message, setMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [archivePipeline, setArchivePipeline] = useState(false)
   const [discardDraftOpen, setDiscardDraftOpen] = useState(false)
@@ -86,7 +85,7 @@ export default function CrmSettingsPage() {
   const version = query.data?.pipelines.find((pipeline) => pipeline.id === pipelineId)?.versions.find((item) => item.status === 'Draft')
   const validation = useValidatePipelineDraft(pipelineId, version?.id ?? null)
 
-  useEffect(() => { setForm(null); setPipelineId(null); setPipelineBaseline(null); selectedEditorPipeline.current = null; setMessage(''); setErrorMessage('') }, [activeTenantId])
+  useEffect(() => { setForm(null); setPipelineId(null); setPipelineBaseline(null); selectedEditorPipeline.current = null; setErrorMessage('') }, [activeTenantId])
   useEffect(() => { if (query.data && !isSettingsDirty) setForm(query.data) }, [query.data, isSettingsDirty])
   useEffect(() => {
     const clearPointerDrag = () => { pointerDraggedStep.current = null }
@@ -141,8 +140,8 @@ export default function CrmSettingsPage() {
       defaultAssignmentMode: form.defaultAssignmentMode, assignmentPolicy: form.assignmentPolicy, defaultPrincipal: form.defaultPrincipal,
       defaultTeamId: form.defaultTeamId, defaultTerritoryId: form.defaultTerritoryId, expectedVersion: form.rowVersion }
     const key = keys.begin(payload)
-    try { await update.mutateAsync({ ...payload, idempotencyKey: key }); keys.settle(null); setErrorMessage(''); setMessage(t('settings.saved')) }
-    catch (error) { keys.settle(error as ApiError); setMessage(''); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : t('settings.saveError')) }
+    try { await update.mutateAsync({ ...payload, idempotencyKey: key }); keys.settle(null); setErrorMessage('') }
+    catch (error) { keys.settle(error as ApiError); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : t('settings.saveError')) }
   }
 
   const saveDraft = async (event: FormEvent) => {
@@ -154,8 +153,8 @@ export default function CrmSettingsPage() {
       stages: [...openStages, ...systemStages].map(({ name, sortOrder, isEntry, isActive, isArchived, kind }) => ({ name, sortOrder, isEntry, isActive: isArchived ? false : isActive, isArchived: Boolean(isArchived), kind: pipelineStageKindWire(kind) })), enforceAllowedTransitions: enforceTransitions,
       allowedTransitions: enforceTransitions ? openStages.flatMap((from) => openStages.filter((to) => from.name !== to.name && transitions[`${from.name}:${to.name}`]).map((to) => ({ fromStageName: from.name, toStageName: to.name }))) : [] }
     const key = keys.begin(body)
-    try { const result = await createDraft.mutateAsync({ ...body, idempotencyKey: key }); setPipelineBaseline(pipelineSignature); setPipelineId(result.pipelineDefinitionId); keys.settle(null); setErrorMessage(''); setMessage(t('settings.draftSaved')) }
-    catch (error) { keys.settle(error as ApiError); setMessage(''); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : (error as ApiError).status === 400 ? t('settings.pipelineInvalid') : t('settings.saveError')) }
+    try { const result = await createDraft.mutateAsync({ ...body, idempotencyKey: key }); setPipelineBaseline(pipelineSignature); setPipelineId(result.pipelineDefinitionId); keys.settle(null); setErrorMessage('') }
+    catch (error) { keys.settle(error as ApiError); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : (error as ApiError).status === 400 ? t('settings.pipelineInvalid') : t('settings.saveError')) }
   }
 
   if (query.isPending || (!form && !query.isError)) return <div className="mx-auto w-full max-w-[1320px] animate-pulse space-y-5" aria-label={t('settings.loading')}><div className="h-16 w-80 rounded-[var(--nx-r-card)] bg-muted" /><div className="h-72 rounded-[var(--nx-r-card)] bg-muted" /></div>
@@ -174,31 +173,31 @@ export default function CrmSettingsPage() {
   const liveVersion = versionState(selectedPipeline?.versions ?? []).published
   const editable = !selectedPipeline?.isArchived
   const publishBlocker = isPipelineDirty ? t('settings.saveBeforePublish') : !version ? t('settings.bar.noDraft') : validation.isPending ? t('settings.validating') : !validation.data?.isValid ? t('settings.bar.invalid') : null
-  const barStatus = (message && !isPipelineDirty ? message : '') || publishBlocker || (version ? t('settings.bar.ready') : t('settings.bar.editingLive'))
+  const barStatus = publishBlocker || (version ? t('settings.bar.ready') : t('settings.bar.editingLive'))
 
   const executePipelineLifecycle = async (archive: boolean, restore = false) => {
     if (!selectedPipeline) return
     const body = { pipelineId: selectedPipeline.id, expectedRowVersion: selectedPipeline.rowVersion, isActive: archive || restore ? false : !selectedPipeline.isActive, archive, restore }
     try {
       await lifecycle.mutateAsync({ ...body, idempotencyKey: keys.begin(body) })
-      keys.settle(null); setErrorMessage(''); setMessage(archive ? t('settings.archivedMessage') : restore ? t('settings.restoredMessage') : t('settings.saved'))
+      keys.settle(null); setErrorMessage('')
       if (archive) { setPipelineId(null); setArchivePipeline(false) }
     }
-    catch (error) { keys.settle(error as ApiError); setMessage(''); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : t('settings.saveError')) }
+    catch (error) { keys.settle(error as ApiError); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : t('settings.saveError')) }
   }
   const revertEdits = () => { selectedEditorPipeline.current = null; setPipelineBaseline(null); setErrorMessage('') }
   const discardDraft = async () => {
     if (!selectedPipeline || !draftVersion) return
     const body = { pipelineId: selectedPipeline.id, versionId: draftVersion.id }
-    try { await discard.mutateAsync({ ...body, idempotencyKey: keys.begin(body) }); keys.settle(null); setErrorMessage(''); setMessage(t('settings.versionStrip.discarded')); revertEdits() }
-    catch (error) { keys.settle(error as ApiError); setMessage(''); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : t('settings.saveError')) }
+    try { await discard.mutateAsync({ ...body, idempotencyKey: keys.begin(body) }); keys.settle(null); setErrorMessage(''); revertEdits() }
+    catch (error) { keys.settle(error as ApiError); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : t('settings.saveError')) }
     finally { setDiscardDraftOpen(false) }
   }
   const publishDraft = async () => {
     if (!selectedPipeline || !version) return
     const body = { pipelineId: selectedPipeline.id, versionId: version.id, expectedPipelineRowVersion: selectedPipeline.rowVersion }
-    try { await publish.mutateAsync({ ...body, idempotencyKey: keys.begin(body) }); keys.settle(null); setErrorMessage(''); setMessage(t('settings.published')) }
-    catch (error) { keys.settle(error as ApiError); setMessage(''); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : t('settings.saveError')) }
+    try { await publish.mutateAsync({ ...body, idempotencyKey: keys.begin(body) }); keys.settle(null); setErrorMessage('') }
+    catch (error) { keys.settle(error as ApiError); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : t('settings.saveError')) }
   }
 
   return <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-5">
@@ -206,7 +205,6 @@ export default function CrmSettingsPage() {
     <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[236px_minmax(0,1fr)]">
       <aside className="flex flex-col gap-3 lg:sticky lg:top-[88px]" aria-label={t('settings.sectionNavLabel')}><PageNav items={sections} label={t('settings.sectionNavLabel')} /></aside>
       <div className="flex min-w-0 flex-col gap-4">
-    {message && (section !== 'pipelines' || !editable) && <Alert variant="success"><AlertTitle>{message}</AlertTitle></Alert>}
     {errorMessage && <Alert variant="destructive"><AlertTitle>{errorMessage}</AlertTitle><AlertDescription><Button type="button" variant="outline" size="sm" onClick={() => void query.refetch()}>{t('settings.reload')}</Button></AlertDescription></Alert>}
     {(section === 'general' || section === 'creation') && <form onSubmit={mutateSettings} className="flex flex-col gap-4">
       {section === 'general' && <>

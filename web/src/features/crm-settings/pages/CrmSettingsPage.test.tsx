@@ -230,7 +230,9 @@ describe('CrmSettingsPage', () => {
       fireEvent.click(within(dialog).getByRole('button', { name: t('settings.versionStrip.discard') }))
 
       await waitFor(() => expect(discarded).toBe(true))
-      expect(await screen.findByText(t('settings.versionStrip.discarded'))).toBeInTheDocument()
+      await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
+      // Success is announced as a toast, never as a card inside the page.
+      expect(screen.queryByText(t('settings.versionStrip.discarded'))).not.toBeInTheDocument()
     })
 
     it('publishes only a saved, valid draft and says why the button is off', async () => {
@@ -351,6 +353,6 @@ describe('CrmSettingsPage', () => {
     fireEvent.change(selector, { target: { value: '10' } })
     fireEvent.click(await screen.findByRole('button', { name: tr('settings.restore', undefined, 'opportunities') }))
     await waitFor(() => expect(body).toMatchObject({ expectedRowVersion: 2, isActive: false, archive: false, restore: true }))
-    expect(await screen.findByText(tr('settings.restoredMessage', undefined, 'opportunities'))).toBeInTheDocument()
+    expect(screen.queryByText(tr('settings.restoredMessage', undefined, 'opportunities'))).not.toBeInTheDocument()
   })
 })
