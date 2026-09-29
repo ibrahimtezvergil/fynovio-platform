@@ -19,7 +19,7 @@ import { paths } from '@/routes/paths'
 import type { ApiError } from '@/types'
 import { pipelineStageKindWire, type PipelineStageKind } from '@/types/schemas'
 import { useCreatePipelineDraft, useCrmSettings, useDiscardPipelineDraft, useManageCrmCatalog, usePublishPipelineVersion, useSetPipelineLifecycle, useUpdateCrmSettings, useValidatePipelineDraft, type CrmCatalogKind } from '../api'
-import { PipelineVersionStrip, StageRow, SystemStageRow, TransitionMatrix, versionState, type StageForm } from '../components/PipelineEditorParts'
+import { PipelineVersionStrip, StageListHeader, StageRow, SystemStageRow, TransitionMatrix, versionState, type StageForm } from '../components/PipelineEditorParts'
 import type { CrmSettings } from '../schema'
 
 const initialStage = (): StageForm => ({ name: '', sortOrder: 1, isEntry: true, isActive: true, kind: 'Open' })
@@ -73,6 +73,8 @@ export default function CrmSettingsPage() {
   const [errorMessage, setErrorMessage] = useState('')
   const [archivePipeline, setArchivePipeline] = useState(false)
   const [discardDraftOpen, setDiscardDraftOpen] = useState(false)
+  const [focusStageIndex, setFocusStageIndex] = useState<number | null>(null)
+  const clearStageFocus = useCallback(() => setFocusStageIndex(null), [])
   const [pendingPipelineId, setPendingPipelineId] = useState<number | null | undefined>(undefined)
   const [switchConfirmationOpen, setSwitchConfirmationOpen] = useState(false)
   const pendingSwitch = useRef<((proceed: boolean) => void) | null>(null)
@@ -290,41 +292,43 @@ export default function CrmSettingsPage() {
 
     {section === 'pipelines' && <div className="flex flex-col gap-4">
     <Card className="gap-5 px-6 pt-[22px] pb-6"><SectionHeading title={t('settings.pipelineTitle')} description={t('settings.pipelineDescription')} />
-      <Field label={t('settings.selectPipeline')}>{(props) => <Select {...props} value={pipelineId ?? ''} onChange={(e) => { const nextId = e.target.value ? Number(e.target.value) : null; if (isPipelineDirty) setPendingPipelineId(nextId); else setPipelineId(nextId) }}><option value="">{t('settings.newPipeline')}</option>{form.pipelines.filter((p) => !p.isArchived).map((p) => <option key={p.id} value={p.id}>{p.name}{p.isActive ? '' : ` · ${t('settings.status.Inactive')}`}</option>)}{form.pipelines.some((p) => p.isArchived) && <optgroup label={t('settings.archivedGroup')}>{form.pipelines.filter((p) => p.isArchived).map((p) => <option key={p.id} value={p.id}>{p.name} · {t('settings.archived')}</option>)}</optgroup>}</Select>}</Field>
-      {selectedPipeline && <div className="flex flex-wrap items-center gap-2"><Badge variant={selectedPipeline.isArchived ? 'secondary' : selectedPipeline.isActive ? 'success' : 'secondary'}>{selectedPipeline.isArchived ? t('settings.status.Archived') : selectedPipeline.isActive ? t('settings.status.Active') : t('settings.status.Inactive')}</Badge><span className="text-muted-foreground text-xs">{t('settings.versionCount', { count: selectedPipeline.versions.length })}</span></div>}
+      <div className="grid items-end gap-3 md:grid-cols-2">
+        <Field label={t('settings.selectPipeline')}>{(props) => <Select {...props} value={pipelineId ?? ''} onChange={(e) => { const nextId = e.target.value ? Number(e.target.value) : null; if (isPipelineDirty) setPendingPipelineId(nextId); else setPipelineId(nextId) }}><option value="">{t('settings.newPipeline')}</option>{form.pipelines.filter((p) => !p.isArchived).map((p) => <option key={p.id} value={p.id}>{p.name}{p.isActive ? '' : ` · ${t('settings.status.Inactive')}`}</option>)}{form.pipelines.some((p) => p.isArchived) && <optgroup label={t('settings.archivedGroup')}>{form.pipelines.filter((p) => p.isArchived).map((p) => <option key={p.id} value={p.id}>{p.name} · {t('settings.archived')}</option>)}</optgroup>}</Select>}</Field>
+        <Field label={t('settings.pipelineName')}>{(props) => <Input {...props} form="pipeline-editor-form" value={pipelineName} required disabled={!editable} onChange={(e) => setPipelineName(e.target.value)} />}</Field>
+      </div>
+      {selectedPipeline && <div className="flex flex-wrap items-center gap-2"><Badge variant={selectedPipeline.isArchived ? 'secondary' : selectedPipeline.isActive ? 'success' : 'secondary'}>{selectedPipeline.isArchived ? t('settings.status.Archived') : selectedPipeline.isActive ? t('settings.status.Active') : t('settings.status.Inactive')}</Badge>
+        {form.defaultPipelineDefinitionId === selectedPipeline.id && <Badge variant="info">{t('settings.defaultBadge')}</Badge>}
+        <span className="flex-1" />
+        {selectedPipeline.isArchived
+          ? <Button type="button" variant="outline" size="sm" disabled={lifecycle.isPending} onClick={() => void executePipelineLifecycle(false, true)}>{t('settings.restore')}</Button>
+          : <><Button type="button" variant="ghost" size="sm" disabled={lifecycle.isPending || isPipelineDirty || (selectedPipeline.isActive && form.defaultPipelineDefinitionId === selectedPipeline.id)} onClick={() => void executePipelineLifecycle(false)}>{selectedPipeline.isActive ? t('settings.deactivate') : t('settings.activate')}</Button><Button type="button" variant="ghost" size="sm" disabled={lifecycle.isPending || isPipelineDirty || form.defaultPipelineDefinitionId === selectedPipeline.id} onClick={() => setArchivePipeline(true)}>{t('settings.archive')}</Button></>}</div>}
+      {selectedPipeline && form.defaultPipelineDefinitionId === selectedPipeline.id && <p className="text-muted-foreground -mt-1.5 text-[12px] leading-snug">{t('settings.defaultPipelineLifecycleBlock')}</p>}
       {selectedPipeline?.isArchived && <Alert variant="info"><AlertDescription>{t('settings.archivedPipelineReadOnly')}</AlertDescription></Alert>}
       {selectedPipeline && !selectedPipeline.isArchived && <PipelineVersionStrip versions={selectedPipeline.versions} dirty={isPipelineDirty} discarding={discard.isPending} onDiscardDraft={() => setDiscardDraftOpen(true)} />}
-      <form id="pipeline-editor-form" onSubmit={saveDraft}><fieldset disabled={!editable} className="flex flex-col gap-4"><Field label={t('settings.pipelineName')}>{(props) => <Input {...props} value={pipelineName} required onChange={(e) => setPipelineName(e.target.value)} />}</Field>
+      <form id="pipeline-editor-form" onSubmit={saveDraft}><fieldset disabled={!editable} className="flex flex-col gap-3">
         {!selectedPipeline && <div className="flex flex-wrap gap-2" role="group" aria-label={t('settings.pipelineTemplatesLabel')}>
           <Button type="button" variant="outline" onClick={() => setStages(withSystemStages([t('settings.templates.quick.first'), t('settings.templates.quick.second')].map(openStage), systemLabels))}>{t('settings.templates.quick.label')}</Button>
           <Button type="button" variant="outline" onClick={() => setStages(withSystemStages([t('settings.templates.enterprise.first'), t('settings.templates.enterprise.second'), t('settings.templates.enterprise.third')].map(openStage), systemLabels))}>{t('settings.templates.enterprise.label')}</Button>
           <Button type="button" variant="outline" onClick={() => setStages(withSystemStages([t('settings.templates.renewal.first'), t('settings.templates.renewal.second'), t('settings.templates.renewal.third')].map(openStage), systemLabels))}>{t('settings.templates.renewal.label')}</Button>
         </div>}
-        <div className="flex flex-col gap-3">{stages.map((stage, index) => stage.kind !== 'Open'
+        <div className="flex flex-col gap-1.5"><StageListHeader />{stages.map((stage, index) => stage.kind !== 'Open'
           ? <SystemStageRow key={stage.kind} stage={stage} onRename={(name) => setStages((all) => all.map((item, i) => i === index ? { ...item, name } : item))} />
-          : <StageRow key={index} stage={stage} position={index} count={openStageCount}
+          : <StageRow key={index} stage={stage} position={index} count={openStageCount} focusName={focusStageIndex === index} onFocused={clearStageFocus}
               onName={(name) => setStages((all) => all.map((item, i) => i === index ? { ...item, name } : item))}
               onMove={(direction) => setStages((all) => { const next = [...all]; [next[index], next[index + direction]] = [next[index + direction], next[index]]; return next })}
               onEntry={() => setStages((all) => all.map((item, i) => ({ ...item, isEntry: i === index })))}
               onActive={(active) => setStages((all) => all.map((item, i) => i === index ? { ...item, isActive: active } : item))}
               onToggleArchive={() => setStages((all) => all.map((item, i) => i === index ? (item.isArchived ? { ...item, isArchived: false, isActive: true } : { ...item, isArchived: true, isActive: false, isEntry: false }) : item))}
+              onInsertBelow={() => { setStages((all) => [...all.slice(0, index + 1), { name: '', sortOrder: 0, isEntry: false, isActive: true, kind: 'Open' }, ...all.slice(index + 1)]); setFocusStageIndex(index + 1) }}
               onRemove={() => setStages((all) => { const kept = all.filter((_, i) => i !== index); const firstOpen = kept.findIndex((item) => item.kind === 'Open'); return kept.some((item) => item.kind === 'Open' && item.isEntry) ? kept : kept.map((item, i) => i === firstOpen ? { ...item, isEntry: true, isActive: true, isArchived: false } : item) })} />)}</div>
-        <div className="flex flex-wrap items-center gap-3"><Button type="button" variant="outline" onClick={() => setStages((all) => [...all.filter((item) => item.kind === 'Open'), { name: '', sortOrder: openStageCount + 1, isEntry: false, isActive: true, kind: 'Open' }, ...all.filter((item) => item.kind !== 'Open')])}>{t('settings.addStage')}</Button>
+        <div className="flex flex-wrap items-center gap-3"><Button type="button" variant="outline" size="sm" onClick={() => { setStages((all) => [...all.filter((item) => item.kind === 'Open'), { name: '', sortOrder: openStageCount + 1, isEntry: false, isActive: true, kind: 'Open' }, ...all.filter((item) => item.kind !== 'Open')]); setFocusStageIndex(openStageCount) }}>{t('settings.addStage')}</Button>
           <label className="flex items-center gap-2 text-sm"><Checkbox checked={enforceTransitions} onChange={(event) => setEnforceTransitions(event.currentTarget.checked)} />{t('settings.enforceTransitions')}</label></div>
         {enforceTransitions && <TransitionMatrix stages={openStages} value={transitions} onChange={(key, allowed) => setTransitions((all) => ({ ...all, [key]: allowed }))} />}
       </fieldset></form>
-      <Alert variant="info"><AlertDescription>{t('settings.pipelineVersionImpact')}</AlertDescription></Alert>
-      {version && <div className="flex flex-col gap-3 border-t pt-4"><h3 className="text-sm font-medium">{t('settings.validation')}</h3>
-        {validation.isPending && <p className="text-muted-foreground text-sm">{t('settings.validating')}</p>}
+      {version && <div className="flex flex-col gap-2" aria-label={t('settings.validation')}>
         {validation.isError && <Alert variant="destructive"><AlertTitle>{t('settings.validationError')}</AlertTitle><AlertDescription><Button type="button" variant="outline" size="sm" onClick={() => void validation.refetch()}>{t('settings.retry')}</Button></AlertDescription></Alert>}
-        {validation.data && <><Badge variant={validation.data.isValid ? 'success' : 'warning'} className="self-start">{validation.data.isValid ? t('settings.valid') : t('settings.invalid')}</Badge><p className="text-muted-foreground text-xs">{t('settings.retainedOpportunities', { count: validation.data.opportunitiesRetainedOnPriorVersions })}</p>{validation.data.errors.map((error) => <p role="alert" className="text-[var(--nx-neg)] text-sm" key={error}>{error}</p>)}</>}</div>}
-      {selectedPipeline && <div className="flex flex-col gap-3 border-t pt-4">
-        {form.defaultPipelineDefinitionId === selectedPipeline.id && <Alert variant="warning"><AlertDescription>{t('settings.defaultPipelineLifecycleBlock')}</AlertDescription></Alert>}
-        <div className="flex flex-wrap gap-2">{selectedPipeline.isArchived
-          ? <Button type="button" variant="outline" disabled={lifecycle.isPending} onClick={() => void executePipelineLifecycle(false, true)}>{t('settings.restore')}</Button>
-          : <><Button type="button" variant="outline" disabled={lifecycle.isPending || isPipelineDirty || (selectedPipeline.isActive && form.defaultPipelineDefinitionId === selectedPipeline.id)} onClick={() => void executePipelineLifecycle(false)}>{selectedPipeline.isActive ? t('settings.deactivate') : t('settings.activate')}</Button><Button type="button" variant="outline" disabled={lifecycle.isPending || isPipelineDirty || form.defaultPipelineDefinitionId === selectedPipeline.id} onClick={() => setArchivePipeline(true)}>{t('settings.archive')}</Button></>}
-        </div>
-      </div>}
+        {validation.data && !validation.data.isValid && <Alert variant="warning"><AlertTitle>{t('settings.invalid')}</AlertTitle><AlertDescription><ul className="list-disc pl-4">{validation.data.errors.map((error) => <li role="alert" key={error}>{error}</li>)}</ul></AlertDescription></Alert>}
+        {validation.data?.isValid && validation.data.opportunitiesRetainedOnPriorVersions > 0 && <p className="text-muted-foreground text-[12.5px]">{t('settings.retainedOpportunities', { count: validation.data.opportunitiesRetainedOnPriorVersions })}</p>}</div>}
     </Card>
     {editable && <div className="nx-material sticky bottom-4 z-[4] flex flex-wrap items-center gap-3 rounded-[var(--nx-r-card)] px-5 py-3.5">
       <span role="status" id="pipeline-bar-status" className="text-muted-foreground min-w-48 flex-1 text-[12.5px]">{barStatus}</span>

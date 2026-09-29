@@ -259,11 +259,33 @@ describe('CrmSettingsPage', () => {
       fireEvent.click(await screen.findByRole('button', { name: t('settings.addStage') }))
       fireEvent.change(screen.getByLabelText(`${t('settings.stage')} 2`), { target: { value: 'Extra' } })
 
-      fireEvent.click(screen.getAllByRole('button', { name: t('settings.archive') })[1])
-      expect(screen.getByRole('button', { name: t('settings.unarchive') })).toBeInTheDocument()
-      fireEvent.click(screen.getByRole('button', { name: t('settings.unarchive') }))
+      fireEvent.click(screen.getAllByRole('button', { name: t('settings.archiveStage') })[1])
+      expect(screen.getByRole('button', { name: t('settings.unarchiveStage') })).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: t('settings.unarchiveStage') }))
 
-      expect(screen.queryByRole('button', { name: t('settings.unarchive') })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: t('settings.unarchiveStage') })).not.toBeInTheDocument()
+    })
+
+    it('adds a stage right below the row whose + was pressed and puts the cursor in it', async () => {
+      await open(withDraft)
+      fireEvent.click(await screen.findByRole('button', { name: t('settings.addStage') }))
+      fireEvent.change(screen.getByLabelText(`${t('settings.stage')} 2`), { target: { value: 'Last' } })
+
+      fireEvent.click(screen.getByRole('button', { name: t('settings.insertBelow', { position: 1 }) }))
+
+      const inserted = screen.getByLabelText(`${t('settings.stage')} 2`)
+      expect(inserted).toHaveValue('')
+      await waitFor(() => expect(inserted).toHaveFocus())
+      expect(screen.getByLabelText(`${t('settings.stage')} 3`)).toHaveValue('Last')
+    })
+
+    it('lists every version with what it means, next to the live/draft summary', async () => {
+      await open(withDraft)
+
+      const strip = await screen.findByTestId('pipeline-version-strip')
+      expect(within(strip).getByText(t('settings.versionStrip.history', { count: 2 }))).toBeInTheDocument()
+      expect(within(strip).getByText(t('settings.versionStrip.statusHint.Published'))).toBeInTheDocument()
+      expect(within(strip).getByText(t('settings.versionStrip.statusHint.Draft'))).toBeInTheDocument()
     })
 
     it('lays the allowed transitions out as one from/to grid over the ordinary stages only', async () => {

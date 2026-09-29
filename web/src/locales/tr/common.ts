@@ -1,6 +1,15 @@
 export default {
   api: {
     invalidResponse: 'Sunucudan geçersiz veri alındı.',
+    requestFailed: {
+      network: 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edip tekrar deneyin.',
+      unauthorized: 'Oturumunuzun süresi dolmuş olabilir. Yeniden giriş yapın.',
+      forbidden: 'Bu işlem için yetkiniz yok.',
+      notFound: 'İstenen kayıt ya da işlem bulunamadı. Sayfayı yenileyip tekrar deneyin.',
+      conflict: 'Kayıt başka biri tarafından değiştirilmiş. Sayfayı yenileyip tekrar deneyin.',
+      server: 'Sunucuda bir sorun oluştu. Biraz sonra tekrar deneyin.',
+      generic: 'İşlem tamamlanamadı. Tekrar deneyin.',
+    },
   },
   relativeTime: {
     now: 'şimdi',

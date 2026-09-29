@@ -1,6 +1,15 @@
 export default {
   api: {
     invalidResponse: 'The server returned invalid data.',
+    requestFailed: {
+      network: 'The server could not be reached. Check your connection and try again.',
+      unauthorized: 'Your session may have expired. Sign in again.',
+      forbidden: 'You do not have permission to do this.',
+      notFound: 'The record or action was not found. Refresh the page and try again.',
+      conflict: 'The record was changed by someone else. Refresh the page and try again.',
+      server: 'Something went wrong on the server. Try again shortly.',
+      generic: 'The action could not be completed. Try again.',
+    },
   },
   relativeTime: {
     now: 'now',

@@ -39,7 +39,7 @@ export default function App() {
               <RouterProvider router={router} />
             </SessionGate>
           </TooltipProvider>
-          <Toaster position="bottom-right" />
+          <Toaster position="top-left" />
           {ReactQueryDevtools && (
             <Suspense fallback={null}>
               <ReactQueryDevtools />

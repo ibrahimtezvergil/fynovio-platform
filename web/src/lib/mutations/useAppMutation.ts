@@ -2,6 +2,7 @@ import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-quer
 import { toast } from 'sonner'
 import type { ZodType } from 'zod'
 import { track } from '@/lib/telemetry'
+import { failureTitle } from './failureTitle'
 import type { ApiError } from '@/types'
 
 export interface AppMutationToast {
@@ -78,7 +79,7 @@ export function useAppMutation<TData, TVariables>(config: AppMutationConfig<TDat
       track(`mutation_${config.name}_success`)
     },
     onError: (error, variables) => {
-      const failure = config.errorToast ? config.errorToast(error, variables) : { title: error.message }
+      const failure = config.errorToast ? config.errorToast(error, variables) : { title: failureTitle(error) }
       if (failure) toast.error(failure.title, { description: failure.description })
       // `mutation_error` telemetry is already emitted globally by the
       // MutationCache in `src/api/queryClient.ts`, keyed on `mutationKey`.

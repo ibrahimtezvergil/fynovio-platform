@@ -16,6 +16,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme={theme}
       className="toaster group"
       richColors
+      // Every message stays readable: stacked toasts are laid out one under another, not piled on top of each other.
+      expand
+      visibleToasts={5}
+      gap={10}
+      offset={{ top: 76, left: 16 }}
+      mobileOffset={{ top: 76, left: 16 }}
       icons={{
         success: (
           <CircleCheckIcon className="size-4" />
