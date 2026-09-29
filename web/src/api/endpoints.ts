@@ -44,6 +44,7 @@ export const endpoints = {
     pipelineLifecycle: (id: number) => `/crm/settings/pipelines/${id}/lifecycle`,
     pipelineValidate: (id: number, versionId: number) => `/crm/settings/pipelines/${id}/versions/${versionId}/validate`,
     pipelinePublish: (id: number, versionId: number) => `/crm/settings/pipelines/${id}/versions/${versionId}/publish`,
+    pipelineDiscard: (id: number, versionId: number) => `/crm/settings/pipelines/${id}/versions/${versionId}/discard`,
     catalog: (kind: string) => `/crm/settings/catalog/${kind}`,
     catalogItem: (kind: string, id: number) => `/crm/settings/catalog/${kind}/${id}`,
   },

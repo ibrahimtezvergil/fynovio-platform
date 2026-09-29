@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { endpoints } from '@/api/endpoints'
@@ -129,8 +129,9 @@ describe('CrmSettingsPage', () => {
       const won = await screen.findByLabelText(t('settings.systemStage.won'))
       expect(won).toHaveValue('Won')
       expect(screen.getByLabelText(t('settings.systemStage.lost'))).toHaveValue('Lost')
-      // One ordinary stage: its entry + active checkboxes and the enforce-transitions checkbox — nothing for the system rows.
-      expect(screen.getAllByRole('checkbox')).toHaveLength(3)
+      // One ordinary stage: its entry radio, its active checkbox and the enforce-transitions checkbox — nothing for the system rows.
+      expect(screen.getAllByRole('radio')).toHaveLength(1)
+      expect(screen.getAllByRole('checkbox')).toHaveLength(2)
       expect(screen.getAllByText(t('settings.systemStage.badge'))).toHaveLength(2)
     })
 
@@ -172,9 +173,109 @@ describe('CrmSettingsPage', () => {
       server.use(http.post(url(endpoints.crmSettings.pipelineDrafts), () => HttpResponse.json({ status: 400, type: 'validation_error', title: 'Stage names must be unique' }, { status: 400 })))
       await open()
 
-      fireEvent.click(await screen.findByRole('button', { name: t('settings.saveDraft') }))
+      fireEvent.change(await screen.findByLabelText(t('settings.pipelineName')), { target: { value: 'Sales v2' } })
+      fireEvent.click(screen.getByRole('button', { name: t('settings.saveDraft') }))
 
       expect(await screen.findByText(t('settings.pipelineInvalid'))).toBeInTheDocument()
+    })
+  })
+
+  describe('draft lifecycle', () => {
+    const t = (key: string, options?: Record<string, unknown>) => tr(key, options, 'opportunities')
+    const stages = (extra: unknown[] = []) => [
+      { id: 31, name: 'Qualified', sortOrder: 1, isActive: true, isEntry: true, isArchived: false, kind: 0 },
+      ...extra,
+      { id: 41, name: 'Won', sortOrder: 11, isActive: true, isEntry: false, isArchived: false, kind: 1 },
+      { id: 42, name: 'Lost', sortOrder: 21, isActive: true, isEntry: false, isArchived: false, kind: 2 },
+    ]
+    const live = { ...settings.pipelines[0].versions[0], stages: stages() }
+    const withDraft = { ...settings, pipelines: [{ ...settings.pipelines[0], versions: [{ ...live, id: 22, versionNumber: 2, status: 'Draft', publishedAt: null }, live] }] }
+    const open = async (data: Record<string, unknown>) => {
+      server.use(
+        http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(data)),
+        http.get(url('/crm/settings/pipelines/10/versions/22/validate'), () => HttpResponse.json({ isValid: true, errors: [], opportunitiesRetainedOnPriorVersions: 0 })),
+      )
+      renderSettings('/crm/settings/pipelines')
+      fireEvent.change(await screen.findByLabelText(t('settings.selectPipeline')), { target: { value: '10' } })
+    }
+
+    it('says which version is live and which is an unpublished draft', async () => {
+      await open(withDraft)
+
+      const strip = await screen.findByTestId('pipeline-version-strip')
+      expect(strip).toHaveTextContent(t('settings.versionStrip.live', { number: 1 }))
+      expect(strip).toHaveTextContent(t('settings.versionStrip.draft', { number: 2 }))
+      expect(strip).toHaveTextContent(t('settings.versionStrip.draftHint', { number: 1 }))
+    })
+
+    it('says the live version is being edited when there is no draft', async () => {
+      await open(withSystemStagesOnly())
+
+      expect(await screen.findByTestId('pipeline-version-strip')).toHaveTextContent(t('settings.versionStrip.editingLive', { number: 1 }))
+      expect(screen.queryByRole('button', { name: t('settings.versionStrip.discard') })).not.toBeInTheDocument()
+    })
+
+    function withSystemStagesOnly() {
+      return { ...settings, pipelines: [{ ...settings.pipelines[0], versions: [live] }] }
+    }
+
+    it('discards the draft after a confirmation, through its own endpoint', async () => {
+      let discarded = false
+      server.use(http.post(url('/crm/settings/pipelines/10/versions/22/discard'), () => { discarded = true; return HttpResponse.json({ pipelineDefinitionId: 10, versionId: 22, replayed: false }) }))
+      await open(withDraft)
+
+      fireEvent.click(await screen.findByRole('button', { name: t('settings.versionStrip.discard') }))
+      const dialog = await screen.findByRole('alertdialog')
+      expect(discarded).toBe(false)
+      fireEvent.click(within(dialog).getByRole('button', { name: t('settings.versionStrip.discard') }))
+
+      await waitFor(() => expect(discarded).toBe(true))
+      expect(await screen.findByText(t('settings.versionStrip.discarded'))).toBeInTheDocument()
+    })
+
+    it('publishes only a saved, valid draft and says why the button is off', async () => {
+      await open(withDraft)
+
+      await waitFor(() => expect(screen.getByRole('button', { name: t('settings.publish') })).toBeEnabled())
+      expect(screen.getByRole('status')).toHaveTextContent(t('settings.bar.ready'))
+      fireEvent.change(screen.getByLabelText(t('settings.pipelineName')), { target: { value: 'Sales revised' } })
+      expect(screen.getByRole('button', { name: t('settings.publish') })).toBeDisabled()
+      expect(screen.getByRole('status')).toHaveTextContent(t('settings.saveBeforePublish'))
+      expect(screen.getByRole('button', { name: t('settings.bar.revert') })).toBeEnabled()
+    })
+
+    it('reverts unsaved edits back to what is saved', async () => {
+      await open(withDraft)
+      const name = await screen.findByLabelText(t('settings.pipelineName'))
+
+      fireEvent.change(name, { target: { value: 'Sales revised' } })
+      fireEvent.click(screen.getByRole('button', { name: t('settings.bar.revert') }))
+
+      await waitFor(() => expect(screen.getByLabelText(t('settings.pipelineName'))).toHaveValue('Sales'))
+    })
+
+    it('archives a stage in the draft and brings it back', async () => {
+      await open(withDraft)
+      fireEvent.click(await screen.findByRole('button', { name: t('settings.addStage') }))
+      fireEvent.change(screen.getByLabelText(`${t('settings.stage')} 2`), { target: { value: 'Extra' } })
+
+      fireEvent.click(screen.getAllByRole('button', { name: t('settings.archive') })[1])
+      expect(screen.getByRole('button', { name: t('settings.unarchive') })).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: t('settings.unarchive') }))
+
+      expect(screen.queryByRole('button', { name: t('settings.unarchive') })).not.toBeInTheDocument()
+    })
+
+    it('lays the allowed transitions out as one from/to grid over the ordinary stages only', async () => {
+      await open(withDraft)
+      fireEvent.click(await screen.findByRole('button', { name: t('settings.addStage') }))
+      fireEvent.change(screen.getByLabelText(`${t('settings.stage')} 2`), { target: { value: 'Proposal' } })
+      fireEvent.click(screen.getByRole('checkbox', { name: t('settings.enforceTransitions') }))
+
+      const grid = await screen.findByRole('table')
+      expect(within(grid).getByRole('checkbox', { name: 'Qualified → Proposal' })).toBeInTheDocument()
+      expect(within(grid).getByRole('checkbox', { name: 'Proposal → Qualified' })).toBeInTheDocument()
+      expect(within(grid).queryByRole('checkbox', { name: /Won|Lost/ })).not.toBeInTheDocument()
     })
   })
 

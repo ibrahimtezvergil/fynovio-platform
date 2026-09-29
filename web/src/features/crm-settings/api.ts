@@ -37,6 +37,13 @@ export function usePublishPipelineVersion() {
     return data
   }, invalidateKeys: () => [key(tenantId), ['crm-pipeline-stages', tenantId, 'default']] })
 }
+export function useDiscardPipelineDraft() {
+  const tenantId = useSessionStore((state) => state.activeTenantId)
+  return useAppMutation({ name: 'crmSettings.pipelineDiscard', mutationFn: async ({ pipelineId, versionId, idempotencyKey }: { pipelineId: number; versionId: number; idempotencyKey: string }) => {
+    const { data } = await apiClient.post(endpoints.crmSettings.pipelineDiscard(pipelineId, versionId), null, { headers: { 'Idempotency-Key': idempotencyKey } })
+    return data
+  }, invalidateKeys: () => [key(tenantId), ['crm-pipeline-stages', tenantId, 'default']] })
+}
 export function useSetPipelineLifecycle() {
   const tenantId = useSessionStore((state) => state.activeTenantId)
   return useAppMutation({ name: 'crmSettings.pipelineLifecycle', mutationFn: async ({ pipelineId, ...body }: { pipelineId: number; expectedRowVersion: number; isActive: boolean; archive: boolean; restore: boolean; idempotencyKey: string }) => {

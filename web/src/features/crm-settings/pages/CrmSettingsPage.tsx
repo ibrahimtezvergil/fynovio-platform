@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, GripVertical, GitBranch, ListChecks, LoaderCircle, PanelsTopLeft, RotateCcw, Settings2, Trash2, X, XCircle, type LucideIcon } from 'lucide-react'
+import { ArrowDown, ArrowUp, GripVertical, GitBranch, ListChecks, LoaderCircle, PanelsTopLeft, RotateCcw, Settings2, X, XCircle, type LucideIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
@@ -18,10 +18,10 @@ import { useSessionStore, useTenantSwitchGuard } from '@/lib/auth'
 import { paths } from '@/routes/paths'
 import type { ApiError } from '@/types'
 import { pipelineStageKindWire, type PipelineStageKind } from '@/types/schemas'
-import { useCreatePipelineDraft, useCrmSettings, useManageCrmCatalog, usePublishPipelineVersion, useSetPipelineLifecycle, useUpdateCrmSettings, useValidatePipelineDraft, type CrmCatalogKind } from '../api'
+import { useCreatePipelineDraft, useCrmSettings, useDiscardPipelineDraft, useManageCrmCatalog, usePublishPipelineVersion, useSetPipelineLifecycle, useUpdateCrmSettings, useValidatePipelineDraft, type CrmCatalogKind } from '../api'
+import { PipelineVersionStrip, StageRow, SystemStageRow, TransitionMatrix, versionState, type StageForm } from '../components/PipelineEditorParts'
 import type { CrmSettings } from '../schema'
 
-type StageForm = { id?: number; name: string; sortOrder: number; isEntry: boolean; isActive: boolean; isArchived?: boolean; kind: PipelineStageKind }
 const initialStage = (): StageForm => ({ name: '', sortOrder: 1, isEntry: true, isActive: true, kind: 'Open' })
 type SystemKind = Exclude<PipelineStageKind, 'Open'>
 type SystemLabels = Record<SystemKind, string>
@@ -40,13 +40,6 @@ const settingsValues = (value: CrmSettings) => ({ defaultPipelineDefinitionId: v
   assignmentPolicy: value.assignmentPolicy, defaultPrincipal: value.defaultPrincipal, defaultTeamId: value.defaultTeamId,
   defaultTerritoryId: value.defaultTerritoryId })
 
-function SystemStageRow({ stage, label, hint, badge, onRename }: { stage: StageForm; label: string; hint: string; badge: string; onRename: (name: string) => void }) {
-  return <div className="bg-muted/30 grid items-end gap-2 rounded-[var(--nx-r-ctl)] border border-dashed p-3 lg:grid-cols-[1fr_auto]" data-stage-kind={stage.kind}>
-    <Field label={label} hint={hint}>{(props) => <Input {...props} value={stage.name} required maxLength={100} onChange={(event) => onRename(event.target.value)} />}</Field>
-    <Badge variant="secondary" className="mb-2 self-start lg:self-end">{badge}</Badge>
-  </div>
-}
-
 function SectionHeading({ title, description }: { title: string; description: string }) {
   return <div className="flex min-w-0 flex-col gap-0.5"><h2 className="font-heading text-[17px] leading-tight font-[620] tracking-[-0.024em]">{title}</h2><p className="text-muted-foreground text-[12.5px]">{description}</p></div>
 }
@@ -63,6 +56,7 @@ export default function CrmSettingsPage() {
   const update = useUpdateCrmSettings()
   const createDraft = useCreatePipelineDraft()
   const publish = usePublishPipelineVersion()
+  const discard = useDiscardPipelineDraft()
   const lifecycle = useSetPipelineLifecycle()
   const keys = useAttemptKeys()
   const [form, setForm] = useState<CrmSettings | null>(null)
@@ -78,6 +72,7 @@ export default function CrmSettingsPage() {
   const [message, setMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [archivePipeline, setArchivePipeline] = useState(false)
+  const [discardDraftOpen, setDiscardDraftOpen] = useState(false)
   const [pendingPipelineId, setPendingPipelineId] = useState<number | null | undefined>(undefined)
   const [switchConfirmationOpen, setSwitchConfirmationOpen] = useState(false)
   const pendingSwitch = useRef<((proceed: boolean) => void) | null>(null)
@@ -173,6 +168,11 @@ export default function CrmSettingsPage() {
   const selectedPipeline = form.pipelines.find((item) => item.id === pipelineId)
   const openStages = stages.filter((stage) => stage.kind === 'Open')
   const openStageCount = openStages.length
+  const draftVersion = version
+  const liveVersion = versionState(selectedPipeline?.versions ?? []).published
+  const editable = !selectedPipeline?.isArchived
+  const publishBlocker = isPipelineDirty ? t('settings.saveBeforePublish') : !version ? t('settings.bar.noDraft') : validation.isPending ? t('settings.validating') : !validation.data?.isValid ? t('settings.bar.invalid') : null
+  const barStatus = (message && !isPipelineDirty ? message : '') || publishBlocker || (version ? t('settings.bar.ready') : t('settings.bar.editingLive'))
 
   const executePipelineLifecycle = async (archive: boolean, restore = false) => {
     if (!selectedPipeline) return
@@ -183,6 +183,14 @@ export default function CrmSettingsPage() {
       if (archive) { setPipelineId(null); setArchivePipeline(false) }
     }
     catch (error) { keys.settle(error as ApiError); setMessage(''); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : t('settings.saveError')) }
+  }
+  const revertEdits = () => { selectedEditorPipeline.current = null; setPipelineBaseline(null); setErrorMessage('') }
+  const discardDraft = async () => {
+    if (!selectedPipeline || !draftVersion) return
+    const body = { pipelineId: selectedPipeline.id, versionId: draftVersion.id }
+    try { await discard.mutateAsync({ ...body, idempotencyKey: keys.begin(body) }); keys.settle(null); setErrorMessage(''); setMessage(t('settings.versionStrip.discarded')); revertEdits() }
+    catch (error) { keys.settle(error as ApiError); setMessage(''); setErrorMessage((error as ApiError).status === 409 ? t('settings.conflict') : t('settings.saveError')) }
+    finally { setDiscardDraftOpen(false) }
   }
   const publishDraft = async () => {
     if (!selectedPipeline || !version) return
@@ -196,7 +204,7 @@ export default function CrmSettingsPage() {
     <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[236px_minmax(0,1fr)]">
       <aside className="flex flex-col gap-3 lg:sticky lg:top-[88px]" aria-label={t('settings.sectionNavLabel')}><PageNav items={sections} label={t('settings.sectionNavLabel')} /></aside>
       <div className="flex min-w-0 flex-col gap-4">
-    {message && <Alert variant="success"><AlertTitle>{message}</AlertTitle></Alert>}
+    {message && (section !== 'pipelines' || !editable) && <Alert variant="success"><AlertTitle>{message}</AlertTitle></Alert>}
     {errorMessage && <Alert variant="destructive"><AlertTitle>{errorMessage}</AlertTitle><AlertDescription><Button type="button" variant="outline" size="sm" onClick={() => void query.refetch()}>{t('settings.reload')}</Button></AlertDescription></Alert>}
     {(section === 'general' || section === 'creation') && <form onSubmit={mutateSettings} className="flex flex-col gap-4">
       {section === 'general' && <>
@@ -280,36 +288,36 @@ export default function CrmSettingsPage() {
       </div>
     </form>}
 
-    {section === 'pipelines' && <Card className="gap-5 px-6 pt-[22px] pb-6"><SectionHeading title={t('settings.pipelineTitle')} description={t('settings.pipelineDescription')} />
-      <Field label={t('settings.selectPipeline')}>{(props) => <Select {...props} value={pipelineId ?? ''} onChange={(e) => { const nextId = e.target.value ? Number(e.target.value) : null; if (isPipelineDirty) setPendingPipelineId(nextId); else setPipelineId(nextId) }}><option value="">{t('settings.newPipeline')}</option>{form.pipelines.map((p) => <option key={p.id} value={p.id}>{p.name}{p.isArchived ? ` · ${t('settings.archived')}` : ''}</option>)}</Select>}</Field>
+    {section === 'pipelines' && <div className="flex flex-col gap-4">
+    <Card className="gap-5 px-6 pt-[22px] pb-6"><SectionHeading title={t('settings.pipelineTitle')} description={t('settings.pipelineDescription')} />
+      <Field label={t('settings.selectPipeline')}>{(props) => <Select {...props} value={pipelineId ?? ''} onChange={(e) => { const nextId = e.target.value ? Number(e.target.value) : null; if (isPipelineDirty) setPendingPipelineId(nextId); else setPipelineId(nextId) }}><option value="">{t('settings.newPipeline')}</option>{form.pipelines.filter((p) => !p.isArchived).map((p) => <option key={p.id} value={p.id}>{p.name}{p.isActive ? '' : ` · ${t('settings.status.Inactive')}`}</option>)}{form.pipelines.some((p) => p.isArchived) && <optgroup label={t('settings.archivedGroup')}>{form.pipelines.filter((p) => p.isArchived).map((p) => <option key={p.id} value={p.id}>{p.name} · {t('settings.archived')}</option>)}</optgroup>}</Select>}</Field>
       {selectedPipeline && <div className="flex flex-wrap items-center gap-2"><Badge variant={selectedPipeline.isArchived ? 'secondary' : selectedPipeline.isActive ? 'success' : 'secondary'}>{selectedPipeline.isArchived ? t('settings.status.Archived') : selectedPipeline.isActive ? t('settings.status.Active') : t('settings.status.Inactive')}</Badge><span className="text-muted-foreground text-xs">{t('settings.versionCount', { count: selectedPipeline.versions.length })}</span></div>}
       {selectedPipeline?.isArchived && <Alert variant="info"><AlertDescription>{t('settings.archivedPipelineReadOnly')}</AlertDescription></Alert>}
-      <form onSubmit={saveDraft}><fieldset disabled={Boolean(selectedPipeline?.isArchived)} className="flex flex-col gap-4"><Field label={t('settings.pipelineName')}>{(props) => <Input {...props} value={pipelineName} required onChange={(e) => setPipelineName(e.target.value)} />}</Field>
-        {!selectedPipeline && <div className="flex flex-wrap gap-2" aria-label={t('settings.pipelineTemplatesLabel')}>
+      {selectedPipeline && !selectedPipeline.isArchived && <PipelineVersionStrip versions={selectedPipeline.versions} dirty={isPipelineDirty} discarding={discard.isPending} onDiscardDraft={() => setDiscardDraftOpen(true)} />}
+      <form id="pipeline-editor-form" onSubmit={saveDraft}><fieldset disabled={!editable} className="flex flex-col gap-4"><Field label={t('settings.pipelineName')}>{(props) => <Input {...props} value={pipelineName} required onChange={(e) => setPipelineName(e.target.value)} />}</Field>
+        {!selectedPipeline && <div className="flex flex-wrap gap-2" role="group" aria-label={t('settings.pipelineTemplatesLabel')}>
           <Button type="button" variant="outline" onClick={() => setStages(withSystemStages([t('settings.templates.quick.first'), t('settings.templates.quick.second')].map(openStage), systemLabels))}>{t('settings.templates.quick.label')}</Button>
           <Button type="button" variant="outline" onClick={() => setStages(withSystemStages([t('settings.templates.enterprise.first'), t('settings.templates.enterprise.second'), t('settings.templates.enterprise.third')].map(openStage), systemLabels))}>{t('settings.templates.enterprise.label')}</Button>
           <Button type="button" variant="outline" onClick={() => setStages(withSystemStages([t('settings.templates.renewal.first'), t('settings.templates.renewal.second'), t('settings.templates.renewal.third')].map(openStage), systemLabels))}>{t('settings.templates.renewal.label')}</Button>
         </div>}
-        <div className="flex flex-col gap-3">{stages.map((stage, index) => stage.kind !== 'Open' ? <SystemStageRow key={stage.kind} stage={stage} label={t(`settings.systemStage.${stage.kind === 'Won' ? 'won' : 'lost'}`)} hint={t(`settings.systemStage.${stage.kind === 'Won' ? 'wonHint' : 'lostHint'}`)} badge={t('settings.systemStage.badge')} onRename={(name) => setStages((all) => all.map((item, i) => i === index ? { ...item, name } : item))} /> : <div key={index} className="grid items-end gap-2 rounded-[var(--nx-r-ctl)] border p-3 lg:grid-cols-[1fr_auto_auto_auto_auto_auto]">
-          <Field label={`${t('settings.stage')} ${index + 1}`}>{(props) => <Input {...props} value={stage.name} required onChange={(e) => setStages((all) => all.map((item, i) => i === index ? { ...item, name: e.target.value } : item))} />}</Field>
-          <div className="flex gap-1 pb-1"><Button type="button" variant="outline" disabled={index === 0} aria-label={t('settings.moveUp')} onClick={() => setStages((all) => { const next = [...all]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; return next })}>↑</Button><Button type="button" variant="outline" disabled={index === openStageCount - 1} aria-label={t('settings.moveDown')} onClick={() => setStages((all) => { const next = [...all]; [next[index], next[index + 1]] = [next[index + 1], next[index]]; return next })}>↓</Button></div>
-          <label className="flex items-center gap-2 pb-2"><Checkbox checked={stage.isEntry} onChange={(event) => { const checked = event.currentTarget.checked; setStages((all) => all.map((item, i) => ({ ...item, isEntry: checked && i === index }))) }} />{t('settings.entryStage')}</label>
-          <label className="flex items-center gap-2 pb-2"><Checkbox checked={stage.isActive} onChange={(event) => { const checked = event.currentTarget.checked; setStages((all) => all.map((item, i) => i === index ? { ...item, isActive: checked } : item)) }} />{t('settings.active')}</label>
-          <Button type="button" variant="outline" disabled={Boolean(stage.isArchived)} onClick={() => setStages((all) => all.map((item, i) => i === index ? { ...item, isArchived: true, isActive: false, isEntry: false } : item))}>{stage.isArchived ? t('settings.archived') : t('settings.archive')}</Button>
-          <Button type="button" variant="outline" size="icon" disabled={openStageCount <= 1} aria-label={t('settings.removeStage')} onClick={() => setStages((all) => { const kept = all.filter((_, i) => i !== index); const firstOpen = kept.findIndex((item) => item.kind === 'Open'); return kept.some((item) => item.kind === 'Open' && item.isEntry) ? kept : kept.map((item, i) => i === firstOpen ? { ...item, isEntry: true, isActive: true, isArchived: false } : item) })}><Trash2 aria-hidden strokeWidth={1.7} /></Button>
-        </div>)}</div>
-        <div className="flex flex-wrap gap-3"><Button type="button" variant="outline" onClick={() => setStages((all) => [...all.filter((item) => item.kind === 'Open'), { name: '', sortOrder: openStageCount + 1, isEntry: false, isActive: true, kind: 'Open' }, ...all.filter((item) => item.kind !== 'Open')])}>{t('settings.addStage')}</Button>
-          <label className="flex items-center gap-2"><Checkbox checked={enforceTransitions} onChange={(event) => setEnforceTransitions(event.currentTarget.checked)} />{t('settings.enforceTransitions')}</label></div>
-        {enforceTransitions && <div className="grid gap-2 sm:grid-cols-2">{openStages.flatMap((from) => openStages.filter((to) => from.name && to.name && from.name !== to.name).map((to) => { const key = `${from.name}:${to.name}`; return <label key={key} className="flex items-center gap-2"><Checkbox checked={Boolean(transitions[key])} onChange={(event) => { const checked = event.currentTarget.checked; setTransitions((all) => ({ ...all, [key]: checked })) }} />{from.name} → {to.name}</label> }))}</div>}
-        <Button type="submit" disabled={createDraft.isPending || Boolean(selectedPipeline?.isArchived)}>{t('settings.saveDraft')}</Button>
+        <div className="flex flex-col gap-3">{stages.map((stage, index) => stage.kind !== 'Open'
+          ? <SystemStageRow key={stage.kind} stage={stage} onRename={(name) => setStages((all) => all.map((item, i) => i === index ? { ...item, name } : item))} />
+          : <StageRow key={index} stage={stage} position={index} count={openStageCount}
+              onName={(name) => setStages((all) => all.map((item, i) => i === index ? { ...item, name } : item))}
+              onMove={(direction) => setStages((all) => { const next = [...all]; [next[index], next[index + direction]] = [next[index + direction], next[index]]; return next })}
+              onEntry={() => setStages((all) => all.map((item, i) => ({ ...item, isEntry: i === index })))}
+              onActive={(active) => setStages((all) => all.map((item, i) => i === index ? { ...item, isActive: active } : item))}
+              onToggleArchive={() => setStages((all) => all.map((item, i) => i === index ? (item.isArchived ? { ...item, isArchived: false, isActive: true } : { ...item, isArchived: true, isActive: false, isEntry: false }) : item))}
+              onRemove={() => setStages((all) => { const kept = all.filter((_, i) => i !== index); const firstOpen = kept.findIndex((item) => item.kind === 'Open'); return kept.some((item) => item.kind === 'Open' && item.isEntry) ? kept : kept.map((item, i) => i === firstOpen ? { ...item, isEntry: true, isActive: true, isArchived: false } : item) })} />)}</div>
+        <div className="flex flex-wrap items-center gap-3"><Button type="button" variant="outline" onClick={() => setStages((all) => [...all.filter((item) => item.kind === 'Open'), { name: '', sortOrder: openStageCount + 1, isEntry: false, isActive: true, kind: 'Open' }, ...all.filter((item) => item.kind !== 'Open')])}>{t('settings.addStage')}</Button>
+          <label className="flex items-center gap-2 text-sm"><Checkbox checked={enforceTransitions} onChange={(event) => setEnforceTransitions(event.currentTarget.checked)} />{t('settings.enforceTransitions')}</label></div>
+        {enforceTransitions && <TransitionMatrix stages={openStages} value={transitions} onChange={(key, allowed) => setTransitions((all) => ({ ...all, [key]: allowed }))} />}
       </fieldset></form>
       <Alert variant="info"><AlertDescription>{t('settings.pipelineVersionImpact')}</AlertDescription></Alert>
       {version && <div className="flex flex-col gap-3 border-t pt-4"><h3 className="text-sm font-medium">{t('settings.validation')}</h3>
-        {isPipelineDirty && <Alert variant="info"><AlertDescription>{t('settings.saveBeforePublish')}</AlertDescription></Alert>}
         {validation.isPending && <p className="text-muted-foreground text-sm">{t('settings.validating')}</p>}
         {validation.isError && <Alert variant="destructive"><AlertTitle>{t('settings.validationError')}</AlertTitle><AlertDescription><Button type="button" variant="outline" size="sm" onClick={() => void validation.refetch()}>{t('settings.retry')}</Button></AlertDescription></Alert>}
-        {validation.data && <><Badge variant={validation.data.isValid ? 'success' : 'warning'}>{validation.data.isValid ? t('settings.valid') : t('settings.invalid')}</Badge><p className="text-muted-foreground text-xs">{t('settings.retainedOpportunities', { count: validation.data.opportunitiesRetainedOnPriorVersions })}</p>{validation.data.errors.map((error) => <p role="alert" className="text-[var(--nx-neg)] text-sm" key={error}>{error}</p>)}</>}
-        <Button type="button" className="self-start" disabled={isPipelineDirty || !validation.data?.isValid || publish.isPending || !selectedPipeline || selectedPipeline.isArchived} onClick={() => void publishDraft()}>{t('settings.publish')}</Button></div>}
+        {validation.data && <><Badge variant={validation.data.isValid ? 'success' : 'warning'} className="self-start">{validation.data.isValid ? t('settings.valid') : t('settings.invalid')}</Badge><p className="text-muted-foreground text-xs">{t('settings.retainedOpportunities', { count: validation.data.opportunitiesRetainedOnPriorVersions })}</p>{validation.data.errors.map((error) => <p role="alert" className="text-[var(--nx-neg)] text-sm" key={error}>{error}</p>)}</>}</div>}
       {selectedPipeline && <div className="flex flex-col gap-3 border-t pt-4">
         {form.defaultPipelineDefinitionId === selectedPipeline.id && <Alert variant="warning"><AlertDescription>{t('settings.defaultPipelineLifecycleBlock')}</AlertDescription></Alert>}
         <div className="flex flex-wrap gap-2">{selectedPipeline.isArchived
@@ -317,12 +325,20 @@ export default function CrmSettingsPage() {
           : <><Button type="button" variant="outline" disabled={lifecycle.isPending || isPipelineDirty || (selectedPipeline.isActive && form.defaultPipelineDefinitionId === selectedPipeline.id)} onClick={() => void executePipelineLifecycle(false)}>{selectedPipeline.isActive ? t('settings.deactivate') : t('settings.activate')}</Button><Button type="button" variant="outline" disabled={lifecycle.isPending || isPipelineDirty || form.defaultPipelineDefinitionId === selectedPipeline.id} onClick={() => setArchivePipeline(true)}>{t('settings.archive')}</Button></>}
         </div>
       </div>}
-    </Card>}
+    </Card>
+    {editable && <div className="nx-material sticky bottom-4 z-[4] flex flex-wrap items-center gap-3 rounded-[var(--nx-r-card)] px-5 py-3.5">
+      <span role="status" id="pipeline-bar-status" className="text-muted-foreground min-w-48 flex-1 text-[12.5px]">{barStatus}</span>
+      <Button type="button" variant="ghost" disabled={!isPipelineDirty || createDraft.isPending} onClick={revertEdits}><RotateCcw aria-hidden strokeWidth={1.8} />{t('settings.bar.revert')}</Button>
+      <Button type="submit" form="pipeline-editor-form" variant={version && !isPipelineDirty ? 'outline' : 'default'} disabled={createDraft.isPending || (Boolean(selectedPipeline) && !isPipelineDirty)}>{createDraft.isPending ? <LoaderCircle aria-hidden className="animate-spin" /> : null}{t('settings.saveDraft')}</Button>
+      {selectedPipeline && <Button type="button" aria-describedby="pipeline-bar-status" disabled={Boolean(publishBlocker) || publish.isPending} onClick={() => void publishDraft()}>{publish.isPending ? <LoaderCircle aria-hidden className="animate-spin" /> : null}{t('settings.publish')}</Button>}
+    </div>}
+    </div>}
 
     {section === 'reasons' && <CatalogPanel kind="lost-reasons" title={t('settings.reasonsTitle')} description={t('settings.reasonsDescription')} items={form.lostReasons} />}
     {section === 'needs' && <CatalogPanel kind="customer-needs" title={t('settings.needsTitle')} description={t('settings.needsDescription')} items={form.customerNeeds} />}
       </div>
     </div>
+    <AlertDialog open={discardDraftOpen} onOpenChange={setDiscardDraftOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('settings.versionStrip.discardTitle')}</AlertDialogTitle><AlertDialogDescription>{t('settings.versionStrip.discardDescription', { number: draftVersion?.versionNumber ?? 0, live: liveVersion?.versionNumber ?? 0 })}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => void discardDraft()}>{t('settings.versionStrip.discard')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     <AlertDialog open={archivePipeline} onOpenChange={setArchivePipeline}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('settings.confirmArchiveTitle')}</AlertDialogTitle><AlertDialogDescription>{t('settings.confirmArchivePipeline')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => void executePipelineLifecycle(true)}>{t('settings.archive')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     <AlertDialog open={pendingPipelineId !== undefined} onOpenChange={(open) => { if (!open) setPendingPipelineId(undefined) }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('settings.unsavedTitle')}</AlertDialogTitle><AlertDialogDescription>{t('settings.unsavedDescription')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => { setPipelineId(pendingPipelineId ?? null); setPendingPipelineId(undefined) }}>{t('settings.discardAndSwitch')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     <AlertDialog open={switchConfirmationOpen} onOpenChange={(open) => { if (!open) answerTenantSwitch(false) }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('settings.unsavedTitle')}</AlertDialogTitle><AlertDialogDescription>{t('settings.unsavedDescription')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel onClick={() => answerTenantSwitch(false)}>{t('common.cancel')}</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => answerTenantSwitch(true)}>{t('settings.discardAndSwitch')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
