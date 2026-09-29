@@ -90,6 +90,21 @@ describe('opportunity create — validation', () => {
     expect(recorder.commands()).toHaveLength(0)
   })
 
+  it('lets the stepper jump ahead once the customer is chosen, and back again without a check', async () => {
+    server.use(http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(settingsWith({ opportunityCreationMode: 'Wizard' }))))
+    render()
+    const amountStep = await screen.findByRole('button', { name: new RegExp(t('form.steps.amount')) })
+    fireEvent.click(amountStep)
+    expect(await screen.findByText(t('form.partyId.invalid'))).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: t('form.currency.label') })).not.toBeInTheDocument()
+
+    await chooseParty()
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(t('form.steps.amount')) }))
+    await screen.findByRole('combobox', { name: t('form.currency.label') })
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(t('form.steps.customer')) }))
+    expect(await screen.findByRole('combobox', { name: partyLabel() })).toBeInTheDocument()
+  })
+
   it('shows field errors on empty submit', async () => {
     server.use(http.post(url(endpoints.opportunities.create), () => HttpResponse.json({ opportunityId: 1, replayed: false })))
     render()
@@ -424,6 +439,11 @@ describe('opportunity create — customer picker', () => {
   })
 })
 
+async function openStartInfo() {
+  fireEvent.click(await screen.findByRole('button', { name: t('form.summary.button') }))
+  return screen.findByRole('dialog', { name: t('form.summary.title') })
+}
+
 describe('opportunity create — what the settings decide', () => {
   it('tells the person who will own it, the type, and the pipeline stage it will enter, before they create it', async () => {
     server.use(
@@ -439,7 +459,7 @@ describe('opportunity create — what the settings decide', () => {
     )
     render()
 
-    const summary = await screen.findByRole('complementary', { name: t('form.summary.title') })
+    const summary = await openStartInfo()
     expect(within(summary).getByText('New customer')).toBeInTheDocument()
     expect(await within(summary).findByText(t('form.summary.pipelineEntry', { pipeline: 'Retail', stage: 'Qualified' }))).toBeInTheDocument()
     expect(within(summary).getByText(t('form.summary.statusValue'))).toBeInTheDocument()
@@ -448,8 +468,10 @@ describe('opportunity create — what the settings decide', () => {
 
   it('says so when no default pipeline is configured, without blocking the create', async () => {
     render()
-    const summary = await screen.findByRole('complementary', { name: t('form.summary.title') })
+    const summary = await openStartInfo()
     expect(within(summary).getByText(t('form.summary.pipelineNoneHint'))).toBeInTheDocument()
+    fireEvent.keyDown(summary, { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(screen.getByRole('button', { name: t('form.submit') })).toBeEnabled()
   })
 
@@ -474,7 +496,7 @@ describe('opportunity create — what the settings decide', () => {
     server.use(http.get(url(endpoints.crmSettings.root), () => HttpResponse.json({ title: 'Forbidden' }, { status: 403 })))
     render()
     await screen.findByRole('button', { name: t('form.submit') })
-    expect(screen.queryByRole('complementary', { name: t('form.summary.title') })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: t('form.summary.button') })).not.toBeInTheDocument()
   })
 })
 

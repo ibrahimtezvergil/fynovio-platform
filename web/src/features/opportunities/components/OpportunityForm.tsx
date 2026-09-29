@@ -18,7 +18,7 @@ import { summarizeCreation } from '../lib/creationSummary'
 import { useKeyedCommand } from '../lib/useKeyedCommand'
 import { createOpportunityFormSchema, type CreateOpportunityInput, type CreateOpportunityValues, type PartyReference } from '../schema'
 import { NewPartyDialog } from './NewPartyDialog'
-import { OpportunityStartSummary } from './OpportunityStartSummary'
+import { OpportunityStartBlocker, OpportunityStartInfo } from './OpportunityStartSummary'
 import { PartyPicker } from './PartyPicker'
 import { ProblemNotice } from './ProblemNotice'
 import { SelectedParty } from './SelectedParty'
@@ -106,21 +106,31 @@ export function OpportunityForm() {
     <>
       <form onSubmit={onSubmit} noValidate aria-label={t('form.title')} className="flex flex-col gap-5">
         {isWizard && (
-          <ol className="bg-card/60 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[var(--nx-r-card)] border px-5 py-3 text-[13px]" aria-label={t('form.stepOf', { current: step + 1, total: WIZARD_STEPS.length })}>
+          <ol className="bg-card/60 flex items-center gap-x-2 rounded-[var(--nx-r-card)] border px-3 py-2 text-[13px] sm:gap-x-3 sm:px-4" aria-label={t('form.stepOf', { current: step + 1, total: WIZARD_STEPS.length })}>
             {WIZARD_STEPS.map((name, index) => (
-              <li key={name} aria-current={index === step ? 'step' : undefined} className={cn('flex items-center gap-2', index === step ? 'font-[600]' : 'text-muted-foreground')}>
-                <span className={cn('grid size-6 place-items-center rounded-full border text-[11.5px]', index === step && 'border-[var(--nx-tint)] bg-[var(--nx-tint)] text-white', index < step && 'border-[var(--nx-tint)] text-[var(--nx-tint)]')}>
-                  {index < step ? <Check aria-hidden className="size-3.5" strokeWidth={2.4} /> : index + 1}
-                </span>
-                {stepLabel(name)}
-                {index < WIZARD_STEPS.length - 1 && <span aria-hidden className="bg-border ml-1 hidden h-px w-10 sm:block" />}
+              <li key={name} className="flex items-center gap-2 sm:gap-3">
+                {/* Any step is one click away: going back is always free, going forward checks the step being left. */}
+                <button
+                  type="button"
+                  aria-current={index === step ? 'step' : undefined}
+                  disabled={command.isPending}
+                  onClick={() => index !== step && void go(index)}
+                  className={cn('hover:bg-muted flex items-center gap-2 rounded-full py-1 pr-3 pl-1 transition-colors', index === step ? 'font-[600]' : 'text-muted-foreground')}
+                >
+                  <span className={cn('grid size-6 place-items-center rounded-full border text-[11.5px]', index === step && 'border-[var(--nx-tint)] bg-[var(--nx-tint)] text-white', index < step && 'border-[var(--nx-tint)] text-[var(--nx-tint)]')}>
+                    {index < step ? <Check aria-hidden className="size-3.5" strokeWidth={2.4} /> : index + 1}
+                  </span>
+                  {stepLabel(name)}
+                </button>
+                {index < WIZARD_STEPS.length - 1 && <span aria-hidden className="bg-border h-px w-6 sm:w-10" />}
               </li>
             ))}
           </ol>
         )}
 
-        <div className={cn('grid items-start gap-5', settings.data && 'lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]')}>
-          <div ref={stepBody} className="grid content-start gap-5">
+        {settings.data && <OpportunityStartBlocker summary={summary} />}
+
+        <div ref={stepBody} className={cn('grid items-start gap-5', !isWizard && 'lg:grid-cols-2')}>
             {onStep('customer') && (
               <Card>
                 <CardHeader>
@@ -176,13 +186,11 @@ export function OpportunityForm() {
               </Card>
             )}
 
-            {command.problem && <ProblemNotice problem={command.problem} />}
-          </div>
-
-          {settings.data && <OpportunityStartSummary summary={summary} loading={hasDefaultPipeline && defaultStages.isPending} />}
+            {command.problem && <div className="lg:col-span-full"><ProblemNotice problem={command.problem} /></div>}
         </div>
 
         <div className="nx-material sticky bottom-4 z-[4] flex flex-wrap items-center gap-3 rounded-[var(--nx-r-card)] px-5 py-3.5">
+          {settings.data && <OpportunityStartInfo summary={summary} loading={hasDefaultPipeline && defaultStages.isPending} />}
           <span role="status" className="text-muted-foreground min-w-48 flex-1 text-[12.5px]">{barMessage}</span>
           <Button type="button" variant="ghost" disabled={command.isPending} onClick={() => navigate(paths.crmOpportunities)}>
             {t('common.cancel')}

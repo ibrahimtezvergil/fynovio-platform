@@ -181,6 +181,7 @@ export default {
     stepOf: 'Adım {{current}} / {{total}}',
     steps: { customer: 'Müşteri', amount: 'Tutar' },
     summary: {
+      button: 'Başlangıç bilgisi',
       title: 'Bu fırsat nasıl başlayacak?',
       description: 'Bu değerleri CRM ayarları belirler.',
       owner: 'Sorumlu',

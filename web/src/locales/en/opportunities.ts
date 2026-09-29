@@ -181,6 +181,7 @@ export default {
     stepOf: 'Step {{current}} of {{total}}',
     steps: { customer: 'Customer', amount: 'Amount' },
     summary: {
+      button: 'Starting details',
       title: 'How will this opportunity start?',
       description: 'CRM settings decide these values.',
       owner: 'Owner',
