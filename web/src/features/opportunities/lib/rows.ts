@@ -19,6 +19,8 @@ export interface OpportunityRow {
   updatedAt: string | null
   totalAmount: number | null
   needs: string[]
+  /** The concurrency token the list carries; null when the API omitted it (the board then offers no move). */
+  rowVersion: number | null
 }
 
 export function toRows(
@@ -41,6 +43,7 @@ export function toRows(
     updatedAt: item.updatedAt ?? null,
     totalAmount: item.totalAmount ?? null,
     needs: item.needs ?? [],
+    rowVersion: item.rowVersion ?? null,
   }))
 }
 

@@ -87,6 +87,15 @@ export const availableActionsSchema = z.object({
 })
 export type AvailableActions = z.infer<typeof availableActionsSchema>
 
+export const PIPELINE_STAGE_KINDS = ['Open', 'Won', 'Lost'] as const
+export type PipelineStageKind = (typeof PIPELINE_STAGE_KINDS)[number]
+
+/** Like the lifecycle status, the API sends the kind as its integer ordinal; a name is accepted too. An absent kind reads as `Open`. */
+const stageKindSchema = z
+  .union([z.number().int().min(0).max(2), z.enum(PIPELINE_STAGE_KINDS)])
+  .default('Open')
+  .transform((wire): PipelineStageKind => (typeof wire === 'number' ? PIPELINE_STAGE_KINDS[wire] : wire))
+
 export const pipelineStageSchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -94,6 +103,8 @@ export const pipelineStageSchema = z.object({
   isActive: z.boolean(),
   isEntry: z.boolean(),
   isArchived: z.boolean().default(false),
+  /** Won/Lost stages are reached only through the win/lose commands, never through a stage change. */
+  kind: stageKindSchema,
 })
 export type PipelineStage = z.infer<typeof pipelineStageSchema>
 

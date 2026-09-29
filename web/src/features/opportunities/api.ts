@@ -110,6 +110,21 @@ export function useAvailableActions(id: number, enabled = true) {
   })
 }
 
+/**
+ * The same actions projection, fetched imperatively (through the query cache) for a moment that needs the answer
+ * before any component could subscribe — the board loads it when a card is picked up, not for all cards up front.
+ */
+export function useFetchAvailableActions() {
+  const queryClient = useQueryClient()
+  const tenantId = useTenantId()
+  return (id: number) =>
+    queryClient.fetchQuery({
+      queryKey: opportunityKeys.actions(tenantId, id),
+      staleTime: 5_000,
+      queryFn: () => get(endpoints.opportunities.actions(id), availableActionsSchema),
+    })
+}
+
 const STAGES_STALE_TIME = 5 * 60_000 // tenant configuration, not record data
 
 async function fetchStages(versionId: number) {

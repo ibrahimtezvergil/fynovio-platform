@@ -36,6 +36,12 @@ export const stages = [
   { id: 33, name: 'Legacy stage', sortOrder: 40, isActive: false, isEntry: false },
 ]
 
+/** A real pipeline also carries its Won and Lost system stages (kind as the integer ordinal, like the status). */
+export const closingStages = [
+  { id: 34, name: 'Won', sortOrder: 90, isActive: true, isEntry: false, kind: 1 },
+  { id: 35, name: 'Lost', sortOrder: 91, isActive: true, isEntry: false, kind: 2 },
+]
+
 /** The pathname a request for this endpoint carries on the wire (the API base included), as `Recorded.path` reports it. */
 export const wirePath = (endpoint: string) => new URL(url(endpoint), 'http://localhost').pathname
 

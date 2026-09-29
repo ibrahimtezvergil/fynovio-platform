@@ -12,7 +12,7 @@ import { endOfLocalDay, openFormSchema, reasonFormSchema, type OpenValues, type 
 import { CommandDialog } from './CommandDialog'
 
 interface LifecycleDialogProps {
-  opportunity: Opportunity
+  opportunity: Pick<Opportunity, 'id' | 'rowVersion'>
   onClose: () => void
   onReload: () => void
 }
@@ -26,7 +26,7 @@ function defaultExpiry(): string {
   return toDateInput(date)
 }
 
-export function OpenDialog({ opportunity, onClose, onReload }: LifecycleDialogProps) {
+export function OpenDialog({ opportunity, onClose, onReload }: Omit<LifecycleDialogProps, 'opportunity'> & { opportunity: Opportunity }) {
   const { t } = useTranslation('opportunities')
   const schema = useMemo(() => openFormSchema(t), [t])
   const command = useKeyedCommand(useOpenOpportunity())

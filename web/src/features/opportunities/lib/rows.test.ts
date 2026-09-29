@@ -16,6 +16,7 @@ const row = (overrides: Partial<OpportunityRow> = {}): OpportunityRow => ({
   updatedAt: null,
   totalAmount: null,
   needs: [],
+  rowVersion: 1,
   ...overrides,
 })
 

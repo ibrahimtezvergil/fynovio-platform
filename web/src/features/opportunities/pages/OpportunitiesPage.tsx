@@ -119,6 +119,7 @@ export default function OpportunitiesPage() {
             rows={rows}
             configuredStages={defaultStages.data ?? []}
             refreshing={list.isFetching && list.data !== undefined}
+            readOnly={filter.archivedOnly === true}
             page={filter.page}
             hasNext={list.data?.hasNext ?? false}
             loadedCount={loadedRows.length}
