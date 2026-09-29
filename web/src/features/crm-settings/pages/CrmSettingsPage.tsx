@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, GripVertical, GitBranch, ListChecks, LoaderCircle, PanelsTopLeft, RotateCcw, Settings2, X, XCircle, type LucideIcon } from 'lucide-react'
+import { ArrowDown, ArrowUp, GripVertical, GitBranch, ListChecks, LoaderCircle, PanelsTopLeft, RotateCcw, Settings2, Tags, X, XCircle, type LucideIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
@@ -18,8 +18,10 @@ import { useSessionStore, useTenantSwitchGuard } from '@/lib/auth'
 import { paths } from '@/routes/paths'
 import type { ApiError } from '@/types'
 import { pipelineStageKindWire, type PipelineStageKind } from '@/types/schemas'
-import { useCreatePipelineDraft, useCrmSettings, useDiscardPipelineDraft, useManageCrmCatalog, usePublishPipelineVersion, useSetPipelineLifecycle, useUpdateCrmSettings, useValidatePipelineDraft, type CrmCatalogKind } from '../api'
+import { useCreatePipelineDraft, useCrmSettings, useDiscardPipelineDraft, usePublishPipelineVersion, useSetPipelineLifecycle, useUpdateCrmSettings, useValidatePipelineDraft } from '../api'
 import { PipelineVersionStrip, StageListHeader, StageRow, SystemStageRow, TransitionMatrix, versionState, type StageForm } from '../components/PipelineEditorParts'
+import { CatalogPanel } from '../components/CatalogPanel'
+import { SectionHeading } from '../components/SectionHeading'
 import type { CrmSettings } from '../schema'
 
 const initialStage = (): StageForm => ({ name: '', sortOrder: 1, isEntry: true, isActive: true, kind: 'Open' })
@@ -32,22 +34,18 @@ function withSystemStages(stages: readonly StageForm[], defaults: SystemLabels):
   return [...open, ...system.map((stage, index) => ({ ...stage, sortOrder: open.length + index + 1 }))]
 }
 const openStage = (name: string, index: number): StageForm => ({ name, sortOrder: index + 1, isEntry: index === 0, isActive: true, kind: 'Open' })
-type Section = 'general' | 'creation' | 'pipelines' | 'reasons' | 'needs'
-const sectionIcons: Record<Section, LucideIcon> = { general: Settings2, creation: PanelsTopLeft, pipelines: GitBranch, reasons: XCircle, needs: ListChecks }
+type Section = 'general' | 'creation' | 'pipelines' | 'types' | 'reasons' | 'needs'
+const sectionIcons: Record<Section, LucideIcon> = { general: Settings2, creation: PanelsTopLeft, pipelines: GitBranch, types: Tags, reasons: XCircle, needs: ListChecks }
 const settingsValues = (value: CrmSettings) => ({ defaultPipelineDefinitionId: value.defaultPipelineDefinitionId,
   opportunityCreationMode: value.opportunityCreationMode, opportunityCreationSteps: value.opportunityCreationSteps, defaultOpportunityTypeId: value.defaultOpportunityTypeId,
   requireLostReason: value.requireLostReason, requireWonLine: value.requireWonLine, defaultAssignmentMode: value.defaultAssignmentMode,
   assignmentPolicy: value.assignmentPolicy, defaultPrincipal: value.defaultPrincipal, defaultTeamId: value.defaultTeamId,
   defaultTerritoryId: value.defaultTerritoryId })
 
-function SectionHeading({ title, description }: { title: string; description: string }) {
-  return <div className="flex min-w-0 flex-col gap-0.5"><h2 className="font-heading text-[17px] leading-tight font-[620] tracking-[-0.024em]">{title}</h2><p className="text-muted-foreground text-[12.5px]">{description}</p></div>
-}
-
 export default function CrmSettingsPage() {
   const { t } = useTranslation('opportunities')
   const { section: routeSection } = useParams<{ section?: string }>()
-  const section: Section = routeSection === 'creation' || routeSection === 'pipelines' || routeSection === 'reasons' || routeSection === 'needs' ? routeSection : 'general'
+  const section: Section = routeSection === 'creation' || routeSection === 'pipelines' || routeSection === 'types' || routeSection === 'reasons' || routeSection === 'needs' ? routeSection : 'general'
   const sections: readonly PageNavItem[] = (Object.keys(sectionIcons) as Section[]).map((item) => ({
     to: item === 'general' ? paths.crmSettings : paths.crmSettingsSection(item), label: t(`settings.sections.${item}`), icon: sectionIcons[item],
   }))
@@ -211,6 +209,7 @@ export default function CrmSettingsPage() {
       <Card className="scroll-mt-24 gap-5 px-6 pt-[22px] pb-6"><SectionHeading title={t('settings.opportunity.title')} description={t('settings.opportunity.description')} />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t('settings.defaultPipeline')}>{(props) => <Select {...props} value={form.defaultPipelineDefinitionId ?? ''} onChange={(e) => set('defaultPipelineDefinitionId', e.target.value ? Number(e.target.value) : null)}><option value="">{t('settings.noDefault')}</option>{form.pipelines.filter((p) => p.isActive && !p.isArchived).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select>}</Field>
+          <Field label={t('settings.defaultOpportunityType')} hint={t('settings.defaultTypeHint')}>{(props) => <Select {...props} value={form.defaultOpportunityTypeId ?? ''} onChange={(e) => set('defaultOpportunityTypeId', e.target.value ? Number(e.target.value) : null)}><option value="">{t('settings.noDefaultType')}</option>{form.opportunityTypes.filter((type) => type.status === 'Active' || type.id === form.defaultOpportunityTypeId).map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}</Select>}</Field>
         </div>
         <p className="text-muted-foreground rounded-[var(--nx-r-ctl)] bg-muted/40 px-4 py-3 text-sm">{t('settings.lifecycleReportingHint')}</p>
       </Card>
@@ -336,6 +335,7 @@ export default function CrmSettingsPage() {
     </div>}
     </div>}
 
+    {section === 'types' && <CatalogPanel kind="opportunity-types" title={t('settings.typesTitle')} description={t('settings.typesDescription')} items={form.opportunityTypes} />}
     {section === 'reasons' && <CatalogPanel kind="lost-reasons" title={t('settings.reasonsTitle')} description={t('settings.reasonsDescription')} items={form.lostReasons} />}
     {section === 'needs' && <CatalogPanel kind="customer-needs" title={t('settings.needsTitle')} description={t('settings.needsDescription')} items={form.customerNeeds} />}
       </div>
@@ -345,59 +345,4 @@ export default function CrmSettingsPage() {
     <AlertDialog open={pendingPipelineId !== undefined} onOpenChange={(open) => { if (!open) setPendingPipelineId(undefined) }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('settings.unsavedTitle')}</AlertDialogTitle><AlertDialogDescription>{t('settings.unsavedDescription')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => { setPipelineId(pendingPipelineId ?? null); setPendingPipelineId(undefined) }}>{t('settings.discardAndSwitch')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     <AlertDialog open={switchConfirmationOpen} onOpenChange={(open) => { if (!open) answerTenantSwitch(false) }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('settings.unsavedTitle')}</AlertDialogTitle><AlertDialogDescription>{t('settings.unsavedDescription')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel onClick={() => answerTenantSwitch(false)}>{t('common.cancel')}</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => answerTenantSwitch(true)}>{t('settings.discardAndSwitch')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
   </div>
-}
-
-type CatalogItem = { id: number; name: string; key?: string; category?: string | null; averagePrice?: number; status: 'Active' | 'Inactive' | 'Archived'; rowVersion: number }
-const catalogKeyFromName = (name: string) => name.trim().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-  .replace(/ı/g, 'i').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'lost-reason'
-
-function CatalogPanel({ kind, title, description, items }: { kind: CrmCatalogKind; title: string; description: string; items: CatalogItem[] }) {
-  const { t } = useTranslation('opportunities')
-  const mutation = useManageCrmCatalog(kind)
-  const keys = useAttemptKeys()
-  const [editing, setEditing] = useState<number | null>(null)
-  const [archiveTarget, setArchiveTarget] = useState<CatalogItem | null>(null)
-  const [name, setName] = useState('')
-  const [keyValue, setKeyValue] = useState('')
-  const [category, setCategory] = useState('')
-  const [averagePrice, setAveragePrice] = useState('0')
-  const [notice, setNotice] = useState('')
-  const [error, setError] = useState('')
-  const begin = (item?: CatalogItem) => {
-    setEditing(item?.id ?? 0); setName(item?.name ?? ''); setKeyValue(item?.key ?? '')
-    setCategory(item?.category ?? ''); setAveragePrice(String(item?.averagePrice ?? 0)); setError(''); setNotice('')
-  }
-  const failure = (problem: unknown) => { const apiError = problem as ApiError; keys.settle(apiError); setNotice(''); setError(apiError.status === 409 ? t('settings.conflict') : t('settings.saveError')) }
-  const save = async (event: FormEvent) => {
-    event.preventDefault()
-    const item = items.find((candidate) => candidate.id === editing)
-    const body = { id: item?.id, expectedVersion: item?.rowVersion ?? 0, name: name.trim(), key: item?.key ?? (kind === 'lost-reasons' ? catalogKeyFromName(name) : keyValue.trim()), category: category.trim() || null, averagePrice: Number(averagePrice), status: item?.status ?? 'Active' as const }
-    try { await mutation.mutateAsync({ ...body, idempotencyKey: keys.begin(body) }); keys.settle(null); setEditing(null); setError(''); setNotice(t('settings.saved')) }
-    catch (problem) { failure(problem) }
-  }
-  const setStatus = async (item: CatalogItem, status: CatalogItem['status']) => {
-    const body = { id: item.id, expectedVersion: item.rowVersion, name: item.name, key: item.key, category: item.category, averagePrice: item.averagePrice, status }
-    try { await mutation.mutateAsync({ ...body, idempotencyKey: keys.begin(body) }); keys.settle(null); setError(''); setNotice(status === 'Archived' ? t('settings.archivedMessage') : t('settings.saved')) }
-    catch (problem) { failure(problem) }
-  }
-  return <Card className="gap-5 px-6 pt-[22px] pb-6">
-    <div className="flex flex-wrap items-start justify-between gap-3"><SectionHeading title={title} description={description} /><Button type="button" variant="outline" onClick={() => begin()}>{t('settings.add')}</Button></div>
-    {notice && <Alert variant="success"><AlertTitle>{notice}</AlertTitle></Alert>}
-    {error && <Alert variant="destructive"><AlertTitle>{error}</AlertTitle></Alert>}
-    {items.length === 0 && editing === null && <p className="text-muted-foreground rounded-[var(--nx-r-ctl)] border border-dashed px-4 py-8 text-center text-sm">{t('settings.catalogEmpty')}</p>}
-    {items.length > 0 && <div className="divide-y rounded-[var(--nx-r-card)] border">{items.map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-      <div className="min-w-0"><p className="font-medium">{item.name}</p>{(kind !== 'lost-reasons' && (item.key || item.category)) && <p className="text-muted-foreground text-xs">{[item.key, item.category].filter(Boolean).join(' · ')}</p>}</div>
-      <div className="flex flex-wrap items-center gap-2"><Badge variant={item.status === 'Active' ? 'success' : item.status === 'Archived' ? 'secondary' : 'warning'}>{t(`settings.status.${item.status}`)}</Badge>
-        <Button type="button" variant="outline" size="sm" disabled={item.status === 'Archived' || mutation.isPending} onClick={() => begin(item)}>{t('settings.edit')}</Button>
-        {item.status !== 'Archived' && <><Button type="button" variant="outline" size="sm" disabled={mutation.isPending} onClick={() => void setStatus(item, item.status === 'Active' ? 'Inactive' : 'Active')}>{item.status === 'Active' ? t('settings.deactivate') : t('settings.activate')}</Button><Button type="button" variant="outline" size="sm" disabled={mutation.isPending} onClick={() => setArchiveTarget(item)}>{t('settings.archive')}</Button></>}
-      </div>
-    </div>)}</div>}
-    {editing !== null && <form onSubmit={(event) => void save(event)} className="grid gap-3 border-t pt-4 sm:grid-cols-2">
-      <Field label={t('settings.name')}>{(props) => <Input {...props} value={name} required onChange={(event) => setName(event.target.value)} />}</Field>
-      {kind !== 'customer-needs' && kind !== 'lost-reasons' && <Field label={t('settings.key')} hint={editing > 0 ? t('settings.keyStable') : undefined}>{(props) => <Input {...props} value={keyValue} required disabled={editing > 0} onChange={(event) => setKeyValue(event.target.value)} />}</Field>}
-      {kind === 'customer-needs' && <><Field label={t('settings.category')}>{(props) => <Input {...props} value={category} onChange={(event) => setCategory(event.target.value)} />}</Field><Field label={t('settings.averagePrice')}>{(props) => <Input {...props} type="number" min="0" step="0.01" value={averagePrice} onChange={(event) => setAveragePrice(event.target.value)} />}</Field></>}
-      <div className="flex gap-2 sm:col-span-2"><Button type="submit" disabled={mutation.isPending}>{t('settings.save')}</Button><Button type="button" variant="outline" onClick={() => setEditing(null)}>{t('common.cancel')}</Button></div>
-    </form>}
-    <AlertDialog open={archiveTarget !== null} onOpenChange={(open) => { if (!open) setArchiveTarget(null) }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('settings.confirmArchiveTitle')}</AlertDialogTitle><AlertDialogDescription>{t('settings.confirmArchiveCatalog', { name: archiveTarget?.name ?? '' })}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => { if (archiveTarget) void setStatus(archiveTarget, 'Archived'); setArchiveTarget(null) }}>{t('settings.archive')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-  </Card>
 }

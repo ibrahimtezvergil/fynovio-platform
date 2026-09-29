@@ -66,6 +66,7 @@ export function useValidatePipelineDraft(pipelineId: number | null, versionId: n
 export type CrmCatalogKind = 'opportunity-types' | 'lost-reasons' | 'customer-needs'
 export interface CatalogMutation { id?: number; expectedVersion: number; name: string; key?: string; category?: string | null; averagePrice?: number; status: 'Active' | 'Inactive' | 'Archived'; idempotencyKey: string }
 export function useManageCrmCatalog(kind: CrmCatalogKind) {
+  const { t } = useTranslation('opportunities')
   const tenantId = useSessionStore((state) => state.activeTenantId)
   return useAppMutation({ name: `crmSettings.catalog.${kind}`, mutationFn: async (payload: CatalogMutation) => {
     const { idempotencyKey, id, ...body } = payload
@@ -74,5 +75,5 @@ export function useManageCrmCatalog(kind: CrmCatalogKind) {
       ? await apiClient.post(url, body, { headers: { 'Idempotency-Key': idempotencyKey } })
       : await apiClient.put(url, body, { headers: { 'Idempotency-Key': idempotencyKey } })
     return data
-  }, invalidateKeys: () => [key(tenantId)] })
+  }, successToast: (_data, { id, status }) => ({ title: t(status === 'Archived' ? 'settings.archivedMessage' : id == null ? 'settings.catalog.created' : 'settings.saved') }), invalidateKeys: () => [key(tenantId)] })
 }

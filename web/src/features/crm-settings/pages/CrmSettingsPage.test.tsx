@@ -72,11 +72,93 @@ describe('CrmSettingsPage', () => {
     server.use(http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(settings)))
     const { router } = renderSettings()
     expect(await screen.findByRole('heading', { name: tr('settings.opportunity.title', undefined, 'opportunities') })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /fırsat türleri|opportunity types/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: tr('settings.sections.types', undefined, 'opportunities') })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('link', { name: tr('settings.sections.reasons', undefined, 'opportunities') }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/crm/settings/reasons'))
     expect(screen.getByRole('heading', { name: tr('settings.reasonsTitle', undefined, 'opportunities') })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: tr('settings.opportunity.title', undefined, 'opportunities') })).not.toBeInTheDocument()
+  })
+
+  describe('catalog lists', () => {
+    const t = (key: string, options?: Record<string, unknown>) => tr(key, options, 'opportunities')
+    const withReasons = (lostReasons: unknown[]) => ({ ...settings, lostReasons })
+    const reason = (id: number, name: string, status = 'Active') => ({ id, key: `k${id}`, name, status, rowVersion: 1 })
+
+    it('keeps one Edit button per row and moves state changes into a menu', async () => {
+      let body: Record<string, unknown> | undefined
+      server.use(
+        http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(withReasons([reason(1, 'Price')]))),
+        http.put(url(endpoints.crmSettings.catalogItem('lost-reasons', 1)), async ({ request }) => {
+          body = await request.json() as Record<string, unknown>
+          return HttpResponse.json({ item: reason(1, 'Price', 'Inactive'), replayed: false })
+        }),
+      )
+      renderSettings('/crm/settings/reasons')
+
+      expect(await screen.findByRole('button', { name: t('settings.edit') })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: t('settings.deactivate') })).not.toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: t('settings.catalog.more', { name: 'Price' }) }))
+      fireEvent.click(await screen.findByRole('menuitem', { name: t('settings.deactivate') }))
+
+      await waitFor(() => expect(body).toMatchObject({ name: 'Price', status: 'Inactive', expectedVersion: 1 }))
+      expect(screen.getByText(t('settings.catalog.legend'))).toBeInTheDocument()
+    })
+
+    it('lists archived entries last, without Edit, and restores them as inactive', async () => {
+      let body: Record<string, unknown> | undefined
+      server.use(
+        http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(withReasons([reason(2, 'Old', 'Archived'), reason(1, 'Price')]))),
+        http.put(url(endpoints.crmSettings.catalogItem('lost-reasons', 2)), async ({ request }) => {
+          body = await request.json() as Record<string, unknown>
+          return HttpResponse.json({ item: reason(2, 'Old', 'Inactive'), replayed: false })
+        }),
+      )
+      renderSettings('/crm/settings/reasons')
+
+      await screen.findByText('Price')
+      const rows = screen.getAllByRole('listitem')
+      expect(rows[0]).toHaveTextContent('Price')
+      expect(rows[1]).toHaveTextContent('Old')
+      expect(within(rows[1]).queryByRole('button', { name: t('settings.edit') })).not.toBeInTheDocument()
+      fireEvent.click(within(rows[1]).getByRole('button', { name: t('settings.catalog.more', { name: 'Old' }) }))
+      fireEvent.click(await screen.findByRole('menuitem', { name: t('settings.catalog.restore') }))
+
+      await waitFor(() => expect(body).toMatchObject({ status: 'Inactive', expectedVersion: 1 }))
+    })
+
+    it('offers a search once the list is long enough to need one', async () => {
+      const many = Array.from({ length: 7 }, (_, index) => reason(index + 1, `Reason ${index + 1}`))
+      server.use(http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(withReasons(many))))
+      renderSettings('/crm/settings/reasons')
+
+      fireEvent.change(await screen.findByRole('textbox', { name: t('settings.catalog.search') }), { target: { value: 'reason 3' } })
+      expect(screen.getAllByRole('listitem')).toHaveLength(1)
+      fireEvent.change(screen.getByRole('textbox', { name: t('settings.catalog.search') }), { target: { value: 'nothing' } })
+      expect(screen.getByText(t('settings.catalog.noMatch'))).toBeInTheDocument()
+    })
+
+    it('manages opportunity types on their own page and picks the default type from the active ones', async () => {
+      const types = [{ id: 7, key: 'new-business', name: 'New business', status: 'Active', rowVersion: 1 }, { id: 8, key: 'gone', name: 'Gone', status: 'Archived', rowVersion: 1 }]
+      let body: Record<string, unknown> | undefined
+      server.use(
+        http.get(url(endpoints.crmSettings.root), () => HttpResponse.json({ ...settings, opportunityTypes: types })),
+        http.put(url(endpoints.crmSettings.root), async ({ request }) => {
+          body = await request.json() as Record<string, unknown>
+          return HttpResponse.json({ settings: { ...settings, rowVersion: 5 }, replayed: false })
+        }),
+      )
+      const first = renderSettings('/crm/settings/types')
+      expect(await screen.findByRole('heading', { name: t('settings.typesTitle') })).toBeInTheDocument()
+      expect(screen.getByText('New business')).toBeInTheDocument()
+      first.unmount()
+
+      renderSettings('/crm/settings')
+      const select = await screen.findByLabelText(t('settings.defaultOpportunityType'))
+      expect(within(select).queryByRole('option', { name: 'Gone' })).not.toBeInTheDocument()
+      fireEvent.change(select, { target: { value: '7' } })
+      fireEvent.click(screen.getByRole('button', { name: t('settings.save') }))
+      await waitFor(() => expect(body).toMatchObject({ defaultOpportunityTypeId: 7 }))
+    })
   })
 
   it('distinguishes an authorization failure from a temporary load failure', async () => {
