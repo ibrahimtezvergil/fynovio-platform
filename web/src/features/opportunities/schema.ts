@@ -121,6 +121,7 @@ export const partyReferenceSchema = z.object({
 export type PartyReference = z.infer<typeof partyReferenceSchema>
 
 // The command results carry only what the caller needs; the canonical state is refetched after every command.
+export const createPartyResultSchema = z.object({ id: z.number(), replayed: z.boolean() })
 export const createResultSchema = z.object({ opportunityId: z.number(), replayed: z.boolean() })
 export const commandResultSchema = z.object({ opportunityId: z.number(), replayed: z.boolean().optional() }).loose()
 
@@ -161,6 +162,17 @@ export function createOpportunityFormSchema(t: TFunction<'opportunities'>) {
 }
 export type CreateOpportunityValues = z.infer<ReturnType<typeof createOpportunityFormSchema>>
 export type CreateOpportunityInput = z.input<ReturnType<typeof createOpportunityFormSchema>>
+
+export function newPartyFormSchema(t: TFunction<'opportunities'>) {
+  return z.object({
+    partyType: z.enum(['Person', 'Organization']),
+    name: z.string().trim().min(1, t('newParty.name.required')).max(200, t('newParty.name.tooLong')),
+    surname: z.string().trim().max(200, t('newParty.name.tooLong')),
+    phone: z.string().trim().max(50, t('newParty.phone.tooLong')),
+    email: z.string().trim().max(320, t('newParty.email.tooLong')).refine((value) => value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value), t('newParty.email.invalid')),
+  })
+}
+export type NewPartyValues = z.infer<ReturnType<typeof newPartyFormSchema>>
 
 export function addLineFormSchema(t: TFunction<'opportunities'>) {
   return z.object({

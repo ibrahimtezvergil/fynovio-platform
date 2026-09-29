@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
-import { fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { endpoints } from '@/api/endpoints'
@@ -12,6 +12,13 @@ import { resetSession } from '@/test/session'
 import OpportunityNewPage from './OpportunityNewPage'
 
 const t = (key: string, options?: Record<string, unknown>) => tr(key, options, 'opportunities')
+
+const settingsWith = (overrides: Record<string, unknown> = {}) => ({
+  defaultPipelineDefinitionId: null, opportunityCreationMode: 'Form', defaultOpportunityTypeId: null,
+  requireLostReason: false, requireWonLine: true, defaultAssignmentMode: 'Manual', assignmentPolicy: 'AnyAssignablePrincipal',
+  defaultPrincipal: null, defaultTeamId: null, defaultTerritoryId: null, rowVersion: 0,
+  pipelines: [], opportunityTypes: [], lostReasons: [], customerNeeds: [], ...overrides,
+})
 
 beforeEach(() => {
   resetSession()
@@ -40,15 +47,10 @@ const render = () =>
   )
 
 describe('opportunity create — validation', () => {
-  it('follows the tenant-configured wizard flow without changing the create command contract', async () => {
+  it('follows the tenant-configured wizard flow (customer, amount, review) without changing the create command contract', async () => {
     const recorder = recordRequests()
     server.use(
-      http.get(url(endpoints.crmSettings.root), () => HttpResponse.json({
-        defaultPipelineDefinitionId: null, opportunityCreationMode: 'Wizard', defaultOpportunityTypeId: null,
-        requireLostReason: false, requireWonLine: true, defaultAssignmentMode: 'Manual', assignmentPolicy: 'AnyAssignablePrincipal',
-        defaultPrincipal: null, defaultTeamId: null, defaultTerritoryId: null, rowVersion: 0,
-        pipelines: [], opportunityTypes: [], lostReasons: [], customerNeeds: [],
-      })),
+      http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(settingsWith({ opportunityCreationMode: 'Wizard' }))),
       http.post(url(endpoints.opportunities.create), async ({ request }) => {
         await recorder.record(request)
         return HttpResponse.json({ opportunityId: 77, replayed: false })
@@ -61,9 +63,36 @@ describe('opportunity create — validation', () => {
     expect(screen.queryByRole('combobox', { name: partyLabel() })).not.toBeInTheDocument()
     fireEvent.change(await screen.findByRole('combobox', { name: t('form.currency.label') }), { target: { value: 'EUR' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '125' } })
+    fireEvent.click(screen.getByRole('button', { name: t('form.next') }))
+
+    // Review: nothing is sent until the last step, and it shows what will be sent.
+    expect(await screen.findByText(t('form.review.title'))).toBeInTheDocument()
+    expect(screen.getByText(/Acme Ltd/)).toBeInTheDocument()
+    expect(screen.getByText(/125/)).toBeInTheDocument()
+    expect(recorder.commands()).toHaveLength(0)
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
     await screen.findByTestId('detail-page')
     expect(recorder.commands()[0].body).toEqual({ partyId: 1001, currency: 'EUR', estimatedAmount: 125 })
+  })
+
+  it('does not step past the customer without one, and Enter inside a step means next, never create', async () => {
+    const recorder = recordRequests()
+    server.use(
+      http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(settingsWith({ opportunityCreationMode: 'Wizard' }))),
+      http.post(url(endpoints.opportunities.create), async ({ request }) => {
+        await recorder.record(request)
+        return HttpResponse.json({ opportunityId: 1, replayed: false })
+      }),
+    )
+    render()
+    fireEvent.click(await screen.findByRole('button', { name: t('form.next') }))
+    expect(await screen.findByText(t('form.partyId.invalid'))).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: t('form.currency.label') })).not.toBeInTheDocument()
+
+    await chooseParty()
+    fireEvent.submit(screen.getByRole('form', { name: t('form.title') }))
+    await screen.findByRole('combobox', { name: t('form.currency.label') })
+    expect(recorder.commands()).toHaveLength(0)
   })
 
   it('shows field errors on empty submit', async () => {
@@ -397,5 +426,119 @@ describe('opportunity create — customer picker', () => {
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
     expect(await screen.findByText(t('form.partyId.invalid'))).toBeInTheDocument()
     expect(recorder.commands()).toHaveLength(0)
+  })
+})
+
+describe('opportunity create — what the settings decide', () => {
+  it('tells the person who will own it, the type, and the pipeline stage it will enter, before they create it', async () => {
+    server.use(
+      http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(settingsWith({
+        defaultPipelineDefinitionId: 3, defaultOpportunityTypeId: 7,
+        pipelines: [{ id: 3, name: 'Retail', rowVersion: 1, isActive: true, isArchived: false, versions: [] }],
+        opportunityTypes: [{ id: 7, key: 'new', name: 'New customer', status: 'Active', rowVersion: 1 }],
+      }))),
+      http.get(url(endpoints.pipelines.defaultStages), () => HttpResponse.json([
+        { id: 30, name: 'Qualified', sortOrder: 1, isActive: true, isEntry: true, isArchived: false, kind: 0 },
+        { id: 31, name: 'Won', sortOrder: 2, isActive: true, isEntry: false, isArchived: false, kind: 1 },
+      ])),
+    )
+    render()
+
+    const summary = await screen.findByRole('complementary', { name: t('form.summary.title') })
+    expect(within(summary).getByText('New customer')).toBeInTheDocument()
+    expect(await within(summary).findByText(t('form.summary.pipelineEntry', { pipeline: 'Retail', stage: 'Qualified' }))).toBeInTheDocument()
+    expect(within(summary).getByText(t('form.summary.statusValue'))).toBeInTheDocument()
+    expect(within(summary).getByRole('link', { name: t('form.summary.settings') })).toHaveAttribute('href', '/crm/settings')
+  })
+
+  it('says so when no default pipeline is configured, without blocking the create', async () => {
+    render()
+    const summary = await screen.findByRole('complementary', { name: t('form.summary.title') })
+    expect(within(summary).getByText(t('form.summary.pipelineNoneHint'))).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: t('form.submit') })).toBeEnabled()
+  })
+
+  it.each(['Team', 'Territory'] as const)('blocks the create up front when %s assignment cannot be honoured', async (mode) => {
+    const recorder = recordRequests()
+    server.use(
+      http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(settingsWith({ defaultAssignmentMode: mode }))),
+      http.post(url(endpoints.opportunities.create), async ({ request }) => {
+        await recorder.record(request)
+        return HttpResponse.json({ opportunityId: 1, replayed: false })
+      }),
+    )
+    render()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(t(`form.summary.blocked.${mode}`))
+    expect(screen.getByRole('button', { name: t('form.submit') })).toBeDisabled()
+    expect(screen.getByRole('button', { name: t('form.submitAndAddLine') })).toBeDisabled()
+    expect(recorder.commands()).toHaveLength(0)
+  })
+
+  it('leaves the summary out when the settings cannot be read, instead of guessing', async () => {
+    server.use(http.get(url(endpoints.crmSettings.root), () => HttpResponse.json({ title: 'Forbidden' }, { status: 403 })))
+    render()
+    await screen.findByRole('button', { name: t('form.submit') })
+    expect(screen.queryByRole('complementary', { name: t('form.summary.title') })).not.toBeInTheDocument()
+  })
+})
+
+describe('opportunity create — new customer and lines', () => {
+  it('adds a customer that was not in the list and selects it, without leaving or submitting the opportunity', async () => {
+    const recorder = recordRequests()
+    server.use(
+      http.post(url(endpoints.references.parties), async ({ request }) => {
+        await recorder.record(request)
+        return HttpResponse.json({ id: 2001, replayed: false }, { status: 201 })
+      }),
+      http.post(url(endpoints.opportunities.create), async ({ request }) => {
+        await recorder.record(request)
+        return HttpResponse.json({ opportunityId: 1, replayed: false })
+      }),
+    )
+    render()
+
+    fireEvent.click(await screen.findByRole('button', { name: t('form.newPartyAction') }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByRole('textbox', { name: t('newParty.name.organization') }), { target: { value: 'Yeni AŞ' } })
+    fireEvent.change(within(dialog).getByRole('textbox', { name: t('newParty.email.label') }), { target: { value: 'info@yeni.example' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: t('newParty.submit') }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(recorder.commands()).toHaveLength(1)
+    expect(recorder.commands()[0].path).toBe('/api/crm/references/parties')
+    expect(recorder.commands()[0].body).toEqual({ partyType: 'Organization', name: 'Yeni AŞ', surname: null, phone: null, email: 'info@yeni.example' })
+    expect(screen.getByRole('combobox', { name: partyLabel() })).toHaveValue('Yeni AŞ')
+  })
+
+  it('asks for a name and a valid e-mail before adding a customer', async () => {
+    const recorder = recordRequests()
+    server.use(http.post(url(endpoints.references.parties), async ({ request }) => {
+      await recorder.record(request)
+      return HttpResponse.json({ id: 1, replayed: false }, { status: 201 })
+    }))
+    render()
+
+    fireEvent.click(await screen.findByRole('button', { name: t('form.newPartyAction') }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByRole('textbox', { name: t('newParty.email.label') }), { target: { value: 'not-an-email' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: t('newParty.submit') }))
+
+    expect(await within(dialog).findByText(t('newParty.name.required'))).toBeInTheDocument()
+    expect(within(dialog).getByText(t('newParty.email.invalid'))).toBeInTheDocument()
+    expect(recorder.commands()).toHaveLength(0)
+  })
+
+  it('"create and add lines" creates the draft and lands on it asking to add a line', async () => {
+    server.use(http.post(url(endpoints.opportunities.create), () => HttpResponse.json({ opportunityId: 88, replayed: false })))
+    const { router } = render()
+
+    await chooseParty()
+    fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '50' } })
+    fireEvent.click(screen.getByRole('button', { name: t('form.submitAndAddLine') }))
+
+    await screen.findByTestId('detail-page')
+    expect(router.state.location.pathname).toBe('/crm/opportunities/88')
+    expect(router.state.location.state).toEqual({ addLine: true })
   })
 })

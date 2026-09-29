@@ -13,11 +13,12 @@ import { AddLineDialog, CancelLineDialog } from './LineDialogs'
  * Lines are the only editable CRM-owned state Phase 2 defines (there is no update command for scalar fields),
  * so this card IS the edit surface. Which controls to offer comes from `lineEditability` (integration gap G4).
  */
-export function LinesCard({ opportunity, onReload }: { opportunity: Opportunity; onReload: () => void }) {
+/** `autoAdd` opens the add-line dialog on arrival — the create form's "create and add lines" lands here. */
+export function LinesCard({ opportunity, onReload, autoAdd = false }: { opportunity: Opportunity; onReload: () => void; autoAdd?: boolean }) {
   const { t } = useTranslation('opportunities')
   const { canOfferAdd, canOfferCancel } = lineEditability(opportunity)
   const hasActiveRequiredLine = opportunity.lines.some((line) => !line.isCanceled && !line.isOptional)
-  const [adding, setAdding] = useState(false)
+  const [adding, setAdding] = useState(autoAdd && canOfferAdd)
   const [cancelling, setCancelling] = useState<OpportunityLine | null>(null)
 
   return (

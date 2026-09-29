@@ -11,6 +11,7 @@ import {
   assignablePrincipalSchema,
   availableActionsSchema,
   commandResultSchema,
+  createPartyResultSchema,
   createResultSchema,
   opportunitySchema,
   opportunitySummarySchema,
@@ -358,3 +359,26 @@ export const useReassignOpportunity = () =>
       body: { expectedVersion, newPrincipalIssuer, newPrincipalSubject },
     }),
   )
+
+export interface CreatePartyVariables {
+  partyType: 'Person' | 'Organization'
+  name: string
+  surname: string | null
+  phone: string | null
+  email: string | null
+  idempotencyKey: string
+}
+
+/** Adds a customer the person could not find; the dialog shows the failure inline, so no error toast. */
+export function useCreateParty() {
+  const { t } = useTranslation('opportunities')
+  return useAppMutation<z.infer<typeof createPartyResultSchema>, CreatePartyVariables>({
+    name: 'opportunities.createParty',
+    mutationFn: async ({ idempotencyKey, ...body }) => {
+      const { data } = await apiClient.post<unknown>(endpoints.references.parties, body, { headers: { 'Idempotency-Key': idempotencyKey } })
+      return parseApiResponse(data, createPartyResultSchema)
+    },
+    successToast: () => ({ title: t('newParty.created') }),
+    errorToast: () => null,
+  })
+}

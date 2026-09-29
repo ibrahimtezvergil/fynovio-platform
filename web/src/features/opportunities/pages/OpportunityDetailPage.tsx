@@ -1,5 +1,5 @@
 import { CalendarPlus, MoreHorizontal, RefreshCw } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { openLinkedOpportunityEntryDialog } from '@/features/calendar'
@@ -36,6 +36,11 @@ export default function OpportunityDetailPage() {
   const partyNames = usePartyNames(opportunity.data?.partyId == null ? [] : [opportunity.data.partyId])
   const pipelineStages = usePipelineStages(opportunity.data?.pipelineDefinitionVersionId)
   const [dialog, setDialog] = useState<LifecycleAction | null>(null)
+  // Arriving from "create and add lines": remember it once, then clear the history state so a reload does not reopen the dialog.
+  const [autoAddLine] = useState(() => Boolean((location.state as { addLine?: boolean } | null)?.addLine))
+  useEffect(() => {
+    if (autoAddLine) navigate(`${location.pathname}${location.search}`, { replace: true, state: null })
+  }, [autoAddLine, location.pathname, location.search, navigate])
 
   const returnTo = new URLSearchParams(location.search).get('from')
   const listUrl = returnTo ? `${paths.crmOpportunities}?${returnTo}` : paths.crmOpportunities
@@ -126,7 +131,7 @@ export default function OpportunityDetailPage() {
       <div className="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <div className="grid content-start gap-5">
           <SummaryCard opportunity={data} canReassign={actions?.canReassign ?? false} onReassign={() => setDialog('reassign')} />
-          <LinesCard opportunity={data} onReload={() => void reload()} />
+          <LinesCard opportunity={data} onReload={() => void reload()} autoAdd={autoAddLine} />
         </div>
         <div className="grid content-start gap-5">
           <PipelineCard opportunity={data} actions={actions} onReload={() => void reload()} />

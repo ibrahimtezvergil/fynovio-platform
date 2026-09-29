@@ -252,7 +252,7 @@ export default function CrmSettingsPage() {
                 set('opportunityCreationSteps', reordered)
               }} className="flex items-center gap-3 rounded-[var(--nx-r-ctl)] border bg-background px-3 py-3">
                 <GripVertical aria-hidden onPointerDown={() => { if (stepName !== 'Customer') pointerDraggedStep.current = stepName }} className={`text-muted-foreground size-4 touch-none ${stepName === 'Customer' ? 'opacity-40' : 'cursor-grab active:cursor-grabbing'}`} />
-                <span className="flex-1 text-sm font-medium">{label}</span>
+                <span className="flex-1 text-sm font-medium">{label}{stepName !== 'Customer' && <Badge variant="secondary" className="ml-2 align-middle" title={t('settings.creation.soonHint')}>{t('settings.creation.soon')}</Badge>}</span>
                 {stepName === 'Customer' ? <span className="text-muted-foreground text-xs">{t('settings.creation.requiredStep')}</span> : <>
                   <Button type="button" variant="ghost" size="icon" aria-label={t('settings.creation.moveUp')} disabled={index <= 1} onClick={() => { const next = [...form.opportunityCreationSteps]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; set('opportunityCreationSteps', next) }}><ArrowUp aria-hidden /></Button>
                   <Button type="button" variant="ghost" size="icon" aria-label={t('settings.creation.moveDown')} disabled={index === form.opportunityCreationSteps.length - 1} onClick={() => { const next = [...form.opportunityCreationSteps]; [next[index], next[index + 1]] = [next[index + 1], next[index]]; set('opportunityCreationSteps', next) }}><ArrowDown aria-hidden /></Button>
@@ -264,7 +264,7 @@ export default function CrmSettingsPage() {
           {(['Needs', 'Products'] as const).filter((stepName) => !form.opportunityCreationSteps.includes(stepName)).length > 0 && <div className="mt-3 flex flex-wrap gap-2">
             {(['Needs', 'Products'] as const).filter((stepName) => !form.opportunityCreationSteps.includes(stepName)).map((stepName) => {
               const stepKey = stepName === 'Needs' ? 'needs' : 'products'
-              return <Button key={stepName} type="button" variant="outline" onClick={() => set('opportunityCreationSteps', [...form.opportunityCreationSteps, stepName])}>+ {t('settings.creation.addStep', { step: t(`settings.creation.step.${stepKey}`) })}</Button>
+              return <Button key={stepName} type="button" variant="outline" disabled title={t('settings.creation.soonHint')}>+ {t('settings.creation.addStep', { step: t(`settings.creation.step.${stepKey}`) })} · {t('settings.creation.soon')}</Button>
             })}
           </div>}
         </div>}
