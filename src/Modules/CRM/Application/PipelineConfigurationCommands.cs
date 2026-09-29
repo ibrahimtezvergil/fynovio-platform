@@ -3,7 +3,9 @@ using CRM.Domain;
 
 namespace CRM.Application;
 
-public sealed record PipelineStageInput(string Name, int SortOrder, bool IsEntry, bool IsActive, bool IsArchived = false);
+/// <summary>`Kind` defaults to Open. A Won/Lost input carries only the tenant's label for that system stage:
+/// its position, activity and entry flag are the system's, whatever the client sends.</summary>
+public sealed record PipelineStageInput(string Name, int SortOrder, bool IsEntry, bool IsActive, bool IsArchived = false, PipelineStageKind Kind = PipelineStageKind.Open);
 public sealed record PipelineTransitionInput(string FromStageName, string ToStageName);
 public sealed record CreatePipelineDraftCommand(TenantId TenantId, PrincipalRef Principal, long? PipelineDefinitionId, string Name,
     long ExpectedRowVersion, int ExpectedLatestVersionNumber, IReadOnlyList<PipelineStageInput> Stages,

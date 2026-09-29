@@ -53,18 +53,20 @@ public sealed class CreatePipelineDraftHandler(CrmDbContext context, IAuthorizer
         context.Entry(version).Property(x => x.Id).CurrentValue = await context.AllocateConfigurationIdAsync<PipelineDefinitionVersion>(cancellationToken);
         context.PipelineDefinitionVersions.Add(version);
 
-        var stages = command.Stages.OrderBy(x => x.SortOrder).Select(x => version.AddStage(x.Name.Trim(), x.SortOrder)).ToList();
-        foreach (var (stage, input) in stages.Zip(command.Stages.OrderBy(x => x.SortOrder)))
+        var openInputs = command.Stages.Where(x => x.Kind == PipelineStageKind.Open).OrderBy(x => x.SortOrder).ToList();
+        var stages = openInputs.Select(x => version.AddStage(x.Name.Trim(), x.SortOrder)).ToList();
+        foreach (var (stage, input) in stages.Zip(openInputs))
         {
             if (input.IsArchived) stage.Archive();
             else if (!input.IsActive) stage.Deactivate();
             context.Entry(stage).Property(x => x.Id).CurrentValue = await context.AllocateConfigurationIdAsync<PipelineStage>(cancellationToken);
         }
-        version.MarkEntry(stages[command.Stages.OrderBy(x => x.SortOrder).ToList().FindIndex(x => x.IsEntry)]);
+        version.MarkEntry(stages[openInputs.FindIndex(x => x.IsEntry)]);
 
+        // Won and Lost are system stages: the tenant edits only their labels; position and activity are the system's.
         var systemSortOrder = stages.Max(s => s.SortOrder) + 10;
-        var wonStage = version.AddWonStage("Won", systemSortOrder);
-        var lostStage = version.AddLostStage("Lost", systemSortOrder + 10);
+        var wonStage = version.AddWonStage(SystemLabel(command, PipelineStageKind.Won, "Won"), systemSortOrder);
+        var lostStage = version.AddLostStage(SystemLabel(command, PipelineStageKind.Lost, "Lost"), systemSortOrder + 10);
         context.Entry(wonStage).Property(x => x.Id).CurrentValue = await context.AllocateConfigurationIdAsync<PipelineStage>(cancellationToken);
         context.Entry(lostStage).Property(x => x.Id).CurrentValue = await context.AllocateConfigurationIdAsync<PipelineStage>(cancellationToken);
 
@@ -115,17 +117,27 @@ public sealed class CreatePipelineDraftHandler(CrmDbContext context, IAuthorizer
         return result;
     }
 
+    private static string SystemLabel(CreatePipelineDraftCommand command, PipelineStageKind kind, string fallback) =>
+        command.Stages.SingleOrDefault(x => x.Kind == kind)?.Name.Trim() ?? fallback;
+
     private static void Validate(CreatePipelineDraftCommand command)
     {
         if (string.IsNullOrWhiteSpace(command.Name) || command.Name.Trim().Length > 100) throw new ArgumentException("Pipeline name must be 1–100 characters.");
-        if (command.Stages is not { Count: > 0 and <= 50 } || command.Stages.Count(x => x.IsEntry) != 1) throw new ArgumentException("A pipeline draft needs 1–50 stages and exactly one explicit entry stage.");
+        if (command.Stages is null) throw new ArgumentException("A pipeline draft needs 1–50 stages and exactly one explicit entry stage.");
+        var open = command.Stages.Where(x => x.Kind == PipelineStageKind.Open).ToList();
+        var system = command.Stages.Where(x => x.Kind != PipelineStageKind.Open).ToList();
+        if (open is not { Count: > 0 and <= 50 } || open.Count(x => x.IsEntry) != 1) throw new ArgumentException("A pipeline draft needs 1–50 stages and exactly one explicit entry stage.");
+        if (command.Stages.Any(x => !Enum.IsDefined(x.Kind))) throw new ArgumentException("Stage kind is invalid.");
+        if (system.GroupBy(x => x.Kind).Any(group => group.Count() > 1)) throw new ArgumentException("A pipeline has at most one Won and one Lost stage.");
+        if (system.Any(x => x.IsEntry)) throw new ArgumentException("The Won and Lost stages cannot be the entry stage.");
         if (command.Stages.Any(x => string.IsNullOrWhiteSpace(x.Name) || x.Name.Trim().Length > 100 || x.SortOrder < 0 || x.IsArchived && x.IsActive)) throw new ArgumentException("Stage names, lifecycle and sort orders are invalid.");
-        if (command.Stages.Select(x => x.Name.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() != command.Stages.Count || command.Stages.Select(x => x.SortOrder).Distinct().Count() != command.Stages.Count) throw new ArgumentException("Stage names and sort orders must be unique.");
-        if (command.Stages.Any(x => x.Name.Trim().Equals("Won", StringComparison.OrdinalIgnoreCase) || x.Name.Trim().Equals("Lost", StringComparison.OrdinalIgnoreCase)))
+        if (command.Stages.Select(x => x.Name.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() != command.Stages.Count || open.Select(x => x.SortOrder).Distinct().Count() != open.Count) throw new ArgumentException("Stage names and sort orders must be unique.");
+        // "Won"/"Lost" are the system stages' default labels: an ordinary stage may not impersonate one.
+        if (open.Any(x => x.Name.Trim().Equals("Won", StringComparison.OrdinalIgnoreCase) || x.Name.Trim().Equals("Lost", StringComparison.OrdinalIgnoreCase)))
             throw new ArgumentException("\"Won\" and \"Lost\" are reserved stage names managed by the system.");
-        var active = command.Stages.Where(x => x.IsActive).Select(x => x.Name.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (!active.Contains(command.Stages.Single(x => x.IsEntry).Name.Trim())) throw new ArgumentException("The entry stage must be active.");
-        var names = command.Stages.Select(x => x.Name.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var active = open.Where(x => x.IsActive).Select(x => x.Name.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (!active.Contains(open.Single(x => x.IsEntry).Name.Trim())) throw new ArgumentException("The entry stage must be active.");
+        var names = open.Select(x => x.Name.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
         if (command.AllowedTransitions.Any(x => !names.Contains(x.FromStageName.Trim()) || !names.Contains(x.ToStageName.Trim()) || !active.Contains(x.FromStageName.Trim()) || !active.Contains(x.ToStageName.Trim()) || string.Equals(x.FromStageName, x.ToStageName, StringComparison.OrdinalIgnoreCase))) throw new ArgumentException("Allowed transitions must connect two distinct active stages in this draft.");
         if (command.AllowedTransitions.Select(x => (x.FromStageName.ToUpperInvariant(), x.ToStageName.ToUpperInvariant())).Distinct().Count() != command.AllowedTransitions.Count) throw new ArgumentException("Allowed transitions must be unique.");
     }
