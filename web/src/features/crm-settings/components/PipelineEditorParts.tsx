@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ArchiveRestore, Archive, History, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArchiveRestore, Archive, ChevronRight, History, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
@@ -24,7 +24,22 @@ interface VersionLike {
   versionNumber: number
   status: 'Draft' | 'Published' | 'Superseded' | 'Archived'
   publishedAt?: string | null
-  stages?: readonly unknown[]
+  stages?: readonly VersionStage[]
+}
+
+interface VersionStage {
+  name: string
+  sortOrder: number
+  isActive: boolean
+  isArchived?: boolean
+  kind?: PipelineStageKind
+}
+
+/** A version's flow in reading order: the open stages by sort order, then Won/Lost. Archived stages are left out. */
+function versionFlow(stages: readonly VersionStage[] = []) {
+  const shown = stages.filter((stage) => !stage.isArchived)
+  const closing = (stage: VersionStage) => (stage.kind && stage.kind !== 'Open' ? 1 : 0)
+  return shown.toSorted((a, b) => closing(a) - closing(b) || a.sortOrder - b.sortOrder)
 }
 
 /** The live version and the open draft of a pipeline — the two numbers the person needs to tell them apart. */
@@ -68,11 +83,21 @@ export function PipelineVersionStrip({ versions, dirty, onDiscardDraft, discardi
         <div className="mt-2 flex flex-col gap-2">
           <ul className="divide-y rounded-[var(--nx-r-ctl)] border bg-background/60">
             {history.map((version) => (
-              <li key={version.id ?? version.versionNumber} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
-                <span className="tnum w-8 font-[590]">v{version.versionNumber}</span>
-                <Badge variant={version.status === 'Published' ? 'success' : version.status === 'Draft' ? 'warning' : 'secondary'}>{t(`settings.versionStrip.status.${version.status}`)}</Badge>
-                <span className="text-muted-foreground flex-1">{t(`settings.versionStrip.statusHint.${version.status}`)}</span>
-                {dateFormat(version.publishedAt) && <span className="text-muted-foreground tnum">{dateFormat(version.publishedAt)}</span>}
+              <li key={version.id ?? version.versionNumber} className="flex flex-col gap-1.5 px-3 py-2" data-testid={`version-${version.versionNumber}`}>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="tnum w-8 font-[590]">v{version.versionNumber}</span>
+                  <Badge variant={version.status === 'Published' ? 'success' : version.status === 'Draft' ? 'warning' : 'secondary'}>{t(`settings.versionStrip.status.${version.status}`)}</Badge>
+                  <span className="text-muted-foreground flex-1">{t(`settings.versionStrip.statusHint.${version.status}`)}</span>
+                  {dateFormat(version.publishedAt) && <span className="text-muted-foreground tnum">{dateFormat(version.publishedAt)}</span>}
+                </div>
+                <ol className="flex flex-wrap items-center gap-1" aria-label={t('settings.versionStrip.flow', { number: version.versionNumber })}>
+                  {versionFlow(version.stages).map((stage, index) => (
+                    <li key={`${stage.name}-${index}`} className="flex items-center gap-1">
+                      {index > 0 && <ChevronRight aria-hidden className="text-muted-foreground size-3" strokeWidth={1.8} />}
+                      <span className={cn('rounded-full border px-2 py-0.5 text-[11.5px]', stage.kind === 'Won' && 'border-[var(--nx-st-green-fg)]/40', stage.kind === 'Lost' && 'border-[var(--nx-st-red-fg)]/40', !stage.isActive && 'text-muted-foreground line-through')}>{stage.name}</span>
+                    </li>
+                  ))}
+                </ol>
               </li>
             ))}
           </ul>

@@ -288,6 +288,15 @@ describe('CrmSettingsPage', () => {
       expect(within(strip).getByText(t('settings.versionStrip.statusHint.Draft'))).toBeInTheDocument()
     })
 
+    it('shows each version\'s own stage flow inside the history', async () => {
+      await open(withDraft)
+
+      const strip = await screen.findByTestId('pipeline-version-strip')
+      const flow = within(strip).getAllByRole('list', { name: /v\d+/ })
+      expect(flow.length).toBeGreaterThanOrEqual(2)
+      expect(within(flow[0]).getAllByRole('listitem').length).toBeGreaterThan(0)
+    })
+
     it('lays the allowed transitions out as one from/to grid over the ordinary stages only', async () => {
       await open(withDraft)
       fireEvent.click(await screen.findByRole('button', { name: t('settings.addStage') }))
