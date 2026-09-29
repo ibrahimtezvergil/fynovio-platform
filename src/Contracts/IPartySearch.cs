@@ -7,8 +7,9 @@ namespace Contracts;
 /// Merged (tombstone) parties never appear — only their surviving party does.</summary>
 public interface IPartySearch
 {
-    /// <summary>Parties whose name, surname, full name or e-mail contains `query` (case-insensitive, literal — `%` and `_`
-    /// are not wildcards), ordered by name. A blank query lists the first parties alphabetically. `take` is clamped to 1..50.</summary>
+    /// <summary>Parties whose name, surname, full name, e-mail or phone contains `query` (case-insensitive, literal — `%` and `_`
+    /// are not wildcards; a phone matches on its digits, so `0532 111` finds `+90 532 111 22 33`), or whose id equals a numeric `query`
+    /// (the customer number), ordered by name. A blank query lists the first parties alphabetically. `take` is clamped to 1..50.</summary>
     Task<IReadOnlyList<PartyDirectoryEntry>> SearchPartiesAsync(
         TenantId tenantId, string? query, int take, CancellationToken cancellationToken = default);
 }

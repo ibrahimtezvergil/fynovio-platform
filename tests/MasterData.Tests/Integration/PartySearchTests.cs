@@ -48,6 +48,40 @@ public sealed class PartySearchTests
     }
 
     [Fact]
+    public async Task Matches_a_phone_on_its_digits_and_returns_it()
+    {
+        var tenant = TestData.NextTenant();
+        await using (var seed = _fixture.CreateAdminContext())
+        {
+            seed.Parties.Add(Party.Create(tenant, PartyType.Organization, "Acme Corp", null, "+90 (532) 111-22 33", null));
+            seed.Parties.Add(Party.Create(tenant, PartyType.Organization, "Other Ltd", null, "0212 999 88 77", null));
+            await seed.SaveChangesAsync();
+        }
+        var directory = await AdminDirectoryAsync();
+
+        Assert.Equal(["Acme Corp"], Names(await directory.SearchPartiesAsync(tenant, "0532 111", 10)));
+        Assert.Equal(["Acme Corp"], Names(await directory.SearchPartiesAsync(tenant, "(532) 111-22", 10)));
+        var byDigits = Assert.Single(await directory.SearchPartiesAsync(tenant, "532111", 10));
+        Assert.Equal("Acme Corp", byDigits.Name);
+        Assert.Equal("+90 (532) 111-22 33", byDigits.Phone);
+        Assert.Equal(["Other Ltd"], Names(await directory.SearchPartiesAsync(tenant, "999 88", 10)));
+        Assert.Equal(["Other Ltd"], Names(await directory.SearchPartiesAsync(tenant, "0212", 10)));
+    }
+
+    [Fact]
+    public async Task An_all_digit_query_also_finds_the_party_with_that_customer_number()
+    {
+        var tenant = await SeedAsync(Sample);
+        var directory = await AdminDirectoryAsync();
+        var acme = Assert.Single(await directory.SearchPartiesAsync(tenant, "acme", 10));
+
+        var byNumber = await directory.SearchPartiesAsync(tenant, acme.PartyRef.PartyId.ToString(), 10);
+
+        Assert.Contains(byNumber, entry => entry.PartyRef.PartyId == acme.PartyRef.PartyId);
+        Assert.Empty(await directory.SearchPartiesAsync(tenant, "999999999", 10));
+    }
+
+    [Fact]
     public async Task Wildcards_are_literal()
     {
         var tenant = await SeedAsync(Sample);

@@ -154,9 +154,9 @@ export default {
     description: 'Enter the customer and amount first. The opportunity is saved as a draft; it enters the pipeline once you add lines and open it.',
     partyId: {
       label: 'Customer',
-      hint: 'Search by name and choose a customer from the list.',
+      hint: 'Search by name, phone, e-mail or customer number.',
       invalid: 'Choose a customer from the list.',
-      placeholder: 'Customer name or e-mail…',
+      placeholder: 'Name, phone, e-mail or customer no…', createNamed: 'Create new customer: “{{query}}”',
     },
     currency: { label: 'Currency', invalid: 'Choose a currency from the list.', options: { TRY: 'Turkish lira (TRY)', USD: 'US dollar (USD)', EUR: 'Euro (EUR)' } },
     estimatedAmount: {
@@ -170,11 +170,16 @@ export default {
     next: 'Next step',
     previousStep: 'Previous step',
     submitAndAddLine: 'Create and add lines',
+    sections: {
+      customer: { title: 'Customer', description: 'Choose who the opportunity is for. If they are not listed, create them right from the search.' },
+      amount: { title: 'Estimated amount', description: 'The expected sale value. The actual total is calculated separately as lines are added.' },
+    },
+    customerCard: { number: 'Customer no', phone: 'Phone', email: 'Email', type: { Organization: 'Company', Person: 'Person' } },
+    bar: { pickCustomer: 'Choose a customer to continue.', ready: 'The opportunity is saved as a draft; you can add lines afterwards.', blocked: 'Cannot be created right now because of the assignment rule.' },
     newPartyPrompt: 'Can’t find the customer in the list?',
     newPartyAction: 'Add a new customer',
     stepOf: 'Step {{current}} of {{total}}',
-    steps: { customer: 'Customer', amount: 'Amount', review: 'Review' },
-    review: { title: 'Check the details', customer: 'Customer', amount: 'Estimated amount', hint: 'The customer and amount cannot be changed once the opportunity is created.' },
+    steps: { customer: 'Customer', amount: 'Amount' },
     summary: {
       title: 'How will this opportunity start?',
       description: 'CRM settings decide these values.',

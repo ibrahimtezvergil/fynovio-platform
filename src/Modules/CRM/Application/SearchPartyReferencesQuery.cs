@@ -13,4 +13,4 @@ public sealed record SearchPartyReferencesQuery(
     Guid CorrelationId);
 
 /// <summary>The display fields of a Party, nothing else — no phone, no external identities, no merge internals.</summary>
-public sealed record PartyReferenceDto(long Id, string PartyType, string DisplayName, string? Email);
+public sealed record PartyReferenceDto(long Id, string PartyType, string DisplayName, string? Email, string? Phone = null);

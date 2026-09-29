@@ -4,7 +4,8 @@ import type { AssignablePrincipal, PartyReference } from '../schema'
 export const partyOption = (party: PartyReference): SelectOption => ({
   value: String(party.id),
   label: party.displayName,
-  description: party.email ?? party.partyType,
+  // The customer number, phone and e-mail: what tells two customers with the same name apart.
+  description: [`#${party.id}`, party.phone, party.email].filter(Boolean).join(' · '),
 })
 
 /** (issuer, subject) is the identity; encoded as JSON so no separator can be forged by a subject value. */

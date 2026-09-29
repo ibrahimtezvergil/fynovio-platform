@@ -98,7 +98,7 @@ export const wireParty = (id: number, displayName: string, overrides: Record<str
   ...overrides,
 })
 
-export const PARTIES = [wireParty(1001, 'Acme Ltd', { email: 'ops@acme.example' }), wireParty(1002, 'Bora Tekstil'), wireParty(1003, 'Acar Gıda')]
+export const PARTIES = [wireParty(1001, 'Acme Ltd', { email: 'ops@acme.example', phone: '+90 532 111 22 33' }), wireParty(1002, 'Bora Tekstil'), wireParty(1003, 'Acar Gıda')]
 
 /** The SERVER side of party search: `search` filters by name, `ids` resolves display names. Records every request. */
 export function mockParties(rows = PARTIES, recorder?: ReturnType<typeof recordRequests>) {

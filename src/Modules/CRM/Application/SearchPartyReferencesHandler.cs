@@ -39,5 +39,5 @@ public sealed class SearchPartyReferencesHandler(IAuthorizer authorizer, IPartyS
     }
 
     private static PartyReferenceDto ToDto(PartyDirectoryEntry entry) =>
-        new(entry.PartyRef.PartyId, entry.PartyType.ToString(), PartyDisplay.Name(entry), entry.Email);
+        new(entry.PartyRef.PartyId, entry.PartyType.ToString(), PartyDisplay.Name(entry), entry.Email, entry.Phone);
 }

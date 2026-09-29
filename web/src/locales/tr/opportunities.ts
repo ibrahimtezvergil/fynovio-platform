@@ -154,9 +154,9 @@ export default {
     description: 'Önce müşteriyi ve tutarı girin. Fırsat taslak olarak kaydedilir; kalem ekleyip açınca satış hattına girer.',
     partyId: {
       label: 'Müşteri',
-      hint: 'Adıyla arayın; listeden bir müşteri seçin.',
+      hint: 'Ad, telefon, e-posta ya da müşteri numarasıyla arayın.',
       invalid: 'Listeden bir müşteri seçin.',
-      placeholder: 'Müşteri adı ya da e-postası…',
+      placeholder: 'Ad, telefon, e-posta ya da müşteri no…', createNamed: 'Yeni müşteri oluştur: “{{query}}”',
     },
     currency: { label: 'Para birimi', invalid: 'Listeden bir para birimi seçin.', options: { TRY: 'Türk lirası (TRY)', USD: 'ABD doları (USD)', EUR: 'Avro (EUR)' } },
     estimatedAmount: {
@@ -170,11 +170,16 @@ export default {
     next: 'Sonraki adım',
     previousStep: 'Önceki adım',
     submitAndAddLine: 'Oluştur ve kalem ekle',
+    sections: {
+      customer: { title: 'Müşteri', description: 'Fırsatın kimin için açıldığını seçin. Listede yoksa aramanın altından hemen oluşturabilirsiniz.' },
+      amount: { title: 'Tahmini tutar', description: 'Beklenen satış değeri. Kalemler eklendikçe gerçek toplam ayrıca hesaplanır.' },
+    },
+    customerCard: { number: 'Müşteri no', phone: 'Telefon', email: 'E-posta', type: { Organization: 'Kurum', Person: 'Kişi' } },
+    bar: { pickCustomer: 'Devam etmek için bir müşteri seçin.', ready: 'Fırsat taslak olarak kaydedilir; ardından kalem ekleyebilirsiniz.', blocked: 'Atama kuralı nedeniyle şu an oluşturulamıyor.' },
     newPartyPrompt: 'Müşteriyi listede bulamadınız mı?',
     newPartyAction: 'Yeni müşteri ekle',
     stepOf: 'Adım {{current}} / {{total}}',
-    steps: { customer: 'Müşteri', amount: 'Tutar', review: 'Özet' },
-    review: { title: 'Kontrol edin', customer: 'Müşteri', amount: 'Tahmini tutar', hint: 'Fırsat oluşturulunca müşteri ve tutar değişmez.' },
+    steps: { customer: 'Müşteri', amount: 'Tutar' },
     summary: {
       title: 'Bu fırsat nasıl başlayacak?',
       description: 'Bu değerleri CRM ayarları belirler.',

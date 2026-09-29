@@ -1,24 +1,26 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Field } from '@/components/common/Field'
-import type { SelectOption } from '@/components/common/inputs/types'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { useCreateParty } from '../api'
 import { useKeyedCommand } from '../lib/useKeyedCommand'
-import { newPartyFormSchema, type NewPartyValues } from '../schema'
+import { draftFromQuery } from '../lib/partyDraft'
+import { newPartyFormSchema, type NewPartyValues, type PartyReference } from '../schema'
 import { CommandDialog } from './CommandDialog'
 
 interface NewPartyDialogProps {
+  /** What was typed in the customer search; sorted into name, phone or e-mail so nothing is retyped. */
+  initialQuery: string
   onClose: () => void
-  /** The freshly created customer, already in the shape the picker shows. */
-  onCreated: (option: SelectOption) => void
+  /** The freshly created customer, in the shape the search returns. */
+  onCreated: (party: PartyReference) => void
 }
 
 /** For the customer who is not in the list yet: the salesperson adds them here instead of leaving the form. */
-export function NewPartyDialog({ onClose, onCreated }: NewPartyDialogProps) {
+export function NewPartyDialog({ initialQuery, onClose, onCreated }: NewPartyDialogProps) {
   const { t } = useTranslation('opportunities')
   const schema = useMemo(() => newPartyFormSchema(t), [t])
   const command = useKeyedCommand(useCreateParty())
@@ -26,15 +28,21 @@ export function NewPartyDialog({ onClose, onCreated }: NewPartyDialogProps) {
     register,
     control,
     handleSubmit,
+    setFocus,
     formState: { errors },
-  } = useForm<NewPartyValues>({ resolver: zodResolver(schema), defaultValues: { partyType: 'Organization', name: '', surname: '', phone: '', email: '' } })
+  } = useForm<NewPartyValues>({ resolver: zodResolver(schema), defaultValues: { partyType: 'Organization', surname: '', ...draftFromQuery(initialQuery) } })
+  // The dialog opens with the cursor where typing is needed, so "create" is: click, confirm the name, Enter.
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setFocus('name'))
+    return () => cancelAnimationFrame(frame)
+  }, [setFocus])
   const isPerson = useWatch({ control, name: 'partyType' }) === 'Person'
 
   const submit = handleSubmit(async (values) => {
     const result = await command.run({ partyType: values.partyType, name: values.name, surname: isPerson ? values.surname || null : null, phone: values.phone || null, email: values.email || null })
     if (!result) return
-    const label = [values.name, isPerson ? values.surname : ''].filter(Boolean).join(' ')
-    onCreated({ value: String(result.id), label, description: values.email || (isPerson ? t('newParty.type.Person') : t('newParty.type.Organization')) })
+    const displayName = [values.name, isPerson ? values.surname : ''].filter(Boolean).join(' ')
+    onCreated({ id: result.id, partyType: values.partyType, displayName, email: values.email || null, phone: values.phone || null })
     onClose()
   })
 

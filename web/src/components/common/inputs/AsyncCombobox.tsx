@@ -1,6 +1,6 @@
 import { Combobox } from '@base-ui/react/combobox'
 import { Check, ChevronDown, Loader2, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { CONTROL_INPUT, CONTROL_SHELL, POPUP, POPUP_EMPTY, POPUP_ITEM } from './styles'
@@ -29,6 +29,11 @@ export interface AsyncComboboxProps<T extends string> extends FieldControlProps 
   errorMessage?: string
   disabled?: boolean
   className?: string
+  /**
+   * Pinned under the results (and under "no results"), for the one action that belongs to this search — "create what I
+   * just typed". `close` dismisses the list; the footer runs its own action.
+   */
+  footer?: (context: { query: string; close: () => void }) => ReactNode
 }
 
 /**
@@ -50,6 +55,7 @@ export function AsyncCombobox<T extends string>({
   errorMessage,
   disabled,
   className,
+  footer,
   id,
   ...aria
 }: AsyncComboboxProps<T>) {
@@ -60,6 +66,7 @@ export function AsyncCombobox<T extends string>({
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SelectOption<T>[]>([])
   const [fetchStatus, setFetchStatus] = useState<Status>('idle')
+  const [open, setOpen] = useState(false)
 
   const trimmed = query.trim()
   // Selecting an item rewrites the input to its label; that is not a search.
@@ -113,6 +120,8 @@ export function AsyncCombobox<T extends string>({
       // hide hits the server matched on a field the label doesn't show.
       filter={null}
       disabled={disabled}
+      open={open}
+      onOpenChange={setOpen}
     >
       <Combobox.InputGroup className={cn(CONTROL_SHELL, className)}>
         <Combobox.Input
@@ -169,6 +178,12 @@ export function AsyncCombobox<T extends string>({
                 </Combobox.Item>
               )}
             </Combobox.List>
+            {footer && (
+              // A mouse-down on the footer must not move focus out of the input, or the list would close before the click lands.
+              <div className="border-t" onMouseDown={(event) => event.preventDefault()}>
+                {footer({ query: trimmed === value?.label ? '' : trimmed, close: () => setOpen(false) })}
+              </div>
+            )}
           </Combobox.Popup>
         </Combobox.Positioner>
       </Combobox.Portal>

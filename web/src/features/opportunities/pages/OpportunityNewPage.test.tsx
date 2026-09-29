@@ -47,7 +47,7 @@ const render = () =>
   )
 
 describe('opportunity create — validation', () => {
-  it('follows the tenant-configured wizard flow (customer, amount, review) without changing the create command contract', async () => {
+  it('follows the tenant-configured wizard flow (customer, then amount) without changing the create command contract', async () => {
     const recorder = recordRequests()
     server.use(
       http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(settingsWith({ opportunityCreationMode: 'Wizard' }))),
@@ -63,12 +63,7 @@ describe('opportunity create — validation', () => {
     expect(screen.queryByRole('combobox', { name: partyLabel() })).not.toBeInTheDocument()
     fireEvent.change(await screen.findByRole('combobox', { name: t('form.currency.label') }), { target: { value: 'EUR' } })
     fireEvent.change(screen.getByRole('textbox', { name: t('form.estimatedAmount.label') }), { target: { value: '125' } })
-    fireEvent.click(screen.getByRole('button', { name: t('form.next') }))
-
-    // Review: nothing is sent until the last step, and it shows what will be sent.
-    expect(await screen.findByText(t('form.review.title'))).toBeInTheDocument()
-    expect(screen.getByText(/Acme Ltd/)).toBeInTheDocument()
-    expect(screen.getByText(/125/)).toBeInTheDocument()
+    // Nothing is sent until the last step is confirmed.
     expect(recorder.commands()).toHaveLength(0)
     fireEvent.click(screen.getByRole('button', { name: t('form.submit') }))
     await screen.findByTestId('detail-page')
@@ -484,7 +479,7 @@ describe('opportunity create — what the settings decide', () => {
 })
 
 describe('opportunity create — new customer and lines', () => {
-  it('adds a customer that was not in the list and selects it, without leaving or submitting the opportunity', async () => {
+  it('offers to create the typed customer right under the search, prefilled, and selects the new one', async () => {
     const recorder = recordRequests()
     server.use(
       http.post(url(endpoints.references.parties), async ({ request }) => {
@@ -498,9 +493,12 @@ describe('opportunity create — new customer and lines', () => {
     )
     render()
 
-    fireEvent.click(await screen.findByRole('button', { name: t('form.newPartyAction') }))
+    await typeInCombobox(partyLabel(), 'Yeni AŞ')
+    expect(await screen.findByText(t('picker.empty'))).toBeInTheDocument()
+    fireEvent.click(await screen.findByRole('button', { name: t('form.partyId.createNamed', { query: 'Yeni AŞ' }) }))
+
     const dialog = await screen.findByRole('dialog')
-    fireEvent.change(within(dialog).getByRole('textbox', { name: t('newParty.name.organization') }), { target: { value: 'Yeni AŞ' } })
+    expect(within(dialog).getByRole('textbox', { name: t('newParty.name.organization') })).toHaveValue('Yeni AŞ')
     fireEvent.change(within(dialog).getByRole('textbox', { name: t('newParty.email.label') }), { target: { value: 'info@yeni.example' } })
     fireEvent.click(within(dialog).getByRole('button', { name: t('newParty.submit') }))
 
@@ -509,6 +507,53 @@ describe('opportunity create — new customer and lines', () => {
     expect(recorder.commands()[0].path).toBe('/api/crm/references/parties')
     expect(recorder.commands()[0].body).toEqual({ partyType: 'Organization', name: 'Yeni AŞ', surname: null, phone: null, email: 'info@yeni.example' })
     expect(screen.getByRole('combobox', { name: partyLabel() })).toHaveValue('Yeni AŞ')
+    expect(within(screen.getByTestId('selected-party')).getByText('#2001')).toBeInTheDocument()
+  })
+
+  it('sorts a typed phone number or e-mail into the right field of the new customer', async () => {
+    render()
+
+    await typeInCombobox(partyLabel(), '+90 555 000 11 22')
+    fireEvent.click(await screen.findByRole('button', { name: t('form.partyId.createNamed', { query: '+90 555 000 11 22' }) }))
+    const dialog = await screen.findByRole('dialog')
+
+    expect(within(dialog).getByRole('textbox', { name: t('newParty.name.organization') })).toHaveValue('')
+    expect(within(dialog).getByRole('textbox', { name: t('newParty.phone.label') })).toHaveValue('+90 555 000 11 22')
+  })
+
+  it('still offers to create when the search does find customers', async () => {
+    render()
+
+    await typeInCombobox(partyLabel(), 'Acme')
+    expect(await screen.findByRole('option', { name: /Acme Ltd/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: t('form.partyId.createNamed', { query: 'Acme' }) })).toBeInTheDocument()
+  })
+
+  it('shows the name with the customer number, phone and e-mail in each result, and again once chosen', async () => {
+    render()
+
+    await typeInCombobox(partyLabel(), 'Acme')
+    const option = await screen.findByRole('option', { name: /Acme Ltd/ })
+    expect(option).toHaveTextContent('#1001')
+    expect(option).toHaveTextContent('+90 532 111 22 33')
+    expect(option).toHaveTextContent('ops@acme.example')
+    fireEvent.click(option)
+
+    const card = await screen.findByTestId('selected-party')
+    expect(card).toHaveTextContent('Acme Ltd')
+    expect(card).toHaveTextContent('#1001')
+    expect(card).toHaveTextContent('+90 532 111 22 33')
+    expect(card).toHaveTextContent('ops@acme.example')
+  })
+
+  it('sends what was typed to the server, so a phone number or customer number is searched there', async () => {
+    const recorder = recordRequests()
+    mockParties(undefined, recorder)
+    render()
+
+    await typeInCombobox(partyLabel(), '532111')
+    await screen.findByRole('button', { name: t('form.partyId.createNamed', { query: '532111' }) })
+    await waitFor(() => expect(new URLSearchParams(recorder.seen.at(-1)?.search).get('search')).toBe('532111'))
   })
 
   it('asks for a name and a valid e-mail before adding a customer', async () => {
@@ -519,8 +564,10 @@ describe('opportunity create — new customer and lines', () => {
     }))
     render()
 
-    fireEvent.click(await screen.findByRole('button', { name: t('form.newPartyAction') }))
+    await typeInCombobox(partyLabel(), 'x')
+    fireEvent.click(await screen.findByRole('button', { name: t('form.partyId.createNamed', { query: 'x' }) }))
     const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByRole('textbox', { name: t('newParty.name.organization') }), { target: { value: '' } })
     fireEvent.change(within(dialog).getByRole('textbox', { name: t('newParty.email.label') }), { target: { value: 'not-an-email' } })
     fireEvent.click(within(dialog).getByRole('button', { name: t('newParty.submit') }))
 

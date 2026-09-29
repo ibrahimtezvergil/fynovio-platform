@@ -30,8 +30,8 @@ public sealed class SearchPartyReferencesHandlerTests
         }
     }
 
-    private static PartyDirectoryEntry Entry(long id, string name, string? surname = null, string? email = null, PartyType type = PartyType.Organization) =>
-        new(new PartyRef(Tenant, id), type, name, surname, email);
+    private static PartyDirectoryEntry Entry(long id, string name, string? surname = null, string? email = null, PartyType type = PartyType.Organization, string? phone = null) =>
+        new(new PartyRef(Tenant, id), type, name, surname, email, phone);
 
     private static SearchPartyReferencesQuery Query(string? search = null, IReadOnlyCollection<long>? ids = null, int take = 10) =>
         new(Tenant, TestData.Seller, search, ids, take, Guid.NewGuid());
@@ -47,6 +47,17 @@ public sealed class SearchPartyReferencesHandlerTests
         Assert.Equal([new PartyReferenceDto(1, "Organization", "Acme", "a@acme.test"), new PartyReferenceDto(2, "Person", "Ada Lovelace", null)], result);
         Assert.Equal(("a", 5), Assert.Single(parties.Searches));
         Assert.Empty(parties.Lookups);
+    }
+
+    [Fact]
+    public async Task Search_carries_the_phone_so_the_picker_can_show_it()
+    {
+        var parties = new FakeParties(Entry(1, "Acme", phone: "+90 532 111 22 33"));
+        var handler = new SearchPartyReferencesHandler(StubAuthorizer.AlwaysAllow, parties, parties);
+
+        var result = await handler.HandleAsync(Query("acme"));
+
+        Assert.Equal("+90 532 111 22 33", Assert.Single(result).Phone);
     }
 
     [Fact]

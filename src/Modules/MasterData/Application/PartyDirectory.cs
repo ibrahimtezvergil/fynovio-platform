@@ -8,6 +8,8 @@ public sealed class PartyDirectory : IPartyDirectory, IPartySearch
 {
     public const int MaxSearchTake = 50;
     private const int MaxQueryLength = 100;
+    private const int MaxNumberDigits = 18;
+    private const int MinPhoneDigits = 3;
 
     private readonly MasterDataDbContext _context;
 
@@ -40,19 +42,29 @@ public sealed class PartyDirectory : IPartyDirectory, IPartySearch
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var pattern = "%" + EscapeLike(query.Trim()) + "%";
+                var trimmedQuery = query.Trim();
+                var pattern = "%" + EscapeLike(trimmedQuery) + "%";
+                // The customer number is the party id: an all-digit query also finds that exact party.
+                long? number = trimmedQuery.Length <= MaxNumberDigits && trimmedQuery.All(char.IsAsciiDigit) && long.TryParse(trimmedQuery, out var parsed) ? parsed : null;
+                // A phone is compared on its digits only, so spaces, dashes, brackets and a leading + never decide a match.
+                var digits = new string(trimmedQuery.Where(char.IsAsciiDigit).ToArray());
+                var digitPattern = digits.Length >= MinPhoneDigits ? "%" + digits + "%" : null;
                 parties = parties.Where(p =>
                     EF.Functions.ILike(p.Name, pattern, "\\")
                     || (p.Surname != null && EF.Functions.ILike(p.Surname, pattern, "\\"))
                     || EF.Functions.ILike(p.Name + " " + (p.Surname ?? ""), pattern, "\\")
-                    || (p.Email != null && EF.Functions.ILike(p.Email, pattern, "\\")));
+                    || (p.Email != null && EF.Functions.ILike(p.Email, pattern, "\\"))
+                    || (number != null && p.Id == number)
+                    || (p.Phone != null && EF.Functions.ILike(p.Phone, pattern, "\\"))
+                    || (digitPattern != null && p.Phone != null && EF.Functions.ILike(
+                        p.Phone.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Replace("+", "").Replace(".", ""), digitPattern)));
             }
 
             var rows = await parties
                 .OrderBy(p => p.Name).ThenBy(p => p.Surname).ThenBy(p => p.Id)
                 .Take(Math.Clamp(take, 1, MaxSearchTake))
                 .ToListAsync(cancellationToken);
-            return rows.Select(p => new PartyDirectoryEntry(new PartyRef(tenantId, p.Id), p.PartyType, p.Name, p.Surname, p.Email)).ToList();
+            return rows.Select(p => new PartyDirectoryEntry(new PartyRef(tenantId, p.Id), p.PartyType, p.Name, p.Surname, p.Email, p.Phone)).ToList();
         }, cancellationToken);
 
     private async Task<IReadOnlyDictionary<PartyRef, PartyDirectoryEntry>> ResolveAsync(
@@ -88,7 +100,7 @@ public sealed class PartyDirectory : IPartyDirectory, IPartySearch
                 : party;
             if (resolved is null) continue;
 
-            result[requested] = new PartyDirectoryEntry(requested, resolved.PartyType, resolved.Name, resolved.Surname, resolved.Email);
+            result[requested] = new PartyDirectoryEntry(requested, resolved.PartyType, resolved.Name, resolved.Surname, resolved.Email, resolved.Phone);
         }
 
         return result;

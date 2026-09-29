@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { AsyncCombobox } from '@/components/common/inputs/AsyncCombobox'
 import type { FieldControlProps, SelectOption } from '@/components/common/inputs/types'
 import type { ApiError } from '@/types'
@@ -14,6 +14,7 @@ interface ReferenceSearchFieldProps extends FieldControlProps {
   /** Shown instead of `errorMessage` when the server answers 403 — the field fails closed, it never offers a manual fallback. */
   forbiddenMessage: string
   disabled?: boolean
+  footer?: (context: { query: string; close: () => void }) => ReactNode
 }
 
 /**

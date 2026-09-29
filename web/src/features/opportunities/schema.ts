@@ -117,6 +117,7 @@ export const partyReferenceSchema = z.object({
   partyType: z.string(),
   displayName: z.string(),
   email: z.string().nullish(),
+  phone: z.string().nullish(),
 })
 export type PartyReference = z.infer<typeof partyReferenceSchema>
 
