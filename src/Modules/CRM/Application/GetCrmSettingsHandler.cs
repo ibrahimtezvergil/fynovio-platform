@@ -19,7 +19,7 @@ public sealed class GetCrmSettingsHandler(CrmDbContext context, IAuthorizer auth
         var pipelines = definitions.Select(definition => new PipelineDefinitionDto(definition.Id, definition.Name, definition.RowVersion, definition.IsActive, definition.IsArchived,
             versions.Where(version => version.PipelineDefinitionId == definition.Id).OrderByDescending(version => version.VersionNumber).Select(version => new PipelineVersionDto(
                 version.Id, version.VersionNumber, version.Status.ToString(), version.EnforceAllowedTransitions, version.PublishedAt,
-                stageRows.Where(stage => stage.PipelineDefinitionVersionId == version.Id).Select(stage => new PipelineStageDto(stage.Id, stage.Name, stage.SortOrder, stage.IsActive, stage.IsEntry, stage.IsArchived)).ToList(),
+                stageRows.Where(stage => stage.PipelineDefinitionVersionId == version.Id).Select(stage => new PipelineStageDto(stage.Id, stage.Name, stage.SortOrder, stage.IsActive, stage.IsEntry, stage.IsArchived, stage.Kind)).ToList(),
                 transitionRows.Where(edge => edge.PipelineDefinitionVersionId == version.Id).Select(edge => new PipelineTransitionDto(edge.FromStageId, edge.ToStageId)).ToList())).ToList())).ToList();
         var types = await context.OpportunityTypes.AsNoTracking().Where(x => x.TenantId == query.TenantId).OrderBy(x => x.Name).ToListAsync(cancellationToken);
         var reasons = await context.LostReasons.AsNoTracking().Where(x => x.TenantId == query.TenantId).OrderBy(x => x.Name).ToListAsync(cancellationToken);

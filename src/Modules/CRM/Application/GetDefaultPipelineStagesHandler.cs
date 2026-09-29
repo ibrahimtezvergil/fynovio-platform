@@ -34,7 +34,7 @@ public sealed class GetDefaultPipelineStagesHandler(CrmDbContext context, IAutho
         IReadOnlyList<PipelineStageDto> stages = versionId is null ? [] : await context.PipelineStages.AsNoTracking()
             .Where(x => x.TenantId == query.TenantId && x.PipelineDefinitionVersionId == versionId && !x.IsArchived)
             .OrderBy(x => x.SortOrder)
-            .Select(x => new PipelineStageDto(x.Id, x.Name, x.SortOrder, x.IsActive, x.IsEntry, x.IsArchived))
+            .Select(x => new PipelineStageDto(x.Id, x.Name, x.SortOrder, x.IsActive, x.IsEntry, x.IsArchived, x.Kind))
             .ToListAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return stages;
