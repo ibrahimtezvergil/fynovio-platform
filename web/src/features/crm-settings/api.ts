@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 import { parseApiResponse } from '@/api/response'
@@ -23,26 +24,29 @@ export function useUpdateCrmSettings() {
 }
 
 export function useCreatePipelineDraft() {
+  const { t } = useTranslation('opportunities')
   const tenantId = useSessionStore((state) => state.activeTenantId)
   return useAppMutation({ name: 'crmSettings.pipelineDraft', mutationFn: async (payload: Record<string, unknown> & { idempotencyKey: string }) => {
     const { idempotencyKey, ...body } = payload
     const { data } = await apiClient.post(endpoints.crmSettings.pipelineDrafts, body, { headers: { 'Idempotency-Key': idempotencyKey } })
     return data as { pipelineDefinitionId: number; versionId: number; versionNumber: number; rowVersion: number; replayed: boolean }
-  }, invalidateKeys: () => [key(tenantId)] })
+  }, successToast: () => ({ title: t('settings.draftSaved') }), invalidateKeys: () => [key(tenantId)] })
 }
 export function usePublishPipelineVersion() {
+  const { t } = useTranslation('opportunities')
   const tenantId = useSessionStore((state) => state.activeTenantId)
   return useAppMutation({ name: 'crmSettings.pipelinePublish', mutationFn: async ({ pipelineId, versionId, expectedPipelineRowVersion, idempotencyKey }: { pipelineId: number; versionId: number; expectedPipelineRowVersion: number; idempotencyKey: string }) => {
     const { data } = await apiClient.post(endpoints.crmSettings.pipelinePublish(pipelineId, versionId), { expectedPipelineRowVersion }, { headers: { 'Idempotency-Key': idempotencyKey } })
     return data
-  }, invalidateKeys: () => [key(tenantId), ['crm-pipeline-stages', tenantId, 'default']] })
+  }, successToast: () => ({ title: t('settings.published') }), invalidateKeys: () => [key(tenantId), ['crm-pipeline-stages', tenantId, 'default']] })
 }
 export function useDiscardPipelineDraft() {
+  const { t } = useTranslation('opportunities')
   const tenantId = useSessionStore((state) => state.activeTenantId)
   return useAppMutation({ name: 'crmSettings.pipelineDiscard', mutationFn: async ({ pipelineId, versionId, idempotencyKey }: { pipelineId: number; versionId: number; idempotencyKey: string }) => {
     const { data } = await apiClient.post(endpoints.crmSettings.pipelineDiscard(pipelineId, versionId), null, { headers: { 'Idempotency-Key': idempotencyKey } })
     return data
-  }, invalidateKeys: () => [key(tenantId), ['crm-pipeline-stages', tenantId, 'default']] })
+  }, successToast: () => ({ title: t('settings.versionStrip.discarded') }), invalidateKeys: () => [key(tenantId), ['crm-pipeline-stages', tenantId, 'default']] })
 }
 export function useSetPipelineLifecycle() {
   const tenantId = useSessionStore((state) => state.activeTenantId)
