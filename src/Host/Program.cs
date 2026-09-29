@@ -258,6 +258,7 @@ builder.Services.AddScoped<EnsureTenantAdministratorActionsHandler>();
 builder.Services.AddScoped<UpdateCrmSettingsHandler>();
 builder.Services.AddScoped<CreatePipelineDraftHandler>();
 builder.Services.AddScoped<PublishPipelineVersionHandler>();
+builder.Services.AddScoped<DiscardPipelineDraftHandler>();
 builder.Services.AddScoped<ValidatePipelineDraftHandler>();
 builder.Services.AddScoped<SetPipelineLifecycleHandler>();
 builder.Services.AddScoped<ManageCrmCatalogHandler>();

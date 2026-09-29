@@ -55,6 +55,14 @@ public static class CrmSettingsEndpoints
             return Results.Ok(await handler.HandleAsync(new PublishPipelineVersionCommand(actor.TenantId, actor.Principal, pipelineId,
                 versionId, request.ExpectedPipelineRowVersion, RequiredKey(idempotencyKey), actor.CorrelationId), cancellationToken));
         });
+        group.MapPost("/pipelines/{pipelineId:long}/versions/{versionId:long}/discard", async (long pipelineId, long versionId,
+            [FromHeader(Name = "Idempotency-Key")] string idempotencyKey, HttpContext httpContext,
+            DiscardPipelineDraftHandler handler, CancellationToken cancellationToken) =>
+        {
+            var actor = httpContext.GetActorContext();
+            return Results.Ok(await handler.HandleAsync(new DiscardPipelineDraftCommand(actor.TenantId, actor.Principal, pipelineId,
+                versionId, RequiredKey(idempotencyKey), actor.CorrelationId), cancellationToken));
+        });
         group.MapPut("/pipelines/{pipelineId:long}/lifecycle", async (long pipelineId, SetPipelineLifecycleRequest request,
             [FromHeader(Name = "Idempotency-Key")] string idempotencyKey, HttpContext httpContext,
             SetPipelineLifecycleHandler handler, CancellationToken cancellationToken) =>
