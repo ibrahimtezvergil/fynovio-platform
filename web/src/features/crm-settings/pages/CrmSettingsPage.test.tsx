@@ -116,7 +116,7 @@ describe('CrmSettingsPage', () => {
       { id: 32, name: 'Won', sortOrder: 11, isActive: true, isEntry: false, isArchived: false, kind: 1 },
       { id: 33, name: 'Lost', sortOrder: 21, isActive: true, isEntry: false, isArchived: false, kind: 2 },
     ] }] }] }
-    const t = (key: string) => tr(key, undefined, 'opportunities')
+    const t = (key: string, options?: Record<string, unknown>) => tr(key, options, 'opportunities')
     const open = async () => {
       server.use(http.get(url(endpoints.crmSettings.root), () => HttpResponse.json(withSystemStages)))
       renderSettings('/crm/settings/pipelines')
@@ -145,7 +145,7 @@ describe('CrmSettingsPage', () => {
 
       fireEvent.change(await screen.findByLabelText(t('settings.systemStage.won')), { target: { value: 'Kazanıldı' } })
       fireEvent.change(screen.getByLabelText(t('settings.systemStage.lost')), { target: { value: 'Kaybedildi' } })
-      fireEvent.click(screen.getByRole('button', { name: t('settings.addStage') }))
+      fireEvent.click(screen.getByRole('button', { name: t('settings.insertBelow', { position: 1 }) }))
       fireEvent.change(screen.getByLabelText(`${t('settings.stage')} 2`), { target: { value: 'Teklif' } })
       fireEvent.click(screen.getByRole('button', { name: t('settings.saveDraft') }))
 
@@ -160,7 +160,7 @@ describe('CrmSettingsPage', () => {
 
     it('removes an ordinary stage from the draft, and keeps the last one', async () => {
       await open()
-      fireEvent.click(await screen.findByRole('button', { name: t('settings.addStage') }))
+      fireEvent.click(await screen.findByRole('button', { name: t('settings.insertBelow', { position: 1 }) }))
       fireEvent.change(screen.getByLabelText(`${t('settings.stage')} 2`), { target: { value: 'Extra' } })
 
       fireEvent.click(screen.getAllByRole('button', { name: t('settings.removeStage') })[1])
@@ -256,7 +256,7 @@ describe('CrmSettingsPage', () => {
 
     it('archives a stage in the draft and brings it back', async () => {
       await open(withDraft)
-      fireEvent.click(await screen.findByRole('button', { name: t('settings.addStage') }))
+      fireEvent.click(await screen.findByRole('button', { name: t('settings.insertBelow', { position: 1 }) }))
       fireEvent.change(screen.getByLabelText(`${t('settings.stage')} 2`), { target: { value: 'Extra' } })
 
       fireEvent.click(screen.getAllByRole('button', { name: t('settings.archiveStage') })[1])
@@ -268,7 +268,7 @@ describe('CrmSettingsPage', () => {
 
     it('adds a stage right below the row whose + was pressed and puts the cursor in it', async () => {
       await open(withDraft)
-      fireEvent.click(await screen.findByRole('button', { name: t('settings.addStage') }))
+      fireEvent.click(await screen.findByRole('button', { name: t('settings.insertBelow', { position: 1 }) }))
       fireEvent.change(screen.getByLabelText(`${t('settings.stage')} 2`), { target: { value: 'Last' } })
 
       fireEvent.click(screen.getByRole('button', { name: t('settings.insertBelow', { position: 1 }) }))
@@ -299,7 +299,7 @@ describe('CrmSettingsPage', () => {
 
     it('lays the allowed transitions out as one from/to grid over the ordinary stages only', async () => {
       await open(withDraft)
-      fireEvent.click(await screen.findByRole('button', { name: t('settings.addStage') }))
+      fireEvent.click(await screen.findByRole('button', { name: t('settings.insertBelow', { position: 1 }) }))
       fireEvent.change(screen.getByLabelText(`${t('settings.stage')} 2`), { target: { value: 'Proposal' } })
       fireEvent.click(screen.getByRole('checkbox', { name: t('settings.enforceTransitions') }))
 

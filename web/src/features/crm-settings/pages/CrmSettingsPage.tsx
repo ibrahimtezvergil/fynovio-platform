@@ -321,7 +321,7 @@ export default function CrmSettingsPage() {
               onToggleArchive={() => setStages((all) => all.map((item, i) => i === index ? (item.isArchived ? { ...item, isArchived: false, isActive: true } : { ...item, isArchived: true, isActive: false, isEntry: false }) : item))}
               onInsertBelow={() => { setStages((all) => [...all.slice(0, index + 1), { name: '', sortOrder: 0, isEntry: false, isActive: true, kind: 'Open' }, ...all.slice(index + 1)]); setFocusStageIndex(index + 1) }}
               onRemove={() => setStages((all) => { const kept = all.filter((_, i) => i !== index); const firstOpen = kept.findIndex((item) => item.kind === 'Open'); return kept.some((item) => item.kind === 'Open' && item.isEntry) ? kept : kept.map((item, i) => i === firstOpen ? { ...item, isEntry: true, isActive: true, isArchived: false } : item) })} />)}</div>
-        <div className="flex flex-wrap items-center gap-3"><Button type="button" variant="outline" size="sm" onClick={() => { setStages((all) => [...all.filter((item) => item.kind === 'Open'), { name: '', sortOrder: openStageCount + 1, isEntry: false, isActive: true, kind: 'Open' }, ...all.filter((item) => item.kind !== 'Open')]); setFocusStageIndex(openStageCount) }}>{t('settings.addStage')}</Button>
+        <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-sm"><Checkbox checked={enforceTransitions} onChange={(event) => setEnforceTransitions(event.currentTarget.checked)} />{t('settings.enforceTransitions')}</label></div>
         {enforceTransitions && <TransitionMatrix stages={openStages} value={transitions} onChange={(key, allowed) => setTransitions((all) => ({ ...all, [key]: allowed }))} />}
       </fieldset></form>
