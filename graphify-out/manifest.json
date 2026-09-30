@@ -9006,9 +9006,9 @@
     "semantic_hash": ""
   },
   "docs/plans/ai-business-os/2026-09-30-tier1-custom-fields-plan.md": {
-    "mtime": 1790774425.267573,
-    "seen": 1790774802.052138,
-    "ast_hash": "110577d866f0935c6333a5c3d67b6f54",
+    "mtime": 1790774868.0224833,
+    "seen": 1790774877.0987241,
+    "ast_hash": "4c39bdaa5e7b077e493f43b2062dcab1",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Persistence/Migrations/20260930132713_ExpandTenantFieldDefinitions.Designer.cs": {

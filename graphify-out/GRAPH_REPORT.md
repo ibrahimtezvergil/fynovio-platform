@@ -1,7 +1,7 @@
 # Graph Report - fynovio-platform  (2026-09-30)
 
 ## Corpus Check
-- 1480 files · ~749,761 words
+- 1480 files · ~749,802 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `01017086`
+- Built from commit: `36c47e25`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -479,16 +479,16 @@
 10. `TenantId` - 94 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Harness` --references--> `CrmDbContext`  [EXTRACTED]
-  tests/CRM.Tests/LinkTargets/CrmLinkTargetResolverTests.cs → src/Modules/CRM/Persistence/CrmDbContext.cs
 - `Harness` --references--> `MasterDataDbContext`  [EXTRACTED]
   tests/CRM.Tests/LinkTargets/CrmLinkTargetResolverTests.cs → src/Modules/MasterData/Persistence/MasterDataDbContext.cs
+- `StubAuthorizer` --references--> `AuthorizationDenialStage`  [EXTRACTED]
+  tests/Collaboration.Tests/StubAuthorizer.cs → src/Contracts/AuthorizationDenialStage.cs
+- `StubAuthorizer` --references--> `AuthorizationDenialStage`  [EXTRACTED]
+  tests/CRM.Tests/StubAuthorizer.cs → src/Contracts/AuthorizationDenialStage.cs
 - `Harness` --references--> `AccessAuthorizer`  [EXTRACTED]
   tests/CRM.Tests/LinkTargets/CrmLinkTargetResolverTests.cs → src/Modules/Access/Application/AccessAuthorizer.cs
-- `CollaborationProblemDetailsExceptionHandlerTests` --references--> `CrmProblemDetailsExceptionHandler`  [EXTRACTED]
-  tests/Host.Tests/CollaborationProblemDetailsExceptionHandlerTests.cs → src/Host/Endpoints/CrmProblemDetailsExceptionHandler.cs
-- `CalendarEntryCreationTests` --references--> `PrincipalRef`  [EXTRACTED]
-  tests/Collaboration.Tests/Domain/CalendarEntryTests.cs → src/Contracts/PrincipalRef.cs
+- `OpportunityEndpointsTests` --references--> `Program`  [EXTRACTED]
+  tests/Host.Tests/OpportunityEndpointsTests.cs → src/Host/Program.cs
 
 ## Import Cycles
 - None detected.
@@ -2104,22 +2104,22 @@ Cohesion: 0.67
 Nodes (3): DevSeedOptions, Enabled, Password
 
 ## Knowledge Gaps
-- **2561 isolated node(s):** `CustomerNeeds`, `CrmSettings`, `OpportunityTypes`, `LostReasons`, `Opportunities` (+2556 more)
+- **2561 isolated node(s):** `Implementation choices made while planning (within the ADR)`, `Task 1 — Domain: definition model and value validator`, `Task 2 — Persistence: configuration, migration, schema doc`, `Task 3 — Application: definitions and opportunity values`, `Task 4 — Host: endpoints and error mapping` (+2556 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 4149 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **48 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Contracts` connect `Contracts` to `OpportunityLine`, `PrincipalRef`, `.CreateAdminContext`, `.OwnedBy_scope_returns_only_that_principals_opportunities`, `TenantMembership`, `PartyRelationship`, `ActorContext`, `IEntityTypeConfiguration`, `ModuleCapabilityManifest`, `LinkTargetDirectory`, `TenantLifecycle.Application`, `AuthEventWriter`, `.RunAsync`, `AccessAuthorizer`, `.HandleAsync`, `Collaboration.Application`, `OutboxMessage`, `MasterData.Application`, `.HandleAsync`, `.Grant`, `.HandleAsync`, `AuthorizedPrincipalDirectory`, `OpportunityAuthorizationDeniedException`, `.EnsureSeededAsync`, `IdempotencyRecord`, `OpportunityPipelineFieldsTests`, `.HandleAsync`, `OutboxMessage`, `EnableTenantModuleHandler`, `IAuthorizedPrincipalDirectory`, `.CreateAsync`, `CrmSettings`, `.HandleAsync`, `.HandleAsync`, `.GrantAsync`, `.LoginAsync`, `Host.Authentication`, `EvidenceRecord`, `.Valid`, `.HandleAsync`, `RowVersionInterceptor`, `.HandleAsync`, `TenantProfile`, `InvitationDeliveryService`, `.HandleAsync`, `.Create`, `OpportunityStageHistoryEntry`, `EvidenceRecord`, `TenantModuleEnablement`, `.HandleAsync`, `OpportunityType`, `Access.Persistence`, `OutboxMessage`, `SelectTenantCommand.cs`, `InvitationDelivery`, `PipelineDefinition`, `TenantId`, `InvalidOperationException`, `OpportunityStatus`, `WinOpportunityHandler`, `AuthSession`, `ILinkTargetDirectory`, `ModuleCapabilityCatalog`, `PartyExternalIdentity`, `Access.Tests.Domain`, `.ProvisionAsync`, `CrmDbContext`, `EntityRef`, `CreateInvitationCommand.cs`, `IdempotencyRecord`, `CalendarEntryImmutabilityTests`, `.SetTenantContextAsync`, `PipelineVersionStatus`, `RefreshSessionResult`, `PipelineStageKind`, `AuthorizationEffect`, `PermissionSet`?**
-  _High betweenness centrality (0.089) - this node is a cross-community bridge._
 - **Why does `PrincipalRef` connect `PrincipalRef` to `.GetAsync`, `.Create`, `AuthorizedPrincipalDirectory`, `CalendarEntry`, `EvidenceRecord`, `OpportunityAuthorizationDeniedException`, `.HandleAsync`, `.ReadEntryAsync`, `.MapCalendarEndpoints`, `.CreateAdminContext`, `.EnsureSeededAsync`, `IdempotencyRecord`, `.OwnedBy_scope_returns_only_that_principals_opportunities`, `.HandleAsync`, `.NewEmail`, `CalendarEntryImmutabilityTests`, `EnableTenantModuleHandler`, `IAuthorizedPrincipalDirectory`, `.HandleAsync`, `RefreshSessionResult`, `.CreateAsync`, `CollaborationDbContext`, `CrmSettings`, `CalendarEntryTextAndPrecisionTests`, `.InvokeAsync`, `.HandleAsync`, `.HandleAsync`, `SelectTenantCommand.cs`, `CreatePartyHandler`, `OpportunityStateMachineTests`, `.GrantAsync`, `.ListAsync`, `.MapCompanySettingsEndpoints`, `.LoginAsync`, `EvidenceRecord`, `TestTimeProvider`, `TenantId`, `InvalidOperationException`, `.HandleAsync`, `ActorContext`, `IdempotencyRecord`, `IEntityTypeConfiguration`, `.BackfillWonLostStagesAsync`, `WinOpportunityHandler`, `.CreateAdminContext`, `OpportunityEndpointsTests`, `AuthSession`, `.CreateAdminContext`, `.HandleAsync`, `EvidenceRecord`, `.HandleAsync`, `.Create`, `.CreateAsync`, `IClassFixture`, `.AddAsync`, `AuthorizedPrincipalDirectoryTests`, `AuthEventWriter`, `.HandleAsync`, `CrmDbContext`, `.HandleAsync`, `EntityRef`, `.RunAsync`, `.HandleAsync`, `.GivenGrantAsync`, `.NewEmail`, `.HandleAsync`, `.RunAsync`, `UpdateCompanySettingsCommand`, `.RuntimeContextAsync`, `.HandleAsync`?**
-  _High betweenness centrality (0.066) - this node is a cross-community bridge._
+  _High betweenness centrality (0.081) - this node is a cross-community bridge._
+- **Why does `Contracts` connect `Contracts` to `OpportunityLine`, `PrincipalRef`, `.CreateAdminContext`, `.OwnedBy_scope_returns_only_that_principals_opportunities`, `TenantMembership`, `PartyRelationship`, `ActorContext`, `IEntityTypeConfiguration`, `ModuleCapabilityManifest`, `LinkTargetDirectory`, `TenantLifecycle.Application`, `AuthEventWriter`, `.RunAsync`, `AccessAuthorizer`, `.HandleAsync`, `Collaboration.Application`, `OutboxMessage`, `MasterData.Application`, `.HandleAsync`, `.Grant`, `.HandleAsync`, `AuthorizedPrincipalDirectory`, `OpportunityAuthorizationDeniedException`, `.EnsureSeededAsync`, `IdempotencyRecord`, `OpportunityPipelineFieldsTests`, `.HandleAsync`, `OutboxMessage`, `EnableTenantModuleHandler`, `IAuthorizedPrincipalDirectory`, `.CreateAsync`, `CrmSettings`, `.HandleAsync`, `.HandleAsync`, `.GrantAsync`, `.LoginAsync`, `Host.Authentication`, `EvidenceRecord`, `.Valid`, `.HandleAsync`, `RowVersionInterceptor`, `.HandleAsync`, `TenantProfile`, `InvitationDeliveryService`, `.HandleAsync`, `.Create`, `OpportunityStageHistoryEntry`, `EvidenceRecord`, `TenantModuleEnablement`, `.HandleAsync`, `OpportunityType`, `Access.Persistence`, `OutboxMessage`, `SelectTenantCommand.cs`, `InvitationDelivery`, `PipelineDefinition`, `TenantId`, `InvalidOperationException`, `OpportunityStatus`, `WinOpportunityHandler`, `AuthSession`, `ILinkTargetDirectory`, `ModuleCapabilityCatalog`, `PartyExternalIdentity`, `Access.Tests.Domain`, `.ProvisionAsync`, `CrmDbContext`, `EntityRef`, `CreateInvitationCommand.cs`, `IdempotencyRecord`, `CalendarEntryImmutabilityTests`, `.SetTenantContextAsync`, `PipelineVersionStatus`, `RefreshSessionResult`, `PipelineStageKind`, `AuthorizationEffect`, `PermissionSet`?**
+  _High betweenness centrality (0.079) - this node is a cross-community bridge._
 - **Why does `AccessDbContext` connect `AccessDbContext` to `AuthorizedPrincipalDirectory`, `EvidenceRecord`, `TenantModuleEnablement`, `.HandleAsync`, `.EnsureSeededAsync`, `Access.Persistence`, `EnableTenantModuleHandler`, `OutboxMessage`, `.HandleAsync`, `.SetTenantContextAsync`, `.CreateAsync`, `AccountTokenPersistenceTests`, `.HandleAsync`, `PermissionSet`, `.GrantAsync`, `TenantMembership`, `.LoginAsync`, `InvitationDelivery`, `AccountToken`, `AuthApiFixture`, `AuthEvent`, `.HandleAsync`, `ActorContext`, `Task`, `IEntityTypeConfiguration`, `.CreateAdminContext`, `OpportunityEndpointsTests`, `AuthSession`, `.Refresh_token_reuse_is_counted_once_per_detection`, `ModuleCapabilityCatalog`, `.AddAsync`, `AuthorizedPrincipalDirectoryTests`, `.ProvisionAsync`, `InvitationDeliveryService`, `AuthEventWriter`, `.Grant`, `.RunAsync`, `AccessAuthorizer`, `.HandleAsync`, `TenantLifecycleDbContext`, `.GivenGrantAsync`, `IdempotencyRecord`, `.NewEmail`, `.RunAsync`, `PostgresFixture`, `.RuntimeContextAsync`?**
-  _High betweenness centrality (0.045) - this node is a cross-community bridge._
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
 - **Are the 43 inferred relationships involving `PrincipalRef` (e.g. with `.InvokeAsync()` and `.BackfillWonLostStagesAsync()`) actually correct?**
   _`PrincipalRef` has 43 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `CustomerNeeds`, `CrmSettings`, `OpportunityTypes` to the rest of the system?**
+- **What connects `Implementation choices made while planning (within the ADR)`, `Task 1 — Domain: definition model and value validator`, `Task 2 — Persistence: configuration, migration, schema doc` to the rest of the system?**
   _2561 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Opportunity` be split into smaller, more focused modules?**
   _Cohesion score 0.06028368794326241 - nodes in this community are weakly interconnected._
