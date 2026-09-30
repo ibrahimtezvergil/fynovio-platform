@@ -129,9 +129,10 @@ public sealed class CustomFieldsEndpointTests : IClassFixture<AuthApiFixture>
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         var problem = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("custom_field_invalid", problem.GetProperty("type").GetString());
-        var errors = problem.GetProperty("errors").EnumerateArray().Select(e => (e.GetProperty("field").GetString(), e.GetProperty("code").GetString())).ToArray();
-        Assert.Contains((key, "out_of_range"), errors);
-        Assert.Contains(("ghost_field", "unknown_field"), errors);
+        var codes = problem.GetProperty("codes");
+        Assert.Equal("out_of_range", codes.GetProperty(key)[0].GetString());
+        Assert.Equal("unknown_field", codes.GetProperty("ghost_field")[0].GetString());
+        Assert.False(string.IsNullOrEmpty(problem.GetProperty("errors").GetProperty(key)[0].GetString()));
     }
 
     [Fact]

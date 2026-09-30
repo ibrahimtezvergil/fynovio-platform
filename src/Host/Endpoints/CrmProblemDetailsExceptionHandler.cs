@@ -15,14 +15,20 @@ public sealed class CrmProblemDetailsExceptionHandler : IExceptionHandler
     {
         if (exception is CustomFieldValidationException invalid)
         {
-            // Per-field errors so the form can place each message next to its input.
+            // Per-field errors in the shared 422 shape (`errors`: field -> messages) so the form places each next to its
+            // input; `codes` (field -> machine codes) lets the client word them in the user's language.
+            var byField = invalid.Errors.GroupBy(e => e.Field, StringComparer.Ordinal);
             httpContext.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
             await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
             {
                 Status = StatusCodes.Status422UnprocessableEntity,
                 Type = "custom_field_invalid",
                 Title = "One or more custom field values are invalid.",
-                Extensions = { ["errors"] = invalid.Errors.Select(e => new { field = e.Field, code = e.Code, message = e.Message }).ToArray() }
+                Extensions =
+                {
+                    ["errors"] = byField.ToDictionary(g => g.Key, g => g.Select(e => e.Message).ToArray(), StringComparer.Ordinal),
+                    ["codes"] = byField.ToDictionary(g => g.Key, g => g.Select(e => e.Code).ToArray(), StringComparer.Ordinal)
+                }
             }, cancellationToken);
             return true;
         }
