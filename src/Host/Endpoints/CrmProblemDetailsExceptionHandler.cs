@@ -41,7 +41,7 @@ public sealed class CrmProblemDetailsExceptionHandler : IExceptionHandler
             PrincipalNotAssignableException => (StatusCodes.Status422UnprocessableEntity, "principal_not_assignable", exception.Message),
             CrmAssignmentProviderUnavailableException => (StatusCodes.Status422UnprocessableEntity, "assignment_provider_unavailable", exception.Message),
             PartyNotFoundException => (StatusCodes.Status422UnprocessableEntity, "party_not_found", exception.Message),
-            CustomFieldKeyConflictException => (StatusCodes.Status409Conflict, "field_key_conflict", exception.Message),
+            CustomFieldKeyConflictException => (StatusCodes.Status409Conflict, "custom_field_key_conflict", exception.Message),
             CustomFieldLimitExceededException => (StatusCodes.Status422UnprocessableEntity, "field_limit_exceeded", exception.Message),
             ArgumentException => (StatusCodes.Status400BadRequest, "validation_error", exception.Message),
             InvalidOperationException => (StatusCodes.Status409Conflict, "illegal_lifecycle_transition", exception.Message),

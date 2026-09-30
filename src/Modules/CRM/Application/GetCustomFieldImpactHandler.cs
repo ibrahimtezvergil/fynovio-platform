@@ -36,25 +36,10 @@ public sealed class GetCustomFieldImpactHandler(CrmDbContext context, IAuthorize
         return new CustomFieldImpactDto(definition.Id, definition.FieldName, opportunitiesWithValue);
     }
 
-    private async Task<int> CountOpportunitiesWithFieldAsync(TenantId tenantId, string fieldName, CancellationToken cancellationToken)
-    {
-        // Try using EF.Functions.JsonExists if Npgsql supports it
-        // Otherwise fall back to raw SQL with the ? operator
-        try
-        {
-            var count = await context.Opportunities
-                .AsNoTracking()
-                .Where(o => o.TenantId == tenantId && o.CustomFields != null && EF.Functions.JsonExists(o.CustomFields, fieldName))
-                .CountAsync(cancellationToken);
-            return count;
-        }
-        catch
-        {
-            // Fallback to raw SQL using the jsonb ? operator
-            var count = await context.Database
-                .SqlQuery<int>($"SELECT COUNT(*) FROM crm.opportunities WHERE tenant_id = {tenantId.Value} AND custom_fields ? {fieldName}")
-                .FirstOrDefaultAsync(cancellationToken);
-            return count;
-        }
-    }
+    // jsonb key-exists (`custom_fields ? key`); archived opportunities count too, since their values stay readable.
+    private Task<int> CountOpportunitiesWithFieldAsync(TenantId tenantId, string fieldName, CancellationToken cancellationToken) =>
+        context.Opportunities
+            .AsNoTracking()
+            .Where(o => o.TenantId == tenantId && o.CustomFields != null && EF.Functions.JsonExists(o.CustomFields, fieldName))
+            .CountAsync(cancellationToken);
 }

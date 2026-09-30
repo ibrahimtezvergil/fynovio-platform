@@ -329,25 +329,19 @@ public sealed class CustomFieldDefinitionHandlerTests(PostgresFixture fixture)
 
         await using (var context = fixture.CreateAdminContext())
         {
-            // Create opportunities and set custom fields via SQL (CustomFields has private setter)
-            var opp1 = Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "USD", 100m);
-            context.Opportunities.Add(opp1);
-
-            var opp2 = Opportunity.Create(tenant, new PartyRef(tenant, 2), TestData.Seller, "USD", 200m);
-            context.Opportunities.Add(opp2);
-
-            var opp3 = Opportunity.Create(tenant, new PartyRef(tenant, 3), TestData.Seller, "USD", 300m);
-            context.Opportunities.Add(opp3);
-
+            context.Opportunities.AddRange(
+                Opportunity.Create(tenant, new PartyRef(tenant, 1), TestData.Seller, "USD", 100m, customFields: """{"impact_field": "value1"}"""),
+                Opportunity.Create(tenant, new PartyRef(tenant, 2), TestData.Seller, "USD", 200m, customFields: """{"other_field": "value2"}"""),
+                Opportunity.Create(tenant, new PartyRef(tenant, 3), TestData.Seller, "USD", 300m, customFields: """{"impact_field": "value3"}"""));
             await context.SaveChangesAsync();
+        }
 
-            // Update custom_fields via SQL
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"""UPDATE crm.opportunities SET custom_fields = {"{\"impact_field\": \"value1\"}"::jsonb} WHERE tenant_id = {tenant.Value} AND id = {opp1.Id}""");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"""UPDATE crm.opportunities SET custom_fields = {"{\"other_field\": \"value2\"}"::jsonb} WHERE tenant_id = {tenant.Value} AND id = {opp2.Id}""");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"""UPDATE crm.opportunities SET custom_fields = {"{\"impact_field\": \"value3\"}"::jsonb} WHERE tenant_id = {tenant.Value} AND id = {opp3.Id}""");
+        // Another tenant's opportunity holding the same key must not be counted.
+        var otherTenant = TestData.NextTenant();
+        await using (var context = fixture.CreateAdminContext())
+        {
+            context.Opportunities.Add(Opportunity.Create(otherTenant, new PartyRef(otherTenant, 1), TestData.Seller, "USD", 1m, customFields: """{"impact_field": "x"}"""));
+            await context.SaveChangesAsync();
         }
 
         await using (var context = fixture.CreateAdminContext())
@@ -414,8 +408,8 @@ public sealed class CustomFieldDefinitionHandlerTests(PostgresFixture fixture)
         ManageCustomFieldDefinitionResult fieldToReactivate;
         await using (var context = fixture.CreateAdminContext())
         {
-            // Create 100 active fields
-            for (int i = 0; i < 100; i++)
+            // 99 active fields plus the one we deprecate make 100
+            for (int i = 0; i < 99; i++)
             {
                 var cmd = new ManageCustomFieldDefinitionCommand(
                     tenant, Administrator, CustomFieldOperation.Create, null, 0,
@@ -445,7 +439,14 @@ public sealed class CustomFieldDefinitionHandlerTests(PostgresFixture fixture)
                 .HandleAsync(deprecateCmd);
         }
 
-        // Try to reactivate: should fail because we still have 100 active fields
+        // Fill the freed slot so 100 fields are active again
+        await using (var context = fixture.CreateAdminContext())
+            await new ManageCustomFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(new ManageCustomFieldDefinitionCommand(
+                tenant, Administrator, CustomFieldOperation.Create, null, 0,
+                TenantFieldAggregateType.Opportunity, "active_099", "Active 99", TenantFieldValueType.Text,
+                false, null, 0, "active-99", Guid.NewGuid()));
+
+        // Reactivating would make it 101
         await using (var context = fixture.CreateAdminContext())
         {
             var def = await context.TenantFieldDefinitions.SingleAsync(x => x.Id == fieldToReactivate.DefinitionId);

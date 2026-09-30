@@ -67,12 +67,11 @@ public sealed class ManageCustomFieldDefinitionHandler(CrmDbContext context, IAu
         if (prior is not null)
         {
             if (prior.RequestHash != hash) throw new IdempotencyKeyReusedException(operation, command.IdempotencyKey);
-            var payload = JsonSerializer.Deserialize<ManageCustomFieldDefinitionResult>(prior.ResponsePayload)
-                ?? throw new InvalidOperationException("Stored custom field definition response is empty.");
-            return payload;
+            return Replay(prior.ResponsePayload);
         }
 
-        var result = await MutateAsync(command, cancellationToken);
+        var definition = await MutateAsync(command, cancellationToken);
+        var result = new ManageCustomFieldDefinitionResult(definition.Id, definition.RowVersion, false);
 
         var responsePayload = JsonSerializer.Serialize(result);
         context.OutboxMessages.Add(OutboxMessage.Create(
@@ -88,8 +87,8 @@ public sealed class ManageCustomFieldDefinitionHandler(CrmDbContext context, IAu
             JsonSerializer.Serialize(new
             {
                 id = result.DefinitionId,
-                aggregateType = command.AggregateType.ToString(),
-                fieldName = command.FieldName,
+                aggregateType = definition.AggregateType.ToString(),
+                fieldName = definition.FieldName,
                 operation = command.Operation.ToString(),
                 rowVersion = result.RowVersion
             })));
@@ -103,8 +102,8 @@ public sealed class ManageCustomFieldDefinitionHandler(CrmDbContext context, IAu
             $"TenantFieldDefinition.{command.Operation}",
             JsonSerializer.Serialize(new
             {
-                fieldName = command.FieldName,
-                aggregateType = command.AggregateType.ToString(),
+                fieldName = definition.FieldName,
+                aggregateType = definition.AggregateType.ToString(),
                 operation = command.Operation.ToString(),
                 rowVersion = result.RowVersion
             }),
@@ -137,8 +136,7 @@ public sealed class ManageCustomFieldDefinitionHandler(CrmDbContext context, IAu
                 cancellationToken);
             if (winner is null) throw;
             if (winner.RequestHash != hash) throw new IdempotencyKeyReusedException(operation, command.IdempotencyKey);
-            return JsonSerializer.Deserialize<ManageCustomFieldDefinitionResult>(winner.ResponsePayload)
-                ?? throw new InvalidOperationException("Stored custom field definition response is empty.");
+            return Replay(winner.ResponsePayload);
         }
         catch (DbUpdateException exception) when (IsFieldKeyViolation(exception))
         {
@@ -149,7 +147,11 @@ public sealed class ManageCustomFieldDefinitionHandler(CrmDbContext context, IAu
         return result;
     }
 
-    private async Task<ManageCustomFieldDefinitionResult> MutateAsync(ManageCustomFieldDefinitionCommand command, CancellationToken ct)
+    private static ManageCustomFieldDefinitionResult Replay(string responsePayload) =>
+        (JsonSerializer.Deserialize<ManageCustomFieldDefinitionResult>(responsePayload)
+            ?? throw new InvalidOperationException("Stored custom field definition response is empty.")) with { Replayed = true };
+
+    private async Task<TenantFieldDefinition> MutateAsync(ManageCustomFieldDefinitionCommand command, CancellationToken ct)
     {
         TenantFieldDefinition definition;
 
@@ -161,7 +163,7 @@ public sealed class ManageCustomFieldDefinitionHandler(CrmDbContext context, IAu
                         throw new ArgumentException("Definition ID must be null for create operations.");
 
                     var activeCount = await context.TenantFieldDefinitions
-                        .CountAsync(x => x.TenantId == command.TenantId && x.AggregateType == command.AggregateType && x.IsActive, ct);
+                        .CountAsync(x => x.TenantId == command.TenantId && x.AggregateType == command.AggregateType && x.Status == TenantFieldStatus.Active, ct);
 
                     if (activeCount >= MaxActiveFieldsPerAggregateType)
                         throw new CustomFieldLimitExceededException(MaxActiveFieldsPerAggregateType);
@@ -237,7 +239,7 @@ public sealed class ManageCustomFieldDefinitionHandler(CrmDbContext context, IAu
                     CheckVersion(definition.RowVersion, command.ExpectedRowVersion);
 
                     var activeCount = await context.TenantFieldDefinitions
-                        .CountAsync(x => x.TenantId == command.TenantId && x.AggregateType == definition.AggregateType && x.IsActive, ct);
+                        .CountAsync(x => x.TenantId == command.TenantId && x.AggregateType == definition.AggregateType && x.Status == TenantFieldStatus.Active, ct);
 
                     if (activeCount >= MaxActiveFieldsPerAggregateType)
                         throw new CustomFieldLimitExceededException(MaxActiveFieldsPerAggregateType);
@@ -249,7 +251,7 @@ public sealed class ManageCustomFieldDefinitionHandler(CrmDbContext context, IAu
                 throw new ArgumentOutOfRangeException(nameof(command.Operation));
         }
 
-        return new ManageCustomFieldDefinitionResult(definition.Id, definition.RowVersion, false);
+        return definition;
     }
 
     private static void CheckVersion(long actual, long expected)
@@ -269,10 +271,11 @@ public sealed class ManageCustomFieldDefinitionHandler(CrmDbContext context, IAu
         if (command.AggregateType == TenantFieldAggregateType.Party)
             throw new ArgumentException("Party field definitions are not supported in this release.", nameof(command.AggregateType));
 
+        if (string.IsNullOrWhiteSpace(command.IdempotencyKey) || command.IdempotencyKey.Length > 200)
+            throw new ArgumentException("An idempotency key is required.");
+
         if (command.Operation == CustomFieldOperation.Create)
         {
-            if (string.IsNullOrWhiteSpace(command.IdempotencyKey) || command.IdempotencyKey.Length > 200)
-                throw new ArgumentException("An idempotency key is required.");
             if (!Enum.IsDefined(command.FieldType))
                 throw new ArgumentException("Unknown field type.", nameof(command.FieldType));
         }
