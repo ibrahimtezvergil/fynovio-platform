@@ -1,12 +1,12 @@
 # ADR: Tier-1 custom field data shape (Opportunity)
 
-**Status:** Proposed — awaiting owner approval. Closes the open follow-up in doc 15 §7 ("detailed data shape for tier 1 … needs a short ADR once the CRM module gets its first real fields").
+**Status:** Accepted — 2026-09-30 by the platform owner (K2, adopted as written). It closes the open follow-up in doc 15 §7 ("detailed data shape for tier 1 … needs a short ADR once the CRM module gets its first real fields").
 **Date:** 2026-09-30
 **Related:** `2026-09-30-architecture-reconciliation.md` §F, §G, §N; doc 15 §3, §6, §7; `docs/schema/crm-sales-schema.md` (tier-1 section).
 
 ## Precondition
 
-Doc 15's header still calls itself a "proposed decision awaiting the same approval gate" (15:3), while `tenant_field_definitions` and `opportunities.custom_fields` already exist in the schema and the code. This ADR assumes tier 1 is accepted. The owner confirms that in the same approval.
+**Resolved (K1, 2026-09-30):** the owner accepted doc 15 tier 1, tier 2 and the direction of §6 (network scope and field locking). Acceptance does not mean implementation: only this tier-1 slice is implemented now.
 
 ## Context
 
@@ -34,7 +34,7 @@ What exists today [V]:
 9. **Authorization:**
    - Managing definitions uses the existing `crm.settings.update`.
    - Reading definitions uses `crm.settings.read`, which is already in the read set, so every CRM reader can render the form.
-   - Writing values uses a new action `crm.opportunity.update_custom_fields` in the write set. This is a template content change. The rule says bump to v3, but because there is no reconciler, already-enabled dev tenants would not receive the new action. **The owner picks one:** (a) v3 plus reseeding the dev tenants, or (b) an in-place change to v2, following the recorded `party.create` exception. Recommendation: (a), because the in-place exception was meant as a one-off.
+   - Writing values uses a new action `crm.opportunity.update_custom_fields` in the write set. This is a template content change. **Decided (K3):** the CRM template is bumped to **v3** and the development tenants are reseeded. No new in-place exception is made; the `party.create` exception stays a one-off.
 10. **Party:** the `Party` value of `aggregate_type` stays in the CHECK for now, but the API refuses to create Party definitions until OD-6 is decided (Party lives in MasterData, which has no `custom_fields` column).
 11. **Querying and indexing:** v1 adds no indexes on custom fields. A list filter on a custom field (if added) runs as a `jsonb` predicate. An expression index is added only when a measured slow query justifies it.
 12. **Impact before deprecation:** v1 has no stored views that reference individual fields (the form and list render every active field by `sort_order`), so no dependency edges exist yet. The deprecate dialog shows the **data impact**: the number of opportunities holding a value. `dependency_edges` arrives with the first stored `ViewDefinition`.

@@ -1,6 +1,6 @@
 # AI Business OS — Mimari Uzlaştırma Raporu
 
-**Durum:** ÖNERİ — bağlayıcı değil. Hiçbir kilitli kararı değiştirmez; değiştirilmesi gerekenleri §A2'de owner kararı olarak listeler.
+**Durum:** Rapor (gerekçe dokümanı). §A2'deki OD-1…OD-7 ile ilk dilim onayları 2026-09-30'da owner tarafından karara bağlandı. **Bağlayıcı olan kayıtlar:** `2026-09-30-owner-decisions.md`, `adr-business-os-principles.md`, `adr-tier1-custom-fields.md`, `adr-workflow-runtime.md`. Bu raporla bir karar kaydı çelişirse karar kaydı geçerlidir.
 **Tarih:** 2026-09-30
 **Revizyon:** r2 — GPT'nin r1 değerlendirmesinden sonra §O eklendi (anayasa ilkeleri, Solution Package, Semantic Catalog kapsamı).
 **Girdi:** GPT brief'i (30 madde), önceki Sonnet/Opus değerlendirmeleri, mevcut kod (2026-09-30 itibarıyla), `AGENTS.md`, `docs/schema/*`, harici karar portföyü `../enterprise ve B2B mimari araştırma/docs/architecture-analysis/` (doc 07, 08, 09, 14, 15).
