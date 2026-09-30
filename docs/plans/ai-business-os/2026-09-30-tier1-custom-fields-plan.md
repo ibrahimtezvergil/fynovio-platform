@@ -42,10 +42,13 @@ The ADR leaves these open, so they are decided here:
 - [x] EF configuration: new columns plus CHECKs for key regex, type, status and owner scope. Id preallocation, same as the catalogs.
 - [x] `dotnet ef migrations add` (generated, expand-shaped).
   → Commit: `0101708` "feat(crm): persist expanded tenant field definitions"
-  **Paused here (2026-09-30, owner request).** Still open in this task: `has-pending-model-changes`, schema doc, persistence test.
-- [ ] Schema doc revision, checked line by line.
-- [ ] Integration test: CHECK constraints and RLS under the runtime role.
-- [ ] Commit.
+  `has-pending-model-changes` → "No changes have been made to the model since the last migration." (run with `--startup-project src/Modules/CRM/CRM.csproj --no-build`; Host has no EF Design reference).
+- [x] Schema doc revision, checked line by line.
+  → Commit: `35012ba` "docs(schema): update TENANT_FIELD_DEFINITIONS to revision 11"
+- [x] Integration test: CHECK constraints and RLS under the runtime role.
+  → Commit: `18b86ba` "test(crm): persistence, constraint and RLS coverage for tenant field definitions" (follow-up fix: `a90fed3` "test(crm): assert the specific CHECK constraint name in tenant field tests")
+- [x] Commit.
+  Note: the implementer subagent ran on Haiku, so the trailer on `35012ba`/`18b86ba` reads "Claude Haiku 4.5". Full CRM suite 340/340 passed, re-run by the controller.
 
 ## Task 3 — Application: definitions and opportunity values
 
