@@ -114,5 +114,9 @@ The ADR leaves these open, so they are decided here:
   - `dotnet test` (solution): 1448 of 1449 pass. The one failure, `PartyReferencesEndpointTests.Search_finds_...`, also fails on main: `aaea0fc` added `phone` to the party search response and did not update the test.
   - `npm run check`: 737/737 pass. `npm run build` passes.
   - Not done: a browser/visual check. It needs the dev DB reset (K3) and the owner's running stack.
-- [ ] Independent code review (`requesting-code-review`), with the findings verified.
-- [ ] Final report: changes, architecture delta, test evidence, next-phase decisions.
+- [x] Independent code review (`requesting-code-review`), with the findings verified.
+  Result: the final review of the whole slice returned APPROVED. Of the earlier per-task findings:
+  - Fixed: 3a replay, event keys and the IsActive query.
+  - Refuted: 3a "status must be snake_case" and 3b "archived bypass". Neither holds against the code; the domain already enforced the archived rule.
+- [x] Final report: changes, architecture delta, test evidence, next-phase decisions.
+  → `2026-09-30-tier1-slice-report.md`
