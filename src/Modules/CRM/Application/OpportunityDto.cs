@@ -1,3 +1,5 @@
+using System.Text.Json;
+using CRM.Customization;
 using CRM.Domain;
 
 namespace CRM.Application;
@@ -27,6 +29,9 @@ public sealed record OpportunityDto(
     DateTimeOffset? ArchivedAt,
     IReadOnlyList<OpportunityLineDto> Lines)
 {
+    /// <summary>Stored custom field object, including values of deprecated fields (read-only in the UI).</summary>
+    public JsonElement? CustomFields { get; init; }
+
     public static OpportunityDto From(Opportunity opportunity) => new(
         opportunity.Id,
         opportunity.Status,
@@ -48,5 +53,8 @@ public sealed record OpportunityDto(
         opportunity.RowVersion,
         opportunity.IsArchived,
         opportunity.ArchivedAt,
-        opportunity.Lines.Select(l => new OpportunityLineDto(l.Id, l.Quantity, l.UnitPrice, l.LineTotal, l.IsOptional, l.IsCanceled)).ToList());
+        opportunity.Lines.Select(l => new OpportunityLineDto(l.Id, l.Quantity, l.UnitPrice, l.LineTotal, l.IsOptional, l.IsCanceled)).ToList())
+    {
+        CustomFields = CustomFieldValues.ToElement(opportunity.CustomFields)
+    };
 }

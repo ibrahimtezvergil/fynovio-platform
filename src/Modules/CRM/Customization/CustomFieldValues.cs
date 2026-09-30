@@ -76,15 +76,26 @@ public static partial class CustomFieldValues
         return json;
     }
 
-    /// <summary>Keys whose stored value differs — what the outbox fact reports (never the values themselves).</summary>
+    /// <summary>Keys whose stored value differs — what the outbox fact reports (never the values themselves).
+    /// Compared semantically: jsonb re-formats stored JSON, so raw text differs even when the value does not.</summary>
     public static IReadOnlyList<string> ChangedKeys(string? beforeJson, string? afterJson)
     {
         var before = Parse(beforeJson);
         var after = Parse(afterJson);
         return before.Keys.Union(after.Keys, StringComparer.Ordinal)
-            .Where(key => !before.TryGetValue(key, out var old) || !after.TryGetValue(key, out var current) || old.GetRawText() != current.GetRawText())
+            .Where(key => !before.TryGetValue(key, out var old) || !after.TryGetValue(key, out var current) || !JsonElement.DeepEquals(old, current))
             .Order(StringComparer.Ordinal)
             .ToArray();
+    }
+
+    /// <summary>The stored object as a JSON value for read models; null when nothing is stored.</summary>
+    public static JsonElement? ToElement(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return null;
+
+        using var document = JsonDocument.Parse(json);
+        return document.RootElement.Clone();
     }
 
     public static IReadOnlyDictionary<string, JsonElement> Parse(string? json)
