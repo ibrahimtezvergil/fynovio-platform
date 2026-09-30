@@ -14,7 +14,7 @@ public sealed class BootstrapTenantAccessHandler(AccessDbContext context)
 {
     internal const string TenantAdministratorRoleKey = "tenant_administrator";
     internal const string SupportRoleKey = "support";
-    private const string TenantAdministratorPermissionSetKey = "tenant_administration";
+    internal const string TenantAdministratorPermissionSetKey = "tenant_administration";
     private const string AccessTemplateModuleKey = "access";
     private const int AccessTemplateVersion = 1;
 
@@ -35,16 +35,11 @@ public sealed class BootstrapTenantAccessHandler(AccessDbContext context)
         var permissionSet = PermissionSet.Create(
             command.TenantId, TenantAdministratorPermissionSetKey, "Sistem Yönetimi", PermissionSet.OriginSystemTemplate,
             AccessTemplateModuleKey, AccessTemplateVersion);
-        // The bootstrap administrator is the tenant's break-glass operator. Grant every
-        // active platform action already registered by Host, rather than a partial,
-        // hard-coded Access-only catalog.
-        var actionKeys = await context.Actions
-            .Where(action => !action.IsDeprecated)
-            .OrderBy(action => action.ActionKey)
-            .Select(action => action.ActionKey)
-            .ToListAsync(cancellationToken);
-        foreach (var actionKey in actionKeys)
-            permissionSet.Grant(actionKey);
+        // Access's own vocabulary only. A business module's actions reach the administrator when that module is
+        // enabled for the tenant (EnableTenantModuleHandler) — granting the whole platform registry here would
+        // hand every tenant the actions of modules it was never given.
+        foreach (var descriptor in AccessActionCatalog.All)
+            permissionSet.Grant(descriptor.ActionKey);
         context.PermissionSets.Add(permissionSet);
 
         var role = Role.Create(

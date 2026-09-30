@@ -16,12 +16,12 @@ public sealed record EnsureTenantAdministratorActionsCommand(
     TenantId TenantId, PrincipalRef Principal, IReadOnlyList<string> ActionKeys, Guid CorrelationId);
 
 /// <summary>Adds explicitly selected, newly introduced capabilities to the existing tenant administrator's
-/// bootstrap permission set. This is a narrow compatibility path for tenants bootstrapped before an action
-/// was registered; it never modifies ordinary roles or grants arbitrary caller-selected permissions.</summary>
-public sealed class EnsureTenantAdministratorActionsHandler(AccessDbContext context)
+/// bootstrap permission set. This is a narrow compatibility path for tenants bootstrapped or enabled before an
+/// action was registered; it never modifies ordinary roles, and a requested action is added only when it belongs
+/// to Access or to a module enabled for the tenant (with that module's template relation).</summary>
+public sealed class EnsureTenantAdministratorActionsHandler(AccessDbContext context, ModuleCapabilityCatalog catalog)
 {
     private const string Operation = "EnsureTenantAdministratorActions";
-    private const string TenantAdministratorPermissionSetKey = "tenant_administration";
     private const string EventType = "enterprise.access.tenant_administrator.capabilities_updated.v1";
     private static readonly TimeSpan IdempotencyRetention = TimeSpan.FromDays(7);
 
@@ -54,7 +54,7 @@ public sealed class EnsureTenantAdministratorActionsHandler(AccessDbContext cont
                 && assignment.ValidFrom <= now && (assignment.ValidTo == null || now < assignment.ValidTo)
                 && role.TenantId == command.TenantId && role.Key == BootstrapTenantAccessHandler.TenantAdministratorRoleKey
                 && role.Origin == Role.OriginSystemTemplate
-                && set.TenantId == command.TenantId && set.Key == TenantAdministratorPermissionSetKey
+                && set.TenantId == command.TenantId && set.Key == BootstrapTenantAccessHandler.TenantAdministratorPermissionSetKey
                 && set.Origin == PermissionSet.OriginSystemTemplate
             select set).SingleOrDefaultAsync(cancellationToken);
 
@@ -64,7 +64,16 @@ public sealed class EnsureTenantAdministratorActionsHandler(AccessDbContext cont
             return false;
         }
 
-        var missingActions = actionKeys.Except(permissionSet.Items.Select(item => item.ActionKey), StringComparer.Ordinal).ToArray();
+        var enabledModules = await context.TenantModuleEnablements.AsNoTracking()
+            .Where(enablement => enablement.TenantId == command.TenantId)
+            .Select(enablement => enablement.ModuleKey).ToListAsync(cancellationToken);
+        var entitled = AccessActionCatalog.All.Select(descriptor => (descriptor.ActionKey, Relation: (string?)null))
+            .Concat(enabledModules.Select(catalog.Find).OfType<ModuleCapabilityManifest>().SelectMany(ModuleCapabilityCatalog.AdministratorGrants))
+            .GroupBy(grant => grant.ActionKey, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.Any(grant => grant.Relation is null) ? null : group.First().Relation, StringComparer.Ordinal);
+
+        var missingActions = actionKeys.Where(entitled.ContainsKey)
+            .Except(permissionSet.Items.Select(item => item.ActionKey), StringComparer.Ordinal).ToArray();
         if (missingActions.Length == 0)
         {
             await transaction.CommitAsync(cancellationToken);
@@ -89,7 +98,7 @@ public sealed class EnsureTenantAdministratorActionsHandler(AccessDbContext cont
         }
 
         foreach (var actionKey in missingActions)
-            permissionSet.Grant(actionKey);
+            permissionSet.Grant(actionKey, entitled[actionKey]);
 
         var accessState = await context.TenantAccessStates.SingleAsync(state => state.TenantId == command.TenantId, cancellationToken);
         accessState.BumpRevision();

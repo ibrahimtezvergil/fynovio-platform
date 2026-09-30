@@ -426,6 +426,9 @@ public sealed class GrantRevokeRoleAssignmentHandlerTests : IClassFixture<Postgr
     public async Task Tenant_administrator_can_create_and_edit_a_custom_role_without_changing_template_roles()
     {
         var (tenantId, admin, _, _) = await GivenBootstrappedTenantAsync();
+        await using (var seed = _fixture.CreateAdminContext())
+            await AccessActionCatalogSeeder.EnsureSeededAsync(seed, AccessActionCatalog.All.Concat(
+                new[] { "crm.opportunity.read", "crm.opportunity.list" }.Select(action => new ActionRegistryDescriptor(action, "CRM", "Opportunity"))));
         ManageTenantRoleResult created;
         await using (var context = _fixture.CreateAdminContext())
         {

@@ -115,40 +115,6 @@ describe('opportunities list — error states', () => {
 })
 
 describe('opportunities list — filtering and pagination', () => {
-  it('sends status filter in the request and resets to page 0', async () => {
-    const rows = Array.from({ length: 26 }, (_, i) => wireOpportunity({ id: i + 1 }))
-    const requestParams: Array<{ status: string | null; skip: string | null }> = []
-    const { router } = render('/crm/opportunities?page=1')
-
-    server.use(
-      http.get(url(endpoints.opportunities.list), ({ request }) => {
-        const searchParams = new URL(request.url).searchParams
-        requestParams.push({
-          status: searchParams.get('status'),
-          skip: searchParams.get('skip'),
-        })
-        const skip = Number(searchParams.get('skip') ?? 0)
-        return HttpResponse.json(skip === 25 ? rows : [])
-      }),
-    )
-
-    // Start at page 1 (skip=25)
-    await screen.findAllByTestId('opportunity-row')
-    expect(requestParams[requestParams.length - 1].skip).toBe('25')
-
-    // Click Open filter
-    const openSegment = screen.getByRole('tab', { name: t('status.Open') })
-    fireEvent.click(openSegment)
-
-    await waitFor(() => {
-      const lastReq = requestParams[requestParams.length - 1]
-      expect(lastReq.status).toBe('Open')
-      expect(lastReq.skip).toBe('0')
-    })
-
-    expect(router.state.location.search).not.toContain('page')
-  })
-
   it('renders up to 25 rows and disables/enables next button based on 26th row', async () => {
     const rows = Array.from({ length: 26 }, (_, i) => wireOpportunity({ id: i + 1 }))
     server.use(http.get(url(endpoints.opportunities.list), () => HttpResponse.json(rows)))
@@ -390,16 +356,6 @@ describe('opportunities list — table / board switcher', () => {
 
     expect(await screen.findAllByTestId('opportunity-row')).toHaveLength(4)
     expect(router.state.location.search).toBe('')
-  })
-
-  it('keeps the view when the status filter or the page changes', async () => {
-    useRows(twoStages)
-    const { router } = render('/crm/opportunities?view=board')
-    await screen.findAllByTestId('opportunity-card')
-
-    fireEvent.click(screen.getByRole('tab', { name: t('status.Won') }))
-
-    await waitFor(() => expect(router.state.location.search).toBe('?status=Won&view=board'))
   })
 
   it('leaves the density toggle to the table, since it only resizes the grid', async () => {

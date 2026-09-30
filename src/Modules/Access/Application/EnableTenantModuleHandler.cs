@@ -44,7 +44,14 @@ public sealed class EnableTenantModuleHandler(AccessDbContext context, ModuleCap
 
         var conflict = await FindKeyConflictAsync(command.TenantId, manifest, cancellationToken);
         if (conflict is not null)
+        {
+            // A concurrent enable of this module may have committed between the enablement check and the key check;
+            // its keys are then ours, not a conflict (read committed: this re-read sees that commit).
+            var committed = await FindEnablementAsync(command.TenantId, manifest.ModuleKey, cancellationToken);
+            if (committed is not null)
+                return AlreadyEnabled(manifest, committed);
             return new EnableTenantModuleResult(EnableTenantModuleStatus.TemplateKeyConflict, manifest.ModuleKey, LatestVersion: manifest.Version, Detail: conflict);
+        }
 
         try
         {
@@ -105,6 +112,17 @@ public sealed class EnableTenantModuleHandler(AccessDbContext context, ModuleCap
                 granted++;
             }
         }
+
+        // The tenant administrator role holds the module's full vocabulary through its bootstrap permission set, so
+        // revoking the administrator role also removes these grants (no hidden per-module administrator roles).
+        var administratorSet = await context.PermissionSets.Include(set => set.Items)
+            .SingleOrDefaultAsync(set => set.TenantId == tenantId
+                && set.Key == BootstrapTenantAccessHandler.TenantAdministratorPermissionSetKey
+                && set.Origin == PermissionSet.OriginSystemTemplate, cancellationToken);
+        if (administratorSet is not null)
+            foreach (var (actionKey, relation) in ModuleCapabilityCatalog.AdministratorGrants(manifest)
+                         .Where(grant => administratorSet.Items.All(item => item.ActionKey != grant.ActionKey)))
+                administratorSet.Grant(actionKey, relation);
 
         var enablement = TenantModuleEnablement.Enable(tenantId, manifest.ModuleKey, manifest.Version, now);
         context.TenantModuleEnablements.Add(enablement);

@@ -7,7 +7,8 @@ public sealed class CalendarEntryCreationTests
 {
     private static readonly TenantId Tenant = new(1);
     private static readonly PrincipalRef Owner = new("test-issuer", "test-subject");
-    private static readonly DateTimeOffset UtcNow = DateTimeOffset.UtcNow;
+    // Microsecond-aligned: the entity truncates instants to PostgreSQL's precision (TimestampPrecision).
+    private static readonly DateTimeOffset UtcNow = new(DateTimeOffset.UtcNow.UtcTicks / 10 * 10, TimeSpan.Zero);
 
     [Fact]
     public void Create_sets_row_version_to_1()
@@ -294,7 +295,8 @@ public sealed class CalendarEntryReplaceTests
 {
     private static readonly TenantId Tenant = new(1);
     private static readonly PrincipalRef Owner = new("test-issuer", "test-subject");
-    private static readonly DateTimeOffset UtcNow = DateTimeOffset.UtcNow;
+    // Microsecond-aligned: the entity truncates instants to PostgreSQL's precision (TimestampPrecision).
+    private static readonly DateTimeOffset UtcNow = new(DateTimeOffset.UtcNow.UtcTicks / 10 * 10, TimeSpan.Zero);
 
     [Fact]
     public void Replace_increments_row_version_exactly_once()
@@ -417,7 +419,8 @@ public sealed class CalendarEntryImmutabilityTests
 {
     private static readonly TenantId Tenant = new(1);
     private static readonly PrincipalRef Owner = new("test-issuer", "test-subject");
-    private static readonly DateTimeOffset UtcNow = DateTimeOffset.UtcNow;
+    // Microsecond-aligned: the entity truncates instants to PostgreSQL's precision (TimestampPrecision).
+    private static readonly DateTimeOffset UtcNow = new(DateTimeOffset.UtcNow.UtcTicks / 10 * 10, TimeSpan.Zero);
 
     [Fact]
     public void Owner_issuer_is_immutable()

@@ -129,6 +129,7 @@ public static class DevSeeder
         await SeedCollaborationAsync(scope.ServiceProvider, context, platformIssuer, logger, cancellationToken);
         await SeedTenantProfilesAsync(scope.ServiceProvider, cancellationToken);
         await SeedTenantLifecycleModuleAsync(scope.ServiceProvider, platformIssuer, logger, cancellationToken);
+        await SeedPersonaRolesAsync(context, cancellationToken);
 
         logger.LogInformation("Dev seed applied ({Created} new accounts). Sign-in identities: {Admin}, {Single}, {Viewer}, {SalesRep}, {NoMembership}.",
             seeded, AdminEmail, SingleTenantEmail, ViewerEmail, SalesRepEmail, NoMembershipEmail);
@@ -159,6 +160,28 @@ public static class DevSeeder
 
         foreach (var tenant in new[] { TenantOne, TenantTwo })
             await EnableModuleAsync(enableModule, tenant, CollaborationModuleCapabilities.ModuleKey, "Collaboration", seedOperator, logger, cancellationToken);
+    }
+
+    /// <summary>The viewer and sales representative personas (tenant 1 only — an assignment needs an active membership
+    /// there) get tenant-authored roles built from the module templates' permission sets, as an administrator would
+    /// compose them; both keep a personal calendar. The single-tenant account deliberately stays without grants
+    /// (its purpose is the 403 state).</summary>
+    private static async Task SeedPersonaRolesAsync(AccessDbContext access, CancellationToken cancellationToken)
+    {
+        var adminAccountId = await AccountIdAsync(access, AdminEmail, cancellationToken);
+        var viewerAccountId = await AccountIdAsync(access, ViewerEmail, cancellationToken);
+        var salesRepAccountId = await AccountIdAsync(access, SalesRepEmail, cancellationToken);
+
+        IReadOnlyList<PermissionSetTemplateItem> Items(ModuleCapabilityManifest manifest, params string[] setKeys) =>
+            [.. manifest.PermissionSets.Where(set => setKeys.Length == 0 || setKeys.Contains(set.Key)).SelectMany(set => set.Items)];
+        var calendar = Items(CollaborationModuleCapabilities.Manifest);
+        var read = Items(CrmModuleCapabilities.Manifest, CrmModuleCapabilities.ReadSetKey);
+        var write = Items(CrmModuleCapabilities.Manifest, CrmModuleCapabilities.WriteSetKey);
+
+        await CrmDevSeed.EnsureTenantRoleAsync(access, TenantOne, "dev_crm_viewer", "CRM Viewer",
+            [.. read, .. calendar], viewerAccountId, adminAccountId, cancellationToken);
+        await CrmDevSeed.EnsureTenantRoleAsync(access, TenantOne, "dev_sales_representative", "Sales Representative",
+            [.. read, .. write, .. calendar], salesRepAccountId, adminAccountId, cancellationToken);
     }
 
     private static async Task SeedTenantProfilesAsync(IServiceProvider services, CancellationToken cancellationToken)

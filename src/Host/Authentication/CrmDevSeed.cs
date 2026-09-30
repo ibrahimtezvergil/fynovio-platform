@@ -23,7 +23,7 @@ public static class CrmDevSeed
     public static readonly IReadOnlyList<string> ActiveStageNames = ["Qualification", "Proposal", "Negotiation"];
     public const string RetiredStageName = "Legacy stage";
 
-    /// <summary>Assigns an already-enabled template role to a dev identity. Uses the same `manual` assignment
+    /// <summary>Assigns an existing role to a dev identity. Uses the same `manual` assignment
     /// source and revision bump as `GrantRoleAssignmentHandler`; skipped when the assignment exists.</summary>
     public static async Task EnsureAssignmentAsync(
         AccessDbContext context,
@@ -51,6 +51,41 @@ public static class CrmDevSeed
         state.BumpRevision();
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+    }
+
+    /// <summary>Gives a dev identity a tenant-authored role (origin `tenant`, exactly what an administrator builds in
+    /// the company settings console) carrying `grants`, then assigns it. Module templates ship no roles, so this is how
+    /// the viewer and sales-representative personas get their permissions. Skipped once the role exists.</summary>
+    public static async Task EnsureTenantRoleAsync(
+        AccessDbContext context,
+        TenantId tenantId,
+        string roleKey,
+        string roleName,
+        IReadOnlyList<PermissionSetTemplateItem> grants,
+        long assigneeAccountId,
+        long grantorAccountId,
+        CancellationToken cancellationToken)
+    {
+        await using (var transaction = await context.Database.BeginTransactionAsync(cancellationToken))
+        {
+            await context.SetTenantContextAsync(tenantId, cancellationToken);
+            if (!await context.Roles.AnyAsync(r => r.TenantId == tenantId && r.Key == roleKey, cancellationToken))
+            {
+                var permissionSet = PermissionSet.Create(tenantId, roleKey, roleName);
+                foreach (var grant in grants.DistinctBy(grant => grant.ActionKey))
+                    permissionSet.Grant(grant.ActionKey, grant.Relation);
+                var role = Role.Create(tenantId, roleKey, roleName);
+                context.PermissionSets.Add(permissionSet);
+                context.Roles.Add(role);
+                await context.SaveChangesAsync(cancellationToken);
+                context.RolePermissionSets.Add(RolePermissionSet.Create(tenantId, role.Id, permissionSet.Id));
+                await context.SaveChangesAsync(cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+
+        await EnsureAssignmentAsync(context, tenantId, roleKey, assigneeAccountId, grantorAccountId, cancellationToken);
     }
 
     /// <summary>The pipeline comes from the same handler the `provision-crm-pipeline` operator command uses. The one
