@@ -85,7 +85,11 @@ public sealed class CustomFieldsEndpointTests : IClassFixture<AuthApiFixture>
         var key = UniqueKey("region");
         await DefineAsync(client, admin, new
         {
-            key, label = "Region", type = "select", isRequired = false, sortOrder = 1,
+            key,
+            label = "Region",
+            type = "select",
+            isRequired = false,
+            sortOrder = 1,
             config = new { options = new[] { new { key = "north", label = "North" }, new { key = "south", label = "South" } } }
         });
 

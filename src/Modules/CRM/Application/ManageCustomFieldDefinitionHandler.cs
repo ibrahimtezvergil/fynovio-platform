@@ -149,7 +149,8 @@ public sealed class ManageCustomFieldDefinitionHandler(CrmDbContext context, IAu
 
     private static ManageCustomFieldDefinitionResult Replay(string responsePayload) =>
         (JsonSerializer.Deserialize<ManageCustomFieldDefinitionResult>(responsePayload)
-            ?? throw new InvalidOperationException("Stored custom field definition response is empty.")) with { Replayed = true };
+            ?? throw new InvalidOperationException("Stored custom field definition response is empty.")) with
+        { Replayed = true };
 
     private async Task<TenantFieldDefinition> MutateAsync(ManageCustomFieldDefinitionCommand command, CancellationToken ct)
     {
