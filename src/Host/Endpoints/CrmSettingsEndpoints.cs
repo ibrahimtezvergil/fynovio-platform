@@ -101,7 +101,7 @@ public static class CrmSettingsEndpoints
         {
             var actor = httpContext.GetActorContext();
             var result = await handler.HandleAsync(new ManageCustomFieldDefinitionCommand(actor.TenantId, actor.Principal, CustomFieldOperation.Create,
-                null, 0, TenantFieldAggregateType.Opportunity, request.Key ?? string.Empty, request.Label, TenantFieldValueTypeNames.Parse(request.Type),
+                null, 0, TenantFieldAggregateType.Opportunity, request.Key ?? string.Empty, request.Label, TenantFieldValueTypeNames.Parse(request.Type ?? string.Empty),
                 request.IsRequired, request.Config, request.SortOrder, RequiredKey(idempotencyKey), actor.CorrelationId), cancellationToken);
             return Results.Created($"/crm/settings/custom-fields/{result.DefinitionId}", result);
         });
@@ -161,6 +161,6 @@ public sealed record PublishPipelineRequest(long ExpectedPipelineRowVersion);
 public sealed record SetPipelineLifecycleRequest(long ExpectedRowVersion, bool IsActive, bool Archive, bool Restore = false);
 public sealed record CrmCatalogRequest(long ExpectedVersion, string Name, string? Key, string? Category, decimal AveragePrice, string Status);
 /// <summary>Key and type are read on create only; they are immutable afterwards.</summary>
-public sealed record CustomFieldDefinitionRequest(string? Key, string Label, string Type, bool IsRequired, TenantFieldConfigInput? Config,
+public sealed record CustomFieldDefinitionRequest(string? Key, string Label, string? Type, bool IsRequired, TenantFieldConfigInput? Config,
     int SortOrder, long ExpectedRowVersion = 0);
 public sealed record CustomFieldTransitionRequest(long ExpectedRowVersion);
