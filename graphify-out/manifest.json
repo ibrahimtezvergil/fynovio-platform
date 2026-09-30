@@ -54,9 +54,9 @@
     "semantic_hash": ""
   },
   "src/Host/Program.cs": {
-    "mtime": 1790783775.107026,
-    "seen": 1790784800.62857,
-    "ast_hash": "af3db34c06b1273a580243760770d8a6",
+    "mtime": 1790785398.8823211,
+    "seen": 1790785505.422775,
+    "ast_hash": "26ac14c58ea1c3e207e54c851ffa74fb",
     "semantic_hash": ""
   },
   "src/Host/Properties/launchSettings.json": {
@@ -180,9 +180,9 @@
     "semantic_hash": "7fff8bf3eb2b9e5b04cbe6cb328ceb9d"
   },
   "src/Modules/CRM/Persistence/Configurations/TenantFieldDefinitionConfiguration.cs": {
-    "mtime": 1790774809.0353997,
-    "seen": 1790774811.163685,
-    "ast_hash": "6cdcbaaedddeff932fc1060b6c44da25",
+    "mtime": 1790785547.211616,
+    "seen": 1790785769.617919,
+    "ast_hash": "c09d56c6e8750ac959846c04f3e8e7b1",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Persistence/CrmDbContext.cs": {
@@ -1632,15 +1632,15 @@
     "semantic_hash": ""
   },
   "src/Host/Endpoints/CrmProblemDetailsExceptionHandler.cs": {
-    "mtime": 1790784955.4337025,
-    "seen": 1790785172.24017,
-    "ast_hash": "5e54622e44cdffa411e0878c71e0b263",
+    "mtime": 1790785575.7727935,
+    "seen": 1790785769.617723,
+    "ast_hash": "00449f02cb69baf8fd8ca9bba652dc66",
     "semantic_hash": ""
   },
   "src/Host/Endpoints/OpportunityEndpoints.cs": {
-    "mtime": 1790770413.6118817,
-    "seen": 1790773962.720544,
-    "ast_hash": "3841c9c0f11ed43ec359ec1588e94956",
+    "mtime": 1790785575.7722046,
+    "seen": 1790785769.617725,
+    "ast_hash": "9876cbcb568242581fb1b8aa06fae64c",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/AddOpportunityLineCommand.cs": {
@@ -1710,15 +1710,15 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/CreateOpportunityCommand.cs": {
-    "mtime": 1790238166.3948665,
-    "seen": 1790281032.399339,
-    "ast_hash": "ed64237cfeef3f4b667bb21224c54b33",
+    "mtime": 1790785361.9197485,
+    "seen": 1790785505.422879,
+    "ast_hash": "10f8c34bdfd5bbd8eb8a7409f1c87e64",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/CreateOpportunityHandler.cs": {
-    "mtime": 1790238264.8695972,
-    "seen": 1790281032.399339,
-    "ast_hash": "d04aa9fd1da0ee2e515842d274b22bce",
+    "mtime": 1790785361.9202635,
+    "seen": 1790785505.42288,
+    "ast_hash": "bd975579636f57913210e203e4260d98",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/CreateOpportunityResult.cs": {
@@ -1782,9 +1782,9 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/ListOpportunitiesHandler.cs": {
-    "mtime": 1790286114.7392552,
-    "seen": 1790287712.966719,
-    "ast_hash": "6246f7cc941913b328ad730d94450a33",
+    "mtime": 1790785413.2906632,
+    "seen": 1790785505.422899,
+    "ast_hash": "9db2353a68f5f7f613ba5909c8f01b90",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/ListOpportunitiesQuery.cs": {
@@ -1860,15 +1860,15 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/OpportunityDto.cs": {
-    "mtime": 1790287559.8692443,
-    "seen": 1790287712.966728,
-    "ast_hash": "b4d86de986e0d2b6e356b215de49444c",
+    "mtime": 1790785398.881022,
+    "seen": 1790785505.4229171,
+    "ast_hash": "a6a9f7c49d66f41022699137d76b4b4a",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/OpportunitySummaryDto.cs": {
-    "mtime": 1790286114.7218819,
-    "seen": 1790287712.966731,
-    "ast_hash": "d304866988625ad9961c6d2001b85f8c",
+    "mtime": 1790785398.8814912,
+    "seen": 1790785505.42292,
+    "ast_hash": "402d9d068710efaeb1122f43720e8355",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/PipelineStageDto.cs": {
@@ -8304,9 +8304,9 @@
     "semantic_hash": ""
   },
   "src/Host/Endpoints/CrmSettingsEndpoints.cs": {
-    "mtime": 1790770413.6112387,
-    "seen": 1790773962.720543,
-    "ast_hash": "670235d9c2253f3d004661d5ac1eb390",
+    "mtime": 1790785575.7715502,
+    "seen": 1790785769.617724,
+    "ast_hash": "1b321e294d03932ca9cbb8cbb41e2dbd",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/EnsureTenantAdministratorActionsHandler.cs": {
@@ -8946,9 +8946,9 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Customization/CustomFieldValues.cs": {
-    "mtime": 1790774547.4102454,
-    "seen": 1790774802.051414,
-    "ast_hash": "f5ecb0a2c0f04ef83098695c99439953",
+    "mtime": 1790785351.9339912,
+    "seen": 1790785505.422946,
+    "ast_hash": "7ce2de5215cb95f8a02fb4899aad5b5e",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Customization/TenantFieldAggregateType.cs": {
@@ -9006,9 +9006,9 @@
     "semantic_hash": ""
   },
   "docs/plans/ai-business-os/2026-09-30-tier1-custom-fields-plan.md": {
-    "mtime": 1790783445.023546,
-    "seen": 1790783448.5795891,
-    "ast_hash": "829542040adbe15160b885c94084c723",
+    "mtime": 1790785767.2377741,
+    "seen": 1790785769.618665,
+    "ast_hash": "0cbe173f187891ff11c3205841fc782e",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Persistence/Migrations/20260930132713_ExpandTenantFieldDefinitions.Designer.cs": {
@@ -9036,9 +9036,9 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/ListCustomFieldDefinitionsHandler.cs": {
-    "mtime": 1790783728.789486,
-    "seen": 1790784800.628692,
-    "ast_hash": "445bbf015b4600c5b46ab54de8cfcfdc",
+    "mtime": 1790785547.2120037,
+    "seen": 1790785769.617852,
+    "ast_hash": "3b1326af17a14f28dd17b680c0de8597",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/ManageCustomFieldDefinitionHandler.cs": {
@@ -9051,6 +9051,36 @@
     "mtime": 1790784966.081992,
     "seen": 1790785172.240544,
     "ast_hash": "3c3ba5381c1b62c0eff839bb20b9b2d0",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Application/UpdateOpportunityCustomFieldsCommand.cs": {
+    "mtime": 1790785366.9715664,
+    "seen": 1790785505.4229388,
+    "ast_hash": "16e4b5bec9a8a88a03c6b4975dd76447",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Application/UpdateOpportunityCustomFieldsHandler.cs": {
+    "mtime": 1790785645.1908062,
+    "seen": 1790785769.617884,
+    "ast_hash": "483a0ccca77d521f4e605fea1eba93e1",
+    "semantic_hash": ""
+  },
+  "tests/CRM.Tests/Application/OpportunityCustomFieldsHandlerTests.cs": {
+    "mtime": 1790785470.3391442,
+    "seen": 1790785505.423156,
+    "ast_hash": "94653faf4c62fb8094e4204be3e26b5b",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Customization/TenantFieldValueTypeNames.cs": {
+    "mtime": 1790785541.2929838,
+    "seen": 1790785769.617897,
+    "ast_hash": "d593c252e9d13fd410aa6a119d6d6738",
+    "semantic_hash": ""
+  },
+  "tests/Host.Tests/Authentication/CustomFieldsEndpointTests.cs": {
+    "mtime": 1790785634.5327148,
+    "seen": 1790785769.618135,
+    "ast_hash": "72b82566ce04d1bb1815dbf54f0ff437",
     "semantic_hash": ""
   }
 }
