@@ -61,21 +61,31 @@ The ADR leaves these open, so they are decided here:
   Note: the subagent committed without running the tests, and all 11 failed. Fixed by the controller. Review notes accepted as-is:
   - The 100-active limit is checked in the application only. A concurrent race can reach 101, which is harmless for a product limit, and a CHECK cannot count across rows.
   - `status` stays `Active`/`Deprecated` (the DB values). Only `type` uses snake_case.
-- [ ] `CreateOpportunity`: optional `CustomFields`, validated and included in the request hash.
-- [ ] `UpdateOpportunityCustomFieldsHandler`: `expectedVersion`, idempotent, outbox `enterprise.crmsales.opportunity.custom_fields_changed.v1` (changed keys only).
-- [ ] `OpportunityDto` and `OpportunitySummaryDto` expose `customFields`.
-- [ ] Handler tests: happy path, replay, validation errors, deprecated, archived, denial, concurrency.
-- [ ] Commit.
+- [x] `CreateOpportunity`: optional `CustomFields`, validated and included in the request hash.
+- [x] `UpdateOpportunityCustomFieldsHandler`: `expectedVersion`, idempotent, outbox `enterprise.crmsales.opportunity.custom_fields_changed.v1` (changed keys only).
+- [x] `OpportunityDto` and `OpportunitySummaryDto` expose `customFields`.
+- [x] Handler tests: happy path, replay, validation errors, deprecated, archived, denial, concurrency.
+- [x] Commit.
+  → Commit: `4cff695` "feat(crm): write and expose opportunity custom field values" (follow-up fix: `655de28` "refactor(crm): refuse archived custom field updates up front")
+  Notes on how this step was done:
+  - The controller implemented Task 3b directly, because Task 3a's subagent was unreliable.
+  - A no-op update (no changed keys) keeps the row version and writes no outbox fact.
+  - `ChangedKeys` compares values semantically, because jsonb reformats the JSON it stores.
+  - The create hash appends the custom fields only when they are present, so requests without them keep their pre-existing hash.
 
 ## Task 4 — Host: endpoints and error mapping
 
 **Files:** `src/Host/Endpoints/*`, `tests/Host.Tests/*`
 
-- [ ] `GET/POST/PUT /crm/settings/custom-fields`, `POST .../{id}/deprecate|reactivate`, `GET .../{id}/impact`.
-- [ ] `PUT /opportunities/{id}/custom-fields`; `POST /opportunities` accepts `customFields`.
-- [ ] `422 custom_field_invalid` with per-field errors, and `409 custom_field_key_conflict`.
-- [ ] Host tests (HTTP → handler → DB).
-- [ ] Commit.
+- [x] `GET/POST/PUT /crm/settings/custom-fields`, `POST .../{id}/deprecate|reactivate`, `GET .../{id}/impact`.
+- [x] `PUT /opportunities/{id}/custom-fields`; `POST /opportunities` accepts `customFields`.
+- [x] `422 custom_field_invalid` with per-field errors, and `409 custom_field_key_conflict`.
+- [x] Host tests (HTTP → handler → DB).
+- [x] Commit.
+  → Commit: `6916041` "feat(host): custom field definition and value endpoints"
+  Notes:
+  - The snake_case type-name mapping now lives in one place, `TenantFieldValueTypeNames`, and is used by both EF and the API. `has-pending-model-changes` reports no changes.
+  - Pre-existing and unrelated: `PartyReferencesEndpointTests.Search_finds_...` fails on main, because `aaea0fc` added `phone` to the party search response without updating the test.
 
 ## Task 5 — Web: settings, form, detail, table
 
