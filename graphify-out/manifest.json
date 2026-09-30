@@ -9006,9 +9006,9 @@
     "semantic_hash": ""
   },
   "docs/plans/ai-business-os/2026-09-30-tier1-custom-fields-plan.md": {
-    "mtime": 1790785772.0296533,
-    "seen": 1790785779.2676458,
-    "ast_hash": "d6fc655605d60c41c6b14616ef616753",
+    "mtime": 1790787087.5381424,
+    "seen": 1790787101.521636,
+    "ast_hash": "4205c5ceb64a93db1bdf024658dd4313",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Persistence/Migrations/20260930132713_ExpandTenantFieldDefinitions.Designer.cs": {
@@ -9042,9 +9042,9 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/ManageCustomFieldDefinitionHandler.cs": {
-    "mtime": 1790784949.320706,
-    "seen": 1790785172.2403042,
-    "ast_hash": "1b5909f0b6cf64188b73431ebe1729ce",
+    "mtime": 1790786859.1484072,
+    "seen": 1790787072.1206138,
+    "ast_hash": "f1d0254967e6d80cfe7bd5262bbba468",
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Integration/CustomFieldDefinitionHandlerTests.cs": {
@@ -9078,9 +9078,9 @@
     "semantic_hash": ""
   },
   "tests/Host.Tests/Authentication/CustomFieldsEndpointTests.cs": {
-    "mtime": 1790785841.447663,
-    "seen": 1790785872.469991,
-    "ast_hash": "eda0649359d3fb678d9bf9296c29bb86",
+    "mtime": 1790786859.1502633,
+    "seen": 1790787072.120887,
+    "ast_hash": "3e2d90a90d2383ff50f0c5523123e8a0",
     "semantic_hash": ""
   },
   "web/src/components/custom-fields/CustomFieldInput.tsx": {
