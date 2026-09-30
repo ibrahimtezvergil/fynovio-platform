@@ -54,9 +54,13 @@ The ADR leaves these open, so they are decided here:
 
 **Files:** `src/Modules/CRM/Application/*`, `tests/CRM.Tests/*`
 
-- [ ] `ManageCustomFieldDefinitionHandler`: create, update, deprecate, reactivate. Uses `crm.settings.update`, idempotency, outbox and evidence. Key conflict is `409`; more than 100 active fields is `422`; Party is refused.
-- [ ] `ListCustomFieldDefinitionsHandler` (`crm.settings.read`) and `GetCustomFieldImpactHandler` (`crm.settings.update`).
-- [ ] New action `crm.opportunity.update_custom_fields` (catalog). CRM template **v3** with the action in the write set (K3).
+- [x] `ManageCustomFieldDefinitionHandler`: create, update, deprecate, reactivate. Uses `crm.settings.update`, idempotency, outbox and evidence. Key conflict is `409`; more than 100 active fields is `422`; Party is refused.
+- [x] `ListCustomFieldDefinitionsHandler` (`crm.settings.read`) and `GetCustomFieldImpactHandler` (`crm.settings.update`).
+- [x] New action `crm.opportunity.update_custom_fields` (catalog). CRM template **v3** with the action in the write set (K3).
+  → Commit: `d084527` "feat(crm): manage tenant custom field definitions" (follow-up fix: `b4cb5dc` "fix(crm): custom field definition handler replay, event keys and tests")
+  Note: the subagent committed without running the tests, and all 11 failed. Fixed by the controller. Review notes accepted as-is:
+  - The 100-active limit is checked in the application only. A concurrent race can reach 101, which is harmless for a product limit, and a CHECK cannot count across rows.
+  - `status` stays `Active`/`Deprecated` (the DB values). Only `type` uses snake_case.
 - [ ] `CreateOpportunity`: optional `CustomFields`, validated and included in the request hash.
 - [ ] `UpdateOpportunityCustomFieldsHandler`: `expectedVersion`, idempotent, outbox `enterprise.crmsales.opportunity.custom_fields_changed.v1` (changed keys only).
 - [ ] `OpportunityDto` and `OpportunitySummaryDto` expose `customFields`.
