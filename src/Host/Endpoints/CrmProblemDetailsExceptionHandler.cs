@@ -1,5 +1,6 @@
 using Contracts;
 using CRM.Application;
+using CRM.Customization;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +13,20 @@ public sealed class CrmProblemDetailsExceptionHandler : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
+        if (exception is CustomFieldValidationException invalid)
+        {
+            // Per-field errors so the form can place each message next to its input.
+            httpContext.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+            await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Status = StatusCodes.Status422UnprocessableEntity,
+                Type = "custom_field_invalid",
+                Title = "One or more custom field values are invalid.",
+                Extensions = { ["errors"] = invalid.Errors.Select(e => new { field = e.Field, code = e.Code, message = e.Message }).ToArray() }
+            }, cancellationToken);
+            return true;
+        }
+
         var (status, type, title) = exception switch
         {
             // Record-level denial must be externally indistinguishable from a genuinely

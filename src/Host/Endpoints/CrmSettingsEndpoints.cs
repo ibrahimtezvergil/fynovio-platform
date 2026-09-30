@@ -1,5 +1,6 @@
 using Contracts;
 using CRM.Application;
+using CRM.Customization;
 using CRM.Domain;
 using Host.Authentication;
 using Microsoft.AspNetCore.Mvc;
@@ -87,6 +88,51 @@ public static class CrmSettingsEndpoints
                 request.ExpectedVersion, request.Key ?? string.Empty, request.Name, request.Category, request.AveragePrice,
                 ParseCatalogStatus(request.Status), RequiredKey(idempotencyKey), actor.CorrelationId), cancellationToken));
         });
+
+        var customFields = group.MapGroup("/custom-fields");
+        customFields.MapGet("", async (HttpContext httpContext, ListCustomFieldDefinitionsHandler handler, CancellationToken cancellationToken) =>
+        {
+            var actor = httpContext.GetActorContext();
+            return Results.Ok(await handler.HandleAsync(new ListCustomFieldDefinitionsQuery(actor.TenantId, actor.Principal,
+                TenantFieldAggregateType.Opportunity, actor.CorrelationId), cancellationToken));
+        });
+        customFields.MapPost("", async (CustomFieldDefinitionRequest request, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
+            HttpContext httpContext, ManageCustomFieldDefinitionHandler handler, CancellationToken cancellationToken) =>
+        {
+            var actor = httpContext.GetActorContext();
+            var result = await handler.HandleAsync(new ManageCustomFieldDefinitionCommand(actor.TenantId, actor.Principal, CustomFieldOperation.Create,
+                null, 0, TenantFieldAggregateType.Opportunity, request.Key ?? string.Empty, request.Label, TenantFieldValueTypeNames.Parse(request.Type),
+                request.IsRequired, request.Config, request.SortOrder, RequiredKey(idempotencyKey), actor.CorrelationId), cancellationToken);
+            return Results.Created($"/crm/settings/custom-fields/{result.DefinitionId}", result);
+        });
+        customFields.MapPut("/{id:long}", async (long id, CustomFieldDefinitionRequest request, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
+            HttpContext httpContext, ManageCustomFieldDefinitionHandler handler, CancellationToken cancellationToken) =>
+        {
+            var actor = httpContext.GetActorContext();
+            return Results.Ok(await handler.HandleAsync(new ManageCustomFieldDefinitionCommand(actor.TenantId, actor.Principal, CustomFieldOperation.Update,
+                id, request.ExpectedRowVersion, TenantFieldAggregateType.Opportunity, string.Empty, request.Label, TenantFieldValueType.Text,
+                request.IsRequired, request.Config, request.SortOrder, RequiredKey(idempotencyKey), actor.CorrelationId), cancellationToken));
+        });
+        customFields.MapPost("/{id:long}/deprecate", (long id, CustomFieldTransitionRequest request, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
+            HttpContext httpContext, ManageCustomFieldDefinitionHandler handler, CancellationToken cancellationToken) =>
+                TransitionAsync(CustomFieldOperation.Deprecate, id, request, idempotencyKey, httpContext, handler, cancellationToken));
+        customFields.MapPost("/{id:long}/reactivate", (long id, CustomFieldTransitionRequest request, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
+            HttpContext httpContext, ManageCustomFieldDefinitionHandler handler, CancellationToken cancellationToken) =>
+                TransitionAsync(CustomFieldOperation.Reactivate, id, request, idempotencyKey, httpContext, handler, cancellationToken));
+        customFields.MapGet("/{id:long}/impact", async (long id, HttpContext httpContext, GetCustomFieldImpactHandler handler, CancellationToken cancellationToken) =>
+        {
+            var actor = httpContext.GetActorContext();
+            return Results.Ok(await handler.HandleAsync(new GetCustomFieldImpactQuery(actor.TenantId, actor.Principal, id, actor.CorrelationId), cancellationToken));
+        });
+    }
+
+    private static async Task<IResult> TransitionAsync(CustomFieldOperation operation, long id, CustomFieldTransitionRequest request, string idempotencyKey,
+        HttpContext httpContext, ManageCustomFieldDefinitionHandler handler, CancellationToken cancellationToken)
+    {
+        var actor = httpContext.GetActorContext();
+        return Results.Ok(await handler.HandleAsync(new ManageCustomFieldDefinitionCommand(actor.TenantId, actor.Principal, operation,
+            id, request.ExpectedRowVersion, TenantFieldAggregateType.Opportunity, string.Empty, string.Empty, TenantFieldValueType.Text,
+            false, null, 0, RequiredKey(idempotencyKey), actor.CorrelationId), cancellationToken));
     }
 
     private static string RequiredKey(string key) => string.IsNullOrWhiteSpace(key) ? throw new ArgumentException("Idempotency-Key is required.") : key;
@@ -114,3 +160,7 @@ public sealed record CreatePipelineDraftRequest(long? PipelineDefinitionId, stri
 public sealed record PublishPipelineRequest(long ExpectedPipelineRowVersion);
 public sealed record SetPipelineLifecycleRequest(long ExpectedRowVersion, bool IsActive, bool Archive, bool Restore = false);
 public sealed record CrmCatalogRequest(long ExpectedVersion, string Name, string? Key, string? Category, decimal AveragePrice, string Status);
+/// <summary>Key and type are read on create only; they are immutable afterwards.</summary>
+public sealed record CustomFieldDefinitionRequest(string? Key, string Label, string Type, bool IsRequired, TenantFieldConfigInput? Config,
+    int SortOrder, long ExpectedRowVersion = 0);
+public sealed record CustomFieldTransitionRequest(long ExpectedRowVersion);

@@ -24,7 +24,7 @@ public sealed class TenantFieldDefinitionConfiguration : IEntityTypeConfiguratio
             .IsRequired();
 
         builder.Property(f => f.FieldType)
-            .HasConversion(t => FieldTypeToDb(t), t => FieldTypeFromDb(t))
+            .HasConversion(t => TenantFieldValueTypeNames.ToName(t), t => TenantFieldValueTypeNames.Parse(t))
             .HasMaxLength(16)
             .IsRequired();
 
@@ -55,36 +55,4 @@ public sealed class TenantFieldDefinitionConfiguration : IEntityTypeConfiguratio
         // Unique on (tenant_id, aggregate_type, field_name) — not a generic EAV table set.
         builder.HasIndex(f => new { f.TenantId, f.AggregateType, f.FieldName }).IsUnique();
     }
-
-    private static string FieldTypeToDb(TenantFieldValueType type) => type switch
-    {
-        TenantFieldValueType.Text => "text",
-        TenantFieldValueType.LongText => "long_text",
-        TenantFieldValueType.Number => "number",
-        TenantFieldValueType.Decimal => "decimal",
-        TenantFieldValueType.Boolean => "boolean",
-        TenantFieldValueType.Date => "date",
-        TenantFieldValueType.Select => "select",
-        TenantFieldValueType.MultiSelect => "multi_select",
-        TenantFieldValueType.Email => "email",
-        TenantFieldValueType.Phone => "phone",
-        TenantFieldValueType.Url => "url",
-        _ => throw new ArgumentOutOfRangeException(nameof(type))
-    };
-
-    private static TenantFieldValueType FieldTypeFromDb(string value) => value switch
-    {
-        "text" => TenantFieldValueType.Text,
-        "long_text" => TenantFieldValueType.LongText,
-        "number" => TenantFieldValueType.Number,
-        "decimal" => TenantFieldValueType.Decimal,
-        "boolean" => TenantFieldValueType.Boolean,
-        "date" => TenantFieldValueType.Date,
-        "select" => TenantFieldValueType.Select,
-        "multi_select" => TenantFieldValueType.MultiSelect,
-        "email" => TenantFieldValueType.Email,
-        "phone" => TenantFieldValueType.Phone,
-        "url" => TenantFieldValueType.Url,
-        _ => throw new ArgumentOutOfRangeException(nameof(value))
-    };
 }

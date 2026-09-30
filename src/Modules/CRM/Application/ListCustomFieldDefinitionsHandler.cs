@@ -64,7 +64,7 @@ public sealed class ListCustomFieldDefinitionsHandler(CrmDbContext context, IAut
             definition.Id,
             definition.FieldName,
             definition.Label,
-            GetFieldTypeString(definition.FieldType),
+            TenantFieldValueTypeNames.ToName(definition.FieldType),
             definition.IsRequired,
             new CustomFieldConfigDto(
                 config.Options?.Select(o => new CustomFieldOptionDto(o.Key, o.Label, o.IsDeprecated)).ToList(),
@@ -76,20 +76,4 @@ public sealed class ListCustomFieldDefinitionsHandler(CrmDbContext context, IAut
             definition.SortOrder,
             definition.RowVersion);
     }
-
-    private static string GetFieldTypeString(TenantFieldValueType type) => type switch
-    {
-        TenantFieldValueType.Text => "text",
-        TenantFieldValueType.LongText => "long_text",
-        TenantFieldValueType.Number => "number",
-        TenantFieldValueType.Decimal => "decimal",
-        TenantFieldValueType.Boolean => "boolean",
-        TenantFieldValueType.Date => "date",
-        TenantFieldValueType.Select => "select",
-        TenantFieldValueType.MultiSelect => "multi_select",
-        TenantFieldValueType.Email => "email",
-        TenantFieldValueType.Phone => "phone",
-        TenantFieldValueType.Url => "url",
-        _ => throw new ArgumentOutOfRangeException(nameof(type))
-    };
 }

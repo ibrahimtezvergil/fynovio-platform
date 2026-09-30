@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using Contracts;
 using CRM.Application;
 using Host.Authentication;
@@ -20,7 +21,7 @@ public static class OpportunityEndpoints
             var command = new CreateOpportunityCommand(
                 actor.TenantId, new PartyRef(actor.TenantId, request.PartyId), actor.Principal,
                 request.Currency, request.EstimatedAmount, idempotencyKey, actor.CorrelationId)
-            { CallerPrincipal = actor.Principal };
+            { CallerPrincipal = actor.Principal, CustomFields = request.CustomFields };
             var result = await handler.HandleAsync(command, cancellationToken);
             return Results.Created($"/opportunities/{result.OpportunityId}", result);
         });
@@ -95,6 +96,16 @@ public static class OpportunityEndpoints
             var actor = httpContext.GetActorContext();
             var command = new LoseOpportunityCommand(
                 actor.TenantId, id, actor.Principal, request.ExpectedVersion, request.LostReason, idempotencyKey, actor.CorrelationId);
+            return Results.Ok(await handler.HandleAsync(command, cancellationToken));
+        });
+
+        group.MapPut("/{id:long}/custom-fields", async (
+            long id, UpdateOpportunityCustomFieldsRequest request, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
+            UpdateOpportunityCustomFieldsHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
+        {
+            var actor = httpContext.GetActorContext();
+            var command = new UpdateOpportunityCustomFieldsCommand(
+                actor.TenantId, id, actor.Principal, request.ExpectedVersion, request.CustomFields, idempotencyKey, actor.CorrelationId);
             return Results.Ok(await handler.HandleAsync(command, cancellationToken));
         });
 
@@ -223,7 +234,8 @@ public static class OpportunityEndpoints
     }
 }
 
-public sealed record CreateOpportunityRequest(long PartyId, string Currency, decimal EstimatedAmount);
+public sealed record CreateOpportunityRequest(long PartyId, string Currency, decimal EstimatedAmount, JsonElement? CustomFields = null);
+public sealed record UpdateOpportunityCustomFieldsRequest(long ExpectedVersion, JsonElement? CustomFields);
 
 public sealed record CreatePartyReferenceRequest(string? PartyType, string? Name, string? Surname, string? Phone, string? Email);
 public sealed record AddOpportunityLineRequest(long ExpectedVersion, long ProductId, int Quantity, decimal UnitPrice, bool IsOptional, int SortOrder);
