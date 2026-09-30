@@ -54,9 +54,9 @@
     "semantic_hash": ""
   },
   "src/Host/Program.cs": {
-    "mtime": 1790770412.9761076,
-    "seen": 1790773962.720546,
-    "ast_hash": "20eace317e352d869027838654c3bb91",
+    "mtime": 1790783775.107026,
+    "seen": 1790784800.62857,
+    "ast_hash": "af3db34c06b1273a580243760770d8a6",
     "semantic_hash": ""
   },
   "src/Host/Properties/launchSettings.json": {
@@ -1632,9 +1632,9 @@
     "semantic_hash": ""
   },
   "src/Host/Endpoints/CrmProblemDetailsExceptionHandler.cs": {
-    "mtime": 1790636694.140661,
-    "seen": 1790636876.694704,
-    "ast_hash": "db7d300510794c9b40c9bc90996954a4",
+    "mtime": 1790784955.4337025,
+    "seen": 1790785172.24017,
+    "ast_hash": "5e54622e44cdffa411e0878c71e0b263",
     "semantic_hash": ""
   },
   "src/Host/Endpoints/OpportunityEndpoints.cs": {
@@ -1734,9 +1734,9 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/CrmActionCatalog.cs": {
-    "mtime": 1790279261.7043235,
-    "seen": 1790281032.399343,
-    "ast_hash": "22438340ffde8c4ebc08a97dd3188b2e",
+    "mtime": 1790783744.2867355,
+    "seen": 1790784800.6286778,
+    "ast_hash": "e6ae13a897438be4b10bb507172c0187",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/GetOpportunityAvailableActionsHandler.cs": {
@@ -6684,15 +6684,15 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/CrmActionKeys.cs": {
-    "mtime": 1790279261.6872182,
-    "seen": 1790281032.3993442,
-    "ast_hash": "8556435054cd85a0dfdae98f1c0c53f5",
+    "mtime": 1790783740.302238,
+    "seen": 1790784800.6286778,
+    "ast_hash": "2a7173265451bcfbb74ee6e6ccef4ed9",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/CrmModuleCapabilities.cs": {
-    "mtime": 1790279261.7193456,
-    "seen": 1790281032.399345,
-    "ast_hash": "1eb282db2425bc41e0f83b1a3e20d388",
+    "mtime": 1790783756.9742436,
+    "seen": 1790784800.62868,
+    "ast_hash": "cfb5a33e928df52fc6723e7c3c5ac8a0",
     "semantic_hash": ""
   },
   "tests/Access.Tests/Application/ModuleCapabilityManifestTests.cs": {
@@ -9027,6 +9027,30 @@
     "mtime": 1790783423.5878115,
     "seen": 1790783448.579011,
     "ast_hash": "d141fdcdca272c942546d7424a97f186",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Application/GetCustomFieldImpactHandler.cs": {
+    "mtime": 1790784977.992053,
+    "seen": 1790785172.240291,
+    "ast_hash": "46ceacfdf864624812300da4314a04b5",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Application/ListCustomFieldDefinitionsHandler.cs": {
+    "mtime": 1790783728.789486,
+    "seen": 1790784800.628692,
+    "ast_hash": "445bbf015b4600c5b46ab54de8cfcfdc",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Application/ManageCustomFieldDefinitionHandler.cs": {
+    "mtime": 1790784949.320706,
+    "seen": 1790785172.2403042,
+    "ast_hash": "1b5909f0b6cf64188b73431ebe1729ce",
+    "semantic_hash": ""
+  },
+  "tests/CRM.Tests/Integration/CustomFieldDefinitionHandlerTests.cs": {
+    "mtime": 1790784966.081992,
+    "seen": 1790785172.240544,
+    "ast_hash": "3c3ba5381c1b62c0eff839bb20b9b2d0",
     "semantic_hash": ""
   }
 }
