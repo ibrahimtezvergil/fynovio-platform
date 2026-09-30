@@ -91,15 +91,28 @@ The ADR leaves these open, so they are decided here:
 
 **Files:** `web/src/features/crm-settings/*`, `web/src/features/opportunities/*`, `web/src/api/*`
 
-- [ ] Zod schemas and API client for definitions and custom-field updates.
-- [ ] Settings: custom field list with create/edit dialog, deprecate with an impact dialog, and reactivate.
-- [ ] Metadata-driven `CustomFieldInput` / `CustomFieldValue` renderer shared by form, detail and table.
-- [ ] Create form section, detail section (edit + read-only deprecated values), list columns.
-- [ ] Vitest tests.
-- [ ] Commit.
+- [x] Zod schemas and API client for definitions and custom-field updates.
+- [x] Settings: custom field list with create/edit dialog, deprecate with an impact dialog, and reactivate.
+- [x] Metadata-driven `CustomFieldInput` / `CustomFieldValue` renderer shared by form, detail and table.
+- [x] Create form section, detail section (edit + read-only deprecated values), list columns.
+- [x] Vitest tests.
+- [x] Commit.
+  → Commit: `6177c86` "feat(web): metadata-driven opportunity custom fields" (backend follow-ups: `e104bfb` "fix(host): custom field 422 uses the shared errors map plus codes", `dc54bea` "fix(host): custom field type is read on create only")
+  Deviations from the plan:
+  - **Location.** The shared code lives in `web/src/lib/custom-fields/` and `web/src/components/custom-fields/`, not under `features/`. Features must not import each other (`web/AGENTS.md`), and both crm-settings and opportunities use it.
+  - **Display.** Values are shown through the `formatCustomFieldValue` helper rather than a separate `CustomFieldValue` component.
+  - **Editing.** Edits happen inline in the settings section, like the catalogs, rather than in a dialog.
+  - **422 shape.** The response keeps the shared `errors` shape (field → messages) and adds `codes` (field → machine codes), so the UI can show the Turkish message for each code.
+  - **Test setup.** `src/test/setup.ts` answers the definitions request with `[]` in every test by default. The handler is registered per test rather than in `handlers`, so the dev MSW never answers the real API.
 
 ## Task 6 — Verification and review
 
-- [ ] `dotnet build`, `dotnet format --verify-no-changes`, full `dotnet test`, `npm run lint && npm run type-check && npm test`.
+- [x] `dotnet build`, `dotnet format --verify-no-changes`, full `dotnet test`, `npm run lint && npm run type-check && npm test`.
+  → Commit: `d892d8d` "style: dotnet format on custom field handler and host tests"
+  Results:
+  - `dotnet format --verify-no-changes` exits 0.
+  - `dotnet test` (solution): 1448 of 1449 pass. The one failure, `PartyReferencesEndpointTests.Search_finds_...`, also fails on main: `aaea0fc` added `phone` to the party search response and did not update the test.
+  - `npm run check`: 737/737 pass. `npm run build` passes.
+  - Not done: a browser/visual check. It needs the dev DB reset (K3) and the owner's running stack.
 - [ ] Independent code review (`requesting-code-review`), with the findings verified.
 - [ ] Final report: changes, architecture delta, test evidence, next-phase decisions.
