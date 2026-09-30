@@ -62,6 +62,10 @@ public sealed class UpdateOpportunityCustomFieldsHandler(CrmDbContext context, I
         if (opportunity.RowVersion != command.ExpectedVersion)
             throw new OpportunityConcurrencyConflictException(opportunity.Id, command.ExpectedVersion);
 
+        // Checked up front so an archived record is refused even when the request would change nothing.
+        if (opportunity.IsArchived)
+            throw new InvalidOperationException("Archived opportunities cannot change their custom fields.");
+
         var definitions = await context.TenantFieldDefinitions.AsNoTracking()
             .Where(x => x.TenantId == command.TenantId && x.AggregateType == TenantFieldAggregateType.Opportunity)
             .ToListAsync(cancellationToken);
@@ -76,11 +80,6 @@ public sealed class UpdateOpportunityCustomFieldsHandler(CrmDbContext context, I
             context.OutboxMessages.Add(OutboxMessage.Create(
                 command.TenantId, nameof(Opportunity), opportunity.Id, opportunity.RowVersion,
                 EventType, EventSource, $"opportunities/{opportunity.Id}", command.CorrelationId, null, payloadJson));
-        }
-        else if (opportunity.IsArchived)
-        {
-            // A no-op must not bypass the archived rule either.
-            throw new InvalidOperationException("Archived opportunities cannot change their custom fields.");
         }
 
         context.IdempotencyRecords.Add(IdempotencyRecord.Create(
