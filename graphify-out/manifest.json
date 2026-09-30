@@ -1632,9 +1632,9 @@
     "semantic_hash": ""
   },
   "src/Host/Endpoints/CrmProblemDetailsExceptionHandler.cs": {
-    "mtime": 1790785575.7727935,
-    "seen": 1790785769.617723,
-    "ast_hash": "00449f02cb69baf8fd8ca9bba652dc66",
+    "mtime": 1790785841.4475121,
+    "seen": 1790785872.469589,
+    "ast_hash": "5e8263e519f45893480a579cbb1ef1c5",
     "semantic_hash": ""
   },
   "src/Host/Endpoints/OpportunityEndpoints.cs": {
@@ -2904,15 +2904,15 @@
     "semantic_hash": ""
   },
   "web/src/api/client.ts": {
-    "mtime": 1789913055.7167492,
-    "seen": 1790024389.3293371,
-    "ast_hash": "06d1e2fa795262f6b6eca0a62415db33",
+    "mtime": 1790785847.656359,
+    "seen": 1790785872.470036,
+    "ast_hash": "e91aaee5755dc7380d8ef5907f7ebf60",
     "semantic_hash": ""
   },
   "web/src/api/endpoints.ts": {
-    "mtime": 1790770412.9880939,
-    "seen": 1790773962.7209542,
-    "ast_hash": "7695d279446668b548269032eb9af2e0",
+    "mtime": 1790785933.3438437,
+    "seen": 1790786510.963424,
+    "ast_hash": "7d249c1f0eb5f78e15129bb5f072211b",
     "semantic_hash": ""
   },
   "web/src/api/queryClient.ts": {
@@ -5964,9 +5964,9 @@
     "semantic_hash": ""
   },
   "web/src/test/setup.ts": {
-    "mtime": 1789861433.3089795,
-    "seen": 1790024389.3297348,
-    "ast_hash": "fc5b405ebac2534b1f06caef603c6616",
+    "mtime": 1790786270.2698796,
+    "seen": 1790786510.9638588,
+    "ast_hash": "9980a00172e61a584013180f7e33e1a4",
     "semantic_hash": ""
   },
   "web/src/types/entity.ts": {
@@ -5976,9 +5976,9 @@
     "semantic_hash": ""
   },
   "web/src/types/index.ts": {
-    "mtime": 1789913055.7406704,
-    "seen": 1790024389.329737,
-    "ast_hash": "e411496f2811a2f2fd47f044f919bca5",
+    "mtime": 1790785841.4481583,
+    "seen": 1790785872.470475,
+    "ast_hash": "ad44529d2d5176a3c896e0e44f4f040a",
     "semantic_hash": ""
   },
   "web/src/types/schemas.ts": {
@@ -6348,9 +6348,9 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/api.ts": {
-    "mtime": 1790770412.9954512,
-    "seen": 1790773962.721248,
-    "ast_hash": "27767d7e5801c0aabfeeb77fb5f2a50b",
+    "mtime": 1790786042.1027024,
+    "seen": 1790786510.963702,
+    "ast_hash": "726671e61ccaffefb452034aaab3f5ef",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/ApiModeChip.tsx": {
@@ -6384,9 +6384,9 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/OpportunityForm.tsx": {
-    "mtime": 1790770413.0001094,
-    "seen": 1790773962.721257,
-    "ast_hash": "e9f50beb7ebe5d6872532b6559be01dd",
+    "mtime": 1790786056.4921138,
+    "seen": 1790786510.963711,
+    "ast_hash": "6761da413d92ecfc79619a31ea448ec4",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/OpportunityStatusBadge.tsx": {
@@ -6444,9 +6444,9 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/lib/problem.ts": {
-    "mtime": 1789933845.2765992,
-    "seen": 1790024389.329613,
-    "ast_hash": "1f34d90b6655c0c9c14cb9d9bc669045",
+    "mtime": 1790786042.1032205,
+    "seen": 1790786510.963727,
+    "ast_hash": "8a686e7f3618b80b73486fbb7738006a",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/lib/useKeyedCommand.ts": {
@@ -6462,9 +6462,9 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/pages/OpportunityDetailPage.tsx": {
-    "mtime": 1790770413.007681,
-    "seen": 1790773962.721282,
-    "ast_hash": "20106fcec739675c0d7120467833a0a1",
+    "mtime": 1790786086.0018425,
+    "seen": 1790786510.963735,
+    "ast_hash": "afe4d2cea714e63496242a8d9a6dec3e",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/pages/OpportunityNewPage.test.tsx": {
@@ -6492,9 +6492,9 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/schema.ts": {
-    "mtime": 1790770413.009254,
-    "seen": 1790773962.7212858,
-    "ast_hash": "38f53cae402dbdef3bbda5a6325843ac",
+    "mtime": 1790786042.102299,
+    "seen": 1790786510.9637399,
+    "ast_hash": "0c71cfeb4138fb43740d25c8ab187389",
     "semantic_hash": ""
   },
   "web/src/lib/apiMode.ts": {
@@ -6522,15 +6522,15 @@
     "semantic_hash": ""
   },
   "web/src/locales/en/opportunities.ts": {
-    "mtime": 1790770413.6209805,
-    "seen": 1790773962.721371,
-    "ast_hash": "3d5907ce60f6a3e5f2dd6415f399de69",
+    "mtime": 1790786042.0799205,
+    "seen": 1790786510.9638221,
+    "ast_hash": "d5be8fe7b0f8f91e8b4f410be2ea42f9",
     "semantic_hash": ""
   },
   "web/src/locales/tr/opportunities.ts": {
-    "mtime": 1790770413.621207,
-    "seen": 1790773962.721388,
-    "ast_hash": "f69933233da88667045da2f3264c11b4",
+    "mtime": 1790786042.0791276,
+    "seen": 1790786510.9638379,
+    "ast_hash": "94d6094baf40ebe454f05a83c7ff1261",
     "semantic_hash": ""
   },
   "web/src/test/opportunities.ts": {
@@ -7026,27 +7026,27 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/OpportunitiesGrid.tsx": {
-    "mtime": 1790287233.0669177,
-    "seen": 1790287712.967297,
-    "ast_hash": "a61cc7eed10bf5cc046cdf858742ed03",
+    "mtime": 1790786111.791177,
+    "seen": 1790786510.963711,
+    "ast_hash": "1d985b4f03e3013205a5874bed9374b7",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/opportunitiesTable.tsx": {
-    "mtime": 1790286948.8554015,
-    "seen": 1790287712.967304,
-    "ast_hash": "2ed36d8664397ae9e50753c4cc773316",
+    "mtime": 1790786111.7908847,
+    "seen": 1790786510.963719,
+    "ast_hash": "6c8a7b9ae582b5b0f1397e3514a58d31",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/lib/rows.test.ts": {
-    "mtime": 1790770413.0053425,
-    "seen": 1790773962.7212749,
-    "ast_hash": "ed57e56927de1ab466e0236978a586d2",
+    "mtime": 1790786131.6509843,
+    "seen": 1790786510.963728,
+    "ast_hash": "561ae9f1870604ac5e0e01ec111518b8",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/lib/rows.ts": {
-    "mtime": 1790770413.0055761,
-    "seen": 1790773962.7212749,
-    "ast_hash": "8db5a58632ede6572ecfb57766936990",
+    "mtime": 1790786111.7905223,
+    "seen": 1790786510.963729,
+    "ast_hash": "56ad9dbbd4daad829bc02730e7796615",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/nav.ts": {
@@ -8304,9 +8304,9 @@
     "semantic_hash": ""
   },
   "src/Host/Endpoints/CrmSettingsEndpoints.cs": {
-    "mtime": 1790785575.7715502,
-    "seen": 1790785769.617724,
-    "ast_hash": "1b321e294d03932ca9cbb8cbb41e2dbd",
+    "mtime": 1790785954.4911299,
+    "seen": 1790786510.962969,
+    "ast_hash": "3fe5644a6cdc3a914dcb08e7995afeb6",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/EnsureTenantAdministratorActionsHandler.cs": {
@@ -8568,9 +8568,9 @@
     "semantic_hash": ""
   },
   "web/src/features/crm-settings/pages/CrmSettingsPage.tsx": {
-    "mtime": 1790770412.994248,
-    "seen": 1790773962.721121,
-    "ast_hash": "5a50e8ed94d8ea1168dc727b0e70e0e7",
+    "mtime": 1790786196.2278192,
+    "seen": 1790786510.9635851,
+    "ast_hash": "e6d062881c22dd71b38cd7725aed6885",
     "semantic_hash": ""
   },
   "web/src/features/crm-settings/routes.ts": {
@@ -9006,9 +9006,9 @@
     "semantic_hash": ""
   },
   "docs/plans/ai-business-os/2026-09-30-tier1-custom-fields-plan.md": {
-    "mtime": 1790785767.2377741,
-    "seen": 1790785769.618665,
-    "ast_hash": "0cbe173f187891ff11c3205841fc782e",
+    "mtime": 1790785772.0296533,
+    "seen": 1790785779.2676458,
+    "ast_hash": "d6fc655605d60c41c6b14616ef616753",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Persistence/Migrations/20260930132713_ExpandTenantFieldDefinitions.Designer.cs": {
@@ -9078,9 +9078,75 @@
     "semantic_hash": ""
   },
   "tests/Host.Tests/Authentication/CustomFieldsEndpointTests.cs": {
-    "mtime": 1790785634.5327148,
-    "seen": 1790785769.618135,
-    "ast_hash": "72b82566ce04d1bb1815dbf54f0ff437",
+    "mtime": 1790785841.447663,
+    "seen": 1790785872.469991,
+    "ast_hash": "eda0649359d3fb678d9bf9296c29bb86",
+    "semantic_hash": ""
+  },
+  "web/src/components/custom-fields/CustomFieldInput.tsx": {
+    "mtime": 1790785988.304596,
+    "seen": 1790786510.963506,
+    "ast_hash": "778d020d7769d425886054fe9c043c3d",
+    "semantic_hash": ""
+  },
+  "web/src/features/crm-settings/components/CustomFieldsPanel.tsx": {
+    "mtime": 1790786226.485695,
+    "seen": 1790786510.9635808,
+    "ast_hash": "b14c492b3b097e01bc1ddf159a16d5e6",
+    "semantic_hash": ""
+  },
+  "web/src/features/crm-settings/pages/CustomFieldsSettings.test.tsx": {
+    "mtime": 1790786394.0071828,
+    "seen": 1790786510.9635851,
+    "ast_hash": "0016d21bf64a9a075af93b24aa5ca9c6",
+    "semantic_hash": ""
+  },
+  "web/src/features/opportunities/components/CustomFieldsCard.tsx": {
+    "mtime": 1790786081.3562553,
+    "seen": 1790786510.963706,
+    "ast_hash": "f04433cfb75627052159d45260dd7af1",
+    "semantic_hash": ""
+  },
+  "web/src/features/opportunities/components/opportunitiesTable.test.tsx": {
+    "mtime": 1790786407.621423,
+    "seen": 1790786510.963719,
+    "ast_hash": "9f1b32098e3b21ef2520454730c2aeba",
+    "semantic_hash": ""
+  },
+  "web/src/features/opportunities/pages/OpportunityCustomFields.test.tsx": {
+    "mtime": 1790786371.3083408,
+    "seen": 1790786510.963734,
+    "ast_hash": "e187dfd1a86f25427654add36d8b0b85",
+    "semantic_hash": ""
+  },
+  "web/src/lib/custom-fields/api.ts": {
+    "mtime": 1790785954.4912906,
+    "seen": 1790786510.963785,
+    "ast_hash": "a85afd36b525d13740fe07acd4ec14a0",
+    "semantic_hash": ""
+  },
+  "web/src/lib/custom-fields/errors.ts": {
+    "mtime": 1790785974.5677776,
+    "seen": 1790786510.963786,
+    "ast_hash": "3bd33bacec9bb1dd7df59b24c03938d9",
+    "semantic_hash": ""
+  },
+  "web/src/lib/custom-fields/schema.ts": {
+    "mtime": 1790785911.6767607,
+    "seen": 1790786510.963786,
+    "ast_hash": "fc313bf30bd5cb21f269db9726b12534",
+    "semantic_hash": ""
+  },
+  "web/src/lib/custom-fields/values.test.ts": {
+    "mtime": 1790786321.6322427,
+    "seen": 1790786510.963787,
+    "ast_hash": "7dfd514f514f7082c70141feaa748c4b",
+    "semantic_hash": ""
+  },
+  "web/src/lib/custom-fields/values.ts": {
+    "mtime": 1790786226.4860203,
+    "seen": 1790786510.963787,
+    "ast_hash": "47145801e9d74f48fb8e10ca3d6e326f",
     "semantic_hash": ""
   }
 }
