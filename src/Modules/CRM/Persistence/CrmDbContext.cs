@@ -50,6 +50,8 @@ public sealed class CrmDbContext : DbContext
                 ? Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('crm.lost_reasons', 'id')) AS \"Value\"")
             : typeof(TEntity) == typeof(CustomerNeed)
                 ? Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('crm.customer_needs', 'id')) AS \"Value\"")
+            : typeof(TEntity) == typeof(TenantFieldDefinition)
+                ? Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('crm.tenant_field_definitions', 'id')) AS \"Value\"")
             : throw new ArgumentOutOfRangeException(nameof(TEntity));
 
         return query.SingleAsync(cancellationToken);
