@@ -1,44 +1,45 @@
 # Graph Report - fynovio-platform  (2026-09-30)
 
 ## Corpus Check
-- 1463 files · ~743,434 words
+- 1480 files · ~749,761 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 11048 nodes · 30406 edges · 436 communities (397 shown, 36 thin omitted)
-- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 2613 edges (avg confidence: 0.83)
+- 11264 nodes · 30762 edges · 452 communities (402 shown, 48 thin omitted)
+- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 2619 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `48040f4a`
+- Built from commit: `01017086`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - Opportunity
 - OpportunityLine
-- CustomerNeed
+- PrincipalRef
 - OpportunityMoneyTests
 - TenantFieldDefinition
 - ChartsDemoPage.tsx
 - OutboxMessage
-- .Create
+- calendar/api.ts
 - CRM+Sales pilot schema (PostgreSQL, `crm` schema)
-- CRM.csproj
+- Contracts.csproj
 - CRM Module — Current-State Analysis
 - useSessionStore
 - CRM.Persistence.Migrations
 - http
-- .Create
+- .CreateAdminContext
 - Worker
 - .NET rehberi — Laravel'den gelenler için
 - Organization/Class1.cs
 - ModuleBoundaryTests
-- actions.ts
+- commands/index.ts
 - Running locally: API, web and signing in
 - Pilot Enforcement Implementation Plan
 - .OwnedBy_scope_returns_only_that_principals_opportunities
 - What You Must Do When Invoked
+- i18n.ts
 - fynovio-platform — Engineering Contract
 - CalendarEndpointsTests
 - graphify reference: extra exports and benchmark
@@ -52,23 +53,23 @@
 - graphify reference: transcribe video and audio
 - .claude/CLAUDE.md
 - extraction-spec.md
-- .HandleAsync
-- .MapOpportunityEndpoints
+- url
+- ConversationsButton.tsx
 - OpportunityStateMachineTests
-- .CreateAdminContext
+- CreatePartyHandler
 - Contracts
 - PHASE 2 — CRM Opportunity Commands & API — Planning Document
 - .NewDraftOpportunity
-- sanitizeHtml.ts
+- TenantMembership
 - CRM Target Model — Phase 0 Delta Plan
 - Enterprise Access Foundation — Phase 1.5 Execution Plan
-- LegacyMigrationFixture
+- loaded.tsx
 - Enterprise Access Foundation — Phase 1.5 Adversarial Architecture Review
 - AccessTokenIssuer
 - Design notes
 - Enterprise Access Foundation — Phase 1.5 Round 3 Final Closure
 - MasterData / Party Foundation — Phase 0.5 Execution Plan
-- calendar/api.ts
+- CalendarPage.test.tsx
 - react
 - MasterData / Party Foundation — Design Reference (Phase 0.5)
 - 4. Entegrasyon testleri (`tests/CRM.Tests/Integration/`)
@@ -77,38 +78,38 @@
 - EmailDeliveryTests
 - AdvancedSaasGrid.tsx
 - PartyRelationship
-- Party
-- BackfillMasterDataParties
+- .Create
+- NpgsqlCommand
 - ActorContext
 - Design notes
 - IdempotencyRecord
 - IEntityTypeConfiguration
 - ModuleBoundaryTests
 - .CreateAdminContext
-- NotificationCenter.tsx
+- TablesDemoPage.tsx
 - DropCrmParties
-- loaded.tsx
-- PostgresFixture
-- AuthTestSetup
+- lucide-react
+- .CreateAdminContext
+- .LoadTokenAsync
 - Topbar.tsx
 - .HandleAsync
-- registries.ts
-- CapturingLoggerProvider
+- ModuleCapabilityManifest
+- .StartHostAsync
 - EnableRowLevelSecurity
 - LinkTargetDirectory
 - 3. Integration katmanı — gerçek Postgres (`tests/CRM.Tests/Integration/`)
 - AccessDbContext
 - ARCHITECTURE DELTA — Phase 1.5 Authorization Contract
 - TenantLifecycle.Application
-- OpportunityForm.tsx
+- react-i18next
 - AuthorizedPrincipalDirectoryTests
 - InitialMasterDataSchema
 - Enterprise Access Foundation — Owner Decisions Final Closure
-- TenantId
+- CancellationToken
 - PHASE 2 — CRM Opportunity Commands & API
-- ModuleCapabilityCatalog
-- KanbanColumn.tsx
-- .HandleAsync
+- registries.ts
+- Button
+- StubPrincipalDirectory
 - Enterprise Access Foundation — Phase 1.5 İnceleme (Round 2)
 - 6. Current Repo Deltas
 - CalendarLinkEndpointsTests
@@ -117,48 +118,48 @@
 - 2. Repository Current State (doğrulanmış)
 - 12. Phase 1.5 Real Scope
 - 8. Target Data Model (Phase 1.5 minimum)
-- EvidenceRecord
-- data-table/index.ts
+- MasterDataDbContext
+- paths.ts
 - 10. Query Authorization Strategy
 - CRM Phase 2 — Opportunity Commands & API Implementation Plan
 - .RunAsync
 - CRM Phase 2 — Test Gap Audit
 - 17. Final Recommendation
-- ActionKey
+- AccessAuthorizer
 - .HandleAsync
 - Collaboration.Application
-- AuthorizationDecision
+- OutboxMessage
 - Migration
-- .Invite
-- paths.ts
-- PartySearchTests
+- .GivenGrantAsync
+- index.tsx
+- PostgresFixture
 - OrderExplorer.tsx
 - MasterData.Application
 - .HandleAsync
-- i18n
-- RoleAssignment
-- .RunAsync
-- .NewTenantId
-- OpportunityAuthorizationDeniedException
+- PipelineDefinitionVersionTests
+- .Grant
+- PostgresFixture
+- .NewEmail
+- .HandleAsync
 - CODEX EXECUTION PROMPT — Collaboration / Personal Calendar (real API, `EntityRef` links)
-- RefreshToken
-- .GenerateAndHash
+- AI Business OS — Mimari Uzlaştırma Raporu
+- .WriteAsync
 - PHASE 2 — CRM Opportunity Commands & API — Closure Report
 - .A_late_winner_under_a_different_key_is_still_a_plain_concurrency_conflict
-- .SeedOpenOpportunityWithBillableLineAsync
-- .CreateAdminContext
+- .GetAsync
+- .RunAsync
 - .Create
-- AccountCredential
+- AuthorizedPrincipalDirectory
 - CalendarEntry
-- AuthEndpointsTests
-- OpportunityNotFoundException
+- .NewTenantId
+- OpportunityAuthorizationDeniedException
 - EnableAccessRowLevelSecurity
 - opportunities/api.ts
 - .ReadEntryAsync
 - .MapCalendarEndpoints
 - lib/auth/index.ts
 - .AcceptInvitationAsync
-- OutboxMessage
+- .EnsureSeededAsync
 - CLAUDE PHASE 2 — EXECUTION PROMPT
 - AssignablePrincipalsEndpointTests
 - IdempotencyRecord
@@ -166,43 +167,43 @@
 - PHASE 1.5 RUNTIME RLS PDP DELTA
 - .HandleAsync
 - vitest
-- .RuntimeContextAsync
-- AddPipelineStageActiveAndEntryFlags
+- .NewEmail
+- OutboxMessage
 - EnableTenantModuleHandler
-- react-router-dom
-- CapturingLogger
+- IAuthorizedPrincipalDirectory
+- .HandleAsync
 - ModelSnapshot
 - .CreateAsync
 - CollaborationDbContext
 - CrmSettings
+- AccountTokenPersistenceTests
+- .InvokeAsync
 - .HandleAsync
-- zod
+- Host.Email
 - .HandleAsync
-- DevMailbox
-- PasswordService
 - Phase 2.5B — CRM Opportunity Frontend Integration: Final Report
-- TestTimeProvider
-- Fact
-- LifecycleTestSupport
+- CustomFieldValuesTests
 - .HandleAsync
+- LifecycleTestSupport
+- .GrantAsync
 - Collaboration Calendar — tech debt backlog (post-merge review)
 - .ListAsync
 - CalendarEntryAuthorizationDeniedException
-- .EvaluateAsync
+- .MapCompanySettingsEndpoints
 - RenderedEmail
-- ui.ts
+- account.e2e.ts
 - PipelineDefinitionVersion
 - .LoginAsync
-- Host.Email
+- Host.Authentication
 - handlers/demo-tables.ts
 - .SeedDraftAsync
 - 2. Plan §6 güvenlik tablosu — satır satır kanıt
 - EvidenceRecord
-- .NewEmail
+- TestTimeProvider
 - AccountToken
 - AuthApiFixture
 - InitialTenantLifecycleSchema
-- CompanySettingsEndpoints
+- AuthEvent
 - dependencies
 - .Valid
 - .HandleAsync
@@ -210,25 +211,25 @@
 - Task
 - CRM Won/Lost Pipeline-Stage Integration — Implementation Plan
 - IdentifierRateLimiter
-- AddAccountTokens
+- .BackfillWonLostStagesAsync
 - package.json
-- time.ts
+- client.ts
 - ClientFingerprintTests
 - Phase 2.5B — CRM Opportunity Frontend Integration: Implementation Plan
 - AddModuleEnablement
 - .ValidateRequest
-- PipelineStageTransition
+- .NormalizeValue
 - AuthenticationOptionsValidationTests
-- IdempotencyRecord
-- DashboardLayout.tsx
+- EvidenceRecord
+- RowVersionInterceptor
 - .HandleAsync
 - 3. Need → Decision matrix
 - .Create
 - What You Must Do When Invoked
-- DevSeederTests
+- IClassFixture
 - AddPipelineTables
-- .Normalize
-- ModuleCapabilityManifest
+- .AddAsync
+- TenantFieldDefinitionTests
 - Phase 2.5A — Authentication Frontend: Implementation Plan
 - PartyReferencesEndpointTests
 - AuthenticationHostOptions
@@ -240,23 +241,23 @@
 - compilerOptions
 - InvitationDeliveryService
 - CLAUDE-BOOTSTRAP.md
-- client.ts
+- CalendarPage.tsx
 - opportunities.e2e.ts
 - CalendarEntryConstraintTests
 - .HandleAsync
 - .Create
 - .Create
-- lucide-react
+- types/index.ts
 - Phase 2.6 — CRM Production Readiness & Reference Queries: implementation plan
 - compilerOptions
-- .HandleAsync
+- EmailMessage
 - Phase 2.5A + 2.5B — Post-Implementation Audit Report
 - devDependencies
-- FixOpportunityAssignedPrincipalIndex
+- CRM.Customization
 - Enterprise React Frontend — Ana Katmanlar: Feasibility Assessment
 - test-gitleaks-range.sh
 - rules
-- ConfigureOpportunityCreationSteps
+- PartySearchTests
 - Density
 - 07 · Forms
 - 11 · Accessibility
@@ -264,22 +265,22 @@
 - capabilities/index.ts
 - CompleteCrmConfigurationManagement
 - ModuleBoundaryTests
-- CreatePipelineDraftCommand
+- .RunAsync
 - 05 · Navigation & App Shell
 - Fynovio Design System
 - CODEX-BOOTSTRAP.md
 - The checklist
-- LostReason
-- OutboxMessage
+- TenantFieldConfig
+- OpportunityStageHistoryEntry
 - RenameOpportunityLifecycle
 - 01 · Principles
 - 09 · States & Feedback
 - 04 · Component Standards
 - 06 · Data Grids
 - scripts
-- RefreshSessionResult
-- CRM.Tests.csproj
-- MasterData.Tests.csproj
+- EvidenceRecord
+- TenantModuleEnablement
+- .HandleAsync
 - 10 · Data Visualization
 - mockServiceWorker.js
 - OpportunityType
@@ -327,17 +328,17 @@
 - InvitationDelivery
 - PipelineDefinition
 - NonDisposingScope
-- .GetEntriesAsync
+- TenantId
 - Phase 2.6 — CRM Production Readiness & Reference Queries: Final Report
-- IAsyncLifetime
-- Contracts.csproj
-- fynovio-platform.slnx
+- PostgresFixture
+- data/api.ts
+- InvalidOperationException
 - CRM Opportunity Pipeline — Won/Lost as Pipeline Stages & Cross-Pipeline Move
-- .HandleAsync
-- Grup 2 — Mimari owner kararları (OD-1 … OD-7)
+- DomainEntityField.tsx
+- Grup 2 — Mimari owner kararları
 - OpportunityStatus
 - WinOpportunityHandler
-- Host.Authentication
+- DataTableViewOptions.tsx
 - PipelineStage
 - Collaboration schema (`collaboration`)
 - OpportunityEndpointsTests
@@ -345,63 +346,63 @@
 - pre_tool_use_policy.py
 - ADR: Collaboration boundary for personal calendar entries
 - BackgroundService
-- AssignmentMode
-- .StartHostAsync
+- PublicOnlyRoute.tsx
+- AuthProblems
 - ILinkTargetDirectory
-- EnableTenantModuleStatus
-- DomainEntityField.tsx
-- .GetAsync
+- CapturingLogger
+- TenantFieldValueType
+- .CreateAsync
 - .Refresh_token_reuse_is_counted_once_per_detection
-- .HandleAsync
+- ModuleCapabilityCatalog
 - personalViews.ts
 - PartyExternalIdentity
-- .CreateAsync
+- .SavingChangesAsync
 - DropOpportunityPartyForeignKey
 - RemoveCrmPartyEntity
-- PrincipalRef
+- RebuildAccessAuthorizationModel
 - AuthMetrics
 - Access.Tests.Domain
 - .ProvisionAsync
-- TenantMembership
+- .HandleAsync
 - Calendar API contract (frozen for parallel backend / frontend work)
-- OpportunityStageHistoryEntry
+- Tier-1 Custom Fields (Opportunity) — Implementation Plan
 - EmailDispatcher
-- InvalidOperationException
-- BackfillCrmPipelinesCommandTests
+- CrmDbContext
+- StubLinkDirectory
 - useTableSearchParams.ts
 - PartyDirectory
-- TenantModuleEnablement
-- AuthProblems
-- paths
+- InlineData
+- data-table/index.ts
+- .NewOpportunity
 - CrmModuleCapabilitiesTests
-- PartyRef
-- OpportunityNeed
-- Access.Tests/TestData.cs
-- ProvisionCrmPipelineCommandTests
-- PreventDuplicateActiveRoleAssignments
+- EntityRef
+- ExpandTenantFieldDefinitions
+- TenantLifecycle.csproj
+- EnableInvitationDeliveryRowLevelSecurity
+- ADR: Tier-1 custom field data shape (Opportunity)
 - TenantLifecycleDbContext
 - vite.config.ts
-- EntityRef
+- ADR: Workflow runtime (OD-2)
 - EnableRowLevelSecurityOnPipelineTables
-- AuthenticateResult
-- ILinkTargetResolver
+- CreateInvitationCommand.cs
+- FixOpportunityAssignedPrincipalIndex
 - IdempotencyRecord
-- .HandleAsync
-- MembershipStatus
-- IClassFixture
+- AddPipelineStageActiveAndEntryFlags
+- ADR: AI Business OS principles
+- DefaultNewPipelineVersionsToDraft
 - Host.Tests.csproj
 - .HandleAsync
-- MasterDataDbContext
+- GetDefaultPipelineStagesHandler
 - UpdateCompanySettingsCommand
-- .HandleAsync
-- .SavingChangesAsync
+- .RuntimeContextAsync
+- AddPipelineStageKind
 - AddInvitationRole
-- ConfigurationStatus
+- .Every_profile_check_rejects_its_invalid_value
 - CancellationToken
 - AddCrmSettingsConfiguration
 - AddOpportunityStageHistory
 - DbUpdateException
-- contrast.ts
+- MasterData.Tests.csproj
 - EnableModuleEnablementRowLevelSecurity
 - List
 - EnforceOpportunityStageVersionFk
@@ -411,120 +412,136 @@
 - Access.Tests.csproj
 - Collaboration.Tests.csproj
 - Fact
-- App.tsx
+- useAppMutation.ts
 - .A_single_dispatch_pass_marks_every_pending_message_processed
-- account.e2e.ts
+- EntityTypeBuilder
 - TenantLifecycle.Tests.csproj
-- Access.csproj
+- CRM.Tests.csproj
 - Company settings — execution plan
 - Revision 1 — Company settings foundation
-- .Configure
-- support/calendar.ts
+- sanitizeHtml.ts
+- PartyIdentityResolver
+- contrast.ts
+- EnableTenantModuleStatus
+- CalendarEntryImmutabilityTests
+- Access.csproj
 - .SetTenantContextAsync
-- MasterData.csproj
-- TenantLifecycle.csproj
-- TestData
-- OpportunityCreationStep
 - PipelineVersionStatus
-- .LoginAsync
-- env.ts
-- PipelineStageConfiguration
-- .SavingChangesAsync
+- RefreshSessionResult
+- OpportunityDto
+- PipelineStageKind
+- TenantId
 - IEndpointRouteBuilder
 - IReadOnlyList
-- PartyDevSeed
-- IHasRowVersion
+- ChangePasswordStatus
+- PartyRef
 - FixCancelExpiryCheck
-- Collaboration.Tests
+- AuthorizationEffect
 - PermissionSet
 - CrmActionCatalog.cs
-- PipelineStageKindTests
-- DevSeedOptions
-- AccessConnectionString.cs
+- CRM.csproj
+- TenantId
+- MasterData.csproj
 - ApiModeChip.tsx
-- CrmAssignmentPolicy
+- support/calendar.ts
 - ApplyCrmOpportunityDefaults
-- OpportunityAvailableActionsDto
-- CrmConnectionString.cs
+- InvitationTokenProtector
+- .A_party_seeded_through_masterdata_is_readable_back
+- .Truncate
+- .ApplyAnyOf
+- IdempotencyKeyReusedException
 - AddCrmConfigurationChecks
+- entitySearch.ts
 - CompleteCrmConfigurationChecks
+- DevSeedOptions
+- CancellationToken
+- IReadOnlyCollection
+- IReadOnlyDictionary
+- IReadOnlyList
+- List
+- Take
+- Task
+- CrmSettings
+- DbSet
+- Opportunity
+- Task
 
 ## God Nodes (most connected - your core abstractions)
-1. `Contracts` - 359 edges
+1. `Contracts` - 355 edges
 2. `cn()` - 254 edges
 3. `lucide-react` - 207 edges
 4. `react-i18next` - 205 edges
-5. `PrincipalRef` - 198 edges
+5. `PrincipalRef` - 193 edges
 6. `react` - 167 edges
 7. `AccessDbContext` - 132 edges
 8. `CRM.Application` - 126 edges
-9. `TenantId` - 97 edges
-10. `Button()` - 96 edges
+9. `Button()` - 96 edges
+10. `TenantId` - 94 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `Harness` --references--> `CrmDbContext`  [EXTRACTED]
+  tests/CRM.Tests/LinkTargets/CrmLinkTargetResolverTests.cs → src/Modules/CRM/Persistence/CrmDbContext.cs
+- `Harness` --references--> `MasterDataDbContext`  [EXTRACTED]
+  tests/CRM.Tests/LinkTargets/CrmLinkTargetResolverTests.cs → src/Modules/MasterData/Persistence/MasterDataDbContext.cs
 - `Harness` --references--> `AccessAuthorizer`  [EXTRACTED]
   tests/CRM.Tests/LinkTargets/CrmLinkTargetResolverTests.cs → src/Modules/Access/Application/AccessAuthorizer.cs
-- `AuthApiHost` --references--> `Program`  [EXTRACTED]
-  tests/Host.Tests/Fixtures/AuthApiFixture.cs → src/Host/Program.cs
-- `StubPrincipalDirectory` --implements--> `IAuthorizedPrincipalDirectory`  [EXTRACTED]
-  tests/CRM.Tests/StubPrincipalDirectory.cs → src/Contracts/IAuthorizedPrincipalDirectory.cs
-- `RecordingAuthorizer` --implements--> `IAuthorizer`  [EXTRACTED]
-  tests/CRM.Tests/StubPrincipalDirectory.cs → src/Contracts/IAuthorizer.cs
-- `TestData` --references--> `PrincipalRef`  [EXTRACTED]
-  tests/MasterData.Tests/TestData.cs → src/Contracts/PrincipalRef.cs
+- `CollaborationProblemDetailsExceptionHandlerTests` --references--> `CrmProblemDetailsExceptionHandler`  [EXTRACTED]
+  tests/Host.Tests/CollaborationProblemDetailsExceptionHandlerTests.cs → src/Host/Endpoints/CrmProblemDetailsExceptionHandler.cs
+- `CalendarEntryCreationTests` --references--> `PrincipalRef`  [EXTRACTED]
+  tests/Collaboration.Tests/Domain/CalendarEntryTests.cs → src/Contracts/PrincipalRef.cs
 
 ## Import Cycles
 - None detected.
 
-## Communities (436 total, 36 thin omitted)
+## Communities (452 total, 48 thin omitted)
 
 ### Community 0 - "Opportunity"
 Cohesion: 0.06
-Nodes (30): Opportunity, ArchivedAt, AssignedPrincipal, AssignedPrincipalIssuer, AssignedPrincipalSubject, ClosedFromStageId, CreatedAt, Currency (+22 more)
+Nodes (31): EntityRef, IHasRowVersion, OpportunityLine, Opportunity, ArchivedAt, AssignedPrincipal, AssignedPrincipalIssuer, AssignedPrincipalSubject (+23 more)
 
 ### Community 1 - "OpportunityLine"
-Cohesion: 0.09
-Nodes (20): OpportunityLine, CancelReason, CreatedAt, Id, IsCanceled, IsOptional, LineTotal, OpportunityId (+12 more)
+Cohesion: 0.10
+Nodes (19): OpportunityLine, CancelReason, CreatedAt, Id, IsCanceled, IsOptional, LineTotal, OpportunityId (+11 more)
 
-### Community 2 - "CustomerNeed"
-Cohesion: 0.14
-Nodes (13): CustomerNeed, AveragePrice, Category, CreatedAt, Id, Name, RowVersion, Status (+5 more)
+### Community 2 - "PrincipalRef"
+Cohesion: 0.03
+Nodes (73): All, GetDefaultPipelineStagesQuery, GetPipelineStagesQuery, PipelineStageKind, AuthorizationRequest, Resource, CancellationToken, Task (+65 more)
 
 ### Community 3 - "OpportunityMoneyTests"
 Cohesion: 0.44
 Nodes (3): OpportunityMoneyTests, ArgumentException, Fact
 
 ### Community 4 - "TenantFieldDefinition"
-Cohesion: 0.11
-Nodes (21): CRM.Customization, TenantFieldAggregateType, Opportunity, Party, TenantFieldDefinition, AggregateType, CreatedAt, FieldName (+13 more)
+Cohesion: 0.08
+Nodes (23): TenantFieldAggregateType, Opportunity, Party, TenantFieldDefinition, AggregateType, Config, ConfigJson, CreatedAt (+15 more)
 
 ### Community 5 - "ChartsDemoPage.tsx"
 Cohesion: 0.07
-Nodes (79): recharts, ChartConfig, ChartContainer(), ChartContext, ChartContextProps, ChartLegendContent(), ChartTooltipContent(), getPayloadConfigFromPayload() (+71 more)
+Nodes (80): recharts, ChartConfig, ChartContainer(), ChartContext, ChartContextProps, ChartLegendContent(), ChartTooltipContent(), getPayloadConfigFromPayload() (+72 more)
 
 ### Community 6 - "OutboxMessage"
 Cohesion: 0.10
-Nodes (20): DateTimeOffset, Guid, TenantId, OutboxMessage, AggregateId, AggregateType, AggregateVersion, CausationId (+12 more)
+Nodes (19): DateTimeOffset, Guid, TenantId, OutboxMessage, AggregateId, AggregateType, AggregateVersion, CausationId (+11 more)
 
-### Community 7 - ".Create"
-Cohesion: 0.21
-Nodes (7): PipelineDefinitionVersionTests, ArgumentException, Fact, InvalidOperationException, PipelineDefinitionPersistenceTests, Fact, Task
+### Community 7 - "calendar/api.ts"
+Cohesion: 0.04
+Nodes (92): calendarKeys, CommandOptions, CreateEntryVariables, DeleteEntryVariables, findCachedEntry(), mintKey(), MoveLane, READ_OPTIONS (+84 more)
 
 ### Community 8 - "CRM+Sales pilot schema (PostgreSQL, `crm` schema)"
 Cohesion: 0.10
 Nodes (20): Atomic durable intent ([14](.) decision #4), Contracts primitives already added (`src/Contracts/`), CRM+Sales pilot schema (PostgreSQL, `crm` schema), Cross-module references carry no FK ([07](.) §3, `EntityRef` in `Contracts`), Design notes carried over from revision 1 (still accurate), Diagram, Diagram additions, Money: one rounding rule ([17](.) §3.4) (+12 more)
 
-### Community 9 - "CRM.csproj"
-Cohesion: 0.20
-Nodes (8): Microsoft.Extensions.Hosting (10.0.12), Microsoft.NET.Sdk.Worker, net10.0, EFCore.NamingConventions (10.0.1), Microsoft.EntityFrameworkCore.Design (10.0.4), Npgsql.EntityFrameworkCore.PostgreSQL (10.0.3), Microsoft.NET.Sdk, net10.0
+### Community 9 - "Contracts.csproj"
+Cohesion: 0.14
+Nodes (12): Microsoft.AspNetCore.Authentication.JwtBearer (10.0.4), Microsoft.NET.Sdk.Web, net10.0, Microsoft.NET.Sdk, net10.0, net10.0, EFCore.NamingConventions (10.0.1), Microsoft.EntityFrameworkCore.Design (10.0.4) (+4 more)
 
 ### Community 10 - "CRM Module — Current-State Analysis"
 Cohesion: 0.07
 Nodes (26): 10. Events and Integration, 11. Test Coverage, 12. Current Scope Summary, 13. Target-vs-Current Comparison, 14. Recommended Next Actions, 1. Executive Summary, 2. CRM File / Module Inventory, 3. Current Domain Model (+18 more)
 
 ### Community 11 - "useSessionStore"
-Cohesion: 0.07
-Nodes (49): TenantSelectorPage(), companySettingsKeys, UpdateCompanySettingsVariables, useCancelCompanyInvitation(), useCompanyAccess(), useCompanySettings(), useCreateCompanyRole(), useGrantCompanyRole() (+41 more)
+Cohesion: 0.09
+Nodes (43): useSelectTenant(), NoAccessPage(), TenantSelectorPage(), companySettingsKeys, UpdateCompanySettingsVariables, useCancelCompanyInvitation(), useCompanyAccess(), useCompanySettings() (+35 more)
 
 ### Community 12 - "CRM.Persistence.Migrations"
 Cohesion: 0.07
@@ -534,9 +551,9 @@ Nodes (18): CRM.Persistence.Migrations, DateTimeOffset, Guid, MigrationBuilder, 
 Cohesion: 0.13
 Nodes (16): ASPNETCORE_ENVIRONMENT, DevSeed__Enabled, applicationUrl, commandName, dotnetRunMessages, environmentVariables, launchBrowser, applicationUrl (+8 more)
 
-### Community 14 - ".Create"
-Cohesion: 0.10
-Nodes (21): MergedPartyPayload, Guid, MergePartyCommand, CancellationToken, Task, TimeSpan, MergePartyHandler, MergePartyResult (+13 more)
+### Community 14 - ".CreateAdminContext"
+Cohesion: 0.12
+Nodes (15): MergedPartyPayload, Guid, MergePartyCommand, CancellationToken, Task, TimeSpan, MergePartyHandler, MergePartyResult (+7 more)
 
 ### Community 15 - "Worker"
 Cohesion: 0.25
@@ -550,9 +567,9 @@ Nodes (14): 1. Solution ve proje kavramı, 2. Proje tipleri — bu repoda kullan
 Cohesion: 0.31
 Nodes (5): MasterData.Tests.Architecture, Assembly, Fact, TestResult, ModuleBoundaryTests
 
-### Community 19 - "actions.ts"
-Cohesion: 0.11
-Nodes (24): Can(), CanProps, CommandBar(), ChangeDealStageContext, actions, getActions(), registerAction(), Action (+16 more)
+### Community 19 - "commands/index.ts"
+Cohesion: 0.14
+Nodes (20): Can(), CanProps, actions, getActions(), registerAction(), Action, ActionContext, commands (+12 more)
 
 ### Community 20 - "Running locally: API, web and signing in"
 Cohesion: 0.10
@@ -563,8 +580,8 @@ Cohesion: 0.14
 Nodes (13): Pilot Enforcement Implementation Plan, Sonraki plan (bu planın kapsamı dışında), Task 0: Bağlayıcı çekirdeği kararlaştır (checkpoint — kod yok), Task 10: Dokümanları kodla senkronla, Task 1: Test projesi ve domain durum makinesi testleri, Task 2: Mimari sınır testi (FF01), Task 3: Testcontainers altyapısı + iptal hatasını gösteren kırmızı test, Task 4: CHECK kısıtını düzelt (migration) (+5 more)
 
 ### Community 22 - ".OwnedBy_scope_returns_only_that_principals_opportunities"
-Cohesion: 0.14
-Nodes (18): IAccessScopeResolver, CancellationToken, Task, ListOpportunitiesHandler, AnyOf, CancellationToken, IQueryable, IReadOnlyList (+10 more)
+Cohesion: 0.09
+Nodes (27): AccessScope, All, AnyOf, None, IReadOnlyList, IAccessScopeResolver, CancellationToken, Task (+19 more)
 
 ### Community 23 - "What You Must Do When Invoked"
 Cohesion: 0.08
@@ -602,25 +619,25 @@ Nodes (3): For git commit hook, For native CLAUDE.md integration, graphify refer
 Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
-### Community 38 - ".HandleAsync"
-Cohesion: 0.07
-Nodes (28): IExceptionHandler, CancellationToken, Exception, HttpContext, ValueTask, AccessProblemDetailsExceptionHandler, CancellationToken, Exception (+20 more)
+### Community 38 - "url"
+Cohesion: 0.08
+Nodes (44): @tanstack/react-query, preview(), renderHost(), renderSettings(), grip(), mockBoard(), openStages, pipeline (+36 more)
 
-### Community 39 - ".MapOpportunityEndpoints"
-Cohesion: 0.05
-Nodes (43): ArchivePayload, CancellationToken, Task, IEndpointRouteBuilder, IReadOnlyCollection, OpportunityEndpoints, AddOpportunityLineCommand, Guid (+35 more)
+### Community 39 - "ConversationsButton.tsx"
+Cohesion: 0.08
+Nodes (35): Drawer(), DrawerClose(), DrawerContent(), DrawerContext, DrawerContextProps, DrawerDescription(), DrawerFooter(), DrawerHeader() (+27 more)
 
 ### Community 40 - "OpportunityStateMachineTests"
 Cohesion: 0.14
 Nodes (5): OpportunityStateMachineTests, ArgumentException, ArgumentOutOfRangeException, Fact, InvalidOperationException
 
-### Community 41 - ".CreateAdminContext"
-Cohesion: 0.11
-Nodes (23): CancellationToken, Task, Guid, CreatePartyCommand, CancellationToken, Task, TimeSpan, CreatePartyHandler (+15 more)
+### Community 41 - "CreatePartyHandler"
+Cohesion: 0.10
+Nodes (24): Sample, CancellationToken, Dictionary, Task, PartyDevSeed, Sample, PartyRef, Guid (+16 more)
 
 ### Community 42 - "Contracts"
-Cohesion: 0.03
-Nodes (31): CRM.Tests.Domain, CRM.Tests.Application, CRM.Application, CRM.Persistence.Configurations, Contracts, CRM.Tests.Integration, CRM.Idempotency, CRM.Evidence (+23 more)
+Cohesion: 0.06
+Nodes (21): CRM.Tests.Domain, CRM.Tests.Application, CRM.Application, Contracts, CRM.Tests.Integration, CRM.Idempotency, CRM.Evidence, CRM.Outbox (+13 more)
 
 ### Community 43 - "PHASE 2 — CRM Opportunity Commands & API — Planning Document"
 Cohesion: 0.04
@@ -630,9 +647,9 @@ Nodes (46): 0. How to read this document, 10. CustomerNeed impact assessment, 11
 Cohesion: 0.49
 Nodes (3): OpportunityRowVersionTests, Fact, InvalidOperationException
 
-### Community 45 - "sanitizeHtml.ts"
-Cohesion: 0.50
-Nodes (3): dompurify, ALLOWED_TAGS, sanitizeHtml()
+### Community 45 - "TenantMembership"
+Cohesion: 0.10
+Nodes (17): MembershipStatus, Active, Disabled, Invited, TenantMembership, AccountId, DisabledAt, Id (+9 more)
 
 ### Community 46 - "CRM Target Model — Phase 0 Delta Plan"
 Cohesion: 0.13
@@ -642,17 +659,17 @@ Nodes (14): 0. Context and the decision this plan corrects, 10. Explicitly out o
 Cohesion: 0.04
 Nodes (42): Definition of Done, Enterprise Access Foundation — Phase 1.5 Execution Plan, Task 0: Pre-flight — confirm the five source documents, Task 10: Docs and CI sync, Task 1: Contracts — authorization primitives, Task 2: Access domain model rebuild, Task 3: Access persistence configurations + schema migration, Task 4: Access RLS + runtime role grants (+34 more)
 
-### Community 48 - "LegacyMigrationFixture"
-Cohesion: 0.20
-Nodes (10): LegacyDataMigrationTests, Fact, InlineData, Task, Theory, LegacyMigrationFixture, AdminConnectionString, IMigrator (+2 more)
+### Community 48 - "loaded.tsx"
+Cohesion: 0.11
+Nodes (27): Label(), InlineLoadingSection(), LoadMore(), PendingButton(), RefetchOverlay(), usePending(), ChartLoaded(), FormLoaded() (+19 more)
 
 ### Community 49 - "Enterprise Access Foundation — Phase 1.5 Adversarial Architecture Review"
 Cohesion: 0.15
 Nodes (13): 11. Versioning / Audit / Evidence, 13. Freeze Decisions (owner onayı gerekli), 14. YAGNI / Overengineering Risks, 15. Migration Risks, 16. "How This Architecture Could Fail", 1. Executive Verdict, 3. Benchmark Corrections, 4. Architecture Decisions Review (+5 more)
 
 ### Community 50 - "AccessTokenIssuer"
-Cohesion: 0.13
-Nodes (17): ExpiresInSeconds, SecurityTokenException, Guid, TimeProvider, Token, AccessTokenIssuer, JwtOptions, AccessTokenMinutes (+9 more)
+Cohesion: 0.12
+Nodes (18): ExpiresInSeconds, SecurityTokenException, Guid, TimeProvider, Token, AccessTokenIssuer, JwtOptions, AccessTokenMinutes (+10 more)
 
 ### Community 51 - "Design notes"
 Cohesion: 0.11
@@ -666,13 +683,13 @@ Nodes (12): 10. Final Gate, 1. Final Verdict, 2. Closure Matrix, 3. Final Owners
 Cohesion: 0.14
 Nodes (13): Kabul kriterleri (bu planın "bitti" demesi için), MasterData / Party Foundation — Phase 0.5 Execution Plan, Task 0: MasterData projesini iskeletten gerçek modüle çevir, Task 10: CI + dokümanları senkronla, Task 1: Contracts — PartyRef, PartyType, PartyDirectoryEntry, IPartyDirectory, IPartyIdentityResolver, Task 2: Domain — Party, PartyRelationship, PartyExternalIdentity + merge invariant tests, Task 3: Mimari sınır testi, Task 4: Outbox / Idempotency / Evidence (CRM'in şeklinin birebir tekrarı) (+5 more)
 
-### Community 54 - "calendar/api.ts"
-Cohesion: 0.04
-Nodes (84): OverlayHost(), calendarKeys, CommandOptions, CreateEntryVariables, DeleteEntryVariables, findCachedEntry(), mintKey(), MoveLane (+76 more)
+### Community 54 - "CalendarPage.test.tsx"
+Cohesion: 0.17
+Nodes (13): OverlayHost(), render(), t(), DrawerSwipeDirection, openDrawer(), OverlayConfig, OverlayEntry, OverlayKind (+5 more)
 
 ### Community 55 - "react"
 Cohesion: 0.03
-Nodes (130): class-variance-authority, react, sonner, CommandPalette(), CommandPaletteProps, ENTITY_ICON, groupCommands(), groupEntities() (+122 more)
+Nodes (135): date-fns, react, sonner, CommandPalette(), CommandPaletteProps, ENTITY_ICON, groupCommands(), groupEntities() (+127 more)
 
 ### Community 56 - "MasterData / Party Foundation — Design Reference (Phase 0.5)"
 Cohesion: 0.15
@@ -684,35 +701,35 @@ Nodes (34): 1. Domain katmanı (`tests/CRM.Tests/Domain/`), 2. Uygulama katmanı
 
 ### Community 58 - "cn"
 Cohesion: 0.02
-Nodes (275): react-day-picker, react-i18next, DemoSection(), DemoSectionProps, AllocationInput(), AllocationInputProps, AllocationTarget, sum() (+267 more)
+Nodes (247): @tiptap/extensions, @tiptap/react, @tiptap/starter-kit, AllocationInput(), AllocationInputProps, AllocationTarget, sum(), AsyncCombobox() (+239 more)
 
 ### Community 59 - "navigation.ts"
 Cohesion: 0.09
-Nodes (31): calendarNav, crmSettingsNav, dashboardNav, demoBadgesNav, demoChartsNav, demoDrawersNav, demoFiltersNav, demoFormsNav (+23 more)
+Nodes (28): calendarNav, crmSettingsNav, dashboardNav, demoBadgesNav, demoChartsNav, demoDrawersNav, demoFiltersNav, demoFormsNav (+20 more)
 
 ### Community 60 - "EmailDeliveryTests"
-Cohesion: 0.14
-Nodes (14): IHostedService, Action, CancellationToken, Exception, Fact, Func, InvalidOperationException, IServiceCollection (+6 more)
+Cohesion: 0.09
+Nodes (24): IDisposable, IHostedService, ILoggerProvider, Action, CancellationToken, Exception, Fact, Func (+16 more)
 
 ### Community 61 - "AdvancedSaasGrid.tsx"
-Cohesion: 0.08
-Nodes (39): @tanstack/react-store, @tanstack/react-table, SaasGridLayout, SelectionActionBarProps, CoreAdminGrid(), MODE_SEGMENTS, ProcessingMode, STATUS_META (+31 more)
+Cohesion: 0.10
+Nodes (26): @tanstack/react-table, StatusRegistry, ViewState, SaasGridLayout, SelectionActionBarProps, STATUS_META, StatusBadge(), Department (+18 more)
 
 ### Community 62 - "PartyRelationship"
 Cohesion: 0.07
 Nodes (29): DateTimeOffset, TenantId, PartyRelationship, CreatedAt, EndedAt, FromPartyId, Id, JobTitle (+21 more)
 
-### Community 63 - "Party"
-Cohesion: 0.11
-Nodes (17): DateTimeOffset, PartyType, TenantId, Party, CreatedAt, Email, Id, MergedIntoPartyId (+9 more)
+### Community 63 - ".Create"
+Cohesion: 0.08
+Nodes (23): DateTimeOffset, PartyType, TenantId, Party, CreatedAt, Email, Id, MergedIntoPartyId (+15 more)
 
-### Community 64 - "BackfillMasterDataParties"
-Cohesion: 0.22
-Nodes (5): MigrationBuilder, BackfillMasterDataParties, DateTimeOffset, Guid, ModelBuilder
+### Community 64 - "NpgsqlCommand"
+Cohesion: 0.23
+Nodes (13): NpgsqlCommand, NpgsqlTransaction, RowLevelSecurityTests, Tables, Dictionary, Fact, InvalidOperationException, MemberData (+5 more)
 
 ### Community 65 - "ActorContext"
-Cohesion: 0.04
-Nodes (74): IAsyncDisposable, ITestOutputHelper, ActorContext, CorrelationId, Principal, Guid, IAuthorizer, IPartyDirectory (+66 more)
+Cohesion: 0.05
+Nodes (64): IAsyncDisposable, ITestOutputHelper, ActorContext, CorrelationId, Principal, Guid, IAuthorizer, CancellationToken (+56 more)
 
 ### Community 66 - "Design notes"
 Cohesion: 0.25
@@ -720,71 +737,71 @@ Nodes (7): Design notes, Diagram, Not an extension of Tenant Lifecycle or Organi
 
 ### Community 67 - "IdempotencyRecord"
 Cohesion: 0.12
-Nodes (16): DateTimeOffset, TenantId, TimeSpan, IdempotencyRecord, CreatedAt, ExpiresAt, IdempotencyKey, Operation (+8 more)
+Nodes (15): DateTimeOffset, TenantId, TimeSpan, IdempotencyRecord, CreatedAt, ExpiresAt, IdempotencyKey, Operation (+7 more)
 
 ### Community 68 - "IEntityTypeConfiguration"
 Cohesion: 0.02
-Nodes (62): Collaboration.Persistence.Configurations, Access.Persistence.Configurations, IEntityTypeConfiguration, AuthEvent, AccountId, CorrelationId, Detail, EventType (+54 more)
+Nodes (76): CRM.Persistence.Configurations, Access.Persistence.Configurations, EntityTypeBuilder, IEntityTypeConfiguration, PrincipalType, User, Role, Id (+68 more)
 
 ### Community 69 - "ModuleBoundaryTests"
 Cohesion: 0.31
 Nodes (5): CRM.Tests.Architecture, ModuleBoundaryTests, Assembly, Fact, TestResult
 
 ### Community 70 - ".CreateAdminContext"
-Cohesion: 0.13
-Nodes (23): TenantSnapshot, AccessRlsTests, DbUpdateException, Fact, Task, EnableTenantModuleHandlerTests, TenantSnapshot, AccountId (+15 more)
+Cohesion: 0.22
+Nodes (14): TenantSnapshot, EnableTenantModuleHandlerTests, TenantSnapshot, AccountId, Admin, DbUpdateException, Fact, IEnumerable (+6 more)
 
-### Community 71 - "NotificationCenter.tsx"
-Cohesion: 0.05
-Nodes (59): DiffRecord, display(), ObjectDiff(), ObjectDiffProps, Segment, SegmentedControl(), SegmentedControlProps, StatusTone (+51 more)
+### Community 71 - "TablesDemoPage.tsx"
+Cohesion: 0.10
+Nodes (21): CodeBlock(), CodeBlockProps, KEYWORDS, TOKEN_CLASS, tokenize(), TokenKind, DocCard(), DocCardProps (+13 more)
 
 ### Community 72 - "DropCrmParties"
 Cohesion: 0.22
 Nodes (5): MigrationBuilder, DropCrmParties, DateTimeOffset, Guid, ModelBuilder
 
-### Community 73 - "loaded.tsx"
-Cohesion: 0.08
-Nodes (37): AllDoneIllustration(), BrokenIllustration(), EmptyBoxIllustration(), IllustrationProps, NoAccessIllustration(), NoResultsIllustration(), OfflineIllustration(), Label() (+29 more)
+### Community 73 - "lucide-react"
+Cohesion: 0.03
+Nodes (89): class-variance-authority, lucide-react, DemoSection(), DemoSectionProps, AllDoneIllustration(), BrokenIllustration(), EmptyBoxIllustration(), IllustrationProps (+81 more)
 
-### Community 74 - "PostgresFixture"
-Cohesion: 0.09
-Nodes (26): StageId, OpportunityConcurrencyTests, DbUpdateConcurrencyException, Fact, Task, PartyBackfillVerificationTests, Fact, Task (+18 more)
+### Community 74 - ".CreateAdminContext"
+Cohesion: 0.06
+Nodes (42): StageId, ArgumentException, Fact, CrmSettingsManagementTests, DbUpdateException, Fact, InlineData, PostgresException (+34 more)
 
-### Community 75 - "AuthTestSetup"
-Cohesion: 0.16
-Nodes (15): Raw, Guid, AccountTokenParsingTests, AccountTokenServiceTests, Fact, InlineData, PostgresFixture, Task (+7 more)
+### Community 75 - ".LoadTokenAsync"
+Cohesion: 0.21
+Nodes (10): Raw, Guid, AccountTokenParsingTests, AccountTokenServiceTests, Fact, InlineData, PostgresFixture, Task (+2 more)
 
 ### Community 76 - "Topbar.tsx"
-Cohesion: 0.06
-Nodes (60): Option, OptionGroup(), OptionGroupProps, Popover(), PopoverContent(), PopoverDescription(), PopoverHeader(), PopoverTitle() (+52 more)
+Cohesion: 0.04
+Nodes (84): zustand, App(), Option, OptionGroup(), OptionGroupProps, Popover(), PopoverContent(), PopoverDescription() (+76 more)
 
 ### Community 77 - ".HandleAsync"
 Cohesion: 0.04
-Nodes (56): CreatedPayload, ActionKey, CalendarEntryOutbox, DeletedFact, EntryFact, CreateCalendarEntryCommand, DateOnly, DateTimeOffset (+48 more)
+Nodes (57): CreatedPayload, CalendarEntryOutbox, DeletedFact, EntryFact, CreateCalendarEntryCommand, DateOnly, DateTimeOffset, Guid (+49 more)
 
-### Community 78 - "registries.ts"
-Cohesion: 0.10
-Nodes (29): InvoiceRow, APPROVAL_ICON, APPROVAL_STATUSES, APPROVAL_TONE, approvalStatus, buildStatus(), INVOICE_STATUSES, INVOICE_TONE (+21 more)
+### Community 78 - "ModuleCapabilityManifest"
+Cohesion: 0.15
+Nodes (11): ModuleCapabilityManifest, GeneratedRegex, IEnumerable, IReadOnlyList, Regex, IReadOnlyList, PlatformModules, ActionRegistry (+3 more)
 
-### Community 79 - "CapturingLoggerProvider"
-Cohesion: 0.14
-Nodes (12): IDisposable, ILoggerProvider, EventId, Exception, Func, ILogger, IReadOnlyList, List (+4 more)
+### Community 79 - ".StartHostAsync"
+Cohesion: 0.21
+Nodes (8): Exception, Fact, Task, PasswordEndpointsTests, Dictionary, IReadOnlyDictionary, IServiceCollection, EnvScope
 
 ### Community 80 - "EnableRowLevelSecurity"
 Cohesion: 0.22
 Nodes (5): MigrationBuilder, EnableRowLevelSecurity, DateTimeOffset, Guid, ModelBuilder
 
 ### Community 81 - "LinkTargetDirectory"
-Cohesion: 0.08
-Nodes (36): ConcurrencyProbe, OperationCanceledException, LinkTargetDirectory, CancellationToken, Dictionary, GeneratedRegex, IReadOnlyCollection, IReadOnlyDictionary (+28 more)
+Cohesion: 0.06
+Nodes (49): ConcurrencyProbe, OperationCanceledException, BoundedContext, EntityType, ILinkTargetResolver, BoundedContext, EntityType, CancellationToken (+41 more)
 
 ### Community 82 - "3. Integration katmanı — gerçek Postgres (`tests/CRM.Tests/Integration/`)"
 Cohesion: 0.07
 Nodes (28): Acceptance criteria, CRM Phase 1 — Lifecycle/Pipeline Foundation — Execution Plan, Task 0: Pre-flight design decisions — read and confirm before Task 3, Task 1: `OpportunityStatus` lifecycle rename — `Waiting/Offered/Completed/Canceled` → `Draft/Open/Won/Lost`, Task 2: Pipeline definition/version/stage tables (additive), Task 3: `Opportunity.PartyId` → `PartyRef` — MasterData cutover, Task 4: Docs, CI, memory sync, 1. Domain katmanı (`tests/CRM.Tests/Domain/`) (+20 more)
 
 ### Community 83 - "AccessDbContext"
-Cohesion: 0.06
-Nodes (39): CancelInvitationHandler, TimeProvider, RolePermissionSet, PermissionSetId, RoleId, TenantId, TenantId, AccessDbContext (+31 more)
+Cohesion: 0.05
+Nodes (56): AccountTokenService, InviteLifetime, PasswordResetLifetime, PasswordSetupLifetime, TimeSpan, BootstrapTenantAdministratorHandler, BootstrapTenantAccessHandler, TimeProvider (+48 more)
 
 ### Community 84 - "ARCHITECTURE DELTA — Phase 1.5 Authorization Contract"
 Cohesion: 0.12
@@ -792,11 +809,11 @@ Nodes (16): ARCHITECTURE DELTA — Phase 1.5 Authorization Contract, Binding HTT
 
 ### Community 85 - "TenantLifecycle.Application"
 Cohesion: 0.05
-Nodes (24): TenantLifecycle.Domain, TenantLifecycle.Outbox, TenantLifecycle.Persistence, TenantLifecycle.Tests.Architecture, TenantLifecycle.Persistence.Configurations, TenantLifecycle.Tests.Integration, TenantLifecycle.Tests.Domain, TenantLifecycle.Idempotency (+16 more)
+Nodes (25): TenantLifecycle.Domain, TenantLifecycle.Outbox, TenantLifecycle.Persistence, TenantLifecycle.Tests.Architecture, TenantLifecycle.Persistence.Configurations, TenantLifecycle.Tests.Integration, TenantLifecycle.Tests.Domain, TenantLifecycle.Idempotency (+17 more)
 
-### Community 86 - "OpportunityForm.tsx"
+### Community 86 - "react-i18next"
 Cohesion: 0.04
-Nodes (107): i18next, react-hook-form, Field(), FieldProps, Input(), AuthConfig, authConfigSchema, InvitationPreview (+99 more)
+Nodes (114): i18next, react-hook-form, react-i18next, react-router-dom, EmptyState(), EmptyStateProps, Tone, TONE_COLOR (+106 more)
 
 ### Community 87 - "AuthorizedPrincipalDirectoryTests"
 Cohesion: 0.22
@@ -810,25 +827,21 @@ Nodes (13): MasterData.Persistence.Migrations, DateTimeOffset, Guid, MigrationBu
 Cohesion: 0.25
 Nodes (8): 1. Owner Decisions Closed, 2. Repository Impact (yalnızca liste — implementasyon yok), 3. Frozen Invariants, 4. Remaining Owner Decisions, 5. Final Architecture Gate, Decision A — System Catalog, Decision B — Opportunity Owner, Enterprise Access Foundation — Owner Decisions Final Closure
 
-### Community 90 - "TenantId"
-Cohesion: 0.05
-Nodes (40): Fixed, OpportunitiesReassigned, TenantId, CancellationToken, IConfiguration, IServiceProvider, List, Task (+32 more)
-
 ### Community 91 - "PHASE 2 — CRM Opportunity Commands & API"
 Cohesion: 0.06
 Nodes (33): 0. FIRST RULE — INSPECT BEFORE CHANGING, 0A. REFERENCE PRECEDENCE + CONFLICT HANDLING — BINDING, 10. WON / LOST SEMANTICS, 11. CUSTOMER NEED — DO NOT DESTROY OR IGNORE, 11A. UPDATE OPPORTUNITY CAPABILITY, 12. API DESIGN, 13. QUERY SIDE, 13A. AVAILABLE ACTIONS / AVAILABLE TRANSITIONS — BINDING (+25 more)
 
-### Community 92 - "ModuleCapabilityCatalog"
-Cohesion: 0.24
-Nodes (7): ModuleCapabilityCatalog, Modules, Dictionary, IReadOnlyList, Fact, Task, PlatformModulesTests
+### Community 92 - "registries.ts"
+Cohesion: 0.08
+Nodes (36): StatusBadgeProps, StatusMeta, InvoiceRow, APPROVAL_ICON, APPROVAL_STATUSES, APPROVAL_TONE, approvalStatus, buildStatus() (+28 more)
 
-### Community 93 - "KanbanColumn.tsx"
-Cohesion: 0.10
-Nodes (24): stageMeta(), KanbanBoard(), KanbanBoardProps, KanbanCard(), KanbanCardProps, KanbanColumn(), KanbanColumnProps, CRM_CARDS (+16 more)
+### Community 93 - "Button"
+Cohesion: 0.06
+Nodes (53): NumberRange, PeekDrawer(), PeekDrawerProps, Button(), Sheet(), SheetClose(), SheetContent(), SheetDescription() (+45 more)
 
-### Community 94 - ".HandleAsync"
-Cohesion: 0.24
-Nodes (12): RefreshSessionCommand, RefreshSessionHandler, CancellationToken, Task, TimeProvider, AuthenticationBehaviourTests, cookieValue, Fact (+4 more)
+### Community 94 - "StubPrincipalDirectory"
+Cohesion: 0.08
+Nodes (28): ActionKey, AuthorizationDecision, AuthorizationRequest, IAuthorizedPrincipalDirectory, IReadOnlyCollection, IReadOnlyDictionary, IReadOnlyList, List (+20 more)
 
 ### Community 95 - "Enterprise Access Foundation — Phase 1.5 İnceleme (Round 2)"
 Cohesion: 0.29
@@ -839,16 +852,16 @@ Cohesion: 0.29
 Nodes (7): 6.1 Identity — logical vs physical (çelişki değil, kayıt), 6.2 `roles.tenant_id` nullable → target NOT NULL, 6.3 `RoleAssignmentScopeType.Network` hâlâ enum'da, 6.4 `AssignedPrincipal` mutasyonsuz, 6.5 `CompleteOpportunityHandler` sıralaması hedef pipeline ile uyumsuz, 6.6 Değişmeyenler (round 1/2 ile tutarlı, tekrar doğrulandı), 6. Current Repo Deltas
 
 ### Community 97 - "CalendarLinkEndpointsTests"
-Cohesion: 0.08
-Nodes (35): DateOnly, DateTimeOffset, Dictionary, Fact, HttpClient, HttpMethod, HttpResponseMessage, HttpStatusCode (+27 more)
+Cohesion: 0.06
+Nodes (46): IAsyncLifetime, LegacyDataMigrationTests, Fact, InlineData, Task, Theory, LegacyMigrationFixture, AdminConnectionString (+38 more)
 
 ### Community 98 - "AuthEventWriter"
-Cohesion: 0.14
-Nodes (28): AuthenticateCommand, AuthenticateHandler, CancellationToken, Task, TimeProvider, AuthEventWriter, HashSet, JsonSerializerOptions (+20 more)
+Cohesion: 0.08
+Nodes (53): PasswordHasher, AuthenticateCommand, AuthenticateHandler, CancellationToken, Task, TimeProvider, AuthEventWriter, HashSet (+45 more)
 
 ### Community 99 - ".HandleAsync"
-Cohesion: 0.11
-Nodes (21): BootstrapTenantAdministratorCommand, BootstrapTenantAdministratorHandler, BootstrapTenantAdministratorResult, BootstrapTenantAdministratorStatus, AlreadyBootstrapped, Completed, InvalidEmail, BootstrapTenantAccessHandler (+13 more)
+Cohesion: 0.12
+Nodes (19): BootstrapTenantAdministratorCommand, BootstrapTenantAdministratorResult, BootstrapTenantAdministratorStatus, AlreadyBootstrapped, Completed, InvalidEmail, CancellationToken, Task (+11 more)
 
 ### Community 100 - "2. Repository Current State (doğrulanmış)"
 Cohesion: 0.40
@@ -862,13 +875,13 @@ Nodes (4): 12. Phase 1.5 Real Scope, DESIGN / FREEZE NOW, IMPLEMENT LATER, DO NO
 Cohesion: 0.50
 Nodes (4): 8.1 System vs tenant katalog: öneri (owner kararı), 8.2 Tablolar, 8.3 Özel soruların cevapları, 8. Target Data Model (Phase 1.5 minimum)
 
-### Community 104 - "EvidenceRecord"
-Cohesion: 0.12
-Nodes (17): DateTimeOffset, Guid, TenantId, EvidenceRecord, Action, AggregateId, AggregateType, AggregateVersion (+9 more)
+### Community 104 - "MasterDataDbContext"
+Cohesion: 0.13
+Nodes (12): DbSet, ModelBuilder, MasterDataDbContext, EvidenceRecords, IdempotencyRecords, OutboxMessages, Parties, PartyExternalIdentities (+4 more)
 
-### Community 105 - "data-table/index.ts"
-Cohesion: 0.12
-Nodes (38): DataTable(), DataTableBodyRow(), DataTableProps, DataTableRowProps, renderableCells(), TEXT_ALIGN, DataTableHeaderCell(), DataTableHeaderCellProps (+30 more)
+### Community 105 - "paths.ts"
+Cohesion: 0.27
+Nodes (4): FeatureRoute, LazyFeatureRoute, StaticFeatureRoute, paths
 
 ### Community 106 - "10. Query Authorization Strategy"
 Cohesion: 0.67
@@ -879,8 +892,8 @@ Cohesion: 0.07
 Nodes (29): CRM Phase 2 — Opportunity Commands & API Implementation Plan, File Structure, Phase 2 complete, Scope note — one implementation sub-decision this plan makes, flagged rather than silently assumed, Self-review (performed before handing this plan over), Task 10: `AddOpportunityLineCommand` / `AddOpportunityLineHandler`, Task 11: `CancelOpportunityLineCommand` / `CancelOpportunityLineHandler`, Task 12: `LoseOpportunityCommand` / `LoseOpportunityHandler` (+21 more)
 
 ### Community 108 - ".RunAsync"
-Cohesion: 0.12
-Nodes (15): CancellationToken, IConfiguration, IServiceProvider, Task, TextWriter, BootstrapCommand, Dictionary, CommandOptions (+7 more)
+Cohesion: 0.08
+Nodes (29): CancellationToken, IConfiguration, IServiceProvider, Task, TextWriter, Dictionary, CommandOptions, CancellationToken (+21 more)
 
 ### Community 109 - "CRM Phase 2 — Test Gap Audit"
 Cohesion: 0.12
@@ -890,81 +903,81 @@ Nodes (15): 0. Decision provenance — the three named behaviors, 1. Real, proje
 Cohesion: 0.67
 Nodes (3): 17. Final Recommendation, Kaynaklar, OLD → NEW
 
-### Community 111 - "ActionKey"
-Cohesion: 0.06
-Nodes (41): Candidate, Search, ActionKey, Value, GeneratedRegex, Regex, CancellationToken, Task (+33 more)
+### Community 111 - "AccessAuthorizer"
+Cohesion: 0.11
+Nodes (19): AuthorizationDecision, DecisionId, DenialStage, Effect, IsAllowed, ReasonCode, Revision, Guid (+11 more)
 
 ### Community 112 - ".HandleAsync"
-Cohesion: 0.07
-Nodes (45): AdminAssignmentId, Exception, GrantedPayload, Grantee, RevokedPayload, IEndpointRouteBuilder, InvitationRoleUnavailableException, InvitationUnavailableException (+37 more)
+Cohesion: 0.22
+Nodes (16): AdminAssignmentId, GrantedPayload, Grantee, GrantRoleAssignmentCommand, GrantRoleAssignmentResult, Guid, GrantedPayload, GrantRoleAssignmentHandler (+8 more)
 
 ### Community 113 - "Collaboration.Application"
-Cohesion: 0.07
-Nodes (18): Collaboration.Persistence, Collaboration.Idempotency, Collaboration.Domain, Collaboration.Application, Collaboration.Tests.Architecture, Collaboration.Tests.Integration, Collaboration.Outbox, CollaborationActionCatalog (+10 more)
+Cohesion: 0.05
+Nodes (19): Collaboration.Persistence, Collaboration.Idempotency, Collaboration.Persistence.Configurations, Collaboration.Domain, Collaboration.Application, Collaboration.Tests.Architecture, Collaboration.Tests.Integration, Collaboration.Tests.Application (+11 more)
 
-### Community 114 - "AuthorizationDecision"
-Cohesion: 0.07
-Nodes (29): TenantLifecycle.Tests, AuthorizationDecision, DecisionId, DenialStage, Effect, IsAllowed, ReasonCode, Revision (+21 more)
+### Community 114 - "OutboxMessage"
+Cohesion: 0.09
+Nodes (19): OutboxMessage, AggregateId, AggregateType, AggregateVersion, CausationId, CorrelationId, EventId, EventType (+11 more)
 
 ### Community 115 - "Migration"
 Cohesion: 0.04
 Nodes (38): Access.Persistence.Migrations, Migration, DateTimeOffset, MigrationBuilder, InitialAccessSchema, DateTimeOffset, ModelBuilder, DateTimeOffset (+30 more)
 
-### Community 116 - ".Invite"
-Cohesion: 0.10
-Nodes (32): Authorizer, ScopeResolver, Action, Actor, IActionCatalog, AccessActionCatalogService, AccessAuthorizer, AccessScopeResolver (+24 more)
+### Community 116 - ".GivenGrantAsync"
+Cohesion: 0.14
+Nodes (24): Authorizer, ScopeResolver, Action, Actor, AccessActionCatalogService, AccessScopeResolver, PrincipalResolver, AccessTestFixture (+16 more)
 
-### Community 117 - "paths.ts"
-Cohesion: 0.08
-Nodes (37): authAccountRoutes, authLinkRoutes, authRoutes, authSessionRoutes, calendarRoutes, companySettingsRoutes, crmSettingsRoutes, dashboardRoutes (+29 more)
+### Community 117 - "index.tsx"
+Cohesion: 0.06
+Nodes (38): authAccountRoutes, authLinkRoutes, authRoutes, authSessionRoutes, calendarRoutes, companySettingsRoutes, crmSettingsRoutes, dashboardRoutes (+30 more)
 
-### Community 118 - "PartySearchTests"
-Cohesion: 0.16
-Nodes (15): PartyId, Fact, IEnumerable, List, PartyType, Task, TenantId, PartySearchTests (+7 more)
+### Community 118 - "PostgresFixture"
+Cohesion: 0.20
+Nodes (12): PartyId, PostgreSqlContainer, Task, PostgresFixture, AdminConnectionString, DbUpdateException, Fact, InvalidOperationException (+4 more)
 
 ### Community 119 - "OrderExplorer.tsx"
-Cohesion: 0.08
-Nodes (52): ActiveFilterChips(), ActiveFilterChipsProps, FilterPanel(), FilterPanelProps, DEFAULT_SORT, OrderExplorer(), ResultGrid(), ResultGridProps (+44 more)
+Cohesion: 0.07
+Nodes (60): react-day-picker, CheckboxGroupField(), MultiSelect(), NumberRangeInput(), SearchInput(), Separator(), ActiveFilterChips(), ActiveFilterChipsProps (+52 more)
 
 ### Community 120 - "MasterData.Application"
-Cohesion: 0.06
-Nodes (11): MasterData.Idempotency, MasterData.Persistence.Configurations, MasterData.Application, CRM.Tests.LinkTargets, MasterData.Tests.Domain, MasterData.Persistence, MasterData.Tests.Integration, MasterData.Outbox (+3 more)
+Cohesion: 0.05
+Nodes (26): MasterData.Idempotency, MasterData.Persistence.Configurations, MasterData.Application, MasterData.Tests.Domain, MasterData.Persistence, MasterData.Tests.Integration, MasterData.Outbox, MasterData.Domain (+18 more)
 
 ### Community 121 - ".HandleAsync"
-Cohesion: 0.13
-Nodes (20): EntryStageId, InactiveStageId, OtherActiveStageId, Version, ChangePipelineStageCommand, Guid, ChangePipelineStageHandler, CancellationToken (+12 more)
+Cohesion: 0.09
+Nodes (23): EntryStageId, InactiveStageId, OtherActiveStageId, EntityVersion, Entity, Version, ChangePipelineStageCommand, Guid (+15 more)
 
-### Community 122 - "i18n"
-Cohesion: 0.15
-Nodes (21): CatalogMutation, key(), useCreatePipelineDraft(), useCrmSettings(), useDiscardPipelineDraft(), useManageCrmCatalog(), usePublishPipelineVersion(), useSetPipelineLifecycle() (+13 more)
+### Community 122 - "PipelineDefinitionVersionTests"
+Cohesion: 0.23
+Nodes (4): PipelineDefinitionVersionTests, ArgumentException, Fact, InvalidOperationException
 
-### Community 123 - "RoleAssignment"
-Cohesion: 0.13
-Nodes (14): RoleAssignment, AccountId, GrantedByAccountId, Id, PrincipalType, Reason, RoleId, RowVersion (+6 more)
-
-### Community 124 - ".RunAsync"
-Cohesion: 0.40
-Nodes (7): CancellationToken, IHostEnvironment, ILogger, IServiceProvider, Task, TenantId, DevSeeder
-
-### Community 125 - ".NewTenantId"
+### Community 123 - ".Grant"
 Cohesion: 0.10
-Nodes (26): Code, Dictionary, Error, Fact, IConfiguration, InlineData, Output, Task (+18 more)
+Nodes (19): RoleAssignment, AccountId, GrantedByAccountId, Id, PrincipalType, Reason, RoleId, RowVersion (+11 more)
 
-### Community 126 - "OpportunityAuthorizationDeniedException"
-Cohesion: 0.08
-Nodes (35): IAuthorizedPrincipalDirectory, CancellationToken, IReadOnlyCollection, IReadOnlyDictionary, IReadOnlyList, Task, CreateOpportunityCommand, CallerPrincipal (+27 more)
+### Community 124 - "PostgresFixture"
+Cohesion: 0.25
+Nodes (9): AccessRlsTests, DbUpdateException, Fact, Task, PostgresFixture, AdminConnectionString, TimeProvider, PostgreSqlContainer (+1 more)
+
+### Community 125 - ".NewEmail"
+Cohesion: 0.15
+Nodes (17): Program, Code, Dictionary, Error, Fact, HttpClient, HttpStatusCode, IConfiguration (+9 more)
+
+### Community 126 - ".HandleAsync"
+Cohesion: 0.15
+Nodes (14): CreatedPayload, CreateOpportunityCommand, CallerPrincipal, Guid, CreateOpportunityHandler, CancellationToken, DbUpdateException, Task (+6 more)
 
 ### Community 127 - "CODEX EXECUTION PROMPT — Collaboration / Personal Calendar (real API, `EntityRef` links)"
 Cohesion: 0.12
 Nodes (15): Acceptance matrix, Collaboration personal calendar — execution plan, API contract, Architecture decisions (defaults — record them in the ADR at S0), CODEX EXECUTION PROMPT — Collaboration / Personal Calendar (real API, `EntityRef` links), Data model (`collaboration.calendar_entries`), Frontend (`web/`), Linked records (`EntityRef`) (+7 more)
 
-### Community 128 - "RefreshToken"
-Cohesion: 0.12
-Nodes (16): RefreshToken, ExpiresAt, Id, IsRotated, IssuedAt, ReplacedById, RotatedAt, SessionId (+8 more)
+### Community 128 - "AI Business OS — Mimari Uzlaştırma Raporu"
+Cohesion: 0.08
+Nodes (24): A2. Karar bekleyen owner kararları, A. Mimari hüküm, AI Business OS — Mimari Uzlaştırma Raporu, B. Mevcut mimarinin yeniden kullanım haritası, Beş yetki boyutu, C. Hedef mantıksal mimari, D. Güçlü tipli ve dinamik sınır, E. Dinamik yetkilendirme tasarımı (+16 more)
 
-### Community 129 - ".GenerateAndHash"
-Cohesion: 0.16
-Nodes (9): LogoutHandler, CancellationToken, Task, TimeProvider, TokenSecrets, hash, token, TokenSecretsTests (+1 more)
+### Community 129 - ".WriteAsync"
+Cohesion: 0.07
+Nodes (26): Secret, CancellationToken, DateTimeOffset, Hash, IReadOnlyCollection, Task, CancellationToken, DateTimeOffset (+18 more)
 
 ### Community 130 - "PHASE 2 — CRM Opportunity Commands & API — Closure Report"
 Cohesion: 0.12
@@ -974,33 +987,33 @@ Nodes (15): 1. Phase 2 scope completed, 2.1 `AuthorizationDenialStage` delta, 2.
 Cohesion: 0.18
 Nodes (16): BeforeEntryLoad, DbCommandInterceptor, Id, BeforeEntryLoad, Fired, CalendarEntryLateReplayTests, CancellationToken, CommandEventData (+8 more)
 
-### Community 132 - ".SeedOpenOpportunityWithBillableLineAsync"
-Cohesion: 0.19
-Nodes (14): EntryStage, OtherStage, GetOpportunityAvailableActionsHandler, CancellationToken, Task, GetOpportunityAvailableActionsQuery, Guid, DenyingAuthorizer (+6 more)
+### Community 132 - ".GetAsync"
+Cohesion: 0.23
+Nodes (8): CalendarEntryHandlerTests, RecordingAuthorizer, Requests, ArgumentException, CancellationToken, Fact, List, Task
 
-### Community 133 - ".CreateAdminContext"
+### Community 133 - ".RunAsync"
 Cohesion: 0.18
-Nodes (14): GetOpportunityQuery, Guid, GetOpportunityHandlerTests, Fact, OpportunityId, Task, TenantId, PipelineConstraintTests (+6 more)
+Nodes (11): BootstrapCommand, Code, Dictionary, Error, Fact, IConfiguration, InlineData, Output (+3 more)
 
 ### Community 134 - ".Create"
-Cohesion: 0.11
-Nodes (9): CalendarEntryCreationTests, CalendarEntryImmutabilityTests, CalendarEntryReplaceTests, ArgumentException, DateTimeOffset, Fact, InlineData, TenantId (+1 more)
+Cohesion: 0.15
+Nodes (6): CalendarEntryCreationTests, CalendarEntryReplaceTests, ArgumentException, DateTimeOffset, Fact, TenantId
 
-### Community 135 - "AccountCredential"
-Cohesion: 0.13
-Nodes (12): AccountCredential, AccountId, FailedAttempts, LastLoginAt, LockedUntil, LoginEmailNormalized, PasswordChangedAt, PasswordHash (+4 more)
+### Community 135 - "AuthorizedPrincipalDirectory"
+Cohesion: 0.09
+Nodes (26): Candidate, ActionKey, Value, GeneratedRegex, Regex, IActionCatalog, CancellationToken, Task (+18 more)
 
 ### Community 136 - "CalendarEntry"
 Cohesion: 0.07
-Nodes (30): NormalizedEntry, CalendarEntry, AllDay, Color, CreatedAt, EndAt, EndDate, Id (+22 more)
+Nodes (28): NormalizedEntry, CalendarEntry, AllDay, Color, CreatedAt, EndAt, EndDate, Id (+20 more)
 
-### Community 137 - "AuthEndpointsTests"
+### Community 137 - ".NewTenantId"
 Cohesion: 0.13
 Nodes (18): DateTime, Dictionary, Fact, Guid, HttpClient, HttpMethod, HttpRequestMessage, HttpResponseMessage (+10 more)
 
-### Community 138 - "OpportunityNotFoundException"
-Cohesion: 0.19
-Nodes (14): ListAssignablePrincipalsHandler, CancellationToken, IReadOnlyList, Task, AssignablePrincipalDto, ListAssignablePrincipalsQuery, Guid, OpportunityNotFoundException (+6 more)
+### Community 138 - "OpportunityAuthorizationDeniedException"
+Cohesion: 0.10
+Nodes (26): ListAssignablePrincipalsHandler, OpportunityAuthorizationDeniedException, DenialStage, OpportunityId, ReasonCode, OpportunityNotFoundException, PrincipalNotAssignableException, ReassignedPayload (+18 more)
 
 ### Community 139 - "EnableAccessRowLevelSecurity"
 Cohesion: 0.18
@@ -1008,27 +1021,27 @@ Nodes (7): Schema, MigrationBuilder, EnableAccessRowLevelSecurity, DateTimeOffse
 
 ### Community 140 - "opportunities/api.ts"
 Cohesion: 0.03
-Nodes (129): CrmSettings, crmSettingsSchema, item, pipelineStage, pipelineVersion, CommandBase, CommandRequest, CreateOpportunityVariables (+121 more)
+Nodes (141): @tanstack/react-store, CrmSettings, CommandBase, CommandRequest, CreateOpportunityVariables, CreatePartyVariables, fetchStages(), get() (+133 more)
 
 ### Community 141 - ".ReadEntryAsync"
-Cohesion: 0.13
-Nodes (26): SaveChangesCompletedEventData, SaveChangesInterceptor, CalendarEntryDeleteTests, ArgumentException, Fact, InlineData, InvalidOperationException, Task (+18 more)
+Cohesion: 0.12
+Nodes (28): SaveChangesCompletedEventData, CalendarEntryDeleteTests, ArgumentException, Fact, InlineData, InvalidOperationException, Task, Tenant (+20 more)
 
 ### Community 142 - ".MapCalendarEndpoints"
-Cohesion: 0.09
-Nodes (24): EntryFields, CancellationToken, DateOnly, DateTimeOffset, GeneratedRegex, HttpRequest, IEndpointRouteBuilder, IReadOnlyList (+16 more)
+Cohesion: 0.10
+Nodes (22): EntryFields, CancellationToken, DateOnly, DateTimeOffset, GeneratedRegex, HttpRequest, IEndpointRouteBuilder, IReadOnlyList (+14 more)
 
 ### Community 143 - "lib/auth/index.ts"
-Cohesion: 0.09
-Nodes (39): zustand, TenantSwitcher(), deriveInitials(), SessionState, signedOut(), acceptInvitation(), applyRefreshResult(), attemptRefresh() (+31 more)
+Cohesion: 0.10
+Nodes (36): TenantSwitcher(), getAccessToken(), SessionState, acceptInvitation(), applyRefreshResult(), attemptRefresh(), AUTH_REQUEST, bootstrapSession() (+28 more)
 
 ### Community 144 - ".AcceptInvitationAsync"
 Cohesion: 0.11
 Nodes (28): AcceptInvitationRequest, ChangePasswordRequest, CreateInvitationRequest, ForgotPasswordRequest, IDictionary, RegisterRequest, ResetPasswordRequest, HttpContext (+20 more)
 
-### Community 145 - "OutboxMessage"
-Cohesion: 0.04
-Nodes (60): AccessActionCatalog, ActionRegistryDescriptor, IReadOnlyList, AccessActionCatalogSeeder, CancellationToken, IEnumerable, Task, BootstrapTenantAccessCommand (+52 more)
+### Community 145 - ".EnsureSeededAsync"
+Cohesion: 0.12
+Nodes (19): AccessActionCatalog, ActionRegistryDescriptor, IReadOnlyList, AccessActionCatalogSeeder, CancellationToken, IEnumerable, Task, BootstrapTenantAccessCommand (+11 more)
 
 ### Community 146 - "CLAUDE PHASE 2 — EXECUTION PROMPT"
 Cohesion: 0.18
@@ -1043,96 +1056,96 @@ Cohesion: 0.12
 Nodes (15): DateTimeOffset, TenantId, TimeSpan, IdempotencyRecord, CreatedAt, ExpiresAt, IdempotencyKey, Operation (+7 more)
 
 ### Community 149 - "OpportunityPipelineFieldsTests"
-Cohesion: 0.46
-Nodes (3): OpportunityPipelineFieldsTests, ArgumentException, Fact
+Cohesion: 0.23
+Nodes (5): OpportunityPipelineFieldsTests, ArgumentException, Fact, PipelineStageKindTests, Fact
 
 ### Community 150 - "PHASE 1.5 RUNTIME RLS PDP DELTA"
 Cohesion: 0.20
 Nodes (9): Binding principle, Chosen implementation, PHASE 1.5 RUNTIME RLS PDP DELTA, Problem, Remaining architectural risk, Results, Security properties, Tests (+1 more)
 
 ### Community 151 - ".HandleAsync"
-Cohesion: 0.10
-Nodes (26): IPartyRegistration, PartyRegistrationResult, RegisterPartyRequest, CancellationToken, Guid, Task, PartyType, Organization (+18 more)
+Cohesion: 0.11
+Nodes (23): IPartyRegistration, PartyRegistrationResult, CancellationToken, Task, PartyType, Organization, Person, CreatePartyReferenceCommand (+15 more)
 
 ### Community 152 - "vitest"
-Cohesion: 0.05
-Nodes (99): msw, @tanstack/react-query, @testing-library/react, vitest, protectedResource(), signIn(), endpoints, confirm() (+91 more)
+Cohesion: 0.08
+Nodes (58): msw, @testing-library/react, vitest, protectedResource(), signIn(), endpoints, errorMessage(), queryClient (+50 more)
 
-### Community 153 - ".RuntimeContextAsync"
-Cohesion: 0.17
-Nodes (20): CreateInvitationCommand, ValidateInvitationHandler, ValidateInvitationResult, ValidateInvitationStatus, InvalidOrExpiredToken, Valid, CancellationToken, DateTimeOffset (+12 more)
+### Community 153 - ".NewEmail"
+Cohesion: 0.19
+Nodes (17): AcceptInvitationCommand, AcceptInvitationResult, AcceptInvitationStatus, Accepted, InvalidCredentials, InvalidOrExpiredToken, PolicyViolation, IReadOnlyList (+9 more)
 
-### Community 154 - "AddPipelineStageActiveAndEntryFlags"
-Cohesion: 0.22
-Nodes (5): MigrationBuilder, AddPipelineStageActiveAndEntryFlags, DateTimeOffset, Guid, ModelBuilder
+### Community 154 - "OutboxMessage"
+Cohesion: 0.10
+Nodes (18): OutboxMessage, AggregateId, AggregateType, AggregateVersion, CausationId, CorrelationId, EventId, EventType (+10 more)
 
 ### Community 155 - "EnableTenantModuleHandler"
 Cohesion: 0.27
 Nodes (10): EnableTenantModuleCommand, EnableTenantModuleResult, Guid, EnableTenantModuleHandler, CancellationToken, DateTimeOffset, List, Task (+2 more)
 
-### Community 156 - "react-router-dom"
-Cohesion: 0.04
-Nodes (78): date-fns, @fullcalendar/react, react-router-dom, PageHeader(), PageHeaderProps, NavSection, SectionNav(), Badge() (+70 more)
+### Community 156 - "IAuthorizedPrincipalDirectory"
+Cohesion: 0.12
+Nodes (18): IAuthorizedPrincipalDirectory, CancellationToken, IReadOnlyCollection, IReadOnlyDictionary, IReadOnlyList, Task, PrincipalDirectoryEntry, GetOpportunityHandler (+10 more)
 
-### Community 157 - "CapturingLogger"
-Cohesion: 0.18
-Nodes (9): ILogger, EventId, Exception, Func, IDisposable, List, LogLevel, CapturingLogger (+1 more)
+### Community 157 - ".HandleAsync"
+Cohesion: 0.11
+Nodes (14): CancelInvitationHandler, InvitationUnavailableException, CancellationToken, Guid, Task, TimeProvider, AuthorizationDeniedException, EnsureTenantAdministratorActionsHandler (+6 more)
 
 ### Community 158 - "ModelSnapshot"
-Cohesion: 0.08
-Nodes (18): ModelSnapshot, AccessDbContextModelSnapshot, DateTimeOffset, Guid, ModelBuilder, CollaborationDbContextModelSnapshot, DateOnly, DateTimeOffset (+10 more)
+Cohesion: 0.06
+Nodes (22): ModelSnapshot, AccessDbContextModelSnapshot, DateTimeOffset, Guid, ModelBuilder, CollaborationDbContextModelSnapshot, DateOnly, DateTimeOffset (+14 more)
 
 ### Community 159 - ".CreateAsync"
-Cohesion: 0.19
-Nodes (17): CreateTenantRoleCommand, ManageTenantRoleHandler, ManageTenantRoleResult, SystemRoleImmutableException, TenantAccessRevisionConflictException, UpdateTenantRoleCommand, CancellationToken, Guid (+9 more)
+Cohesion: 0.27
+Nodes (12): CreateTenantRoleCommand, ManageTenantRoleHandler, ManageTenantRoleResult, SystemRoleImmutableException, TenantAccessRevisionConflictException, UpdateTenantRoleCommand, CancellationToken, Guid (+4 more)
 
 ### Community 160 - "CollaborationDbContext"
-Cohesion: 0.07
-Nodes (22): IDesignTimeDbContextFactory, CollaborationDbContext, CalendarEntries, IdempotencyRecords, OutboxMessages, DbContextOptions, DbSet, ModelBuilder (+14 more)
+Cohesion: 0.10
+Nodes (18): IDesignTimeDbContextFactory, CollaborationDbContext, CalendarEntries, IdempotencyRecords, OutboxMessages, DbContextOptions, DbSet, ModelBuilder (+10 more)
 
 ### Community 161 - "CrmSettings"
-Cohesion: 0.10
-Nodes (21): CrmSettings, AssignmentPolicy, DefaultAssignmentMode, DefaultOpportunityTypeId, DefaultPipelineDefinitionId, DefaultPrincipalIssuer, DefaultPrincipalSubject, DefaultTeamId (+13 more)
+Cohesion: 0.06
+Nodes (36): AssignmentMode, DefaultPrincipal, Manual, Team, Territory, AssignmentPolicy, AnyAssignablePrincipal, ManagerOnly (+28 more)
 
-### Community 162 - ".HandleAsync"
-Cohesion: 0.13
-Nodes (16): CrmDbContext, DbUpdateException, IAuthorizer, List, PipelineDefinition, PipelineDefinitionVersion, PipelineStage, PipelineStageTransition (+8 more)
+### Community 162 - "AccountTokenPersistenceTests"
+Cohesion: 0.26
+Nodes (9): AccountTokenPersistenceTests, DbUpdateException, Fact, IMigrator, InlineData, PostgresException, PostgresFixture, Task (+1 more)
 
-### Community 163 - "zod"
-Cohesion: 0.10
-Nodes (22): zod, ImportWizard(), ImportWizardProps, DetailDrawer(), DetailDrawerProps, EditDrawerProps, RecordExplorer(), CUSTOMER_STATUS (+14 more)
+### Community 163 - ".InvokeAsync"
+Cohesion: 0.27
+Nodes (7): RequestDelegate, HttpContext, Task, ActorContextMiddleware, CancellationToken, Task, TenantId
 
 ### Community 164 - ".HandleAsync"
-Cohesion: 0.08
-Nodes (17): CompanySettings, CompanySettingsConcurrencyConflictException, ActualVersion, ExpectedVersion, GetCompanySettingsHandler, IdempotencyKeyReusedException, Key, Operation (+9 more)
+Cohesion: 0.09
+Nodes (19): CompanySettings, CompanySettingsAuthorizationDeniedException, ActionKey, ReasonCode, CompanySettingsNotFoundException, CancellationToken, Task, GetCompanySettingsHandler (+11 more)
 
-### Community 165 - "DevMailbox"
-Cohesion: 0.18
-Nodes (11): ConcurrentQueue, AuthenticationHostOptions, CancellationToken, IOptions, Task, DevInvitationPreviewRecorder, DateTimeOffset, Guid (+3 more)
+### Community 165 - "Host.Email"
+Cohesion: 0.09
+Nodes (16): ConcurrentQueue, Host.Email, AuthenticationHostOptions, IOptions, DevInvitationPreviewRecorder, DateTimeOffset, Guid, TimeProvider (+8 more)
 
-### Community 166 - "PasswordService"
-Cohesion: 0.06
-Nodes (37): PasswordHasher, PasswordVerificationResult, AcceptInvitationHandler, CancellationToken, Task, TimeProvider, CancellationToken, DateTimeOffset (+29 more)
+### Community 166 - ".HandleAsync"
+Cohesion: 0.07
+Nodes (27): PasswordVerificationResult, AcceptInvitationHandler, CancellationToken, Task, TimeProvider, CancellationToken, Task, CredentialCheck (+19 more)
 
 ### Community 167 - "Phase 2.5B — CRM Opportunity Frontend Integration: Final Report"
 Cohesion: 0.14
 Nodes (13): 10. Bilinen sınırlamalar, 11. Phase 3 hazırlık ifadesi, 1. Uygulanan rotalar / ekranlar / bileşenler, 2. Tüketilen gerçek API uç noktaları, 3. Authorization / FLS / obligation entegrasyonu, 4. Concurrency ve idempotency davranışı, 5. Tenant değişimi ve cache izolasyonu, 6. Hata durumu uygulaması (+5 more)
 
-### Community 168 - "TestTimeProvider"
-Cohesion: 0.17
-Nodes (19): AcceptInvitationCommand, AcceptInvitationResult, AcceptInvitationStatus, Accepted, InvalidCredentials, InvalidOrExpiredToken, PolicyViolation, IReadOnlyList (+11 more)
+### Community 168 - "CustomFieldValuesTests"
+Cohesion: 0.24
+Nodes (7): CustomFieldValuesTests, Fact, InlineData, IReadOnlyCollection, JsonElement, TenantId, Theory
 
-### Community 169 - "Fact"
-Cohesion: 0.17
-Nodes (15): ArgumentException, Fact, OpportunityAuthorizationDeniedException, PostgresFixture, GetPipelineStagesHandler, CrmDbContext, IAuthorizer, CreatePipelineDraftHandlerTests (+7 more)
+### Community 169 - ".HandleAsync"
+Cohesion: 0.05
+Nodes (49): ArgumentException, CrmDbContext, Access.Tests, DbUpdateException, Fact, IAuthorizer, OpportunityAuthorizationDeniedException, PipelineDefinition (+41 more)
 
 ### Community 170 - "LifecycleTestSupport"
-Cohesion: 0.11
-Nodes (22): AccessToken, MailboxEntry, IReadOnlyList, Fact, Task, InvitationEndpointsTests, Dictionary, HttpClient (+14 more)
+Cohesion: 0.12
+Nodes (21): AccessToken, MailboxEntry, IReadOnlyList, Fact, Task, InvitationEndpointsTests, Dictionary, HttpClient (+13 more)
 
-### Community 171 - ".HandleAsync"
-Cohesion: 0.33
-Nodes (5): ValidatePipelineDraftHandler, CancellationToken, Guid, Task, TenantId
+### Community 171 - ".GrantAsync"
+Cohesion: 0.23
+Nodes (10): RolePermissionSet, PermissionSetId, RoleId, TenantId, TenantId, OpportunityAuthorizationTests, Fact, OpportunityId (+2 more)
 
 ### Community 172 - "Collaboration Calendar — tech debt backlog (post-merge review)"
 Cohesion: 0.29
@@ -1143,40 +1156,40 @@ Cohesion: 0.23
 Nodes (11): CalendarEntryListTests, ArgumentException, DateOnly, DateTimeOffset, Fact, IEnumerable, InlineData, Task (+3 more)
 
 ### Community 174 - "CalendarEntryAuthorizationDeniedException"
-Cohesion: 0.14
-Nodes (15): CalendarEntryAuthorizationDeniedException, DenialStage, EntryId, ReasonCode, CalendarEntryConcurrencyConflictException, CalendarEntryNotFoundException, CalendarRangeTooLargeException, Exception (+7 more)
+Cohesion: 0.11
+Nodes (22): Exception, CancellationToken, Exception, HttpContext, ValueTask, CollaborationProblemDetailsExceptionHandler, InvitationRoleUnavailableException, CalendarEntryAuthorizationDeniedException (+14 more)
 
-### Community 175 - ".EvaluateAsync"
-Cohesion: 0.10
-Nodes (20): AccessScope, All, AnyOf, None, IReadOnlyList, OwnedBy, ScopeTerm, HttpContext (+12 more)
+### Community 175 - ".MapCompanySettingsEndpoints"
+Cohesion: 0.22
+Nodes (11): CancellationToken, HttpRequest, IEndpointRouteBuilder, IReadOnlyList, JsonSerializerOptions, Task, CompanySettingsEndpoints, CompanySettingsRequest (+3 more)
 
 ### Community 176 - "RenderedEmail"
 Cohesion: 0.18
 Nodes (13): IAsyncEnumerable, CancellationToken, ILogger, IOptions, Task, EmailDeliveryService, EmailLogging, EmailOutbox (+5 more)
 
-### Community 177 - "ui.ts"
-Cohesion: 0.15
-Nodes (16): @playwright/test, signInToCalendar(), CompanySettings, ADMIN, APP_URL, SEED_PASSWORD, choosePartyByName(), emailField() (+8 more)
+### Community 177 - "account.e2e.ts"
+Cohesion: 0.11
+Nodes (33): @playwright/test, confirmPassword(), newPassword(), signInToCalendar(), CompanySettings, CSRF, adminToken(), createMember() (+25 more)
 
 ### Community 178 - "PipelineDefinitionVersion"
 Cohesion: 0.10
-Nodes (16): PipelineDefinitionVersion, CreatedAt, EnforceAllowedTransitions, Id, PipelineDefinitionId, PublishedAt, Stages, Status (+8 more)
+Nodes (15): PipelineDefinitionVersion, CreatedAt, EnforceAllowedTransitions, Id, PipelineDefinitionId, PublishedAt, Stages, Status (+7 more)
 
 ### Community 179 - ".LoginAsync"
 Cohesion: 0.12
-Nodes (23): CookieOptions, LoginRequest, SelectTenantRequest, ITenantDirectory, DateTimeOffset, HttpRequest, HttpResponse, IHostEnvironment (+15 more)
+Nodes (24): LoginRequest, SelectTenantRequest, ITenantDirectory, HttpRequest, CancellationToken, Dictionary, Guid, HttpContext (+16 more)
 
-### Community 180 - "Host.Email"
-Cohesion: 0.12
-Nodes (9): Host.Email, IDataProtectionProvider, IDataProtector, InvitationTokenProtector, EmailRenderer, InvitePath, PasswordResetPath, WebApplication (+1 more)
+### Community 180 - "Host.Authentication"
+Cohesion: 0.06
+Nodes (22): Host.Authentication, Host.Bootstrap, Host.Modules, Host.Tests.Authentication, Host.Endpoints, Host.Tests.Fixtures, Host.Tests, IReadOnlyList (+14 more)
 
 ### Community 181 - "handlers/demo-tables.ts"
-Cohesion: 0.09
-Nodes (24): API_BASE, dashboardHandlers, MOCK_ACTIVITIES, MOCK_DEALS, MOCK_STAGES, demoFormsHandlers, demoTableHandlers, EMPLOYEES (+16 more)
+Cohesion: 0.06
+Nodes (41): homeKeys, AttentionSectionProps, ContinueWorkingSectionProps, ENTITY_ICON, RecentWorkRow(), TeamActivitySectionProps, AttentionAction, AttentionItem (+33 more)
 
 ### Community 182 - ".SeedDraftAsync"
-Cohesion: 0.29
-Nodes (9): CreatePipelineDraftResult, CrmSettingsConcurrencyConflictException, Draft, DiscardPipelineDraftHandler, Tenant, DiscardPipelineDraftHandlerTests, PrincipalRef, Task (+1 more)
+Cohesion: 0.15
+Nodes (17): CancellationToken, CreatePipelineDraftResult, CrmSettingsConcurrencyConflictException, Draft, Guid, IdempotencyRecord, DiscardPipelineDraftCommand, DiscardPipelineDraftHandler (+9 more)
 
 ### Community 183 - "2. Plan §6 güvenlik tablosu — satır satır kanıt"
 Cohesion: 0.09
@@ -1184,27 +1197,27 @@ Nodes (21): 1. Slice özeti, 2.10 Secret sızıntısı, 2.11 Tenant yükseltme, 
 
 ### Community 184 - "EvidenceRecord"
 Cohesion: 0.12
-Nodes (17): EvidenceRecord, Action, AggregateId, AggregateType, AggregateVersion, CorrelationId, Detail, Id (+9 more)
+Nodes (16): EvidenceRecord, Action, AggregateId, AggregateType, AggregateVersion, CorrelationId, Detail, Id (+8 more)
 
-### Community 185 - ".NewEmail"
-Cohesion: 0.17
-Nodes (20): PasswordResetRequestStatus, Accepted, RequestPasswordResetCommand, RequestPasswordResetResult, ResetPasswordResult, ResetPasswordStatus, Completed, InvalidOrExpiredToken (+12 more)
+### Community 185 - "TestTimeProvider"
+Cohesion: 0.10
+Nodes (34): ChangePasswordResult, IReadOnlyList, PasswordResetRequestStatus, Accepted, RequestPasswordResetCommand, RequestPasswordResetResult, ResetPasswordResult, ResetPasswordStatus (+26 more)
 
 ### Community 186 - "AccountToken"
 Cohesion: 0.09
 Nodes (25): AccountToken, AccountId, ConsumedAt, CreatedAt, CreatedByAccountId, DisplayName, EmailNormalized, ExpiresAt (+17 more)
 
 ### Community 187 - "AuthApiFixture"
-Cohesion: 0.15
+Cohesion: 0.16
 Nodes (9): Revoked, Guid, PostgreSqlContainer, SemaphoreSlim, Task, AuthApiFixture, AdminConnectionString, Task (+1 more)
 
 ### Community 188 - "InitialTenantLifecycleSchema"
-Cohesion: 0.08
-Nodes (17): TenantLifecycle.Persistence.Migrations, DateTimeOffset, Guid, MigrationBuilder, DateTimeOffset, Guid, ModelBuilder, InitialTenantLifecycleSchema (+9 more)
+Cohesion: 0.10
+Nodes (13): TenantLifecycle.Persistence.Migrations, DateTimeOffset, Guid, MigrationBuilder, DateTimeOffset, Guid, ModelBuilder, InitialTenantLifecycleSchema (+5 more)
 
-### Community 189 - "CompanySettingsEndpoints"
-Cohesion: 0.22
-Nodes (10): CancellationToken, HttpRequest, IReadOnlyList, JsonSerializerOptions, Task, CompanySettingsEndpoints, CompanySettingsRequest, InvitationRequest (+2 more)
+### Community 189 - "AuthEvent"
+Cohesion: 0.12
+Nodes (15): AuthEvent, AccountId, CorrelationId, Detail, EventType, Id, IpHash, OccurredAt (+7 more)
 
 ### Community 190 - "dependencies"
 Cohesion: 0.05
@@ -1219,8 +1232,8 @@ Cohesion: 0.23
 Nodes (15): GetTenantAccessOverviewHandler, GetTenantAccessOverviewQuery, PendingInvitationSummary, TenantAccessActionSummary, TenantAccessOverview, TenantMemberSummary, TenantRoleAssignmentSummary, TenantRolePermissionSummary (+7 more)
 
 ### Community 193 - "SessionHostOptions"
-Cohesion: 0.12
-Nodes (19): DefaultHttpContext, IFileProvider, IHostEnvironment, SessionHostOptions, AllowInsecureCookieInDevelopment, CookieName, CookiePath, PlatformIssuer (+11 more)
+Cohesion: 0.09
+Nodes (25): CookieOptions, DefaultHttpContext, IFileProvider, IHostEnvironment, SessionHostOptions, AllowInsecureCookieInDevelopment, CookieName, CookiePath (+17 more)
 
 ### Community 194 - "Task"
 Cohesion: 0.14
@@ -1231,20 +1244,20 @@ Cohesion: 0.07
 Nodes (27): CRM Won/Lost Pipeline-Stage Integration — Implementation Plan, Explicitly out of scope for this plan, File Structure, Phase A — Foundation: `PipelineStage.Kind`, Phase B — No CRM-enabled tenant may stay pipeline-less, Phase C — Won/Lost become real stages, Phase D — One-time backfill (doc §5 item 6 / §6.2), Phase E — The `CHECK` constraint and final hardening (doc §4.1, §4.2) (+19 more)
 
 ### Community 196 - "IdentifierRateLimiter"
-Cohesion: 0.12
-Nodes (18): Bucket, ConcurrentDictionary, Limit, DateTimeOffset, TimeProvider, TimeSpan, Bucket, Count (+10 more)
+Cohesion: 0.13
+Nodes (17): Bucket, ConcurrentDictionary, Limit, DateTimeOffset, TimeProvider, TimeSpan, Bucket, Count (+9 more)
 
-### Community 197 - "AddAccountTokens"
-Cohesion: 0.18
-Nodes (7): DateTimeOffset, Guid, MigrationBuilder, AddAccountTokens, DateTimeOffset, Guid, ModelBuilder
+### Community 197 - ".BackfillWonLostStagesAsync"
+Cohesion: 0.20
+Nodes (12): Fixed, OpportunitiesReassigned, CancellationToken, IConfiguration, IServiceProvider, List, Task, TenantId (+4 more)
 
 ### Community 198 - "package.json"
 Cohesion: 0.06
-Nodes (35): @base-ui/react, clsx, cmdk, cn, @fontsource-variable/geist, @hookform/resolvers, jsdom, libphonenumber-js (+27 more)
+Nodes (32): @base-ui/react, clsx, cmdk, cn, @fontsource-variable/geist, @hookform/resolvers, jsdom, libphonenumber-js (+24 more)
 
-### Community 199 - "time.ts"
-Cohesion: 0.14
-Nodes (25): CalendarToolbar(), EntryForm(), initialLink(), toDate(), EntryFormInput, entryFormSchema(), EntryFormValues, schema (+17 more)
+### Community 199 - "client.ts"
+Cohesion: 0.05
+Nodes (58): RFC-7807, axios, zod, apiClient, axios, AxiosRequestConfig, BEARER_AUTH_ENDPOINTS, ProblemBody (+50 more)
 
 ### Community 200 - "ClientFingerprintTests"
 Cohesion: 0.33
@@ -1262,49 +1275,49 @@ Nodes (6): DateTimeOffset, MigrationBuilder, AddModuleEnablement, DateTimeOffset
 Cohesion: 0.14
 Nodes (9): HttpContext, HttpRequest, HttpResponse, CsrfOriginGuard, ResponseHardeningExtensions, Fact, InlineData, Theory (+1 more)
 
-### Community 204 - "PipelineStageTransition"
-Cohesion: 0.22
-Nodes (9): PipelineStageTransition, FromStageId, Id, PipelineDefinitionVersionId, TenantId, ToStageId, TenantId, PipelineStageTransitionConfiguration (+1 more)
+### Community 204 - ".NormalizeValue"
+Cohesion: 0.16
+Nodes (12): JsonNode, CustomFieldError, CustomFieldValidationException, Errors, IReadOnlyList, CustomFieldValues, GeneratedRegex, IReadOnlyCollection (+4 more)
 
-### Community 206 - "IdempotencyRecord"
-Cohesion: 0.14
-Nodes (14): IdempotencyRecord, CreatedAt, ExpiresAt, IdempotencyKey, Operation, PrincipalIssuer, PrincipalSubject, RequestHash (+6 more)
+### Community 206 - "EvidenceRecord"
+Cohesion: 0.12
+Nodes (16): DateTimeOffset, Guid, TenantId, EvidenceRecord, Action, AggregateId, AggregateType, AggregateVersion (+8 more)
 
-### Community 207 - "DashboardLayout.tsx"
-Cohesion: 0.18
-Nodes (11): DashboardLayout(), RouteHandle, SIDEBAR_SURFACES, ApplicationIconKey, ApplicationItem, ApplicationKind, ApplicationStatus, NavScope (+3 more)
+### Community 207 - "RowVersionInterceptor"
+Cohesion: 0.17
+Nodes (9): SaveChangesInterceptor, IHasRowVersion, RowVersion, RowVersionInterceptor, CancellationToken, DbContext, DbContextEventData, InterceptionResult (+1 more)
 
 ### Community 208 - ".HandleAsync"
-Cohesion: 0.17
-Nodes (18): SourceStageId, InvalidPipelineTransitionException, MoveOpportunityToPipelineCommand, Guid, MoveOpportunityToPipelineHandler, CancellationToken, DbUpdateException, Task (+10 more)
+Cohesion: 0.15
+Nodes (19): SourceStageId, InvalidPipelineTransitionException, MoveOpportunityToPipelineCommand, Guid, MoveOpportunityToPipelineHandler, CancellationToken, DbUpdateException, Task (+11 more)
 
 ### Community 209 - "3. Need → Decision matrix"
 Cohesion: 0.07
 Nodes (26): 0. Correction to the task premise, 1. Repository snapshot, 2. Validation loop run for this review, 3.10 Renovate — **LATER**, 3.11 Secret scanning (Gitleaks) — **INSTALL — applied, via the CLI directly, not gitleaks-action**, 3.12 Storybook — **LATER**, 3.13 Formatter (Oxc `oxfmt` vs. Prettier) — **LATER, evaluated not applied**, 3.14 Testcontainers (.NET), database tooling, Redis, backend observability (OpenTelemetry .NET, etc.) — **NOT APPLICABLE / LATER** (+18 more)
 
 ### Community 210 - ".Create"
-Cohesion: 0.08
-Nodes (44): LoseOpportunityCommand, Guid, LoseOpportunityHandler, CancellationToken, DbUpdateException, Task, TimeSpan, OpenOpportunityCommand (+36 more)
+Cohesion: 0.05
+Nodes (64): EntryStage, OtherStage, GetOpportunityAvailableActionsHandler, GetOpportunityAvailableActionsQuery, Guid, LoseOpportunityCommand, Guid, LoseOpportunityHandler (+56 more)
 
 ### Community 211 - "What You Must Do When Invoked"
 Cohesion: 0.08
 Nodes (24): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+16 more)
 
-### Community 212 - "DevSeederTests"
+### Community 212 - "IClassFixture"
 Cohesion: 0.15
-Nodes (15): Body, Cookie, DateTimeOffset, Dictionary, Exception, Fact, HttpClient, HttpMethod (+7 more)
+Nodes (16): IClassFixture, Body, Cookie, DateTimeOffset, Dictionary, Exception, Fact, HttpClient (+8 more)
 
 ### Community 213 - "AddPipelineTables"
 Cohesion: 0.20
 Nodes (6): DateTimeOffset, MigrationBuilder, AddPipelineTables, DateTimeOffset, Guid, ModelBuilder
 
-### Community 214 - ".Normalize"
-Cohesion: 0.16
-Nodes (15): EmailNormalizer, RegisterAccountResult, RegisterAccountStatus, Accepted, InvalidDisplayName, InvalidEmail, PolicyViolation, IReadOnlyList (+7 more)
+### Community 214 - ".AddAsync"
+Cohesion: 0.11
+Nodes (21): AccountProvisioning, CancellationToken, Principal, Task, RegisterAccountCommand, RegisterAccountResult, RegisterAccountStatus, Accepted (+13 more)
 
-### Community 215 - "ModuleCapabilityManifest"
-Cohesion: 0.13
-Nodes (12): ModuleCapabilityManifest, GeneratedRegex, IEnumerable, IReadOnlyList, Regex, IReadOnlyList, PlatformModules, ActionRegistry (+4 more)
+### Community 215 - "TenantFieldDefinitionTests"
+Cohesion: 0.25
+Nodes (7): TenantFieldDefinitionTests, ArgumentException, Fact, InlineData, InvalidOperationException, TenantId, Theory
 
 ### Community 216 - "Phase 2.5A — Authentication Frontend: Implementation Plan"
 Cohesion: 0.09
@@ -1319,8 +1332,8 @@ Cohesion: 0.10
 Nodes (21): AuthenticationHostOptions, AllowedOrigins, Lockout, Password, PublicAppBaseUrl, RateLimiting, SelfRegistration, Session (+13 more)
 
 ### Community 219 - "TenantProfile"
-Cohesion: 0.09
-Nodes (18): DateTimeOffset, TenantId, TenantProfile, Address, CreatedAt, CurrencyCode, DisplayName, Email (+10 more)
+Cohesion: 0.07
+Nodes (23): DateTimeOffset, TenantId, TenantProfile, Address, CreatedAt, CurrencyCode, DisplayName, Email (+15 more)
 
 ### Community 220 - "InitialCollaborationSchema"
 Cohesion: 0.09
@@ -1343,40 +1356,40 @@ Cohesion: 0.09
 Nodes (21): compilerOptions, allowArbitraryExtensions, allowImportingTsExtensions, erasableSyntaxOnly, jsx, lib, module, moduleDetection (+13 more)
 
 ### Community 225 - "InvitationDeliveryService"
-Cohesion: 0.19
-Nodes (9): TenantId, Value, CancellationToken, ILogger, IOptions, IServiceScopeFactory, Task, TimeProvider (+1 more)
+Cohesion: 0.15
+Nodes (10): TenantId, Value, CancellationToken, ILogger, IOptions, IServiceScopeFactory, Task, TimeProvider (+2 more)
 
 ### Community 226 - "CLAUDE-BOOTSTRAP.md"
 Cohesion: 0.10
 Nodes (19): 0. Execution contract, 10. Final report, 11. Working conventions this bootstrap should encode, 12. Success criteria, 1. Prime directive, 2. Use native mechanisms before building anything, 3. Execution sequence, 4. CLAUDE.md (+11 more)
 
-### Community 227 - "client.ts"
-Cohesion: 0.06
-Nodes (41): RFC-7807, axios, apiClient, axios, AxiosRequestConfig, BEARER_AUTH_ENDPOINTS, ProblemBody, RefreshHandler (+33 more)
+### Community 227 - "CalendarPage.tsx"
+Cohesion: 0.22
+Nodes (13): @fullcalendar/react, BUSINESS_HOURS, CalendarBoard(), CalendarBoardProps, PLUGINS, rangeOf(), TIME_FORMAT, CalendarToolbar() (+5 more)
 
 ### Community 228 - "opportunities.e2e.ts"
-Cohesion: 0.19
-Nodes (22): CSRF, newApi(), addLineViaApi(), AssignablePrincipal, assignableViaApi(), CreateOpportunityResponse, createViaApi(), CSRF (+14 more)
+Cohesion: 0.18
+Nodes (23): CSRF, newApi(), addLineViaApi(), AssignablePrincipal, assignableViaApi(), CreateOpportunityResponse, createViaApi(), CSRF (+15 more)
 
 ### Community 229 - "CalendarEntryConstraintTests"
-Cohesion: 0.06
-Nodes (48): Constraint, NpgsqlCommand, NpgsqlDbType, NpgsqlTransaction, Row, SqlState, AccountTokenPersistenceTests, DbUpdateException (+40 more)
+Cohesion: 0.13
+Nodes (21): Constraint, NpgsqlDbType, Row, SqlState, CalendarEntryConstraintTests, AcceptedCases, RejectedCases, Row (+13 more)
 
 ### Community 230 - ".HandleAsync"
 Cohesion: 0.10
-Nodes (30): Query, IPartySearch, CancellationToken, IReadOnlyList, Task, SearchPartyReferencesHandler, CancellationToken, IReadOnlyCollection (+22 more)
+Nodes (28): Query, IPartyDirectory, IPartySearch, SearchPartyReferencesHandler, CancellationToken, IReadOnlyCollection, IReadOnlyList, Task (+20 more)
 
 ### Community 231 - ".Create"
 Cohesion: 0.38
 Nodes (3): AccountCredentialTests, DateTimeOffset, Fact
 
 ### Community 232 - ".Create"
-Cohesion: 0.06
-Nodes (33): Role, Id, Key, Name, Origin, OriginModuleKey, OriginVersion, TenantId (+25 more)
+Cohesion: 0.09
+Nodes (20): TemplateProvenance, PermissionSetTests, ArgumentException, Fact, InvalidOperationException, RoleTests, ArgumentException, Fact (+12 more)
 
-### Community 233 - "lucide-react"
-Cohesion: 0.02
-Nodes (158): lucide-react, DensityScope(), DensityToggle(), DensityToggleProps, EmptyState(), EmptyStateProps, Tone, TONE_COLOR (+150 more)
+### Community 233 - "types/index.ts"
+Cohesion: 0.03
+Nodes (123): DensityScope(), DensityScopeProps, DensityToggle(), DensityToggleProps, Segment, SegmentedControl(), SegmentedControlProps, STAGE_TONE (+115 more)
 
 ### Community 234 - "Phase 2.6 — CRM Production Readiness & Reference Queries: implementation plan"
 Cohesion: 0.25
@@ -1386,9 +1399,9 @@ Nodes (7): Binding boundaries (nothing here needs a new owner decision), Design 
 Cohesion: 0.11
 Nodes (17): compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, lib, module, moduleDetection, noEmit, noFallthroughCasesInSwitch (+9 more)
 
-### Community 236 - ".HandleAsync"
-Cohesion: 0.04
-Nodes (45): Secret, AccountTokenService, InviteLifetime, PasswordResetLifetime, PasswordSetupLifetime, CancellationToken, DateTimeOffset, Hash (+37 more)
+### Community 236 - "EmailMessage"
+Cohesion: 0.18
+Nodes (9): CancellationToken, Task, EmailMessage, IReadOnlyDictionary, StringBuilder, CancellationToken, Task, InvalidOperationException (+1 more)
 
 ### Community 237 - "Phase 2.5A + 2.5B — Post-Implementation Audit Report"
 Cohesion: 0.15
@@ -1398,9 +1411,9 @@ Nodes (12): 10. Phase 2.5 Completion Decision, 1. Executive Result, 2. Phase 2.5
 Cohesion: 0.12
 Nodes (17): devDependencies, jsdom, oxlint, @playwright/test, tailwindcss, @tailwindcss/vite, @tanstack/react-query-devtools, @testing-library/dom (+9 more)
 
-### Community 239 - "FixOpportunityAssignedPrincipalIndex"
-Cohesion: 0.22
-Nodes (5): MigrationBuilder, FixOpportunityAssignedPrincipalIndex, DateTimeOffset, Guid, ModelBuilder
+### Community 239 - "CRM.Customization"
+Cohesion: 0.14
+Nodes (6): CRM.Customization, TenantFieldOwnerScope, Tenant, TenantFieldStatus, Active, Deprecated
 
 ### Community 240 - "Enterprise React Frontend — Ana Katmanlar: Feasibility Assessment"
 Cohesion: 0.12
@@ -1414,9 +1427,9 @@ Nodes (14): bad(), commit_file(), git_init(), ok(), resolve_range(), test-gitlea
 Cohesion: 0.12
 Nodes (15): overrides, plugins, rules, jsx-a11y/alt-text, jsx-a11y/anchor-has-content, jsx-a11y/aria-role, jsx-a11y/control-has-associated-label, jsx-a11y/no-access-key (+7 more)
 
-### Community 243 - "ConfigureOpportunityCreationSteps"
-Cohesion: 0.22
-Nodes (5): MigrationBuilder, ConfigureOpportunityCreationSteps, DateTimeOffset, Guid, ModelBuilder
+### Community 243 - "PartySearchTests"
+Cohesion: 0.33
+Nodes (7): Fact, IEnumerable, List, PartyType, Task, TenantId, PartySearchTests
 
 ### Community 244 - "Density"
 Cohesion: 0.13
@@ -1446,9 +1459,9 @@ Nodes (6): DateTimeOffset, MigrationBuilder, CompleteCrmConfigurationManagement,
 Cohesion: 0.31
 Nodes (5): Access.Tests.Architecture, ModuleBoundaryTests, Assembly, Fact, TestResult
 
-### Community 251 - "CreatePipelineDraftCommand"
-Cohesion: 0.26
-Nodes (11): CreatePipelineDraftCommand, PipelineImpactValidationDto, PipelineStageInput, PipelineTransitionInput, PublishPipelineVersionCommand, PublishPipelineVersionResult, Guid, IReadOnlyList (+3 more)
+### Community 251 - ".RunAsync"
+Cohesion: 0.40
+Nodes (7): CancellationToken, IHostEnvironment, ILogger, IServiceProvider, Task, TenantId, DevSeeder
 
 ### Community 252 - "05 · Navigation & App Shell"
 Cohesion: 0.14
@@ -1466,13 +1479,13 @@ Nodes (11): 10. Ownership and safe re-runs, 11. Verification and completion, 1. 
 Cohesion: 0.15
 Nodes (12): 13 · UX Definition of Done, Accessibility, Content, Data surfaces (when relevant), Review guide, States, Structure, The checklist (+4 more)
 
-### Community 256 - "LostReason"
+### Community 256 - "TenantFieldConfig"
 Cohesion: 0.16
-Nodes (12): LostReason, CreatedAt, Id, Key, Name, RowVersion, Status, TenantId (+4 more)
+Nodes (7): JsonSerializerOptions, TenantFieldConfig, Empty, GeneratedRegex, IReadOnlyList, Regex, TenantFieldOption
 
-### Community 257 - "OutboxMessage"
-Cohesion: 0.10
-Nodes (20): OutboxMessage, AggregateId, AggregateType, AggregateVersion, CausationId, CorrelationId, EventId, EventType (+12 more)
+### Community 257 - "OpportunityStageHistoryEntry"
+Cohesion: 0.08
+Nodes (19): OpportunityStageHistoryEntry, EnteredAt, ExitedAt, Id, OpportunityId, PipelineDefinitionVersionId, PipelineStageId, TenantId (+11 more)
 
 ### Community 258 - "RenameOpportunityLifecycle"
 Cohesion: 0.22
@@ -1498,17 +1511,17 @@ Nodes (11): 06 · Data Grids, Alignment — the one rule that is never bent, Che
 Cohesion: 0.18
 Nodes (11): scripts, build, check, dev, e2e, lint, preview, setup (+3 more)
 
-### Community 265 - "RefreshSessionResult"
-Cohesion: 0.25
-Nodes (8): RefreshResult, RefreshConflict, SessionInvalid, Success, RefreshSessionResult, DateTimeOffset, Guid, IReadOnlyList
+### Community 265 - "EvidenceRecord"
+Cohesion: 0.13
+Nodes (15): EvidenceRecord, Action, AggregateId, AggregateType, AggregateVersion, CorrelationId, Detail, Id (+7 more)
 
-### Community 266 - "CRM.Tests.csproj"
-Cohesion: 0.22
-Nodes (8): net10.0, coverlet.collector (6.0.4), Microsoft.NET.Test.Sdk (17.14.1), NetArchTest.Rules (1.3.2), Testcontainers.PostgreSql (4.15.0), xunit (2.9.3), xunit.runner.visualstudio (3.1.4), Microsoft.NET.Sdk
+### Community 266 - "TenantModuleEnablement"
+Cohesion: 0.24
+Nodes (8): TenantModuleEnablement, EnabledAt, Id, ModuleKey, TemplateVersion, TenantId, DateTimeOffset, TenantId
 
-### Community 267 - "MasterData.Tests.csproj"
-Cohesion: 0.22
-Nodes (8): net10.0, coverlet.collector (6.0.4), Microsoft.NET.Test.Sdk (17.14.1), NetArchTest.Rules (1.3.2), Testcontainers.PostgreSql (4.15.0), xunit (2.9.3), xunit.runner.visualstudio (3.1.4), Microsoft.NET.Sdk
+### Community 267 - ".HandleAsync"
+Cohesion: 0.20
+Nodes (10): RevokedPayload, RevokeRoleAssignmentCommand, RevokeRoleAssignmentResult, Guid, RevokedPayload, RevokeRoleAssignmentHandler, CancellationToken, Task (+2 more)
 
 ### Community 268 - "10 · Data Visualization"
 Cohesion: 0.20
@@ -1519,8 +1532,8 @@ Cohesion: 0.36
 Nodes (8): activeClientIds, getResponse(), handleRequest(), IS_MOCKED_RESPONSE, resolveMainClient(), respondWithMock(), sendToClient(), serializeRequest()
 
 ### Community 270 - "OpportunityType"
-Cohesion: 0.16
-Nodes (12): OpportunityType, CreatedAt, Id, Key, Name, RowVersion, Status, TenantId (+4 more)
+Cohesion: 0.03
+Nodes (48): ConfigurationStatus, Archived, Inactive, CustomerNeed, AveragePrice, Category, CreatedAt, Id (+40 more)
 
 ### Community 271 - "useDraftGuard.ts"
 Cohesion: 0.38
@@ -1568,7 +1581,7 @@ Nodes (7): Phase 1 — Build now, ★ must-have, zero backend blockers, Phase 2 
 
 ### Community 282 - "Access.Persistence"
 Cohesion: 0.06
-Nodes (15): Access.Evidence, Access.Application, Access.Tests.Application, Access.Outbox, Access.Persistence, Access.Idempotency, Access.Domain.Identity, Access.Domain.Authorization (+7 more)
+Nodes (20): Access.Evidence, CRM.Tests.LinkTargets, Access.Application, Access.Tests.Application, Access.Outbox, Access.Persistence, Access.Idempotency, Access.Domain.Identity (+12 more)
 
 ### Community 283 - "Backend Data Requirements (from the Frontend)"
 Cohesion: 0.29
@@ -1579,8 +1592,8 @@ Cohesion: 0.29
 Nodes (7): Claude Görevleri, Claude Task A — View State Engine (#27), Claude Task B — Mutation infra + optimistic layer + validation contract (#12 + #13 + #22), Claude Task C — Draft Engine (#23), Claude Task D — Field Registry domain tier (#24), Claude Task E — Query Architecture convention dokümanı (#10), Claude Task F — AI-Ready UI Metadata (#60)
 
 ### Community 285 - "OutboxMessage"
-Cohesion: 0.10
-Nodes (18): OutboxMessage, AggregateId, AggregateType, AggregateVersion, CorrelationId, EventId, EventType, Id (+10 more)
+Cohesion: 0.11
+Nodes (19): OutboxMessage, AggregateId, AggregateType, AggregateVersion, CorrelationId, EventId, EventType, Id (+11 more)
 
 ### Community 286 - "graphify reference: query, path, explain"
 Cohesion: 0.33
@@ -1595,8 +1608,8 @@ Cohesion: 0.33
 Nodes (6): Codex Görevleri — Tur 2, Codex Task 10 — Import / Export Framework (#58), Codex Task 11 — Code Splitting: manualChunks (#43), Codex Task 12 — Accessibility verification (#35), Codex Task 8 — Filter AST (#26), Codex Task 9 — Selection Engine exclusion-set modeli (#28)
 
 ### Community 290 - "CalendarEntryTextAndPrecisionTests"
-Cohesion: 0.18
-Nodes (11): Collaboration.Tests.Domain, CalendarEntryTextAndPrecisionTests, ForbiddenTitleCharacters, ArgumentException, DateTimeOffset, Fact, InlineData, MemberData (+3 more)
+Cohesion: 0.23
+Nodes (10): CalendarEntryTextAndPrecisionTests, ForbiddenTitleCharacters, ArgumentException, DateTimeOffset, Fact, InlineData, MemberData, TenantId (+2 more)
 
 ### Community 291 - "The 31 items"
 Cohesion: 0.40
@@ -1608,11 +1621,11 @@ Nodes (4): compilerOptions, paths, files, references
 
 ### Community 293 - "OutboxMessage"
 Cohesion: 0.10
-Nodes (19): DateTimeOffset, Guid, TenantId, OutboxMessage, AggregateId, AggregateType, AggregateVersion, CausationId (+11 more)
+Nodes (20): DateTimeOffset, Guid, TenantId, OutboxMessage, AggregateId, AggregateType, AggregateVersion, CausationId (+12 more)
 
 ### Community 294 - "CollaborationModuleCapabilitiesTests"
-Cohesion: 0.20
-Nodes (7): Collaboration.Tests.Application, CollaborationModuleCapabilitiesTests, Fact, HashSet, InlineData, Theory, Type
+Cohesion: 0.24
+Nodes (6): CollaborationModuleCapabilitiesTests, Fact, HashSet, InlineData, Theory, Type
 
 ### Community 296 - "SelectTenantCommand.cs"
 Cohesion: 0.33
@@ -1647,72 +1660,72 @@ Cohesion: 0.15
 Nodes (12): InvitationDelivery, Attempts, DeliveredAt, InvitationId, NextAttemptAt, ProtectedToken, TenantId, DateTimeOffset (+4 more)
 
 ### Community 313 - "PipelineDefinition"
-Cohesion: 0.11
+Cohesion: 0.10
 Nodes (16): PipelineDefinition, CreatedAt, Id, IsActive, IsArchived, Name, RowVersion, TenantId (+8 more)
 
 ### Community 314 - "NonDisposingScope"
 Cohesion: 0.36
 Nodes (6): IServiceScope, IServiceScopeFactory, NonDisposingScope, ServiceProvider, SingleContextScopeFactory, IServiceProvider
 
-### Community 315 - ".GetEntriesAsync"
-Cohesion: 0.20
-Nodes (8): CancellationToken, IReadOnlyList, Task, TenantDirectoryEntry, CancellationToken, IReadOnlyList, Task, TenantDirectory
+### Community 315 - "TenantId"
+Cohesion: 0.07
+Nodes (22): MasterData.Tests, TenantId, RegisterPartyRequest, Guid, CancellationToken, IReadOnlyList, Task, CancellationToken (+14 more)
 
 ### Community 316 - "Phase 2.6 — CRM Production Readiness & Reference Queries: Final Report"
 Cohesion: 0.14
 Nodes (13): 1. Sonuç, 2. Ne inşa edildi, 3. Test kanıtı, 4. Operatör el kitabı, 5. G3 — Product arama neden yapılmadı, 6. Bilinen boşluklar (bu kapsamda inşa edilmedi), 6a. Boşluk kapatma (aynı gün, "boşlukları hızlıca kapat"), 7. Doğrulanamayanlar / dikkat (+5 more)
 
-### Community 317 - "IAsyncLifetime"
-Cohesion: 0.13
-Nodes (16): IAsyncLifetime, TenantProfileDetails, ArgumentException, Fact, InlineData, Theory, TenantProfileTests, PostgreSqlContainer (+8 more)
+### Community 317 - "PostgresFixture"
+Cohesion: 0.24
+Nodes (9): PostgreSqlContainer, Task, PostgresFixture, AdminConnectionString, DbUpdateException, Fact, Task, TenantId (+1 more)
 
-### Community 318 - "Contracts.csproj"
-Cohesion: 0.10
-Nodes (13): IReadOnlyList, PipelineStageInput, PipelineTransitionInput, net10.0, Microsoft.NET.Sdk, CreatePipelineDraftRequest, CrmCatalogRequest, CrmSettingsRequest (+5 more)
+### Community 318 - "data/api.ts"
+Cohesion: 0.20
+Nodes (14): unwrapApiResponse(), searchCustomers(), CoreAdminGrid(), demoTableKeys, EmployeePage, EmployeePageRequest, fetchEmployeePage(), isEmployeePage() (+6 more)
 
-### Community 319 - "fynovio-platform.slnx"
-Cohesion: 0.16
-Nodes (10): Microsoft.AspNetCore.Authentication.JwtBearer (10.0.4), Microsoft.NET.Sdk.Web, net10.0, net10.0, EFCore.NamingConventions (10.0.1), Microsoft.EntityFrameworkCore.Design (10.0.4), Npgsql.EntityFrameworkCore.PostgreSQL (10.0.3), Microsoft.NET.Sdk (+2 more)
+### Community 319 - "InvalidOperationException"
+Cohesion: 0.04
+Nodes (55): ArchivePayload, Assignee, InvalidOperationException, CrmAssignmentProviderUnavailableException, IdempotencyKeyReusedException, CrmCatalogItemDto, CrmCatalogKeyConflictException, CrmCatalogKind (+47 more)
 
 ### Community 320 - "CRM Opportunity Pipeline — Won/Lost as Pipeline Stages & Cross-Pipeline Move"
 Cohesion: 0.10
 Nodes (19): 1. Problem statement, 2. Industry precedent, 3.1 Lost stage cardinality — single Lost stage, 3.2 Pipeline version retirement — open opportunities stay and finish in place, 3.3 Cross-pipeline move — allowed, manual target stage, 3.4 Stage mandatory once Open, 3. Decisions (owner, 2026-09-27), 4.1 "A database CHECK constraint keeps `status` and `stage.kind` in sync" — wrong as stated (+11 more)
 
-### Community 321 - ".HandleAsync"
-Cohesion: 0.19
-Nodes (11): CancellationToken, Guid, IdempotencyRecord, PrincipalRef, Task, TenantId, DiscardPipelineDraftCommand, DiscardPipelineDraftResult (+3 more)
+### Community 321 - "DomainEntityField.tsx"
+Cohesion: 0.28
+Nodes (10): DomainRecord, MOCK_CUSTOMERS, MOCK_ERP_CODES, MOCK_PRODUCTS, searchDomainRecords(), createDomainEntityField(), DomainEntityField(), DomainEntityFieldConfig (+2 more)
 
-### Community 322 - "Grup 2 — Mimari owner kararları (OD-1 … OD-7)"
-Cohesion: 0.13
-Nodes (14): AI Business OS — Onay Bekleyen Kararlar, Grup 1 — İlk dilim (tier-1 custom fields) için onaylar, Grup 2 — Mimari owner kararları (OD-1 … OD-7), K1. Doc 15 tier 1 kabul edildi mi?, K2. Tier-1 custom field ADR'ı onaylanıyor mu?, K3. Yeni yetki eylemi için CRM şablon versiyonu, OD-1. Tenant tanımlı objeler için genel kayıt deposu, OD-2. Workflow runtime (+6 more)
+### Community 322 - "Grup 2 — Mimari owner kararları"
+Cohesion: 0.15
+Nodes (12): AI Business OS — Owner Kararları (Karar Kaydı), Aşama → karar eşlemesi, Ek mimari karar, Grup 1 — İlk dilim, Grup 2 — Mimari owner kararları, OD-1 — Tenant tanımlı obje deposu → (b) sınırlı, tetikleyiciyle ertelenmiş, OD-2 — Workflow runtime → (b), OD-3 — Tenant tanımlı iş eylemleri → (b) (+4 more)
 
 ### Community 323 - "OpportunityStatus"
 Cohesion: 0.13
-Nodes (15): ListOpportunitiesRequest, OpportunityDto, OpportunityLineDto, DateTimeOffset, IReadOnlyList, OpportunitySummaryDto, DateTimeOffset, IReadOnlyList (+7 more)
+Nodes (13): ListOpportunitiesRequest, OpportunitySummaryDto, DateTimeOffset, IReadOnlyList, ArchivePayload, DateTimeOffset, OpportunityStatus, Draft (+5 more)
 
 ### Community 324 - "WinOpportunityHandler"
-Cohesion: 0.15
-Nodes (18): WinOpportunityCommand, Guid, WinOpportunityHandler, CancellationToken, DbUpdateException, Task, TimeSpan, WinOpportunityHandlerTests (+10 more)
+Cohesion: 0.13
+Nodes (17): WinOpportunityCommand, Guid, WinOpportunityHandler, CancellationToken, DbUpdateException, Task, TimeSpan, WinOpportunityResult (+9 more)
 
-### Community 325 - "Host.Authentication"
-Cohesion: 0.05
-Nodes (28): Host.Authentication, Host.Bootstrap, Host.Modules, Host.Tests.Authentication, Host.Endpoints, Host.Tests.Fixtures, Host.Tests.Modules, Host.Tests (+20 more)
+### Community 325 - "DataTableViewOptions.tsx"
+Cohesion: 0.27
+Nodes (10): DataTable(), DataTablePagination(), DataTablePaginationProps, PAGE_SIZES, DataTableViewOptions(), DataTableViewOptionsProps, moveColumnOrder(), normalizeColumnOrder() (+2 more)
 
 ### Community 326 - "PipelineStage"
-Cohesion: 0.10
-Nodes (17): PipelineStage, CreatedAt, Id, IsActive, IsArchived, IsEntry, Kind, Name (+9 more)
+Cohesion: 0.11
+Nodes (13): PipelineStage, CreatedAt, Id, IsActive, IsArchived, IsEntry, Kind, Name (+5 more)
 
 ### Community 327 - "Collaboration schema (`collaboration`)"
 Cohesion: 0.22
 Nodes (8): `calendar_entries`, Collaboration schema (`collaboration`), Deliberate exclusions, `idempotency_records`, `outbox_messages`, Ownership and boundaries, RLS and runtime grants, Tables
 
 ### Community 328 - "OpportunityEndpointsTests"
-Cohesion: 0.20
-Nodes (10): Program, Subject, AccountId, Fact, HttpClient, JsonElement, PostgreSqlContainer, Task (+2 more)
+Cohesion: 0.19
+Nodes (10): Subject, JwtTestTokenFactory, AccountId, Fact, HttpClient, JsonElement, PostgreSqlContainer, Task (+2 more)
 
 ### Community 329 - "AuthSession"
-Cohesion: 0.07
-Nodes (25): IssuedSession, RefreshCookie, SessionIssuer, CancellationToken, DateTimeOffset, IReadOnlyList, Task, AuthSession (+17 more)
+Cohesion: 0.04
+Nodes (45): AuthenticateResult, AuthenticationStatus, Authenticated, InvalidCredentials, NoMembership, TenantSelectionRequired, DateTimeOffset, Guid (+37 more)
 
 ### Community 330 - "pre_tool_use_policy.py"
 Cohesion: 0.67
@@ -1726,49 +1739,49 @@ Nodes (6): ADR: Collaboration boundary for personal calendar entries, Consequenc
 Cohesion: 0.33
 Nodes (5): BackgroundService, CancellationToken, ILogger, Task, Worker
 
-### Community 333 - "AssignmentMode"
-Cohesion: 0.15
-Nodes (13): AssignmentMode, DefaultPrincipal, Manual, Team, Territory, AssignmentPolicy, AnyAssignablePrincipal, ManagerOnly (+5 more)
+### Community 333 - "PublicOnlyRoute.tsx"
+Cohesion: 0.30
+Nodes (8): AUTH_PAGES, isSafeRelative(), returnUrlQuery(), sanitizeReturnUrl(), ProtectedRoute(), PublicOnlyRoute(), RouteFallback(), SessionRoute()
 
-### Community 334 - ".StartHostAsync"
-Cohesion: 0.21
-Nodes (8): Exception, Fact, Task, PasswordEndpointsTests, Dictionary, IReadOnlyDictionary, IServiceCollection, EnvScope
+### Community 334 - "AuthProblems"
+Cohesion: 0.24
+Nodes (3): CsrfEndpointExtensions, IResult, AuthProblems
 
 ### Community 335 - "ILinkTargetDirectory"
+Cohesion: 0.08
+Nodes (29): ILinkTargetDirectory, CancellationToken, IReadOnlyCollection, IReadOnlyDictionary, Task, CalendarLinkRefResponse, CalendarLinkResponse, ActionKey (+21 more)
+
+### Community 336 - "CapturingLogger"
+Cohesion: 0.18
+Nodes (9): ILogger, EventId, Exception, Func, IDisposable, List, LogLevel, CapturingLogger (+1 more)
+
+### Community 337 - "TenantFieldValueType"
+Cohesion: 0.17
+Nodes (12): TenantFieldValueType, Boolean, Date, Decimal, Email, LongText, MultiSelect, Number (+4 more)
+
+### Community 338 - ".CreateAsync"
 Cohesion: 0.09
-Nodes (26): ILinkTargetDirectory, CancellationToken, IReadOnlyCollection, IReadOnlyDictionary, Task, LinkTargetResolution, CalendarEntryDto, DateOnly (+18 more)
-
-### Community 336 - "EnableTenantModuleStatus"
-Cohesion: 0.33
-Nodes (6): EnableTenantModuleStatus, AlreadyEnabled, Enabled, TemplateKeyConflict, TenantNotBootstrapped, UnknownModule
-
-### Community 337 - "DomainEntityField.tsx"
-Cohesion: 0.16
-Nodes (18): CustomerPicker, DomainRecord, MOCK_CUSTOMERS, MOCK_ERP_CODES, MOCK_PRODUCTS, searchDomainRecords(), createDomainEntityField(), DomainEntityField() (+10 more)
-
-### Community 338 - ".GetAsync"
-Cohesion: 0.13
-Nodes (20): CalendarLinkTargetUnavailableException, CalendarEntryLinkTests, SilentDirectory, CancellationToken, EntityRef, Fact, IReadOnlyCollection, IReadOnlyDictionary (+12 more)
+Nodes (28): CalendarEntryIdempotencyTests, FailOnSaveNumber, ArgumentException, Fact, InlineData, InvalidOperationException, Task, Theory (+20 more)
 
 ### Community 339 - ".Refresh_token_reuse_is_counted_once_per_detection"
 Cohesion: 0.20
 Nodes (11): AsyncLocal, MeterListener, Name, AuthMetricsTests, MetricCapture, Fact, List, PostgresFixture (+3 more)
 
-### Community 340 - ".HandleAsync"
-Cohesion: 0.22
-Nodes (9): Guid, ResolveOrCreatePartyCommand, CancellationToken, Task, ResolveOrCreatePartyHandler, ResolveOrCreatePartyResult, Fact, Task (+1 more)
+### Community 340 - "ModuleCapabilityCatalog"
+Cohesion: 0.21
+Nodes (7): ModuleCapabilityCatalog, Modules, Dictionary, IReadOnlyList, Fact, Task, PlatformModulesTests
 
 ### Community 341 - "personalViews.ts"
-Cohesion: 0.31
-Nodes (12): DensityScopeProps, readPersistedViewState(), useViewStateUserId(), ViewState, viewStateStorageKey(), writePersistedViewState(), loadPersonalViews(), randomId() (+4 more)
+Cohesion: 0.40
+Nodes (9): readPersistedViewState(), useViewStateUserId(), viewStateStorageKey(), writePersistedViewState(), loadPersonalViews(), randomId(), storePersonalViews(), usePersonalViews() (+1 more)
 
 ### Community 342 - "PartyExternalIdentity"
 Cohesion: 0.14
-Nodes (13): DateTimeOffset, TenantId, PartyExternalIdentity, CreatedAt, ExternalId, ExternalType, Id, PartyId (+5 more)
+Nodes (11): DateTimeOffset, PartyExternalIdentity, CreatedAt, ExternalId, ExternalType, Id, PartyId, Provider (+3 more)
 
-### Community 343 - ".CreateAsync"
-Cohesion: 0.09
-Nodes (32): IdempotencyKeyReusedException, CalendarEntryHandlerTests, RecordingAuthorizer, Requests, ArgumentException, CancellationToken, Fact, List (+24 more)
+### Community 343 - ".SavingChangesAsync"
+Cohesion: 0.40
+Nodes (4): CancellationToken, DbContextEventData, InterceptionResult, ValueTask
 
 ### Community 344 - "DropOpportunityPartyForeignKey"
 Cohesion: 0.22
@@ -1778,45 +1791,45 @@ Nodes (5): MigrationBuilder, DropOpportunityPartyForeignKey, DateTimeOffset, Gui
 Cohesion: 0.22
 Nodes (5): MigrationBuilder, RemoveCrmPartyEntity, DateTimeOffset, Guid, ModelBuilder
 
-### Community 346 - "PrincipalRef"
-Cohesion: 0.08
-Nodes (31): All, GetDefaultPipelineStagesQuery, GetPipelineStagesQuery, AuthorizationRequest, Resource, PrincipalRef, Issuer, Subject (+23 more)
+### Community 346 - "RebuildAccessAuthorizationModel"
+Cohesion: 0.18
+Nodes (7): DateTimeOffset, Guid, MigrationBuilder, RebuildAccessAuthorizationModel, DateTimeOffset, Guid, ModelBuilder
 
 ### Community 347 - "AuthMetrics"
 Cohesion: 0.50
 Nodes (3): Counter, Meter, AuthMetrics
 
 ### Community 348 - "Access.Tests.Domain"
-Cohesion: 0.18
-Nodes (5): Access.Tests.Domain, ActionKeyTests, ArgumentException, InlineData, Theory
+Cohesion: 0.15
+Nodes (7): Access.Tests.Domain, ActionKeyTests, ArgumentException, InlineData, Theory, TenantAccessStateTests, Fact
 
 ### Community 349 - ".ProvisionAsync"
-Cohesion: 0.08
-Nodes (30): Retired, CancellationToken, IReadOnlyList, Task, TenantId, CrmDevSeed, CancellationToken, IConfiguration (+22 more)
+Cohesion: 0.10
+Nodes (25): Retired, CancellationToken, IReadOnlyList, Task, TenantId, CrmDevSeed, ProvisionPipelineCommand, IReadOnlyList (+17 more)
 
-### Community 350 - "TenantMembership"
-Cohesion: 0.14
-Nodes (11): TenantMembership, AccountId, DisabledAt, Id, InvitedAt, JoinedAt, RowVersion, Status (+3 more)
+### Community 350 - ".HandleAsync"
+Cohesion: 0.09
+Nodes (23): IExceptionHandler, CancellationToken, Exception, HttpContext, ValueTask, AccessProblemDetailsExceptionHandler, CancellationToken, Exception (+15 more)
 
 ### Community 351 - "Calendar API contract (frozen for parallel backend / frontend work)"
 Cohesion: 0.29
 Nodes (6): Calendar API contract (frozen for parallel backend / frontend work), Create / replace body, Entry (response shape), Errors, Navigation mapping (frontend), Routes
 
-### Community 352 - "OpportunityStageHistoryEntry"
-Cohesion: 0.15
-Nodes (12): OpportunityStageHistoryEntry, EnteredAt, ExitedAt, Id, OpportunityId, PipelineDefinitionVersionId, PipelineStageId, TenantId (+4 more)
+### Community 352 - "Tier-1 Custom Fields (Opportunity) — Implementation Plan"
+Cohesion: 0.22
+Nodes (8): Implementation choices made while planning (within the ADR), Task 1 — Domain: definition model and value validator, Task 2 — Persistence: configuration, migration, schema doc, Task 3 — Application: definitions and opportunity values, Task 4 — Host: endpoints and error mapping, Task 5 — Web: settings, form, detail, table, Task 6 — Verification and review, Tier-1 Custom Fields (Opportunity) — Implementation Plan
 
 ### Community 353 - "EmailDispatcher"
-Cohesion: 0.25
-Nodes (6): AuthenticationHostOptions, CancellationToken, ILogger, IOptions, Task, EmailDispatcher
+Cohesion: 0.17
+Nodes (9): AuthenticationHostOptions, CancellationToken, ILogger, IOptions, Task, EmailDispatcher, IEmailSender, CancellationToken (+1 more)
 
-### Community 354 - "InvalidOperationException"
+### Community 354 - "CrmDbContext"
 Cohesion: 0.03
-Nodes (89): Assignee, AssignmentMode, AssignmentPolicy, ConfigurationStatus, CrmCatalogKind, CrmSettings, CrmSettingsDto, CustomerNeed (+81 more)
+Nodes (82): AssignmentMode, AssignmentPolicy, ConfigurationStatus, CrmCatalogKind, CrmSettings, CrmSettingsDto, CustomerNeed, DbSet (+74 more)
 
-### Community 355 - "BackfillCrmPipelinesCommandTests"
-Cohesion: 0.32
-Nodes (8): Code, Dictionary, Error, Fact, IConfiguration, Output, Task, BackfillCrmPipelinesCommandTests
+### Community 355 - "StubLinkDirectory"
+Cohesion: 0.18
+Nodes (11): StubLinkDirectory, Calls, Requests, CancellationToken, Exception, Func, IReadOnlyCollection, IReadOnlyDictionary (+3 more)
 
 ### Community 356 - "useTableSearchParams.ts"
 Cohesion: 0.32
@@ -1826,69 +1839,69 @@ Nodes (12): TableSearchParamsResult, useTableSearchParams(), UseTableSearchParam
 Cohesion: 0.30
 Nodes (8): CancellationToken, Func, IReadOnlyCollection, IReadOnlyDictionary, IReadOnlyList, PartyRef, Task, PartyDirectory
 
-### Community 358 - "TenantModuleEnablement"
-Cohesion: 0.21
-Nodes (10): TenantModuleEnablement, EnabledAt, Id, ModuleKey, TemplateVersion, TenantId, DateTimeOffset, TenantId (+2 more)
+### Community 359 - "data-table/index.ts"
+Cohesion: 0.16
+Nodes (28): DataTableBodyRow(), DataTableProps, DataTableRowProps, renderableCells(), TEXT_ALIGN, DataTableHeaderCell(), DataTableHeaderCellProps, FLEX_ALIGN (+20 more)
 
-### Community 359 - "AuthProblems"
-Cohesion: 0.24
-Nodes (3): CsrfEndpointExtensions, IResult, AuthProblems
+### Community 360 - ".NewOpportunity"
+Cohesion: 0.50
+Nodes (3): OpportunityCustomFieldsTests, Fact, InvalidOperationException
 
-### Community 360 - "paths"
-Cohesion: 0.18
-Nodes (7): opportunityRoutes, MOCK_SEARCH_ENTITIES, SearchResultItem, SearchResultType, NotFoundPage, NotFoundPage(), paths
+### Community 362 - "EntityRef"
+Cohesion: 0.09
+Nodes (23): EntityRef, TenantId, IPartyIdentityResolver, CancellationToken, Task, PartyRef, PartyId, TenantId (+15 more)
 
-### Community 362 - "PartyRef"
-Cohesion: 0.12
-Nodes (18): IPartyIdentityResolver, CancellationToken, Task, PartyRef, PartyId, TenantId, CancellationToken, Func (+10 more)
+### Community 363 - "ExpandTenantFieldDefinitions"
+Cohesion: 0.20
+Nodes (6): MigrationBuilder, DateTimeOffset, ExpandTenantFieldDefinitions, DateTimeOffset, Guid, ModelBuilder
 
-### Community 363 - "OpportunityNeed"
+### Community 364 - "TenantLifecycle.csproj"
+Cohesion: 0.20
+Nodes (8): Microsoft.Extensions.Hosting (10.0.12), Microsoft.NET.Sdk.Worker, net10.0, EFCore.NamingConventions (10.0.1), Microsoft.EntityFrameworkCore.Design (10.0.4), Npgsql.EntityFrameworkCore.PostgreSQL (10.0.3), Microsoft.NET.Sdk, net10.0
+
+### Community 365 - "EnableInvitationDeliveryRowLevelSecurity"
 Cohesion: 0.22
-Nodes (7): OpportunityNeed, CustomerNeedId, OpportunityId, TenantId, TenantId, OpportunityNeedConfiguration, EntityTypeBuilder
+Nodes (5): MigrationBuilder, EnableInvitationDeliveryRowLevelSecurity, DateTimeOffset, Guid, ModelBuilder
 
-### Community 365 - "ProvisionCrmPipelineCommandTests"
-Cohesion: 0.25
-Nodes (10): Code, Dictionary, Error, Fact, IConfiguration, InlineData, Output, Task (+2 more)
-
-### Community 366 - "PreventDuplicateActiveRoleAssignments"
-Cohesion: 0.22
-Nodes (5): MigrationBuilder, PreventDuplicateActiveRoleAssignments, DateTimeOffset, Guid, ModelBuilder
+### Community 366 - "ADR: Tier-1 custom field data shape (Opportunity)"
+Cohesion: 0.33
+Nodes (5): ADR: Tier-1 custom field data shape (Opportunity), Consequences, Context, Decisions, Precondition
 
 ### Community 367 - "TenantLifecycleDbContext"
 Cohesion: 0.14
 Nodes (11): DbContext, DbContextOptions, DbSet, ModelBuilder, TenantLifecycleDbContext, IdempotencyRecords, OutboxMessages, TenantProfiles (+3 more)
 
-### Community 369 - "EntityRef"
-Cohesion: 0.20
-Nodes (6): EntityRef, BoundedContext, EntityType, TenantId, EntityVersion, Entity
+### Community 369 - "ADR: Workflow runtime (OD-2)"
+Cohesion: 0.33
+Nodes (5): ADR: Workflow runtime (OD-2), Consequences, Context, Criteria for moving to Temporal, Decision
 
 ### Community 370 - "EnableRowLevelSecurityOnPipelineTables"
 Cohesion: 0.22
 Nodes (5): MigrationBuilder, EnableRowLevelSecurityOnPipelineTables, DateTimeOffset, Guid, ModelBuilder
 
-### Community 371 - "AuthenticateResult"
-Cohesion: 0.22
-Nodes (9): AuthenticateResult, AuthenticationStatus, Authenticated, InvalidCredentials, NoMembership, TenantSelectionRequired, DateTimeOffset, Guid (+1 more)
+### Community 371 - "CreateInvitationCommand.cs"
+Cohesion: 0.40
+Nodes (5): CreateInvitationResult, CreateInvitationStatus, Accepted, Forbidden, InvalidEmail
 
-### Community 372 - "ILinkTargetResolver"
+### Community 372 - "FixOpportunityAssignedPrincipalIndex"
 Cohesion: 0.22
-Nodes (7): ILinkTargetResolver, BoundedContext, EntityType, CancellationToken, IReadOnlyCollection, IReadOnlyDictionary, Task
+Nodes (5): MigrationBuilder, FixOpportunityAssignedPrincipalIndex, DateTimeOffset, Guid, ModelBuilder
 
 ### Community 373 - "IdempotencyRecord"
 Cohesion: 0.12
 Nodes (14): IdempotencyRecord, CreatedAt, ExpiresAt, IdempotencyKey, Operation, PrincipalIssuer, PrincipalSubject, RequestHash (+6 more)
 
-### Community 374 - ".HandleAsync"
-Cohesion: 0.31
-Nodes (6): ProvisionPasswordAccountCommand, ProvisionPasswordAccountResult, ProvisionPasswordAccountHandler, CancellationToken, Task, TimeProvider
+### Community 374 - "AddPipelineStageActiveAndEntryFlags"
+Cohesion: 0.22
+Nodes (5): MigrationBuilder, AddPipelineStageActiveAndEntryFlags, DateTimeOffset, Guid, ModelBuilder
 
-### Community 375 - "MembershipStatus"
-Cohesion: 0.31
-Nodes (6): MembershipStatus, Active, Disabled, Invited, TenantMembershipConfiguration, EntityTypeBuilder
+### Community 375 - "ADR: AI Business OS principles"
+Cohesion: 0.40
+Nodes (4): ADR: AI Business OS principles, Consequences, Context, Decision
 
-### Community 376 - "IClassFixture"
-Cohesion: 0.36
-Nodes (6): IClassFixture, InvitationPersistenceConstraintsTests, Fact, PostgresException, PostgresFixture, Task
+### Community 376 - "DefaultNewPipelineVersionsToDraft"
+Cohesion: 0.22
+Nodes (5): MigrationBuilder, DefaultNewPipelineVersionsToDraft, DateTimeOffset, Guid, ModelBuilder
 
 ### Community 377 - "Host.Tests.csproj"
 Cohesion: 0.25
@@ -1898,29 +1911,29 @@ Nodes (7): Microsoft.AspNetCore.Mvc.Testing (10.0.4), net10.0, Microsoft.NET.Tes
 Cohesion: 0.16
 Nodes (9): Guid, ProvisionTenantProfileCommand, CancellationToken, Task, ProvisionTenantProfileHandler, ProvisionTenantProfileResult, DateTimeOffset, TenantProfileFact (+1 more)
 
-### Community 379 - "MasterDataDbContext"
-Cohesion: 0.12
-Nodes (13): DbSet, ModelBuilder, MasterDataDbContext, EvidenceRecords, IdempotencyRecords, OutboxMessages, Parties, PartyExternalIdentities (+5 more)
+### Community 379 - "GetDefaultPipelineStagesHandler"
+Cohesion: 0.50
+Nodes (3): GetDefaultPipelineStagesHandler, CrmDbContext, IAuthorizer
 
 ### Community 380 - "UpdateCompanySettingsCommand"
-Cohesion: 0.36
-Nodes (7): Guid, TenantId, UpdateCompanySettingsCommand, Fact, Task, TenantId, CompanySettingsUpdateTests
+Cohesion: 0.24
+Nodes (10): CompanySettingsConcurrencyConflictException, ActualVersion, ExpectedVersion, Guid, TenantId, UpdateCompanySettingsCommand, Fact, Task (+2 more)
 
-### Community 381 - ".HandleAsync"
-Cohesion: 0.25
-Nodes (7): GetSessionOverviewHandler, SessionOverview, CancellationToken, Guid, IReadOnlyList, Task, TimeProvider
+### Community 381 - ".RuntimeContextAsync"
+Cohesion: 0.11
+Nodes (26): CreateInvitationCommand, CreateInvitationHandler, CancellationToken, Task, TimeProvider, EmailAddressRules, ValidateInvitationHandler, ValidateInvitationResult (+18 more)
 
-### Community 382 - ".SavingChangesAsync"
-Cohesion: 0.32
-Nodes (5): CancellationToken, DbContext, DbContextEventData, InterceptionResult, ValueTask
+### Community 382 - "AddPipelineStageKind"
+Cohesion: 0.22
+Nodes (5): MigrationBuilder, AddPipelineStageKind, DateTimeOffset, Guid, ModelBuilder
 
 ### Community 383 - "AddInvitationRole"
 Cohesion: 0.22
 Nodes (5): MigrationBuilder, AddInvitationRole, DateTimeOffset, Guid, ModelBuilder
 
-### Community 384 - "ConfigurationStatus"
-Cohesion: 0.25
-Nodes (4): ConfigurationStatus, Active, Archived, Inactive
+### Community 384 - ".Every_profile_check_rejects_its_invalid_value"
+Cohesion: 0.29
+Nodes (5): InlineData, PostgresException, Task, Theory, TenantProfileConstraintTests
 
 ### Community 386 - "AddCrmSettingsConfiguration"
 Cohesion: 0.20
@@ -1930,9 +1943,9 @@ Nodes (6): DateTimeOffset, MigrationBuilder, AddCrmSettingsConfiguration, DateTi
 Cohesion: 0.20
 Nodes (6): DateTimeOffset, MigrationBuilder, AddOpportunityStageHistory, DateTimeOffset, Guid, ModelBuilder
 
-### Community 389 - "contrast.ts"
-Cohesion: 0.57
-Nodes (6): calendarHeaderPalette, contrastRatio(), linearChannel(), mixHexColors(), readableTextColor, relativeLuminance()
+### Community 389 - "MasterData.Tests.csproj"
+Cohesion: 0.22
+Nodes (8): net10.0, coverlet.collector (6.0.4), Microsoft.NET.Test.Sdk (17.14.1), NetArchTest.Rules (1.3.2), Testcontainers.PostgreSql (4.15.0), xunit (2.9.3), xunit.runner.visualstudio (3.1.4), Microsoft.NET.Sdk
 
 ### Community 390 - "EnableModuleEnablementRowLevelSecurity"
 Cohesion: 0.22
@@ -1958,25 +1971,21 @@ Nodes (8): net10.0, coverlet.collector (6.0.4), Microsoft.NET.Test.Sdk (17.14.1)
 Cohesion: 0.22
 Nodes (8): net10.0, coverlet.collector (6.0.4), Microsoft.NET.Test.Sdk (17.14.1), NetArchTest.Rules (1.3.2), Testcontainers.PostgreSql (4.15.0), xunit (2.9.3), xunit.runner.visualstudio (3.1.4), Microsoft.NET.Sdk
 
-### Community 399 - "App.tsx"
-Cohesion: 0.13
-Nodes (12): errorMessage(), queryClient, App(), ErrorBoundary, ErrorBoundaryProps, ErrorBoundaryState, ErrorFallback(), track() (+4 more)
+### Community 399 - "useAppMutation.ts"
+Cohesion: 0.11
+Nodes (12): ErrorBoundary, ErrorBoundaryProps, ErrorBoundaryState, ErrorFallback(), failureTitle(), AppMutationConfig, AppMutationToast, AppMutationUndo (+4 more)
 
 ### Community 400 - ".A_single_dispatch_pass_marks_every_pending_message_processed"
 Cohesion: 0.21
 Nodes (10): CancellationToken, ILogger, IServiceScopeFactory, Task, TimeSpan, OutboxDispatcherService, OutboxDispatcherServiceTests, Fact (+2 more)
 
-### Community 401 - "account.e2e.ts"
-Cohesion: 0.32
-Nodes (11): confirmPassword(), newPassword(), adminToken(), createMember(), CSRF, invite(), login(), MailboxEntry (+3 more)
-
 ### Community 402 - "TenantLifecycle.Tests.csproj"
 Cohesion: 0.25
 Nodes (7): net10.0, Microsoft.NET.Test.Sdk (17.14.1), NetArchTest.Rules (1.3.2), Testcontainers.PostgreSql (4.15.0), xunit (2.9.3), xunit.runner.visualstudio (3.1.4), Microsoft.NET.Sdk
 
-### Community 403 - "Access.csproj"
-Cohesion: 0.33
-Nodes (5): net10.0, EFCore.NamingConventions (10.0.1), Microsoft.EntityFrameworkCore.Design (10.0.4), Npgsql.EntityFrameworkCore.PostgreSQL (10.0.3), Microsoft.NET.Sdk
+### Community 403 - "CRM.Tests.csproj"
+Cohesion: 0.22
+Nodes (8): net10.0, coverlet.collector (6.0.4), Microsoft.NET.Test.Sdk (17.14.1), NetArchTest.Rules (1.3.2), Testcontainers.PostgreSql (4.15.0), xunit (2.9.3), xunit.runner.visualstudio (3.1.4), Microsoft.NET.Sdk
 
 ### Community 404 - "Company settings — execution plan"
 Cohesion: 0.29
@@ -1986,105 +1995,133 @@ Nodes (6): Company settings — execution plan, Decision record, Definition of d
 Cohesion: 0.29
 Nodes (6): API surface, Isolation, Revision 1 — Company settings foundation, Supporting records, Tenant Lifecycle schema, `tenant_profiles`
 
-### Community 406 - ".Configure"
+### Community 406 - "sanitizeHtml.ts"
+Cohesion: 0.50
+Nodes (3): dompurify, ALLOWED_TAGS, sanitizeHtml()
+
+### Community 407 - "PartyIdentityResolver"
+Cohesion: 0.54
+Nodes (5): CancellationToken, Func, PartyRef, Task, PartyIdentityResolver
+
+### Community 408 - "contrast.ts"
+Cohesion: 0.57
+Nodes (6): calendarHeaderPalette, contrastRatio(), linearChannel(), mixHexColors(), readableTextColor, relativeLuminance()
+
+### Community 409 - "EnableTenantModuleStatus"
 Cohesion: 0.33
-Nodes (4): PrincipalType, User, RoleAssignmentConfiguration, EntityTypeBuilder
+Nodes (6): EnableTenantModuleStatus, AlreadyEnabled, Enabled, TemplateKeyConflict, TenantNotBootstrapped, UnknownModule
 
-### Community 407 - "support/calendar.ts"
-Cohesion: 0.18
-Nodes (7): createEntry(), CSRF, currentWindow(), listEntries(), WireEntry, keys(), placeholders()
+### Community 411 - "Access.csproj"
+Cohesion: 0.33
+Nodes (5): net10.0, EFCore.NamingConventions (10.0.1), Microsoft.EntityFrameworkCore.Design (10.0.4), Npgsql.EntityFrameworkCore.PostgreSQL (10.0.3), Microsoft.NET.Sdk
 
-### Community 408 - ".SetTenantContextAsync"
+### Community 412 - ".SetTenantContextAsync"
 Cohesion: 0.47
 Nodes (3): AccessDbContextTenantExtensions, CancellationToken, Task
 
-### Community 409 - "MasterData.csproj"
-Cohesion: 0.33
-Nodes (5): net10.0, EFCore.NamingConventions (10.0.1), Microsoft.EntityFrameworkCore.Design (10.0.4), Npgsql.EntityFrameworkCore.PostgreSQL (10.0.3), Microsoft.NET.Sdk
-
-### Community 410 - "TenantLifecycle.csproj"
-Cohesion: 0.33
-Nodes (5): net10.0, EFCore.NamingConventions (10.0.1), Microsoft.EntityFrameworkCore.Design (10.0.4), Npgsql.EntityFrameworkCore.PostgreSQL (10.0.3), Microsoft.NET.Sdk
-
-### Community 411 - "TestData"
-Cohesion: 0.40
-Nodes (3): MasterData.Tests, TestData, Operator
-
-### Community 412 - "OpportunityCreationStep"
-Cohesion: 0.40
-Nodes (4): OpportunityCreationStep, Customer, Needs, Products
-
 ### Community 413 - "PipelineVersionStatus"
-Cohesion: 0.40
+Cohesion: 0.33
 Nodes (5): PipelineVersionStatus, Archived, Draft, Published, Superseded
 
-### Community 414 - ".LoginAsync"
-Cohesion: 0.21
-Nodes (13): ChangePasswordResult, ChangePasswordStatus, Completed, Conflict, InvalidCredentials, PolicyViolation, IReadOnlyList, ChangePasswordTests (+5 more)
+### Community 414 - "RefreshSessionResult"
+Cohesion: 0.25
+Nodes (8): RefreshResult, RefreshConflict, SessionInvalid, Success, RefreshSessionResult, DateTimeOffset, Guid, IReadOnlyList
 
-### Community 415 - "env.ts"
-Cohesion: 0.20
-Nodes (7): CSRF, NEW_PASSWORD, NO_MEMBERSHIP, OTHER_PASSWORD, SALES_REP, SINGLE, VIEWER
+### Community 415 - "OpportunityDto"
+Cohesion: 0.47
+Nodes (4): OpportunityDto, OpportunityLineDto, DateTimeOffset, IReadOnlyList
 
-### Community 417 - ".SavingChangesAsync"
+### Community 416 - "PipelineStageKind"
+Cohesion: 0.27
+Nodes (6): PipelineStageKind, Lost, Open, Won, PipelineStageConfiguration, EntityTypeBuilder
+
+### Community 420 - "ChangePasswordStatus"
 Cohesion: 0.40
-Nodes (4): CancellationToken, DbContextEventData, InterceptionResult, ValueTask
-
-### Community 420 - "PartyDevSeed"
-Cohesion: 0.50
-Nodes (4): Sample, Dictionary, PartyDevSeed, Sample
+Nodes (5): ChangePasswordStatus, Completed, Conflict, InvalidCredentials, PolicyViolation
 
 ### Community 422 - "FixCancelExpiryCheck"
 Cohesion: 0.22
 Nodes (5): MigrationBuilder, FixCancelExpiryCheck, DateTimeOffset, Guid, ModelBuilder
 
+### Community 423 - "AuthorizationEffect"
+Cohesion: 0.11
+Nodes (11): TenantLifecycle.Tests, Collaboration.Tests, AuthorizationEffect, Allow, Deny, StubAuthorizer, CancellationToken, Task (+3 more)
+
 ### Community 424 - "PermissionSet"
-Cohesion: 0.08
-Nodes (23): PermissionSet, Id, Items, Key, Name, Origin, OriginModuleKey, OriginVersion (+15 more)
+Cohesion: 0.05
+Nodes (33): ActionRegistryEntry, ActionKey, IsDeprecated, OwnerModule, ResourceType, RiskClass, PermissionSet, Id (+25 more)
 
 ### Community 425 - "CrmActionCatalog.cs"
 Cohesion: 0.67
 Nodes (3): CrmActionCatalog, CrmActionDescriptor, IReadOnlyList
 
-### Community 427 - "DevSeedOptions"
-Cohesion: 0.67
-Nodes (3): DevSeedOptions, Enabled, Password
+### Community 426 - "CRM.csproj"
+Cohesion: 0.33
+Nodes (5): net10.0, EFCore.NamingConventions (10.0.1), Microsoft.EntityFrameworkCore.Design (10.0.4), Npgsql.EntityFrameworkCore.PostgreSQL (10.0.3), Microsoft.NET.Sdk
 
-### Community 430 - "CrmAssignmentPolicy"
-Cohesion: 0.67
-Nodes (3): CrmAssignmentPolicy, ActionKey, IReadOnlyList
+### Community 428 - "MasterData.csproj"
+Cohesion: 0.33
+Nodes (5): net10.0, EFCore.NamingConventions (10.0.1), Microsoft.EntityFrameworkCore.Design (10.0.4), Npgsql.EntityFrameworkCore.PostgreSQL (10.0.3), Microsoft.NET.Sdk
+
+### Community 430 - "support/calendar.ts"
+Cohesion: 0.40
+Nodes (5): createEntry(), CSRF, currentWindow(), listEntries(), WireEntry
 
 ### Community 431 - "ApplyCrmOpportunityDefaults"
 Cohesion: 0.22
 Nodes (5): MigrationBuilder, ApplyCrmOpportunityDefaults, DateTimeOffset, Guid, ModelBuilder
 
+### Community 432 - "InvitationTokenProtector"
+Cohesion: 0.40
+Nodes (3): IDataProtectionProvider, IDataProtector, InvitationTokenProtector
+
+### Community 433 - ".A_party_seeded_through_masterdata_is_readable_back"
+Cohesion: 0.40
+Nodes (3): PartyBackfillVerificationTests, Fact, Task
+
+### Community 435 - ".ApplyAnyOf"
+Cohesion: 0.50
+Nodes (3): AnyOf, IQueryable, OwnedBy
+
+### Community 436 - "IdempotencyKeyReusedException"
+Cohesion: 0.50
+Nodes (3): IdempotencyKeyReusedException, Key, Operation
+
 ### Community 437 - "AddCrmConfigurationChecks"
 Cohesion: 0.22
 Nodes (5): MigrationBuilder, AddCrmConfigurationChecks, DateTimeOffset, Guid, ModelBuilder
+
+### Community 438 - "entitySearch.ts"
+Cohesion: 0.50
+Nodes (3): MOCK_SEARCH_ENTITIES, SearchResultItem, SearchResultType
 
 ### Community 439 - "CompleteCrmConfigurationChecks"
 Cohesion: 0.22
 Nodes (5): MigrationBuilder, CompleteCrmConfigurationChecks, DateTimeOffset, Guid, ModelBuilder
 
+### Community 440 - "DevSeedOptions"
+Cohesion: 0.67
+Nodes (3): DevSeedOptions, Enabled, Password
+
 ## Knowledge Gaps
-- **2505 isolated node(s):** `K1. Doc 15 tier 1 kabul edildi mi?`, `K2. Tier-1 custom field ADR'ı onaylanıyor mu?`, `K3. Yeni yetki eylemi için CRM şablon versiyonu`, `OD-4. ConfigChangeSet atomikliği`, `OD-5. ConfigChangeSet'in sahibi` (+2500 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 4053 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **36 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **2561 isolated node(s):** `CustomerNeeds`, `CrmSettings`, `OpportunityTypes`, `LostReasons`, `Opportunities` (+2556 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 4149 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **48 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Contracts` connect `Contracts` to `TenantFieldDefinition`, `AccountCredential`, `CalendarEntry`, `RefreshSessionResult`, `OpportunityNotFoundException`, `.MapCalendarEndpoints`, `IdempotencyRecord`, `.OwnedBy_scope_returns_only_that_principals_opportunities`, `.HandleAsync`, `.SetTenantContextAsync`, `Access.Persistence`, `EnableTenantModuleHandler`, `TestData`, `OutboxMessage`, `.CreateAsync`, `CollaborationDbContext`, `CalendarEntryTextAndPrecisionTests`, `IHasRowVersion`, `OutboxMessage`, `CollaborationModuleCapabilitiesTests`, `SelectTenantCommand.cs`, `PermissionSet`, `Collaboration.Tests`, `CalendarEntryAuthorizationDeniedException`, `.EvaluateAsync`, `.LoginAsync`, `InvitationDelivery`, `.GetEntriesAsync`, `.Valid`, `.HandleAsync`, `ActorContext`, `IEntityTypeConfiguration`, `Host.Authentication`, `AuthSession`, `.HandleAsync`, `ILinkTargetDirectory`, `LinkTargetDirectory`, `TenantLifecycle.Application`, `ModuleCapabilityManifest`, `PrincipalRef`, `TenantProfile`, `Access.Tests.Domain`, `InvitationDeliveryService`, `InvalidOperationException`, `.HandleAsync`, `PartyRef`, `OpportunityNeed`, `.HandleAsync`, `Access.Tests/TestData.cs`, `ActionKey`, `.HandleAsync`, `EntityRef`, `AuthorizationDecision`, `AuthenticateResult`, `.Invite`, `ILinkTargetResolver`, `.HandleAsync`, `IdempotencyRecord`, `MasterData.Application`, `Collaboration.Application`, `OpportunityAuthorizationDeniedException`?**
-  _High betweenness centrality (0.097) - this node is a cross-community bridge._
-- **Why does `PrincipalRef` connect `PrincipalRef` to `Opportunity`, `.SeedOpenOpportunityWithBillableLineAsync`, `.CreateAdminContext`, `.Create`, `CalendarEntry`, `RefreshSessionResult`, `OpportunityNotFoundException`, `.ReadEntryAsync`, `.MapCalendarEndpoints`, `.Create`, `OutboxMessage`, `IdempotencyRecord`, `.OwnedBy_scope_returns_only_that_principals_opportunities`, `.HandleAsync`, `.RuntimeContextAsync`, `EnableTenantModuleHandler`, `TestData`, `.CreateAsync`, `CollaborationDbContext`, `CalendarEntryTextAndPrecisionTests`, `.HandleAsync`, `PasswordService`, `.MapOpportunityEndpoints`, `SelectTenantCommand.cs`, `.CreateAdminContext`, `TestTimeProvider`, `.HandleAsync`, `OpportunityStateMachineTests`, `.ListAsync`, `LifecycleTestSupport`, `.EvaluateAsync`, `.LoginAsync`, `EvidenceRecord`, `.NewEmail`, `.HandleAsync`, `ActorContext`, `IdempotencyRecord`, `IEntityTypeConfiguration`, `WinOpportunityHandler`, `.CreateAdminContext`, `OpportunityEndpointsTests`, `.HandleAsync`, `AssignmentMode`, `.HandleAsync`, `.Create`, `.GetAsync`, `AccessDbContext`, `DevSeederTests`, `AuthorizedPrincipalDirectoryTests`, `.CreateAsync`, `TenantId`, `InvalidOperationException`, `.HandleAsync`, `BackfillCrmPipelinesCommandTests`, `.HandleAsync`, `EvidenceRecord`, `.RunAsync`, `ActionKey`, `.HandleAsync`, `AuthenticateResult`, `.Invite`, `.HandleAsync`, `UpdateCompanySettingsCommand`, `.HandleAsync`, `.RunAsync`, `.NewTenantId`, `OpportunityAuthorizationDeniedException`?**
-  _High betweenness centrality (0.083) - this node is a cross-community bridge._
-- **Why does `AccessDbContext` connect `AccessDbContext` to `RefreshToken`, `.GenerateAndHash`, `AccountCredential`, `OutboxMessage`, `.SetTenantContextAsync`, `.RuntimeContextAsync`, `Access.Persistence`, `EnableTenantModuleHandler`, `.CreateAsync`, `PasswordService`, `PermissionSet`, `.EvaluateAsync`, `InvitationDelivery`, `.NewEmail`, `AccountToken`, `AuthApiFixture`, `.HandleAsync`, `ActorContext`, `Task`, `IEntityTypeConfiguration`, `.CreateAdminContext`, `OpportunityEndpointsTests`, `AuthSession`, `AuthTestSetup`, `.Refresh_token_reuse_is_counted_once_per_detection`, `AuthorizedPrincipalDirectoryTests`, `PrincipalRef`, `ModuleCapabilityCatalog`, `.ProvisionAsync`, `.HandleAsync`, `TenantMembership`, `InvitationDeliveryService`, `AuthEventWriter`, `.HandleAsync`, `CalendarEntryConstraintTests`, `TenantModuleEnablement`, `.Create`, `.HandleAsync`, `ActionKey`, `.HandleAsync`, `TenantLifecycleDbContext`, `.Invite`, `IdempotencyRecord`, `.HandleAsync`, `.NewTenantId`, `RoleAssignment`, `.RunAsync`, `.HandleAsync`?**
-  _High betweenness centrality (0.051) - this node is a cross-community bridge._
+- **Why does `Contracts` connect `Contracts` to `OpportunityLine`, `PrincipalRef`, `.CreateAdminContext`, `.OwnedBy_scope_returns_only_that_principals_opportunities`, `TenantMembership`, `PartyRelationship`, `ActorContext`, `IEntityTypeConfiguration`, `ModuleCapabilityManifest`, `LinkTargetDirectory`, `TenantLifecycle.Application`, `AuthEventWriter`, `.RunAsync`, `AccessAuthorizer`, `.HandleAsync`, `Collaboration.Application`, `OutboxMessage`, `MasterData.Application`, `.HandleAsync`, `.Grant`, `.HandleAsync`, `AuthorizedPrincipalDirectory`, `OpportunityAuthorizationDeniedException`, `.EnsureSeededAsync`, `IdempotencyRecord`, `OpportunityPipelineFieldsTests`, `.HandleAsync`, `OutboxMessage`, `EnableTenantModuleHandler`, `IAuthorizedPrincipalDirectory`, `.CreateAsync`, `CrmSettings`, `.HandleAsync`, `.HandleAsync`, `.GrantAsync`, `.LoginAsync`, `Host.Authentication`, `EvidenceRecord`, `.Valid`, `.HandleAsync`, `RowVersionInterceptor`, `.HandleAsync`, `TenantProfile`, `InvitationDeliveryService`, `.HandleAsync`, `.Create`, `OpportunityStageHistoryEntry`, `EvidenceRecord`, `TenantModuleEnablement`, `.HandleAsync`, `OpportunityType`, `Access.Persistence`, `OutboxMessage`, `SelectTenantCommand.cs`, `InvitationDelivery`, `PipelineDefinition`, `TenantId`, `InvalidOperationException`, `OpportunityStatus`, `WinOpportunityHandler`, `AuthSession`, `ILinkTargetDirectory`, `ModuleCapabilityCatalog`, `PartyExternalIdentity`, `Access.Tests.Domain`, `.ProvisionAsync`, `CrmDbContext`, `EntityRef`, `CreateInvitationCommand.cs`, `IdempotencyRecord`, `CalendarEntryImmutabilityTests`, `.SetTenantContextAsync`, `PipelineVersionStatus`, `RefreshSessionResult`, `PipelineStageKind`, `AuthorizationEffect`, `PermissionSet`?**
+  _High betweenness centrality (0.089) - this node is a cross-community bridge._
+- **Why does `PrincipalRef` connect `PrincipalRef` to `.GetAsync`, `.Create`, `AuthorizedPrincipalDirectory`, `CalendarEntry`, `EvidenceRecord`, `OpportunityAuthorizationDeniedException`, `.HandleAsync`, `.ReadEntryAsync`, `.MapCalendarEndpoints`, `.CreateAdminContext`, `.EnsureSeededAsync`, `IdempotencyRecord`, `.OwnedBy_scope_returns_only_that_principals_opportunities`, `.HandleAsync`, `.NewEmail`, `CalendarEntryImmutabilityTests`, `EnableTenantModuleHandler`, `IAuthorizedPrincipalDirectory`, `.HandleAsync`, `RefreshSessionResult`, `.CreateAsync`, `CollaborationDbContext`, `CrmSettings`, `CalendarEntryTextAndPrecisionTests`, `.InvokeAsync`, `.HandleAsync`, `.HandleAsync`, `SelectTenantCommand.cs`, `CreatePartyHandler`, `OpportunityStateMachineTests`, `.GrantAsync`, `.ListAsync`, `.MapCompanySettingsEndpoints`, `.LoginAsync`, `EvidenceRecord`, `TestTimeProvider`, `TenantId`, `InvalidOperationException`, `.HandleAsync`, `ActorContext`, `IdempotencyRecord`, `IEntityTypeConfiguration`, `.BackfillWonLostStagesAsync`, `WinOpportunityHandler`, `.CreateAdminContext`, `OpportunityEndpointsTests`, `AuthSession`, `.CreateAdminContext`, `.HandleAsync`, `EvidenceRecord`, `.HandleAsync`, `.Create`, `.CreateAsync`, `IClassFixture`, `.AddAsync`, `AuthorizedPrincipalDirectoryTests`, `AuthEventWriter`, `.HandleAsync`, `CrmDbContext`, `.HandleAsync`, `EntityRef`, `.RunAsync`, `.HandleAsync`, `.GivenGrantAsync`, `.NewEmail`, `.HandleAsync`, `.RunAsync`, `UpdateCompanySettingsCommand`, `.RuntimeContextAsync`, `.HandleAsync`?**
+  _High betweenness centrality (0.066) - this node is a cross-community bridge._
+- **Why does `AccessDbContext` connect `AccessDbContext` to `AuthorizedPrincipalDirectory`, `EvidenceRecord`, `TenantModuleEnablement`, `.HandleAsync`, `.EnsureSeededAsync`, `Access.Persistence`, `EnableTenantModuleHandler`, `OutboxMessage`, `.HandleAsync`, `.SetTenantContextAsync`, `.CreateAsync`, `AccountTokenPersistenceTests`, `.HandleAsync`, `PermissionSet`, `.GrantAsync`, `TenantMembership`, `.LoginAsync`, `InvitationDelivery`, `AccountToken`, `AuthApiFixture`, `AuthEvent`, `.HandleAsync`, `ActorContext`, `Task`, `IEntityTypeConfiguration`, `.CreateAdminContext`, `OpportunityEndpointsTests`, `AuthSession`, `.Refresh_token_reuse_is_counted_once_per_detection`, `ModuleCapabilityCatalog`, `.AddAsync`, `AuthorizedPrincipalDirectoryTests`, `.ProvisionAsync`, `InvitationDeliveryService`, `AuthEventWriter`, `.Grant`, `.RunAsync`, `AccessAuthorizer`, `.HandleAsync`, `TenantLifecycleDbContext`, `.GivenGrantAsync`, `IdempotencyRecord`, `.NewEmail`, `.RunAsync`, `PostgresFixture`, `.RuntimeContextAsync`?**
+  _High betweenness centrality (0.045) - this node is a cross-community bridge._
 - **Are the 43 inferred relationships involving `PrincipalRef` (e.g. with `.InvokeAsync()` and `.BackfillWonLostStagesAsync()`) actually correct?**
   _`PrincipalRef` has 43 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `K1. Doc 15 tier 1 kabul edildi mi?`, `K2. Tier-1 custom field ADR'ı onaylanıyor mu?`, `K3. Yeni yetki eylemi için CRM şablon versiyonu` to the rest of the system?**
-  _2505 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `CustomerNeeds`, `CrmSettings`, `OpportunityTypes` to the rest of the system?**
+  _2561 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Opportunity` be split into smaller, more focused modules?**
-  _Cohesion score 0.06423034330011074 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06028368794326241 - nodes in this community are weakly interconnected._
 - **Should `OpportunityLine` be split into smaller, more focused modules?**
-  _Cohesion score 0.09333333333333334 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09523809523809523 - nodes in this community are weakly interconnected._
