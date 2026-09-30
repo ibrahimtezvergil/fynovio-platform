@@ -78,6 +78,7 @@ public sealed class TenantFieldDefinitionPersistenceTests
                 "));
 
         Assert.Equal(PostgresErrorCodes.CheckViolation, exception.SqlState);
+        Assert.Equal("ck_tenant_field_definitions_aggregate_type", exception.ConstraintName);
     }
 
     [Fact]
@@ -92,6 +93,7 @@ public sealed class TenantFieldDefinitionPersistenceTests
                 "));
 
         Assert.Equal(PostgresErrorCodes.CheckViolation, exception.SqlState);
+        Assert.Equal("ck_tenant_field_definitions_field_type", exception.ConstraintName);
     }
 
     [Fact]
@@ -108,6 +110,7 @@ public sealed class TenantFieldDefinitionPersistenceTests
                 "));
 
         Assert.Equal(PostgresErrorCodes.CheckViolation, exception.SqlState);
+        Assert.Equal("ck_tenant_field_definitions_field_name", exception.ConstraintName);
     }
 
     [Fact]
@@ -123,6 +126,7 @@ public sealed class TenantFieldDefinitionPersistenceTests
                 "));
 
         Assert.Equal(PostgresErrorCodes.CheckViolation, exception.SqlState);
+        Assert.Equal("ck_tenant_field_definitions_field_name", exception.ConstraintName);
     }
 
     [Fact]
@@ -137,6 +141,7 @@ public sealed class TenantFieldDefinitionPersistenceTests
                 "));
 
         Assert.Equal(PostgresErrorCodes.CheckViolation, exception.SqlState);
+        Assert.Equal("ck_tenant_field_definitions_status", exception.ConstraintName);
     }
 
     [Fact]
@@ -151,6 +156,7 @@ public sealed class TenantFieldDefinitionPersistenceTests
                 "));
 
         Assert.Equal(PostgresErrorCodes.CheckViolation, exception.SqlState);
+        Assert.Equal("ck_tenant_field_definitions_owner_scope", exception.ConstraintName);
     }
 
     [Fact]
@@ -165,6 +171,7 @@ public sealed class TenantFieldDefinitionPersistenceTests
                 "));
 
         Assert.Equal(PostgresErrorCodes.CheckViolation, exception.SqlState);
+        Assert.Equal("ck_tenant_field_definitions_sort_order", exception.ConstraintName);
     }
 
     [Fact]
@@ -179,6 +186,7 @@ public sealed class TenantFieldDefinitionPersistenceTests
                 "));
 
         Assert.Equal(PostgresErrorCodes.CheckViolation, exception.SqlState);
+        Assert.Equal("ck_tenant_field_definitions_sort_order", exception.ConstraintName);
     }
 
     [Fact]
@@ -195,6 +203,7 @@ public sealed class TenantFieldDefinitionPersistenceTests
                 "));
 
         Assert.Equal(PostgresErrorCodes.CheckViolation, exception.SqlState);
+        Assert.Equal("ck_tenant_field_definitions_config_object", exception.ConstraintName);
     }
 
     [Fact]
