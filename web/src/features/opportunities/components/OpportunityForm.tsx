@@ -5,11 +5,15 @@ import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Field } from '@/components/common/Field'
+import { CustomFieldInputs } from '@/components/custom-fields/CustomFieldInput'
 import type { SelectOption } from '@/components/common/inputs/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import { useCustomFieldDefinitions } from '@/lib/custom-fields/api'
+import { customFieldErrors, requiredErrors } from '@/lib/custom-fields/errors'
+import { activeFields, missingRequired, toPayload, type CustomFieldDrafts } from '@/lib/custom-fields/values'
 import { cn } from '@/lib/utils'
 import { paths } from '@/routes/paths'
 import { useCreateOpportunity, useDefaultPipelineStages } from '../api'
@@ -48,7 +52,16 @@ export function OpportunityForm() {
   const summary = useMemo(() => summarizeCreation(settings.data, defaultStages.data), [settings.data, defaultStages.data])
   const blocked = summary.blocker !== null
   const schema = useMemo(() => createOpportunityFormSchema(t), [t])
-  const command = useKeyedCommand(useCreateOpportunity())
+  const createMutation = useCreateOpportunity()
+  const command = useKeyedCommand(createMutation)
+  const definitions = useCustomFieldDefinitions()
+  const fields = useMemo(() => activeFields(definitions.data ?? []), [definitions.data])
+  const [customDrafts, setCustomDrafts] = useState<CustomFieldDrafts>({})
+  const [missing, setMissing] = useState<string[]>([])
+  const customErrors = useMemo(
+    () => ({ ...customFieldErrors(t, createMutation.error), ...requiredErrors(t, missing) }),
+    [t, createMutation.error, missing],
+  )
   // The form stores the Party id; the picker needs the whole option (its label) to keep showing the chosen name.
   const [party, setParty] = useState<SelectOption | null>(null)
   const {
@@ -72,7 +85,10 @@ export function OpportunityForm() {
   }, [step])
 
   const create = (addLine: boolean) => handleSubmit(async (values) => {
-    const result = await command.run(values)
+    const required = missingRequired(fields, customDrafts)
+    setMissing(required)
+    if (required.length > 0) return
+    const result = await command.run(fields.length > 0 ? { ...values, customFields: toPayload(fields, customDrafts) } : values)
     if (result) navigate(paths.crmOpportunity(result.opportunityId), { replace: true, state: addLine ? { addLine: true } : undefined })
   })
   const submit = create(false)
@@ -182,6 +198,24 @@ export function OpportunityForm() {
                   <Field label={t('form.estimatedAmount.label')} hint={t('form.estimatedAmount.hint')} error={errors.estimatedAmount?.message}>
                     {(props) => <Input {...props} inputMode="decimal" autoComplete="off" placeholder="0,00" {...register('estimatedAmount')} />}
                   </Field>
+                </CardContent>
+              </Card>
+            )}
+
+            {fields.length > 0 && onStep('amount') && (
+              <Card className="lg:col-span-full">
+                <CardHeader>
+                  <CardTitle>{t('customFields.title')}</CardTitle>
+                  <CardDescription>{t('customFields.formDescription')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CustomFieldInputs
+                    definitions={fields}
+                    drafts={customDrafts}
+                    errors={customErrors}
+                    disabled={command.isPending}
+                    onChange={(drafts) => { setCustomDrafts(drafts); setMissing([]) }}
+                  />
                 </CardContent>
               </Card>
             )}

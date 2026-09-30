@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, GripVertical, GitBranch, ListChecks, LoaderCircle, PanelsTopLeft, RotateCcw, Settings2, Tags, X, XCircle, type LucideIcon } from 'lucide-react'
+import { ArrowDown, ArrowUp, GripVertical, GitBranch, FormInput, ListChecks, LoaderCircle, PanelsTopLeft, RotateCcw, Settings2, Tags, X, XCircle, type LucideIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
@@ -21,6 +21,7 @@ import { pipelineStageKindWire, type PipelineStageKind } from '@/types/schemas'
 import { useCreatePipelineDraft, useCrmSettings, useDiscardPipelineDraft, usePublishPipelineVersion, useSetPipelineLifecycle, useUpdateCrmSettings, useValidatePipelineDraft } from '../api'
 import { PipelineVersionStrip, StageListHeader, StageRow, SystemStageRow, TransitionMatrix, versionState, type StageForm } from '../components/PipelineEditorParts'
 import { CatalogPanel } from '../components/CatalogPanel'
+import { CustomFieldsPanel } from '../components/CustomFieldsPanel'
 import { SectionHeading } from '../components/SectionHeading'
 import type { CrmSettings } from '../schema'
 
@@ -34,8 +35,8 @@ function withSystemStages(stages: readonly StageForm[], defaults: SystemLabels):
   return [...open, ...system.map((stage, index) => ({ ...stage, sortOrder: open.length + index + 1 }))]
 }
 const openStage = (name: string, index: number): StageForm => ({ name, sortOrder: index + 1, isEntry: index === 0, isActive: true, kind: 'Open' })
-type Section = 'general' | 'creation' | 'pipelines' | 'types' | 'reasons' | 'needs'
-const sectionIcons: Record<Section, LucideIcon> = { general: Settings2, creation: PanelsTopLeft, pipelines: GitBranch, types: Tags, reasons: XCircle, needs: ListChecks }
+type Section = 'general' | 'creation' | 'pipelines' | 'types' | 'reasons' | 'needs' | 'fields'
+const sectionIcons: Record<Section, LucideIcon> = { general: Settings2, creation: PanelsTopLeft, pipelines: GitBranch, types: Tags, reasons: XCircle, needs: ListChecks, fields: FormInput }
 const settingsValues = (value: CrmSettings) => ({ defaultPipelineDefinitionId: value.defaultPipelineDefinitionId,
   opportunityCreationMode: value.opportunityCreationMode, opportunityCreationSteps: value.opportunityCreationSteps, defaultOpportunityTypeId: value.defaultOpportunityTypeId,
   requireLostReason: value.requireLostReason, requireWonLine: value.requireWonLine, defaultAssignmentMode: value.defaultAssignmentMode,
@@ -45,7 +46,7 @@ const settingsValues = (value: CrmSettings) => ({ defaultPipelineDefinitionId: v
 export default function CrmSettingsPage() {
   const { t } = useTranslation('opportunities')
   const { section: routeSection } = useParams<{ section?: string }>()
-  const section: Section = routeSection === 'creation' || routeSection === 'pipelines' || routeSection === 'types' || routeSection === 'reasons' || routeSection === 'needs' ? routeSection : 'general'
+  const section: Section = routeSection === 'creation' || routeSection === 'pipelines' || routeSection === 'types' || routeSection === 'reasons' || routeSection === 'needs' || routeSection === 'fields' ? routeSection : 'general'
   const sections: readonly PageNavItem[] = (Object.keys(sectionIcons) as Section[]).map((item) => ({
     to: item === 'general' ? paths.crmSettings : paths.crmSettingsSection(item), label: t(`settings.sections.${item}`), icon: sectionIcons[item],
   }))
@@ -338,6 +339,7 @@ export default function CrmSettingsPage() {
     {section === 'types' && <CatalogPanel kind="opportunity-types" title={t('settings.typesTitle')} description={t('settings.typesDescription')} items={form.opportunityTypes} />}
     {section === 'reasons' && <CatalogPanel kind="lost-reasons" title={t('settings.reasonsTitle')} description={t('settings.reasonsDescription')} items={form.lostReasons} />}
     {section === 'needs' && <CatalogPanel kind="customer-needs" title={t('settings.needsTitle')} description={t('settings.needsDescription')} items={form.customerNeeds} />}
+    {section === 'fields' && <CustomFieldsPanel />}
       </div>
     </div>
     <AlertDialog open={discardDraftOpen} onOpenChange={setDiscardDraftOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('settings.versionStrip.discardTitle')}</AlertDialogTitle><AlertDialogDescription>{t('settings.versionStrip.discardDescription', { number: draftVersion?.versionNumber ?? 0, live: liveVersion?.versionNumber ?? 0 })}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => void discardDraft()}>{t('settings.versionStrip.discard')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>

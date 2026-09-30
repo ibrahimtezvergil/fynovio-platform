@@ -58,6 +58,7 @@ interface ProblemBody {
   message?: string
   code?: string
   errors?: Record<string, string[]>
+  codes?: Record<string, string[]>
   violations?: string[]
 }
 
@@ -74,6 +75,7 @@ export function toApiError(error: AxiosError<ProblemBody>): ApiError {
     code: data?.code ?? data?.type,
     // Laravel-style 422 and our 400 `validation_error` share the `errors` map.
     fields: status === 422 || status === 400 ? data?.errors : undefined,
+    ...(status === 422 && data?.codes ? { fieldCodes: data.codes } : {}),
     ...(status === 400 && Array.isArray(data?.violations) ? { violations: data.violations } : {}),
     ...(status === 429 && Number.isFinite(retryAfter) ? { retryAfterSeconds: retryAfter } : {}),
   }

@@ -1,7 +1,7 @@
 export default {
   settings: {
     eyebrow: 'CRM', title: 'CRM settings', description: 'Manage how the CRM application and creation flows work.',
-    sectionNavLabel: 'CRM settings sections', sections: { general: 'General and opportunities', creation: 'Opportunity creation', pipelines: 'Pipelines', reasons: 'Lost reasons', types: 'Opportunity types', needs: 'Customer needs' },
+    sectionNavLabel: 'CRM settings sections', sections: { general: 'General and opportunities', creation: 'Opportunity creation', pipelines: 'Pipelines', reasons: 'Lost reasons', types: 'Opportunity types', needs: 'Customer needs', fields: 'Opportunity fields' },
     loadErrorDescription: 'Check the connection and try again. No settings were changed.', forbiddenTitle: 'You cannot access CRM settings', forbiddenDescription: 'Ask an administrator for permission to view CRM settings in this workspace.', retry: 'Try again', reload: 'Load latest version',
     unsaved: 'You have unsaved changes', allSaved: 'All changes saved', discard: 'Discard changes', unsavedTitle: 'You have unsaved changes', unsavedDescription: 'Leaving this screen will discard your CRM settings changes.', discardAndSwitch: 'Discard and switch', conflict: 'Someone else changed these settings. Load the latest version and try again.',
     wonRulesTitle: 'Won requirements', wonRulesDescription: 'The required condition for a won outcome.', wonRuleHelp: 'At least one active opportunity line is required before marking it won.', lostRulesTitle: 'Lost requirements', lostRulesDescription: 'The required condition for a lost outcome.', lostRuleHelp: 'Choose a configured loss reason; an additional explanation is optional.', lifecycleReportingHint: 'Draft opportunities are left out of reports. Open opportunities are reported by stage. Won and Lost are an opportunity\'s outcome, not a stage.', assignmentSummaryTitle: 'Default assignment', assignmentSummaryDescription: 'The owner behavior used when an opportunity is created.', creatorOwnsOpportunity: 'The user who creates the opportunity automatically becomes its owner.', legacyAssignmentNotice: 'This workspace has an older assignment rule saved. The new rule cannot be chosen here yet, so the current one is kept as it is.',
@@ -318,6 +318,7 @@ export default {
   },
   reason: { required: 'Enter a reason.' },
   toast: {
+    updateCustomFields: 'Additional fields saved',
     create: 'Opportunity created',
     open: 'Opportunity opened',
     changeStage: 'Stage updated',
@@ -347,6 +348,29 @@ export default {
       empty: 'There is no other member who can be assigned this opportunity.',
       error: 'Could not load the candidate list. Try again.',
       forbidden: 'You are not allowed to reassign this opportunity.',
+    },
+  },
+  customFields: {
+    title: 'Additional fields', formDescription: 'Extra information your workspace keeps for this opportunity.', noValue: 'Not selected', yes: 'Yes', no: 'No',
+    edit: 'Edit', save: 'Save', saving: 'Saving…', cancel: 'Cancel', empty: 'No values yet.', deprecated: 'Deprecated', deprecatedHint: 'These fields are no longer in use; their stored values are read-only.',
+    saveError: 'Could not save the additional fields.', conflict: 'Someone else changed this opportunity. Reload the latest version and try again.',
+    toast: { create: 'Field created.', update: 'Field updated.', deprecate: 'Field deprecated.', reactivate: 'Field reactivated.' },
+    errors: {
+      required: 'This field is required.', unknown_field: 'This field is not defined.', field_deprecated: 'This field is deprecated.', invalid_type: 'The value does not match the field type.',
+      invalid_value: 'Enter a valid value.', out_of_range: 'The value is outside the allowed range.', too_long: 'The value is too long.', invalid_option: 'Choose a valid option.',
+      option_deprecated: 'This option is no longer in use.', payload_too_large: 'The additional fields are too large in total.',
+    },
+    types: { text: 'Short text', long_text: 'Long text', number: 'Whole number', decimal: 'Decimal number', boolean: 'Yes / No', date: 'Date', select: 'Single choice', multi_select: 'Multiple choice', email: 'Email', phone: 'Phone', url: 'Web address' },
+    settings: {
+      title: 'Opportunity fields', description: 'Define extra information to keep on opportunities. Fields appear on the new opportunity form, the opportunity detail and the list.',
+      add: 'Add field', empty: 'No additional fields yet. Use "Add field" to define the first one.', required: 'Required', active: 'In use', deprecated: 'Deprecated',
+      label: 'Field name', key: 'Key', keyHint: 'Lowercase letters, digits and underscores. Cannot change after creation.', type: 'Type', typeHint: 'The type cannot change after creation.',
+      isRequired: 'Required field', isRequiredHint: 'Existing records are not affected; the field is asked for on their next edit.', sortOrder: 'Order', maxLength: 'Maximum characters', min: 'Minimum value', max: 'Maximum value', scale: 'Decimal places',
+      options: 'Options', optionKey: 'Option key', optionLabel: 'Option name', addOption: 'Add option', optionDeprecate: 'Deprecate', optionRestore: 'Restore', optionRemove: 'Remove', optionsHint: 'A saved option is never deleted; it is deprecated instead.',
+      edit: 'Edit', deprecate: 'Deprecate', reactivate: 'Reactivate', more: 'More actions for {{name}}',
+      deprecateTitle: 'Deprecate the {{name}} field?', deprecateDescription: 'The field leaves the forms and the list. Stored values are kept and stay readable on the opportunity detail. You can reactivate the field later.',
+      impactLoading: 'Counting affected opportunities…', impact: '{{count}} opportunities have a value stored for this field.', impactNone: 'No opportunity has a value for this field.', impactError: 'Could not calculate the impact.',
+      keyConflict: 'A field with this key already exists.', limit: 'At most 100 fields can be in use.', conflict: 'Someone else changed this field. Reload the page and try again.', saveError: 'Could not save the field.',
     },
   },
 }

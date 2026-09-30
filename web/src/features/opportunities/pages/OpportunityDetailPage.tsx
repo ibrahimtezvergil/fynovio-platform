@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Skeleton } from '@/components/ui/skeleton'
 import { paths } from '@/routes/paths'
 import { useAvailableActions, useOpportunity, usePartyNames, usePipelineStages, useReloadOpportunity, useSetOpportunityArchive } from '../api'
+import { CustomFieldsCard } from '../components/CustomFieldsCard'
 import { LinesCard } from '../components/LinesCard'
 import { LoseDialog, OpenDialog, WinDialog } from '../components/LifecycleDialogs'
 import { ReassignDialog } from '../components/ReassignDialog'
@@ -131,6 +132,7 @@ export default function OpportunityDetailPage() {
       <div className="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <div className="grid content-start gap-5">
           <SummaryCard opportunity={data} canReassign={actions?.canReassign ?? false} onReassign={() => setDialog('reassign')} />
+          <CustomFieldsCard opportunity={data} onSaved={() => void reload()} />
           <LinesCard opportunity={data} onReload={() => void reload()} autoAdd={autoAddLine} />
         </div>
         <div className="grid content-start gap-5">

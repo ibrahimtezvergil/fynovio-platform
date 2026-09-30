@@ -251,6 +251,8 @@ export interface CommandBase {
 interface CommandRequest {
   url: string
   body: unknown
+  /** POST unless the endpoint is a full replacement. */
+  method?: 'post' | 'put'
 }
 
 /**
@@ -264,8 +266,8 @@ function useOpportunityCommand<V extends CommandBase>(name: string, toRequest: (
   return useAppMutation<z.infer<typeof commandResultSchema>, V>({
     name: `opportunities.${name}`,
     mutationFn: async (variables) => {
-      const { url, body } = toRequest(variables)
-      const { data } = await apiClient.post<unknown>(url, body, { headers: { 'Idempotency-Key': variables.idempotencyKey } })
+      const { url, body, method = 'post' } = toRequest(variables)
+      const { data } = await apiClient[method]<unknown>(url, body, { headers: { 'Idempotency-Key': variables.idempotencyKey } })
       return parseApiResponse(data, commandResultSchema)
     },
     invalidateKeys: (_data, variables): QueryKey[] => [
@@ -282,6 +284,8 @@ export interface CreateOpportunityVariables {
   partyId: number
   currency: string
   estimatedAmount: number
+  /** Omitted when the tenant has no active fields; validated by the server against the definitions. */
+  customFields?: Record<string, unknown>
   idempotencyKey: string
 }
 
@@ -311,6 +315,13 @@ export const useChangeStage = () =>
   useOpportunityCommand<CommandBase & { targetStageId: number }>('changeStage', ({ id, expectedVersion, targetStageId }) => ({
     url: endpoints.opportunities.changeStage(id),
     body: { expectedVersion, targetStageId },
+  }))
+
+export const useUpdateOpportunityCustomFields = () =>
+  useOpportunityCommand<CommandBase & { customFields: Record<string, unknown> }>('updateCustomFields', ({ id, expectedVersion, customFields }) => ({
+    url: endpoints.opportunities.customFields(id),
+    body: { expectedVersion, customFields },
+    method: 'put',
   }))
 
 export const useWinOpportunity = () =>
