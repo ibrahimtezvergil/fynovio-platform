@@ -372,7 +372,7 @@ Her aşama tek başına değerli ve geri alınabilir; bir sonraki başlamazsa ö
 3. **Değer yazma yolu:** `CreateOpportunity` `custom_fields`'ı tanımlara göre doğrular. Bugün genel bir güncelleme komutu yok [V `src/Modules/CRM/Application` listesinde `Update*Opportunity*` yok], bu yüzden yeni `UpdateOpportunityCustomFields` komutu: idempotent, `row_version` kontrollü, outbox + (gerekirse) evidence.
 4. **Ayarlar UI:** mevcut `crm-settings` özelliğinde alan yönetimi (ekle, düzenle, deprecate).
 5. **Metadata ile render:** yeni fırsat formunda ve detay sayfasında alan bölümü; fırsat listesinde `DataTable` kolonları. Render tamamen tanımdan, AI yok.
-6. **İlk bağımlılık:** "bu alan nerede kullanılıyor" — form düzeni ve liste kolon ayarları. Önce **hesaplanan sorgu** olarak (tablo yok); deprecate ekranında gösterilir. `dependency_edges` tablosu aşama 2'de.
+6. **İlk etki analizi:** ilk sürümde alanlara tek tek referans veren kayıtlı bir görünüm yok (form ve liste tüm aktif alanları `sort_order` ile render ediyor), bu yüzden henüz bağımlılık kenarı da yok. Deprecate ekranı **veri etkisini** gösterir: bu alanda değeri olan fırsat sayısı. `dependency_edges` ilk kayıtlı `ViewDefinition` ile gelir. (r2 düzeltmesi: r1 burada form/liste kolon bağımlılığı öngörüyordu; ADR yazılırken bunların alan referansı tutmadığı görüldü. Bkz. `adr-tier1-custom-fields.md` karar 12.)
 7. **Testler:** RLS (runtime rolü), tenant izolasyonu, tip/zorunluluk/seçenek doğrulaması, idempotency, eşzamanlılık, deprecate edilmiş alana yazma reddi.
 
 **Kapsam dışı:** AI, ChangeSet, Semantic Catalog modülü, Party alanları (OD-6), tenant objeleri, metrikler, workflow.
