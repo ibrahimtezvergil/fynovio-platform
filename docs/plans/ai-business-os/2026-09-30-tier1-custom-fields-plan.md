@@ -27,19 +27,22 @@ The ADR leaves these open, so they are decided here:
 
 **Files:** `src/Modules/CRM/Customization/*`, `tests/CRM.Tests/Domain/*`
 
-- [ ] Expand `TenantFieldDefinition`:
+- [x] Expand `TenantFieldDefinition`:
   - fields: key, label, 11 value types, config (options, scale, min/max, max length), status, sort order, owner scope, row version;
   - operations: `Update`, `Deprecate`, `Reactivate`.
-- [ ] `CustomFieldValues` validator: type/required/option/limit checks, unknown and deprecated key rejection, deprecated value carry-forward, 64 KB cap. Errors are collected per field.
-- [ ] Domain tests.
-- [ ] Commit.
+- [x] `CustomFieldValues` validator: type/required/option/limit checks, unknown and deprecated key rejection, deprecated value carry-forward, 64 KB cap. Errors are collected per field.
+- [x] Domain tests.
+- [x] Commit.
+  → Commit: `9766ab1` "feat(crm): tier-1 custom field definition model and value validator" (pre-existing main build break fixed first: `3a7e787` "fix(crm-tests): drop duplicate ResolveDisplayNamesAsync from principal directory stub")
 
 ## Task 2 — Persistence: configuration, migration, schema doc
 
 **Files:** `TenantFieldDefinitionConfiguration.cs`, `CrmDbContext.cs`, generated migration, `docs/schema/crm-sales-schema.md`
 
-- [ ] EF configuration: new columns plus CHECKs for key regex, type, status and owner scope. Id preallocation, same as the catalogs.
-- [ ] `dotnet ef migrations add` (generated, expand-shaped). `has-pending-model-changes` must be clean.
+- [x] EF configuration: new columns plus CHECKs for key regex, type, status and owner scope. Id preallocation, same as the catalogs.
+- [x] `dotnet ef migrations add` (generated, expand-shaped).
+  → Commit: `0101708` "feat(crm): persist expanded tenant field definitions"
+  **Paused here (2026-09-30, owner request).** Still open in this task: `has-pending-model-changes`, schema doc, persistence test.
 - [ ] Schema doc revision, checked line by line.
 - [ ] Integration test: CHECK constraints and RLS under the runtime role.
 - [ ] Commit.
