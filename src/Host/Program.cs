@@ -262,6 +262,9 @@ builder.Services.AddScoped<DiscardPipelineDraftHandler>();
 builder.Services.AddScoped<ValidatePipelineDraftHandler>();
 builder.Services.AddScoped<SetPipelineLifecycleHandler>();
 builder.Services.AddScoped<ManageCrmCatalogHandler>();
+builder.Services.AddScoped<ManageCustomFieldDefinitionHandler>();
+builder.Services.AddScoped<ListCustomFieldDefinitionsHandler>();
+builder.Services.AddScoped<GetCustomFieldImpactHandler>();
 builder.Services.AddScoped<GetOpportunityAvailableActionsHandler>();
 
 builder.Services.AddExceptionHandler<AccessProblemDetailsExceptionHandler>();

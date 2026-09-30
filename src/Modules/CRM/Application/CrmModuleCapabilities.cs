@@ -2,18 +2,19 @@ using Contracts;
 
 namespace CRM.Application;
 
-/// <summary>CRM's system role template (version 1) — what a tenant receives when the module is enabled for it.
+/// <summary>CRM's system role template (version 3) — what a tenant receives when the module is enabled for it.
 /// Explicit action keys only (no `crm.*` wildcard); the platform composes this manifest with every other
 /// module's and Access copies it into tenant-local rows. Changing this content later does NOT change tenants
 /// already enabled at an earlier version (Phase 1.5 Decision A) — bump <see cref="Version"/> so provenance
 /// records which content a tenant received.
 /// EXCEPTION, recorded on purpose: `crm.reference.party.create` was added to the v1 write set IN PLACE, not as v2 —
 /// enablement is copy-once with no reconciler, so a v2 would leave every already-enabled tenant without it, and
-/// nothing is in production yet. From the first production tenant on, a content change MUST bump the version.</summary>
+/// nothing is in production yet. From the first production tenant on, a content change MUST bump the version.
+/// Version 3 adds `crm.opportunity.update_custom_fields` to the write set for tier-1 custom fields (Task 3a, 3b).</summary>
 public static class CrmModuleCapabilities
 {
     public const string ModuleKey = "crm";
-    public const int Version = 2;
+    public const int Version = 3;
 
     public const string ReadSetKey = "crm_opportunity_read";
     public const string WriteSetKey = "crm_opportunity_write";
@@ -45,7 +46,8 @@ public static class CrmModuleCapabilities
                 new(CrmActionKeys.OpportunityArchive),
                 new(CrmActionKeys.OpportunityRestore),
                 new(CrmActionKeys.PartyReferenceSearch),
-                new(CrmActionKeys.PartyReferenceCreate)
+                new(CrmActionKeys.PartyReferenceCreate),
+                new(CrmActionKeys.OpportunityUpdateCustomFields)
             ]),
             new PermissionSetTemplate(ReassignSetKey, "CRM — reassign opportunities",
             [

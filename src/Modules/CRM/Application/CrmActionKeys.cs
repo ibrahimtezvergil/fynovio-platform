@@ -22,4 +22,5 @@ public static class CrmActionKeys
     public const string SettingsRead = "crm.settings.read";
     public const string SettingsUpdate = "crm.settings.update";
     public const string AssignmentManage = "crm.opportunity.assignment.manage";
+    public const string OpportunityUpdateCustomFields = "crm.opportunity.update_custom_fields";
 }

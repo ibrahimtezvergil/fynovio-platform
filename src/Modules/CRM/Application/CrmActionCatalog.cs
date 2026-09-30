@@ -25,9 +25,10 @@ public static class CrmActionCatalog
         new(CrmActionKeys.OpportunityRead, "Opportunity"),
         new(CrmActionKeys.OpportunityList, "Opportunity"),
         new(CrmActionKeys.PartyReferenceSearch, "PartyReference"),
-        new(CrmActionKeys.PartyReferenceCreate, "PartyReference")
-        ,new(CrmActionKeys.SettingsRead, "CrmSettings")
-        ,new(CrmActionKeys.SettingsUpdate, "CrmSettings", RiskClass: "high")
-        ,new(CrmActionKeys.AssignmentManage, "Opportunity", RiskClass: "high")
+        new(CrmActionKeys.PartyReferenceCreate, "PartyReference"),
+        new(CrmActionKeys.SettingsRead, "CrmSettings"),
+        new(CrmActionKeys.SettingsUpdate, "CrmSettings", RiskClass: "high"),
+        new(CrmActionKeys.AssignmentManage, "Opportunity", RiskClass: "high"),
+        new(CrmActionKeys.OpportunityUpdateCustomFields, "Opportunity")
     ];
 }
