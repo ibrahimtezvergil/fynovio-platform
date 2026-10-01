@@ -1,5 +1,15 @@
 # CRM+Sales pilot schema (PostgreSQL, `crm` schema)
 
+## Revision 13 (2026-10-01): opportunity activity projection and inbox
+
+Two tables, both written only by the `crm.opportunity-activity` event consumer (`docs/plans/ai-business-os/adr-event-consumption.md`, E-2 (a)), never by a command:
+- **`crm.opportunity_activity`** — one row per published `enterprise.crmsales.opportunity.*.v1` fact: `opportunity_id`, `event_id` (unique per tenant), `kind`, `aggregate_version`, `occurred_at`, and the producer's `payload` (jsonb, kept so the read side labels stages, owners and fields at read time). Index `(tenant_id, opportunity_id, occurred_at)`. **No foreign key** to `opportunities`: a projection is rebuilt from the outbox and never constrains its source.
+- **`crm.consumed_events`** — CRM's inbox, primary key `(consumer, event_id)`, written in the same transaction as the projection row; a redelivery hits the key and is a no-op.
+- Both have `ENABLE` + `FORCE ROW LEVEL SECURITY` with the standard `tenant_isolation` policy (migration `AddOpportunityActivityProjection`, hand-written RLS body).
+- Read through `GET /opportunities/{id}/activity`, authorized exactly like the opportunity detail (same action key and resource descriptor; denial is 404).
+- `crm.outbox_messages` additionally carries the Messaging migration's `relay_access` policy (pointer columns only, for `fynovio_relay`); see `docs/schema/messaging-schema.md`.
+- Line add/cancel write evidence but no outbox row, so they are not facts and do not appear on the timeline.
+
 ## Revision 12 (2026-10-01): custom field list filter index
 
 `crm.opportunities` has a GIN index `ix_opportunities_custom_fields` on `custom_fields` with `jsonb_path_ops`.
