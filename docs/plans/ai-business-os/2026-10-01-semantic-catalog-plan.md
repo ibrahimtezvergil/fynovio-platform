@@ -54,9 +54,11 @@ Note: the concurrency test found that the one-item flow read the base revision b
 
 ## A-1 — `reference` field type
 ### Task 8
-- [ ] `FieldType.Reference` (`reference` on the wire) with a fixed target in config; v1 target `masterdata/party`.
-- [ ] Write: id must be Accessible via `ILinkTargetDirectory` else `422 invalid_reference`; read hydrates `{id,label,accessible}` at the reader's authorization.
-- [ ] Web: definition editor + form control + detail rendering; tests incl. denied/unavailable.
+- [x] `FieldType.Reference` (`reference` on the wire) with a fixed target in config; v1 target `masterdata/party`.
+- [x] Write: id must be Accessible via `ILinkTargetDirectory` else `422 invalid_reference`; read hydrates `{id,label,accessible}` at the reader's authorization.
+- [x] Web: definition editor + form control + detail rendering; tests incl. denied/unavailable.
+→ Commit: `d13f310` "feat(semantic-catalog): add reference fields pointing at a customer (A-1)"
+Note: tests added — SemanticCatalog.Tests 209, CRM.Tests 353, Host.Tests 407, web 754 (incl. the settings editor). The role-overlap check found `update_custom_fields` and `party.search` in the same write set (no writer is locked out) but `party.search` absent from the read set, so a viewer sees references as unavailable: documented in the ADR as an owner decision (template v4 + reseed, K3). Merged parties read as their survivor; also in the ADR.
 
 ## A-2 — Shared table views + `dependency_edges`
 ### Task 9
