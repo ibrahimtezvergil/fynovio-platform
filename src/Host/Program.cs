@@ -244,6 +244,7 @@ builder.Services.AddScoped<MoveOpportunityToPipelineHandler>();
 builder.Services.AddScoped<WinOpportunityHandler>();
 builder.Services.AddScoped<LoseOpportunityHandler>();
 builder.Services.AddScoped<ReassignOpportunityHandler>();
+builder.Services.AddScoped<UpdateOpportunityCustomFieldsHandler>();
 builder.Services.AddScoped<SetOpportunityArchiveHandler>();
 builder.Services.AddScoped<ListAssignablePrincipalsHandler>();
 builder.Services.AddScoped<ProvisionPipelineHandler>(); // operator command `provision-crm-pipeline` and the Development seed
@@ -262,6 +263,9 @@ builder.Services.AddScoped<DiscardPipelineDraftHandler>();
 builder.Services.AddScoped<ValidatePipelineDraftHandler>();
 builder.Services.AddScoped<SetPipelineLifecycleHandler>();
 builder.Services.AddScoped<ManageCrmCatalogHandler>();
+builder.Services.AddScoped<ManageCustomFieldDefinitionHandler>();
+builder.Services.AddScoped<ListCustomFieldDefinitionsHandler>();
+builder.Services.AddScoped<GetCustomFieldImpactHandler>();
 builder.Services.AddScoped<GetOpportunityAvailableActionsHandler>();
 
 builder.Services.AddExceptionHandler<AccessProblemDetailsExceptionHandler>();

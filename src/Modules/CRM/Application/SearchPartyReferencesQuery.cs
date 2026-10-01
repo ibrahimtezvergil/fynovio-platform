@@ -12,5 +12,5 @@ public sealed record SearchPartyReferencesQuery(
     int Take,
     Guid CorrelationId);
 
-/// <summary>The display fields of a Party, nothing else — no phone, no external identities, no merge internals.</summary>
+/// <summary>The display fields of a Party (including the phone the customer picker shows), nothing else — no external identities, no merge internals.</summary>
 public sealed record PartyReferenceDto(long Id, string PartyType, string DisplayName, string? Email, string? Phone = null);

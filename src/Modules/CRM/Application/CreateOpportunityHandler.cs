@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Contracts;
+using CRM.Customization;
 using CRM.Domain;
 using CRM.Evidence;
 using CRM.Idempotency;
@@ -73,8 +74,13 @@ public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer a
                 CrmAssignmentPolicy.RequiredAssigneeActions, cancellationToken))
             throw new PrincipalNotAssignableException(assignedPrincipal);
 
+        var fieldDefinitions = await context.TenantFieldDefinitions.AsNoTracking()
+            .Where(x => x.TenantId == command.TenantId && x.AggregateType == TenantFieldAggregateType.Opportunity)
+            .ToListAsync(cancellationToken);
+        var customFields = CustomFieldValues.Normalize(fieldDefinitions, command.CustomFields, existingJson: null);
+
         var opportunity = Opportunity.Create(
-            command.TenantId, partyRef, assignedPrincipal, command.Currency, command.EstimatedAmount, opportunityTypeId);
+            command.TenantId, partyRef, assignedPrincipal, command.Currency, command.EstimatedAmount, opportunityTypeId, customFields);
         context.Opportunities.Add(opportunity);
         await context.SaveChangesAsync(cancellationToken); // assigns opportunity.Id
 
@@ -131,6 +137,9 @@ public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer a
         var canonical = string.Create(
             CultureInfo.InvariantCulture,
             $"{Operation}|{command.TenantId.Value}|{command.CallerPrincipal ?? command.AssignedPrincipal}|{command.AssignedPrincipal}|{command.PartyRef}|{command.Currency}|{command.EstimatedAmount}");
+        // Appended only when present, so requests without custom fields keep their pre-existing hash.
+        if (command.CustomFields is { } customFields)
+            canonical += "|" + customFields.GetRawText();
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
     }
 

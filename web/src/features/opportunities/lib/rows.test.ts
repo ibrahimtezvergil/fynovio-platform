@@ -17,6 +17,7 @@ const row = (overrides: Partial<OpportunityRow> = {}): OpportunityRow => ({
   totalAmount: null,
   needs: [],
   rowVersion: 1,
+  customFields: {},
   ...overrides,
 })
 

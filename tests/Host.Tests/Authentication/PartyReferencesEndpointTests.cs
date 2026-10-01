@@ -77,7 +77,7 @@ public sealed class PartyReferencesEndpointTests : IClassFixture<AuthApiFixture>
         Assert.Equal("Organization", acme[0].GetProperty("partyType").GetString());
         Assert.Equal(["Ada Lovelace"], Names(person));
         Assert.Equal("Person", person[0].GetProperty("partyType").GetString());
-        Assert.Equal(new[] { "displayName", "email", "id", "partyType" }, person[0].EnumerateObject().Select(p => p.Name).Order().ToArray()); // no phone, no internals
+        Assert.Equal(new[] { "displayName", "email", "id", "partyType", "phone" }, person[0].EnumerateObject().Select(p => p.Name).Order().ToArray()); // display fields only, no internals
     }
 
     [Fact]

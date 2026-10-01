@@ -8,6 +8,8 @@ import { EmptyState } from '@/components/common/EmptyState'
 import { DataTable } from '@/components/data-table'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { useCustomFieldDefinitions } from '@/lib/custom-fields/api'
+import { activeFields } from '@/lib/custom-fields/values'
 import { exportRowsToCsv } from '@/lib/importExport/exportCsv'
 import { paths } from '@/routes/paths'
 import { PAGE_SIZE } from '../api'
@@ -33,13 +35,18 @@ interface OpportunitiesGridProps {
  * without every row re-rendering. Row actions are local UI prototypes until their backend commands are available.
  */
 export function OpportunitiesGrid({ rows, isLoading, refreshing, page, hasNext, loadedCount, onPageChange, returnTo }: OpportunitiesGridProps) {
-  const { t } = useTranslation('opportunities')
+  const { t, i18n } = useTranslation('opportunities')
+  const definitions = useCustomFieldDefinitions()
+  const customFields = useMemo(() => activeFields(definitions.data ?? []), [definitions.data])
   const navigate = useNavigate()
   const rowSelection = useCreateAtom<RowSelectionState>({})
   const [localEdits, setLocalEdits] = useState<Partial<Record<number, Partial<OpportunityRow>>>>({})
   const visibleRows = useMemo(() => rows.map((row) => ({ ...row, ...localEdits[row.id] })), [rows, localEdits])
   const applyLocalEdit = useCallback((id: number, changes: Partial<OpportunityRow>) => setLocalEdits((current) => ({ ...current, [id]: { ...current[id], ...changes } })), [])
-  const columns = useMemo(() => createOpportunityColumns(t, returnTo, applyLocalEdit), [t, returnTo, applyLocalEdit])
+  const columns = useMemo(
+    () => createOpportunityColumns(t, returnTo, applyLocalEdit, customFields, i18n.language),
+    [t, returnTo, applyLocalEdit, customFields, i18n.language],
+  )
 
   const table = useTable(
     {

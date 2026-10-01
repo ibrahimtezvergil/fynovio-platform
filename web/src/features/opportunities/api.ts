@@ -28,6 +28,8 @@ export const PICKER_PAGE_SIZE = 20
 export interface OpportunityListFilter {
   status?: OpportunityStatus
   archivedOnly?: boolean
+  /** Equality filters on select, multi-select and boolean custom fields: field key → option key or 'true'/'false'. */
+  customFields?: Readonly<Record<string, string>>
   /** Zero-based page. */
   page: number
 }
@@ -65,7 +67,7 @@ const retryTransient = (failureCount: number, error: unknown) => {
 /** These screens render their own loading/forbidden/not-found/error states, so errors must not bubble to a boundary. */
 const READ_OPTIONS = { throwOnError: false, retry: retryTransient } as const
 
-async function get<S extends z.ZodType>(url: string, schema: S, params?: Record<string, unknown>): Promise<z.output<S>> {
+async function get<S extends z.ZodType>(url: string, schema: S, params?: Record<string, unknown> | URLSearchParams): Promise<z.output<S>> {
   const { data } = await apiClient.get<unknown>(url, { params })
   return parseApiResponse(data, schema) as z.output<S>
 }
@@ -78,12 +80,11 @@ export function useOpportunityList(filter: OpportunityListFilter) {
     enabled: tenantId !== null,
     // The list contract has no total: one extra row tells us whether a next page exists.
     queryFn: async () => {
-      const rows = await get(endpoints.opportunities.list, opportunitySummarySchema.array(), {
-        status: filter.status,
-        skip: filter.page * PAGE_SIZE,
-        take: PAGE_SIZE + 1,
-        archivedOnly: filter.archivedOnly ?? false,
-      })
+      // URLSearchParams, not an object: axios would send an array as `cf[]=`, the API reads repeated `cf=key:value`.
+      const params = new URLSearchParams({ skip: String(filter.page * PAGE_SIZE), take: String(PAGE_SIZE + 1), archivedOnly: String(filter.archivedOnly ?? false) })
+      if (filter.status) params.set('status', filter.status)
+      for (const [key, value] of Object.entries(filter.customFields ?? {})) params.append('cf', `${key}:${value}`)
+      const rows = await get(endpoints.opportunities.list, opportunitySummarySchema.array(), params)
       return { items: rows.slice(0, PAGE_SIZE), hasNext: rows.length > PAGE_SIZE }
     },
   })
@@ -251,6 +252,8 @@ export interface CommandBase {
 interface CommandRequest {
   url: string
   body: unknown
+  /** POST unless the endpoint is a full replacement. */
+  method?: 'post' | 'put'
 }
 
 /**
@@ -264,8 +267,8 @@ function useOpportunityCommand<V extends CommandBase>(name: string, toRequest: (
   return useAppMutation<z.infer<typeof commandResultSchema>, V>({
     name: `opportunities.${name}`,
     mutationFn: async (variables) => {
-      const { url, body } = toRequest(variables)
-      const { data } = await apiClient.post<unknown>(url, body, { headers: { 'Idempotency-Key': variables.idempotencyKey } })
+      const { url, body, method = 'post' } = toRequest(variables)
+      const { data } = await apiClient[method]<unknown>(url, body, { headers: { 'Idempotency-Key': variables.idempotencyKey } })
       return parseApiResponse(data, commandResultSchema)
     },
     invalidateKeys: (_data, variables): QueryKey[] => [
@@ -282,6 +285,8 @@ export interface CreateOpportunityVariables {
   partyId: number
   currency: string
   estimatedAmount: number
+  /** Omitted when the tenant has no active fields; validated by the server against the definitions. */
+  customFields?: Record<string, unknown>
   idempotencyKey: string
 }
 
@@ -311,6 +316,13 @@ export const useChangeStage = () =>
   useOpportunityCommand<CommandBase & { targetStageId: number }>('changeStage', ({ id, expectedVersion, targetStageId }) => ({
     url: endpoints.opportunities.changeStage(id),
     body: { expectedVersion, targetStageId },
+  }))
+
+export const useUpdateOpportunityCustomFields = () =>
+  useOpportunityCommand<CommandBase & { customFields: Record<string, unknown> }>('updateCustomFields', ({ id, expectedVersion, customFields }) => ({
+    url: endpoints.opportunities.customFields(id),
+    body: { expectedVersion, customFields },
+    method: 'put',
   }))
 
 export const useWinOpportunity = () =>

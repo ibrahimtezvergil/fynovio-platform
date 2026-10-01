@@ -1,5 +1,6 @@
 using Contracts;
 using CRM.Application;
+using CRM.Customization;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +13,26 @@ public sealed class CrmProblemDetailsExceptionHandler : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
+        if (exception is CustomFieldValidationException invalid)
+        {
+            // Per-field errors in the shared 422 shape (`errors`: field -> messages) so the form places each next to its
+            // input; `codes` (field -> machine codes) lets the client word them in the user's language.
+            var byField = invalid.Errors.GroupBy(e => e.Field, StringComparer.Ordinal);
+            httpContext.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+            await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Status = StatusCodes.Status422UnprocessableEntity,
+                Type = "custom_field_invalid",
+                Title = "One or more custom field values are invalid.",
+                Extensions =
+                {
+                    ["errors"] = byField.ToDictionary(g => g.Key, g => g.Select(e => e.Message).ToArray(), StringComparer.Ordinal),
+                    ["codes"] = byField.ToDictionary(g => g.Key, g => g.Select(e => e.Code).ToArray(), StringComparer.Ordinal)
+                }
+            }, cancellationToken);
+            return true;
+        }
+
         var (status, type, title) = exception switch
         {
             // Record-level denial must be externally indistinguishable from a genuinely
@@ -41,6 +62,8 @@ public sealed class CrmProblemDetailsExceptionHandler : IExceptionHandler
             PrincipalNotAssignableException => (StatusCodes.Status422UnprocessableEntity, "principal_not_assignable", exception.Message),
             CrmAssignmentProviderUnavailableException => (StatusCodes.Status422UnprocessableEntity, "assignment_provider_unavailable", exception.Message),
             PartyNotFoundException => (StatusCodes.Status422UnprocessableEntity, "party_not_found", exception.Message),
+            CustomFieldKeyConflictException => (StatusCodes.Status409Conflict, "custom_field_key_conflict", exception.Message),
+            CustomFieldLimitExceededException => (StatusCodes.Status422UnprocessableEntity, "field_limit_exceeded", exception.Message),
             ArgumentException => (StatusCodes.Status400BadRequest, "validation_error", exception.Message),
             InvalidOperationException => (StatusCodes.Status409Conflict, "illegal_lifecycle_transition", exception.Message),
             _ => (0, (string?)null, (string?)null)

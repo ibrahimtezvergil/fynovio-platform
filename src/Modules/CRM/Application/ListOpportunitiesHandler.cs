@@ -1,4 +1,5 @@
 using Contracts;
+using CRM.Customization;
 using CRM.Domain;
 using CRM.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -30,16 +31,31 @@ public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeR
 
         filtered = filtered.Where(o => o.IsArchived == query.ArchivedOnly);
 
-        var results = await filtered
+        if (query.CustomFieldFilters is { Count: > 0 })
+        {
+            var definitions = await context.TenantFieldDefinitions.AsNoTracking()
+                .Where(x => x.TenantId == query.TenantId && x.AggregateType == TenantFieldAggregateType.Opportunity)
+                .ToListAsync(cancellationToken);
+            var containment = CustomFieldFilter.ToContainmentJson(definitions, query.CustomFieldFilters);
+            if (containment is not null)
+                filtered = filtered.Where(o => o.CustomFields != null && EF.Functions.JsonContains(o.CustomFields, containment));
+        }
+
+        var rows = await filtered
             .OrderByDescending(o => o.CreatedAt)
             .ThenByDescending(o => o.Id)
             .Skip(query.Skip)
             .Take(query.Take)
-            .Select(o => new OpportunitySummaryDto(
-                o.Id, o.Status, o.EstimatedAmount, o.Currency, o.AssignedPrincipalIssuer, o.AssignedPrincipalSubject, o.PipelineStageId,
-                o.PartyRefPartyId, o.PipelineDefinitionVersionId, o.ExpiryDate, o.IsArchived, o.ArchivedAt, o.RowVersion,
-                o.CreatedAt, o.UpdatedAt, o.TotalAmount, Array.Empty<string>(), (string?)null))
+            .Select(o => new
+            {
+                Summary = new OpportunitySummaryDto(
+                    o.Id, o.Status, o.EstimatedAmount, o.Currency, o.AssignedPrincipalIssuer, o.AssignedPrincipalSubject, o.PipelineStageId,
+                    o.PartyRefPartyId, o.PipelineDefinitionVersionId, o.ExpiryDate, o.IsArchived, o.ArchivedAt, o.RowVersion,
+                    o.CreatedAt, o.UpdatedAt, o.TotalAmount, Array.Empty<string>(), (string?)null),
+                o.CustomFields
+            })
             .ToListAsync(cancellationToken);
+        var results = rows.Select(x => x.Summary with { CustomFields = CustomFieldValues.ToElement(x.CustomFields) }).ToList();
 
         var opportunityIds = results.Select(x => x.Id).ToArray();
         var needRows = await (from link in context.OpportunityNeeds

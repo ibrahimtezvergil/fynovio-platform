@@ -39,12 +39,6 @@ public sealed class StubPrincipalDirectory(IReadOnlyList<PrincipalDirectoryEntry
         AskedActions.Add(requiredActions);
         return Task.FromResult(permitted.Any(p => p.Principal == principal));
     }
-
-    public Task<IReadOnlyDictionary<PrincipalRef, string>> ResolveDisplayNamesAsync(
-        TenantId tenantId, IReadOnlyCollection<PrincipalRef> principals, CancellationToken cancellationToken = default) =>
-        Task.FromResult<IReadOnlyDictionary<PrincipalRef, string>>(permitted
-            .Where(p => principals.Contains(p.Principal))
-            .ToDictionary(p => p.Principal, p => p.DisplayName));
 }
 
 /// <summary>Allows everything and remembers each action asked about.</summary>

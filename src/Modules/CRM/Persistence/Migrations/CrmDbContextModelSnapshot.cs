@@ -38,13 +38,21 @@ namespace CRM.Persistence.Migrations
                         .HasColumnType("character varying(32)")
                         .HasColumnName("aggregate_type");
 
+                    b.Property<string>("ConfigJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("config")
+                        .HasDefaultValueSql("'{}'::jsonb");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
                     b.Property<string>("FieldName")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(63)
+                        .HasColumnType("character varying(63)")
                         .HasColumnName("field_name");
 
                     b.Property<string>("FieldType")
@@ -57,9 +65,52 @@ namespace CRM.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_required");
 
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("")
+                        .HasColumnName("label");
+
+                    b.Property<string>("OwnerScope")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("Tenant")
+                        .HasColumnName("owner_scope");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L)
+                        .HasColumnName("row_version");
+
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("sort_order");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("Active")
+                        .HasColumnName("status");
+
                     b.Property<long>("TenantId")
                         .HasColumnType("bigint")
                         .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("now()");
 
                     b.HasKey("Id")
                         .HasName("pk_tenant_field_definitions");
@@ -72,7 +123,17 @@ namespace CRM.Persistence.Migrations
                         {
                             t.HasCheckConstraint("ck_tenant_field_definitions_aggregate_type", "aggregate_type IN ('Party','Opportunity')");
 
-                            t.HasCheckConstraint("ck_tenant_field_definitions_field_type", "field_type IN ('text','number','boolean','date')");
+                            t.HasCheckConstraint("ck_tenant_field_definitions_config_object", "jsonb_typeof(config) = 'object'");
+
+                            t.HasCheckConstraint("ck_tenant_field_definitions_field_name", "field_name ~ '^[a-z][a-z0-9_]{1,62}$'");
+
+                            t.HasCheckConstraint("ck_tenant_field_definitions_field_type", "field_type IN ('text','long_text','number','decimal','boolean','date','select','multi_select','email','phone','url')");
+
+                            t.HasCheckConstraint("ck_tenant_field_definitions_owner_scope", "owner_scope = 'Tenant'");
+
+                            t.HasCheckConstraint("ck_tenant_field_definitions_sort_order", "sort_order BETWEEN 0 AND 10000");
+
+                            t.HasCheckConstraint("ck_tenant_field_definitions_status", "status IN ('Active','Deprecated')");
                         });
                 });
 
@@ -409,6 +470,12 @@ namespace CRM.Persistence.Migrations
 
                     b.HasAlternateKey("TenantId", "Id")
                         .HasName("ak_opportunities_tenant_id_id");
+
+                    b.HasIndex("CustomFields")
+                        .HasDatabaseName("ix_opportunities_custom_fields");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("CustomFields"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("CustomFields"), new[] { "jsonb_path_ops" });
 
                     b.HasIndex("TenantId", "CreatedAt")
                         .HasDatabaseName("ix_opportunities_tenant_id_created_at");

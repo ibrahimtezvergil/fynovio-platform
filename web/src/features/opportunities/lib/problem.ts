@@ -44,6 +44,8 @@ export function toProblem(error: ApiError): Problem {
       return { kind: 'notAssignable' }
     case 'validation_error':
       return { kind: 'validation', detail }
+    case 'custom_field_invalid':
+      return { kind: 'validation' } // the per-field messages are shown next to each input
     case 'not_found':
       return { kind: 'notFound' }
     case 'forbidden':

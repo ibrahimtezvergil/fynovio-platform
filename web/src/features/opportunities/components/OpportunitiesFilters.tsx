@@ -11,7 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import type { CustomFieldDefinition } from '@/lib/custom-fields/schema'
 import type { RowFilters } from '../lib/rows'
+import { CustomFieldFilterPills } from './CustomFieldFilterPills'
 
 /**
  * The pill reads tinted exactly while it is narrowing the result set. `size="sm"` is a fixed step in the button
@@ -32,10 +34,16 @@ interface OpportunitiesFiltersProps {
   owners: readonly string[]
   /** Density only resizes the grid, so the board view leaves the toggle out. */
   showDensity?: boolean
+  /** Server-side custom field filters (field key → option key or 'true'/'false'). */
+  fieldFilters?: {
+    definitions: readonly CustomFieldDefinition[]
+    value: Readonly<Record<string, string>>
+    onChange: (next: Record<string, string>) => void
+  }
 }
 
-/** Search and filter pills over the loaded page (status and paging are the server's, above the table). */
-export function OpportunitiesFilters({ filters, onChange, owners, showDensity = true }: OpportunitiesFiltersProps) {
+/** Search and filter pills over the loaded page (status, paging and custom field filters are the server's). */
+export function OpportunitiesFilters({ filters, onChange, owners, showDensity = true, fieldFilters }: OpportunitiesFiltersProps) {
   const { t } = useTranslation('opportunities')
 
   return (
@@ -73,6 +81,8 @@ export function OpportunitiesFilters({ filters, onChange, owners, showDensity = 
           <CalendarClock aria-hidden strokeWidth={1.7} />
           {t('list.filters.closeWindowPrefix')} {filters.quarterOnly ? t('list.filters.thisQuarter') : t('list.filters.all')}
         </Button>
+
+        {fieldFilters && <CustomFieldFilterPills {...fieldFilters} pillProps={pill} />}
       </ToolbarGroup>
 
       <ToolbarSpacer />

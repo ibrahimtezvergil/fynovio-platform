@@ -21,6 +21,8 @@ export interface OpportunityRow {
   needs: string[]
   /** The concurrency token the list carries; null when the API omitted it (the board then offers no move). */
   rowVersion: number | null
+  /** Stored custom field values keyed by field key; rendered through the tenant's definitions. */
+  customFields: Record<string, unknown>
 }
 
 export function toRows(
@@ -44,6 +46,7 @@ export function toRows(
     totalAmount: item.totalAmount ?? null,
     needs: item.needs ?? [],
     rowVersion: item.rowVersion ?? null,
+    customFields: item.customFields ?? {},
   }))
 }
 

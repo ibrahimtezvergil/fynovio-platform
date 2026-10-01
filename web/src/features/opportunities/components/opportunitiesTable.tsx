@@ -6,6 +6,8 @@ import {
 import type { TFunction } from 'i18next'
 import { Link } from 'react-router-dom'
 import { SelectAllHeaderCheckbox, SelectRowCheckbox, type DataTableColumnMeta } from '@/components/data-table'
+import type { CustomFieldDefinition } from '@/lib/custom-fields/schema'
+import { formatCustomFieldValue } from '@/lib/custom-fields/values'
 import { paths } from '@/routes/paths'
 import { formatDate, formatMoney } from '../lib/format'
 import type { OpportunityRow } from '../lib/rows'
@@ -25,7 +27,14 @@ export const opportunityFeatures = tableFeatures({
 const helper = createColumnHelper<typeof opportunityFeatures, OpportunityRow>()
 
 /** `t` comes in as an argument (this is a factory, not a component) so the caller's `useMemo` rebuilds the columns when the language changes. */
-export function createOpportunityColumns(t: TFunction<'opportunities'>, returnTo: string, onLocalEdit: (id: number, changes: Partial<OpportunityRow>) => void) {
+export function createOpportunityColumns(
+  t: TFunction<'opportunities'>,
+  returnTo: string,
+  onLocalEdit: (id: number, changes: Partial<OpportunityRow>) => void,
+  customFields: readonly CustomFieldDefinition[] = [],
+  locale?: string,
+) {
+  const yesNo = { yes: t('customFields.yes'), no: t('customFields.no') }
   return helper.columns([
     helper.display({
       id: 'select',
@@ -83,6 +92,14 @@ export function createOpportunityColumns(t: TFunction<'opportunities'>, returnTo
       meta: { label: t('list.columns.expiry'), align: 'right', cellClassName: 'font-[450]' },
       cell: (info) => formatDate(info.getValue()) ?? '—',
     }),
+    // One column per active tenant field, after the built-in ones (ADR decision 7: rendered from the definitions).
+    ...customFields.map((definition) =>
+      helper.accessor((row) => formatCustomFieldValue(definition, row.customFields[definition.fieldName], yesNo, locale), {
+        id: `cf:${definition.fieldName}`,
+        header: definition.label,
+        meta: { label: definition.label, cellClassName: 'max-w-[220px] truncate' },
+        cell: (info) => info.getValue() || '-',
+      })),
     helper.display({
       id: 'rowActions',
       header: t('list.columns.actions'),

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using CRM.Domain;
 
 namespace CRM.Application;
@@ -20,4 +21,7 @@ public sealed record OpportunitySummaryDto(
     DateTimeOffset UpdatedAt,
     decimal? TotalAmount,
     IReadOnlyList<string> Needs,
-    string? AssignedPrincipalDisplayName);
+    string? AssignedPrincipalDisplayName)
+{
+    public JsonElement? CustomFields { get; init; }
+}

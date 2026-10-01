@@ -29,6 +29,8 @@ public sealed class OpportunityConfiguration : IEntityTypeConfiguration<Opportun
         // Computed value, 4dp — rounded to 2dp exactly once, at the `won` transition.
         builder.Property(o => o.TotalAmount).HasColumnType("numeric(19,4)");
         builder.Property(o => o.CustomFields).HasColumnType("jsonb");
+        // Custom field list filters are jsonb containment (`@>`, CustomFieldFilter); jsonb_path_ops serves exactly that.
+        builder.HasIndex(o => o.CustomFields).HasMethod("gin").HasOperators("jsonb_path_ops");
 
         // Explicit bigint concurrency token (schema revision 2, item 4) — Opportunity increments
         // it inside domain methods; EF captures the original value for the UPDATE ... WHERE.

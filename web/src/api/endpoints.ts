@@ -29,6 +29,7 @@ export const endpoints = {
     archive: (id: number) => `/opportunities/${id}/archive`,
     restore: (id: number) => `/opportunities/${id}/restore`,
     assignablePrincipals: (id: number) => `/opportunities/${id}/assignable-principals`,
+    customFields: (id: number) => `/opportunities/${id}/custom-fields`,
   },
   references: {
     parties: '/crm/references/parties',
@@ -47,6 +48,10 @@ export const endpoints = {
     pipelineDiscard: (id: number, versionId: number) => `/crm/settings/pipelines/${id}/versions/${versionId}/discard`,
     catalog: (kind: string) => `/crm/settings/catalog/${kind}`,
     catalogItem: (kind: string, id: number) => `/crm/settings/catalog/${kind}/${id}`,
+    customFields: '/crm/settings/custom-fields',
+    customField: (id: number) => `/crm/settings/custom-fields/${id}`,
+    customFieldTransition: (id: number, transition: 'deprecate' | 'reactivate') => `/crm/settings/custom-fields/${id}/${transition}`,
+    customFieldImpact: (id: number) => `/crm/settings/custom-fields/${id}/impact`,
   },
   deals: {
     list: '/deals',

@@ -134,6 +134,8 @@ export interface ApiError {
    * shape. See `docs/design-system/07-forms.md`.
    */
   fields?: Record<string, string[]>
+  /** A 422's per-field machine codes alongside `fields` (e.g. custom field `out_of_range`), so the UI can word them. */
+  fieldCodes?: Record<string, string[]>
   /** A `password_policy_violation`'s machine codes (`too_short`, `too_long`, `equals_email`, …) — the UI words them. */
   violations?: string[]
   /** A 429's `Retry-After`, in seconds. */

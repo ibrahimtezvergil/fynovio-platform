@@ -1,5 +1,18 @@
 # CRM+Sales pilot schema (PostgreSQL, `crm` schema)
 
+## Revision 12 (2026-10-01): custom field list filter index
+
+`crm.opportunities` has a GIN index `ix_opportunities_custom_fields` on `custom_fields` with `jsonb_path_ops`.
+- **What it serves:** the Opportunity list's custom field filters.
+  - Filters are equality only, on select, multi_select and boolean fields.
+  - The handler validates them against `tenant_field_definitions`, then applies them as one jsonb containment predicate (`custom_fields @> '{...}'`).
+  - They are ANDed with the caller's access scope and the RLS tenant predicate.
+- **No change** to the columns, CHECK constraints or RLS.
+
+## Revision 11 (2026-09-30): Tier-1 tenant custom field schema expansion
+
+`crm.tenant_field_definitions` expanded with new columns and CHECK constraints. New columns: `label` (varchar 100, required, user-facing field name), `config` (jsonb, default '{}', validates as object), `status` (varchar 16, default 'Active', lifecycle: Active|Deprecated), `sort_order` (integer, default 0, range 0–10000), `owner_scope` (varchar 16, fixed to 'Tenant'), `row_version` (bigint, default 1, concurrency token), `updated_at` (timestamp with time zone, default now()). Existing `field_name` column changed from text to varchar(63). New CHECK constraints validate aggregate_type ('Party'|'Opportunity'), field_type (11 types: text, long_text, number, decimal, boolean, date, select, multi_select, email, phone, url), field_name (regex: lowercase start, 2–63 chars), status, owner_scope, sort_order range, and config as valid JSON object. Unique constraint on (tenant_id, aggregate_type, field_name) was already present. RLS (ENABLE+FORCE + tenant policy) already in place from Phase 1. See `docs/plans/ai-business-os/adr-tier1-custom-fields.md`.
+
 ## Revision 10 (2026-09-24): Opportunity archive lifecycle
 
 `crm.opportunities` has `is_archived` and nullable `archived_at`, with CHECK constraints requiring these fields to agree and forbidding archived Won/Lost records. Archiving does not alter the lifecycle status or pipeline stage. Normal opportunity list queries select only non-archived rows; the archive view selects archived rows. Archive and restore are tenant-scoped, authorized, optimistic-concurrency-protected, idempotent commands, with audit evidence and outbox facts committed atomically. Restore preserves the original lifecycle and stage, except that an Open opportunity whose referenced stage is inactive must be restored to an active stage in the same pipeline version. No hard-delete command is exposed.
@@ -169,11 +182,18 @@ erDiagram
     TENANT_FIELD_DEFINITIONS {
         bigint id PK
         bigint tenant_id "NOT NULL"
-        text aggregate_type "CHECK: Party | Opportunity"
-        text field_name "NOT NULL"
-        text field_type "CHECK: text|number|boolean|date"
+        varchar_32 aggregate_type "NOT NULL, CHECK: Party|Opportunity"
+        varchar_63 field_name "NOT NULL, UNIQUE(tenant_id,aggregate_type,field_name), CHECK: regex ^[a-z][a-z0-9_]{1,62}$"
+        varchar_16 field_type "NOT NULL, CHECK: text|long_text|number|decimal|boolean|date|select|multi_select|email|phone|url"
         boolean is_required "DEFAULT false"
+        varchar_100 label "NOT NULL, DEFAULT ''"
+        jsonb config "NOT NULL, DEFAULT '{}', CHECK: jsonb_typeof(config)='object'"
+        varchar_16 status "NOT NULL, DEFAULT 'Active', CHECK: Active|Deprecated"
+        integer sort_order "NOT NULL, DEFAULT 0, CHECK: BETWEEN 0 AND 10000"
+        varchar_16 owner_scope "NOT NULL, DEFAULT 'Tenant', CHECK: ='Tenant'"
+        bigint row_version "NOT NULL DEFAULT 1, EF Core concurrency token"
         timestamptz created_at
+        timestamptz updated_at "NOT NULL, DEFAULT now()"
     }
 
     IDEMPOTENCY_RECORDS {

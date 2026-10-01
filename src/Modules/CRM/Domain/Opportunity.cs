@@ -56,7 +56,8 @@ public sealed class Opportunity : IHasRowVersion
         PrincipalRef assignedPrincipal,
         string currency,
         decimal estimatedAmount,
-        long? opportunityTypeId = null)
+        long? opportunityTypeId = null,
+        string? customFields = null)
     {
         if (partyRef.TenantId != tenantId)
             throw new ArgumentException("PartyRef's tenant must match the opportunity's tenant.", nameof(partyRef));
@@ -78,6 +79,7 @@ public sealed class Opportunity : IHasRowVersion
             Status = OpportunityStatus.Draft,
             Currency = currency,
             EstimatedAmount = estimatedAmount,
+            CustomFields = customFields,
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -284,6 +286,22 @@ public sealed class Opportunity : IHasRowVersion
         IsArchived = false;
         ArchivedAt = null;
         Touch();
+    }
+
+    /// <summary>Takes JSON already normalized against the tenant's field definitions
+    /// (CRM.Customization.CustomFieldValues) — the aggregate does not read definitions. Custom fields are
+    /// descriptive, not lifecycle facts, so any status may change them; only an archived record is frozen.
+    /// Returns false (and leaves the version alone) when nothing changed.</summary>
+    public bool ReplaceCustomFields(string? customFields)
+    {
+        if (IsArchived)
+            throw new InvalidOperationException("Archived opportunities cannot change their custom fields.");
+        if (CustomFields == customFields)
+            return false;
+
+        CustomFields = customFields;
+        Touch();
+        return true;
     }
 
     private void EnsureNotArchived()
