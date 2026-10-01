@@ -28,16 +28,28 @@ public sealed class OutboxRelay(RelayDataSource relay, ConsumerCatalog catalog)
         return processed;
     }
 
+    /// <summary>Records each consumer the first time the relay sees it. A new <see cref="ConsumerStartPolicy.FromBeginning"/>
+    /// consumer is owed the facts already fanned out before it existed, so its history is backfilled in the same
+    /// transaction as its registration — a crash between the two can never leave it registered but without its past.</summary>
     private async Task<Dictionary<string, DateTimeOffset>> RegisterConsumersAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
     {
         foreach (var consumer in catalog.Consumers)
         {
-            await using var insert = new NpgsqlCommand(
-                "INSERT INTO messaging.consumer_registrations (consumer, start_policy) VALUES (@consumer, @policy) ON CONFLICT (consumer) DO NOTHING",
-                connection);
-            insert.Parameters.AddWithValue("consumer", consumer.Name);
-            insert.Parameters.AddWithValue("policy", consumer.StartPolicy.ToString());
-            await insert.ExecuteNonQueryAsync(cancellationToken);
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            await using (var insert = new NpgsqlCommand(
+                "INSERT INTO messaging.consumer_registrations (consumer, start_policy) VALUES (@consumer, @policy) ON CONFLICT (consumer) DO NOTHING RETURNING consumer",
+                connection, transaction))
+            {
+                insert.Parameters.AddWithValue("consumer", consumer.Name);
+                insert.Parameters.AddWithValue("policy", consumer.StartPolicy.ToString());
+                var isNew = await insert.ExecuteScalarAsync(cancellationToken) is not null;
+                if (isNew && consumer.StartPolicy == ConsumerStartPolicy.FromBeginning)
+                {
+                    foreach (var schema in OutboxSources.All)
+                        await BackfillAsync(connection, transaction, schema, consumer, cancellationToken);
+                }
+            }
+            await transaction.CommitAsync(cancellationToken);
         }
 
         var registeredAt = new Dictionary<string, DateTimeOffset>();
@@ -80,6 +92,26 @@ public sealed class OutboxRelay(RelayDataSource relay, ConsumerCatalog catalog)
 
         await transaction.CommitAsync(cancellationToken);
         return pointers.Count;
+    }
+
+    /// <summary>Rows already marked processed (fanned out to the consumers that existed then) become deliveries of a
+    /// newly registered consumer. Rows still pending are left to the normal fan-out, which now includes it.</summary>
+    private static async Task BackfillAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string schema, ConsumerDescriptor consumer, CancellationToken cancellationToken)
+    {
+        await using var command = new NpgsqlCommand(
+            $"""
+            INSERT INTO messaging.event_deliveries
+                (tenant_id, consumer, source_schema, source_id, event_id, event_type, aggregate_type, aggregate_id, aggregate_version, status, attempts, next_attempt_at)
+            SELECT tenant_id, @consumer, @schema, id, event_id, event_type, aggregate_type, aggregate_id, aggregate_version, '{DeliveryStatusText.Pending}', 0, now()
+            FROM {OutboxSources.Require(schema)}.outbox_messages
+            WHERE processed_at IS NOT NULL AND event_type = ANY(@types)
+            ON CONFLICT (consumer, event_id) DO NOTHING
+            """,
+            connection, transaction);
+        command.Parameters.AddWithValue("consumer", consumer.Name);
+        command.Parameters.AddWithValue("schema", schema);
+        command.Parameters.AddWithValue("types", consumer.EventTypes.ToArray());
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static async Task<List<OutboxPointer>> ReadPendingAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string schema, CancellationToken cancellationToken)

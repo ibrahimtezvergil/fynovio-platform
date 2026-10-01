@@ -100,4 +100,38 @@ public sealed class OutboxRelayTests(MessagingFixture fixture)
         Assert.True(await ProcessedAsync("collaboration", lockedId));
         Assert.Equal(1, await DeliveriesAsync(harness.ConsumerName, lockedEvent));
     }
+
+    [Fact]
+    public async Task A_from_beginning_consumer_added_later_gets_the_history_already_fanned_out()
+    {
+        var eventType = $"test.history.{Guid.NewGuid():N}.v1";
+        var tenant = TestTenants.Next();
+        var (oldId, oldEvent) = await fixture.InsertOutboxAsync("collaboration", tenant, eventType);
+        await using (var early = new MessagingHarness(fixture, new HashSet<string> { "test.unrelated.v1" }))
+            await early.Relay.RelayOnceAsync(CancellationToken.None);
+        Assert.True(await ProcessedAsync("collaboration", oldId));
+
+        await using var late = new MessagingHarness(fixture, new HashSet<string> { eventType });
+        var (_, newEvent) = await fixture.InsertOutboxAsync("collaboration", tenant, eventType);
+        await late.Relay.RelayOnceAsync(CancellationToken.None);
+        await late.Relay.RelayOnceAsync(CancellationToken.None);
+
+        Assert.Equal(1, await DeliveriesAsync(late.ConsumerName, oldEvent, "pending"));
+        Assert.Equal(1, await DeliveriesAsync(late.ConsumerName, newEvent, "pending"));
+    }
+
+    [Fact]
+    public async Task A_from_now_consumer_added_later_gets_no_history()
+    {
+        var eventType = $"test.nohistory.{Guid.NewGuid():N}.v1";
+        var (oldId, oldEvent) = await fixture.InsertOutboxAsync("crm", TestTenants.Next(), eventType);
+        await using (var early = new MessagingHarness(fixture, new HashSet<string> { "test.unrelated.v1" }))
+            await early.Relay.RelayOnceAsync(CancellationToken.None);
+        Assert.True(await ProcessedAsync("crm", oldId));
+
+        await using var late = new MessagingHarness(fixture, new HashSet<string> { eventType }, ConsumerStartPolicy.FromNow);
+        await late.Relay.RelayOnceAsync(CancellationToken.None);
+
+        Assert.Equal(0, await DeliveriesAsync(late.ConsumerName, oldEvent));
+    }
 }
