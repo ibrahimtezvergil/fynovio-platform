@@ -125,6 +125,7 @@ export function CustomFieldsPanel() {
     setEditor((current) => current && { ...current, options: current.options.map((option, at) => (at === index ? { ...option, ...change } : option)) })
 
   const impactCount = impact.data?.opportunitiesWithValue
+  const impactViews = impact.data?.dependentViews ?? []
   return (
     <Card className="min-w-0 gap-4 px-6 pt-[22px] pb-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -256,6 +257,13 @@ export function CustomFieldsPanel() {
               : impact.isError ? t('customFields.settings.impactError')
                 : impactCount === 0 ? t('customFields.settings.impactNone') : t('customFields.settings.impact', { count: impactCount })}
           </p>
+          {impact.isSuccess && impactViews.length > 0 && (
+            <div role="status" className="grid gap-1 text-[13px]">
+              <p className="font-[550]">{t('customFields.settings.impactViews', { count: impactViews.length })}</p>
+              <ul className="text-muted-foreground list-disc pl-5">{impactViews.map((view) => <li key={view.id}>{view.name}</li>)}</ul>
+              <p className="text-muted-foreground text-[12.5px]">{t('customFields.settings.impactViewsHint')}</p>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>{t('customFields.cancel')}</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={() => {

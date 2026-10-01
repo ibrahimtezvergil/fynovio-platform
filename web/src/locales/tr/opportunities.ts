@@ -1,7 +1,7 @@
 export default {
   settings: {
     eyebrow: 'CRM', title: 'CRM ayarları', description: 'CRM uygulamasının çalışma biçimini ve oluşturma akışlarını yönetin.',
-    sectionNavLabel: 'CRM ayarları bölümleri', sections: { general: 'Genel ve fırsat', creation: 'Fırsat oluşturma', pipelines: 'Satış hatları', reasons: 'Kayıp nedenleri', types: 'Fırsat türleri', needs: 'Müşteri ihtiyaçları', fields: 'Fırsat alanları' },
+    sectionNavLabel: 'CRM ayarları bölümleri', sections: { general: 'Genel ve fırsat', creation: 'Fırsat oluşturma', pipelines: 'Satış hatları', reasons: 'Kayıp nedenleri', types: 'Fırsat türleri', needs: 'Müşteri ihtiyaçları', fields: 'Fırsat alanları', views: 'Liste görünümleri' },
     loadErrorDescription: 'Bağlantıyı kontrol edip yeniden deneyin. Ayarlar değiştirilmedi.', forbiddenTitle: 'CRM ayarlarına erişiminiz yok', forbiddenDescription: 'Bu çalışma alanında CRM ayarlarını görmek için yöneticinizden yetki isteyin.', retry: 'Yeniden dene', reload: 'Son hâlini yükle',
     unsaved: 'Kaydedilmemiş değişiklikler var', allSaved: 'Tüm değişiklikler kaydedildi', discard: 'Değişiklikleri geri al', unsavedTitle: 'Kaydedilmemiş değişiklikler var', unsavedDescription: 'Bu ekrandan ayrılırsanız CRM ayarlarına yaptığınız değişiklikler kaybolacak.', discardAndSwitch: 'Değişiklikleri at ve geç', conflict: 'Ayarlar başka biri tarafından değiştirildi. Son hâlini yükleyip yeniden deneyin.',
     wonRulesTitle: 'Kazanıldı kuralları', wonRulesDescription: 'Kazanıldı sonucu için gerekli temel koşul.', wonRuleHelp: 'Kazanıldı olarak kapatmak için en az bir etkin fırsat kalemi gerekir.', lostRulesTitle: 'Kaybedildi kuralları', lostRulesDescription: 'Kaybedildi sonucu için gerekli temel koşul.', lostRuleHelp: 'Yapılandırılmış bir kayıp nedeni seçilir; ek açıklama isteğe bağlıdır.', lifecycleReportingHint: 'Taslak fırsatlar raporlara girmez. Açık fırsatlar aşamalarıyla raporlanır. Kazanıldı ve Kaybedildi bir aşama değil, fırsatın sonucudur.', assignmentSummaryTitle: 'Varsayılan atama', assignmentSummaryDescription: 'Oluşturma akışındaki sorumlu davranışı.', creatorOwnsOpportunity: 'Fırsatı oluşturan kullanıcı otomatik olarak fırsatın sorumlusu olur.', legacyAssignmentNotice: 'Bu çalışma alanında eski bir atama kuralı kayıtlı. Yeni kural henüz buradan seçilemiyor; mevcut kural olduğu gibi korunuyor.',
@@ -366,6 +366,24 @@ export default {
       unknown: 'Güncellendi',
     },
   },
+  views: {
+    toast: { create: 'Görünüm oluşturuldu.', update: 'Görünüm güncellendi.', deprecate: 'Görünüm kullanımdan kaldırıldı.', reactivate: 'Görünüm yeniden etkinleştirildi.' },
+    picker: { label: 'Sütunlar', all: 'Tüm sütunlar' },
+    builtIn: {
+      id: 'No', createdAt: 'Oluşturulma', updatedAt: 'Güncelleme', party: 'Müşteri', owner: 'Sorumlu', needs: 'İhtiyaçlar', status: 'Durum', stage: 'Aşama',
+      amount: 'Tahmini tutar', totalAmount: 'Toplam tutar', expiryDate: 'Son geçerlilik',
+    },
+    settings: {
+      title: 'Liste görünümleri', description: 'Ortak görünümler, fırsat listesinde hangi sütunların hangi sırayla gösterileceğini belirler. Çalışma alanındaki herkes listeden birini seçebilir.',
+      add: 'Görünüm ekle', empty: 'Henüz ortak görünüm yok. İlkini tanımlamak için "Görünüm ekle"yi kullanın.', active: 'Kullanımda', deprecated: 'Kullanımdan kaldırıldı', columnCount: '{{count}} sütun',
+      name: 'Görünüm adı', key: 'Anahtar', keyHint: 'Küçük harf, rakam ve alt çizgi. Oluşturulduktan sonra değiştirilemez.', sortOrder: 'Sıra',
+      columns: 'Sütunlar', columnsEmpty: 'En az bir sütun ekleyin.', addColumn: 'Sütun ekle', chooseColumn: 'Bir sütun seçin…', builtInGroup: 'Hazır sütunlar', fieldsGroup: 'Sizin alanlarınız',
+      fieldColumn: 'Alan', fieldRetired: 'Alan artık kullanılmıyor', moveUp: '{{name}} sütununu yukarı taşı', moveDown: '{{name}} sütununu aşağı taşı', removeColumn: '{{name}} sütununu kaldır', columnLimit: 'Bir görünümde en fazla {{count}} sütun olabilir.',
+      edit: 'Düzenle', deprecate: 'Kullanımdan kaldır', reactivate: 'Yeniden etkinleştir', more: '{{name}} için diğer işlemler',
+      keyConflict: 'Bu anahtarla bir görünüm zaten var.', limit: 'En fazla 50 görünüm kullanımda olabilir.', columnUnknown: 'Bir sütun, tanımlı olmayan bir alana işaret ediyor.',
+      columnDeprecated: 'Bir sütun artık kullanılmayan bir alanı gösteriyor. Önce görünümden kaldırın.', conflict: 'Bu görünümü başka biri değiştirdi. Sayfayı yenileyip yeniden deneyin.', saveError: 'Görünüm kaydedilemedi.',
+    },
+  },
   customFields: {
     title: 'Ek alanlar', formDescription: 'Çalışma alanınızın bu fırsat için tuttuğu ek bilgiler.', noValue: 'Seçilmedi', yes: 'Evet', no: 'Hayır',
     edit: 'Düzenle', save: 'Kaydet', saving: 'Kaydediliyor…', cancel: 'Vazgeç', empty: 'Henüz değer girilmedi.', deprecated: 'Kullanımdan kaldırıldı', deprecatedHint: 'Bu alanlar artık kullanılmıyor; kayıtlı değerler yalnızca okunabilir.',
@@ -391,6 +409,7 @@ export default {
       edit: 'Düzenle', deprecate: 'Kullanımdan kaldır', reactivate: 'Yeniden kullanıma al', more: '{{name}} için diğer işlemler',
       deprecateTitle: '{{name}} alanı kullanımdan kaldırılsın mı?', deprecateDescription: 'Alan formlardan ve listeden kalkar. Kayıtlı değerler silinmez ve fırsat detayında okunabilir kalır. Alanı daha sonra yeniden kullanıma alabilirsiniz.',
       impactLoading: 'Etkilenen fırsatlar hesaplanıyor…', impact: '{{count}} fırsatta bu alan için kayıtlı değer var.', impactNone: 'Hiçbir fırsatta bu alan için değer yok.', impactError: 'Etki hesaplanamadı.',
+      impactViews: 'Bu alan {{count}} ortak liste görünümünde sütun olarak kullanılıyor:', impactViewsHint: 'Bu görünümler çalışmaya devam eder, yalnızca bu sütunu göstermez.',
       keyConflict: 'Bu anahtarla bir alan zaten var.', limit: 'En fazla 100 kullanımda alan tanımlanabilir.', conflict: 'Alan başka biri tarafından değiştirildi. Sayfayı yenileyip yeniden deneyin.', saveError: 'Alan kaydedilemedi.',
     },
   },

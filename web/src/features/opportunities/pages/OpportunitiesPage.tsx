@@ -8,12 +8,14 @@ import { SegmentedControl, type Segment } from '@/components/common/SegmentedCon
 import { Button } from '@/components/ui/button'
 import { useCustomFieldDefinitions } from '@/lib/custom-fields/api'
 import { readCustomFieldFilters } from '@/lib/custom-fields/values'
+import { useSharedViews } from '@/lib/shared-views/api'
 import { paths } from '@/routes/paths'
 import { useDefaultPipelineStages, usePartyNames, usePipelineStageNames, useOpportunityList, stageKey, type OpportunityListFilter } from '../api'
 import { OpportunitiesBoard } from '../components/OpportunitiesBoard'
 import { OpportunitiesFilters } from '../components/OpportunitiesFilters'
 import { OpportunitiesGrid } from '../components/OpportunitiesGrid'
 import { QueryProblemState } from '../components/QueryProblemState'
+import { TableViewPicker } from '../components/TableViewPicker'
 import { NO_ROW_FILTERS, filterRows, hasRowFilters, toRows, totalAmountLabel, type RowFilters } from '../lib/rows'
 import { OPPORTUNITY_STATUSES } from '../schema'
 
@@ -44,12 +46,18 @@ function readRowFilters(params: URLSearchParams): RowFilters {
   }
 }
 
+/** The shared table view rides in the URL (`tv=<key>`), like the grid/board choice, so a shared link opens the same columns. */
+const readTableView = (params: URLSearchParams) => params.get('tv') || null
+
 export default function OpportunitiesPage() {
   const { t } = useTranslation('opportunities')
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const filter = readFilter(searchParams)
   const view = readView(searchParams)
+  const tableViewKey = readTableView(searchParams)
+  const sharedViews = useSharedViews().data
+  const tableView = sharedViews?.find((candidate) => candidate.status === 'Active' && candidate.key === tableViewKey) ?? null
   const list = useOpportunityList(filter)
   const defaultStages = useDefaultPipelineStages(view === 'board')
   const definitions = useCustomFieldDefinitions().data
@@ -78,6 +86,7 @@ export default function OpportunitiesPage() {
     if (next.archivedOnly) params.set('archive', '1')
     for (const [key, value] of Object.entries(next.customFields ?? {})) params.set(`cf.${key}`, value)
     if (nextView === 'board') params.set('view', 'board')
+    if (tableViewKey) params.set('tv', tableViewKey)
     if (nextRowFilters.query.trim()) params.set('q', nextRowFilters.query)
     if (nextRowFilters.owner !== 'all') params.set('owner', nextRowFilters.owner)
     if (nextRowFilters.quarterOnly) params.set('quarter', '1')
@@ -85,6 +94,12 @@ export default function OpportunitiesPage() {
   }
   const goTo = (next: OpportunityListFilter) => navigateTo(next, view)
   const changeRowFilters = (next: RowFilters) => navigateTo({ ...filter, page: 0 }, view, next)
+  const changeTableView = (key: string | null) => {
+    const params = new URLSearchParams(searchParams)
+    if (key) params.set('tv', key); else params.delete('tv')
+    params.delete('page')
+    setSearchParams(params)
+  }
   const changeFieldFilters = (customFields: Record<string, string>) => navigateTo({ ...filter, customFields, page: 0 }, view)
   const narrowed = Boolean(filter.status) || filter.page > 0 || hasFieldFilters(filter)
   const returnTo = `${location.pathname}${location.search}`
@@ -118,6 +133,9 @@ export default function OpportunitiesPage() {
           showDensity={view === 'grid'}
           fieldFilters={definitions && { definitions, value: filter.customFields ?? {}, onChange: changeFieldFilters }}
         />
+        {view === 'grid' && sharedViews && (
+          <TableViewPicker views={sharedViews} value={tableViewKey} onChange={changeTableView} />
+        )}
         {view === 'grid' ? (
           <OpportunitiesGrid
             rows={rows}
@@ -128,6 +146,7 @@ export default function OpportunitiesPage() {
             loadedCount={loadedRows.length}
             onPageChange={(page) => goTo({ ...filter, page })}
             returnTo={returnTo}
+            tableView={tableView}
           />
         ) : (
           <OpportunitiesBoard

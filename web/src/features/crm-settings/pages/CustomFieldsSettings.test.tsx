@@ -96,6 +96,38 @@ describe('CRM settings — opportunity fields', () => {
     expect(transition?.body).toEqual({ expectedRowVersion: 3 })
   })
 
+  it('lists the shared views that use the field before it is deprecated, and still allows it', async () => {
+    server.use(
+      http.get(url(endpoints.crmSettings.customFields), () => HttpResponse.json([region])),
+      http.get(url(endpoints.crmSettings.customFieldImpact(7)), () => HttpResponse.json({
+        definitionId: 7, fieldName: 'region', opportunitiesWithValue: 0, dependentViews: [{ id: 4, key: 'regional', name: 'Regional review' }, { id: 5, key: 'tiers', name: 'Tier overview' }],
+      })),
+    )
+    render()
+
+    fireEvent.click(await screen.findByRole('button', { name: t('customFields.settings.more', { name: 'Region' }) }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: t('customFields.settings.deprecate') }))
+
+    expect(await screen.findByText(t('customFields.settings.impactViews', { count: 2 }))).toBeInTheDocument()
+    expect(screen.getByText('Regional review')).toBeInTheDocument()
+    expect(screen.getByText('Tier overview')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: t('customFields.settings.deprecate') })).toBeEnabled()
+  })
+
+  it('says nothing about views when no view uses the field', async () => {
+    server.use(
+      http.get(url(endpoints.crmSettings.customFields), () => HttpResponse.json([region])),
+      http.get(url(endpoints.crmSettings.customFieldImpact(7)), () => HttpResponse.json({ definitionId: 7, fieldName: 'region', opportunitiesWithValue: 1 })),
+    )
+    render()
+
+    fireEvent.click(await screen.findByRole('button', { name: t('customFields.settings.more', { name: 'Region' }) }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: t('customFields.settings.deprecate') }))
+
+    expect(await screen.findByText(t('customFields.settings.impact', { count: 1 }))).toBeInTheDocument()
+    expect(screen.queryByText(t('customFields.settings.impactViewsHint'))).not.toBeInTheDocument()
+  })
+
   it('never offers to remove a saved option, only to deprecate it', async () => {
     server.use(http.get(url(endpoints.crmSettings.customFields), () => HttpResponse.json([region])))
     render()

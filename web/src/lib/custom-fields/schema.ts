@@ -29,7 +29,12 @@ export const customFieldDefinitionSchema = z.object({
 export type CustomFieldDefinition = z.infer<typeof customFieldDefinitionSchema>
 
 export const customFieldDefinitionsSchema = z.array(customFieldDefinitionSchema)
-export const customFieldImpactSchema = z.object({ definitionId: z.number(), fieldName: z.string(), opportunitiesWithValue: z.number().int().nonnegative() })
+/** A shared view that places the field as a column — listed before the field is deprecated. */
+export const dependentViewSchema = z.object({ id: z.number(), key: z.string(), name: z.string() })
+export const customFieldImpactSchema = z.object({
+  definitionId: z.number(), fieldName: z.string(), opportunitiesWithValue: z.number().int().nonnegative(),
+  dependentViews: z.array(dependentViewSchema).default([]),
+})
 export const manageCustomFieldResultSchema = z.object({ definitionId: z.number(), rowVersion: z.number(), replayed: z.boolean(), changeSetId: z.number().nullish() })
 
 /** A reference value as the *reader* may see it: the target's label, or only the id when it is not available to them. */

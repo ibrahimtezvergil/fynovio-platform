@@ -53,6 +53,9 @@ export const endpoints = {
     customField: (id: number) => `/crm/settings/custom-fields/${id}`,
     customFieldTransition: (id: number, transition: 'deprecate' | 'reactivate') => `/crm/settings/custom-fields/${id}/${transition}`,
     customFieldImpact: (id: number) => `/crm/settings/custom-fields/${id}/impact`,
+    views: '/crm/settings/views',
+    view: (id: number) => `/crm/settings/views/${id}`,
+    viewTransition: (id: number, transition: 'deprecate' | 'reactivate') => `/crm/settings/views/${id}/${transition}`,
   },
   deals: {
     list: '/deals',
