@@ -92,6 +92,19 @@ The slice lets a tenant define its own Opportunity fields, without a developer, 
 - **New tests:** domain, persistence (CHECK/RLS), handlers, host HTTP, and web (values, create/detail flows, settings panel, list columns).
 - **Not done:** a browser/visual check. It needs a dev DB reset and a running stack.
 
+## 4a. Follow-up status (2026-10-01)
+
+The owner answered "do all of them". Status of each:
+
+- **Party test:** fixed in `89543f5`. `dotnet test` now passes **1455/1455**.
+- **List filter:** added in `f9a496d` (API, GIN index, schema rev 12) and `07956c2` (web pills). Details are in the plan's Task 7.
+- **Dev DB reset:** done with the owner's permission. A backup was taken first. The database was recreated with every migration, the seed ran, and CRM is at template v3 in both tenants.
+- **Browser check:** done.
+  - Passed end to end: define field → create with value → edit on detail (no 403) → list pill filter → deprecate impact → read-only deprecated value.
+  - Fixed one visual overlap (the deprecated badge).
+- **Merge and push:** merged to main with `--no-ff` and pushed.
+- **Next phase:** still open. Choose the order of A, B and C. A and C both reshape the definition model.
+
 ## 4. Decisions needed for the next phase
 
 1. **Dev reseed (K3):** reset the dev DB. Until then, dev tenants cannot edit values: they lack the `update_custom_fields` action, so the write gets 403.

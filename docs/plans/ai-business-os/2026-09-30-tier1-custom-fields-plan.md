@@ -120,3 +120,33 @@ The ADR leaves these open, so they are decided here:
   - Refuted: 3a "status must be snake_case" and 3b "archived bypass". Neither holds against the code; the domain already enforced the archived rule.
 - [x] Final report: changes, architecture delta, test evidence, next-phase decisions.
   → `2026-09-30-tier1-slice-report.md`
+
+## Task 7 — Owner follow-ups (2026-10-01, owner: "do all of them")
+
+- [x] Party-search test: align the shape assertion with the intended `phone` field from `aaea0fc`.
+  → Commit: `89543f5` "test(host): party search reference carries the phone the picker shows"
+- [x] List filter on custom fields:
+  - Server: `cf=key:value` (at most 5) on select, multi_select and boolean fields. Validated against the definitions (422 `custom_field_invalid`, new codes `not_filterable`/`too_many_filters`), then applied as one jsonb containment ANDed with the access scope.
+  - Persistence: GIN `jsonb_path_ops` index, schema revision 12.
+  - Tests: domain, handler (including the scope), and host.
+  → Commit: `f9a496d` "feat(crm): filter the opportunity list on custom field values"
+- [x] Web: one pill per filterable active field, kept in the URL (`cf.<key>`), sent server-side, and cleared together with the other filters.
+  → Commit: `07956c2` "feat(web): filter the opportunity list on custom field values"
+  Verification:
+  - `dotnet test` (solution) **1455/1455**; `dotnet format --verify-no-changes` exits 0; `has-pending-model-changes` reports no changes.
+  - `npm run check` 739/739; `npm run build` passes.
+- [x] Dev DB reset (K3), run with the owner's explicit permission:
+  - `pg_dump` backup to the session scratchpad.
+  - `DROP`/`CREATE DATABASE`, then migrations for MasterData, CRM, Access, Collaboration and TenantLifecycle, then the runtime role.
+  - The API restarted with the dev seed. `access.tenant_module_enablements` shows `crm` at template **v3** in tenants 1 and 2.
+- [x] Browser check (claude-in-chrome, tenant 1, admin), all passed:
+  - Created the "Bölge" select field; the key was derived as `bolge`.
+  - Create form shows "Ek alanlar"; created #1 (Kuzey) and #2 (Kuzey).
+  - Edited #1 to Güney on the detail page: saved, **no 403**.
+  - List shows the "Bölge: Tümü" pill; choosing Kuzey gives `?cf.bolge=kuzey` and only #2.
+  - Deprecate dialog shows "2 fırsatta … kayıtlı değer var".
+  - Detail shows the deprecated value read-only.
+  - Found and fixed: the deprecated badge overlapped the value in the 150px label column. The label now wraps.
+  → Commit: see "fix(web): wrap the deprecated badge under the field label"
+- [x] Merge to main and push. See the merge commit on main.
+- [ ] Next phase (A/B/C): needs the owner to pick an order before any code.
