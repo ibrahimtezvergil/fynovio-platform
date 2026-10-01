@@ -60,7 +60,8 @@ Note: the browser check (dev DB, 2026-10-01) showed the 24 pending outbox rows f
 ## Task 7 — Wrap-up
 - [x] `docs/schema/*` revisions (`messaging-schema.md` new, CRM revision 13, collaboration causation note), AGENTS.md status line, README runbook. Test evidence: .NET 1504/1504, web 743/743 (typecheck, lint, build clean).
 → Commit: `ef72110` "docs: event consumption schema, status and plan"
-- [ ] Merge to `main` after owner review.
+- [x] Merge to `main` after owner review.
+  → Commit: `4ad17ab` "merge: event consumption (relay, delivery ledger, CRM activity timeline)" (owner, 2026-10-01: "main'e gönder"; Task 5 stays deferred to an owner decision)
 
 ## Open items (not in this plan)
 - Outbox and delivery retention/cleanup.
