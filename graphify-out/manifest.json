@@ -9442,5 +9442,17 @@
     "seen": 1790865695.5815449,
     "ast_hash": "c568afa5b502c18b53d0e749882bb10f",
     "semantic_hash": ""
+  },
+  "docs/plans/ai-business-os/2026-10-01-semantic-catalog-plan.md": {
+    "mtime": 1790879400.6099608,
+    "seen": 1790879410.088614,
+    "ast_hash": "a4f1498cb7c2d6b1fe7b235b3a2939a5",
+    "semantic_hash": ""
+  },
+  "docs/plans/ai-business-os/adr-semantic-catalog-changeset.md": {
+    "mtime": 1790879400.609694,
+    "seen": 1790879410.088616,
+    "ast_hash": "483c63c117d1cea572ed95d842a297cd",
+    "semantic_hash": ""
   }
 }

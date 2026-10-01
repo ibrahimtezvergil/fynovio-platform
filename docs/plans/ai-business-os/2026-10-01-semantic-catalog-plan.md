@@ -1,12 +1,13 @@
 # Plan: Semantic Catalog + ChangeSet v1 + `reference` fields + shared views (phase 2: A + C)
 
-**Status:** In progress — ADR accepted 2026-10-02 under delegated go-ahead (`adr-semantic-catalog-changeset.md`).
+**Status:** In progress — ADR accepted 2026-10-01 under delegated go-ahead (`adr-semantic-catalog-changeset.md`).
 **Branch:** `feat/semantic-catalog`.
 **Order:** C-1 → C-2 → A-1 → A-2 (deviation from B → A → C recorded in the ADR).
 **Invariants to keep green at every commit:** full .NET suite (1504 at the start) and web suite (743 at the start). No weakening of RLS, PDP, idempotency, outbox, evidence or state machines.
 
 ## Task 0 — Decision
-- [ ] Write the combined ADR and this plan.
+- [x] Write the combined ADR and this plan.
+→ Commit: `01c2a32` "docs(adr): accept the semantic catalog and changeset ADR and plan (phase 2)"
 
 ## C-1 — Behavior-preserving move to the catalog
 ### Task 1 — Contracts
