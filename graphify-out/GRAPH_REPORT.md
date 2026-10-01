@@ -1,7 +1,7 @@
 # Graph Report - fynovio-platform  (2026-10-01)
 
 ## Corpus Check
-- 1550 files · ~785,998 words
+- 1550 files · ~786,044 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ef721102`
+- Built from commit: `573d682d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -573,12 +573,12 @@
   tests/Host.Tests/Authentication/EmailTests.cs → src/Host/Email/EmailDelivery.cs
 - `ScriptedTransport` --references--> `RenderedEmail`  [EXTRACTED]
   tests/Host.Tests/Authentication/EmailTests.cs → src/Host/Email/RenderedEmail.cs
-- `CalendarEntryCreationTests` --references--> `PrincipalRef`  [EXTRACTED]
-  tests/Collaboration.Tests/Domain/CalendarEntryTests.cs → src/Contracts/PrincipalRef.cs
-- `CalendarEntryImmutabilityTests` --references--> `PrincipalRef`  [EXTRACTED]
-  tests/Collaboration.Tests/Domain/CalendarEntryTests.cs → src/Contracts/PrincipalRef.cs
-- `CalendarEntryReplaceTests` --references--> `PrincipalRef`  [EXTRACTED]
-  tests/Collaboration.Tests/Domain/CalendarEntryTests.cs → src/Contracts/PrincipalRef.cs
+- `OpportunityEndpointsTests` --references--> `Program`  [EXTRACTED]
+  tests/Host.Tests/OpportunityEndpointsTests.cs → src/Host/Program.cs
+- `StubLinkDirectory` --references--> `EntityRef`  [EXTRACTED]
+  tests/Collaboration.Tests/StubLinkDirectory.cs → src/Contracts/EntityRef.cs
+- `CalendarEntryResponseTests` --references--> `EntityRef`  [EXTRACTED]
+  tests/Host.Tests/CalendarEntryResponseTests.cs → src/Contracts/EntityRef.cs
 
 ## Import Cycles
 - None detected.
@@ -2254,7 +2254,7 @@ Cohesion: 0.67
 Nodes (3): DevSeedOptions, Enabled, Password
 
 ## Knowledge Gaps
-- **2634 isolated node(s):** `Stack`, `Code Conventions`, `Architecture Rules (binding — enforced by fitness functions, doc 12)`, `Database Rules`, `Enforcement Scope (approved 2026-09-16)` (+2629 more)
+- **2634 isolated node(s):** `Task 0 — Decision`, `Task 1 — Envelope and contracts`, `Task 2 — Relay role and `messaging` schema`, `Task 3 — Relay (fan-out)`, `Task 4 — Delivery, inbox, retries` (+2629 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 4368 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **123 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -2262,14 +2262,14 @@ Nodes (3): DevSeedOptions, Enabled, Password
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Contracts` connect `Contracts` to `CollaborationDbContext`, `.Create`, `AuthorizedPrincipalDirectory`, `CalendarEntry`, `CreateInvitationCommand.cs`, `.MapCalendarEndpoints`, `AuthorizationDecision`, `.HandleAsync`, `FakeResolver`, `Access.Persistence`, `LinkTargetDirectory`, `.GivenGrantAsync`, `CalendarEntryTextAndPrecisionTests`, `.HandleAsync`, `ILinkTargetResolver`, `SelectTenantCommand.cs`, `CreatePartyHandler`, `IEntityTypeConfiguration`, `.CreateAdminContext`, `CollaborationModuleCapabilitiesTests`, `PrincipalRef`, `CalendarEntryAuthorizationDeniedException`, `.HandleAsync`, `EnableTenantModuleHandler`, `.LoginAsync`, `Host.Authentication`, `PartyRef`, `InvitationDelivery`, `.GetEntriesAsync`, `StubLinkDirectory`, `.HandleAsync`, `.Valid`, `.HandleAsync`, `ActorContext`, `AuthEventWriter`, `IEventConsumer`, `.HandleAsync`, `Collaboration.Application`, `ModuleCapabilityManifest`, `ListOpportunitiesQuery`, `Access.Tests.Domain`, `TenantLifecycle.Application`, `TenantMembership`, `Collaboration.Tests`, `AuthSession`, `InvitationDeliveryService`, `CalendarEntryConstraintTests`, `.HandleAsync`, `AuthenticateResult`, `.HandleAsync`, `MasterData.Application`?**
-  _High betweenness centrality (0.085) - this node is a cross-community bridge._
+  _High betweenness centrality (0.082) - this node is a cross-community bridge._
 - **Why does `PrincipalRef` connect `PrincipalRef` to `CollaborationDbContext`, `.Create`, `AuthorizedPrincipalDirectory`, `CalendarEntry`, `.HandleAsync`, `.ReadEntryAsync`, `.MapCalendarEndpoints`, `AssignmentMode`, `IdempotencyRecord`, `FakeEmailSender`, `OpportunityActivityTests`, `.HandleAsync`, `TestTimeProvider`, `PartyDirectory`, `.GivenGrantAsync`, `.CreateAsync`, `.EnsureSeededAsync`, `CalendarEntryTextAndPrecisionTests`, `.Create`, `.HandleAsync`, `SelectTenantCommand.cs`, `IEntityTypeConfiguration`, `Contracts`, `CreatePartyHandler`, `OpportunityStateMachineTests`, `.ListAsync`, `.NewTenantId`, `.HandleAsync`, `EnableTenantModuleHandler`, `.RunAsync`, `.LoginAsync`, `InvalidOperationException`, `.HandleAsync`, `.HandleAsync`, `ActorContext`, `.CreateAsync`, `AuthEventWriter`, `OpportunityAuthorizationDeniedException`, `.BootstrappedTenantAsync`, `OpportunityEndpointsTests`, `.HandleAsync`, `Collaboration.Application`, `.MapCrmSettingsEndpoints`, `ListOpportunitiesQuery`, `IdempotencyRecord`, `.ProvisionAsync`, `AccessDbContext`, `.Create`, `DevSeederTests`, `.HandleAsync`, `AuthorizedPrincipalDirectoryTests`, `.MapCompanySettingsEndpoints`, `.HandleAsync`, `IdempotencyRecord`, `.RunAsync`, `AuthenticateResult`, `BackfillCrmPipelinesCommandTests`, `.CreateAdminContext`, `.HandleAsync`, `EvidenceRecord`, `EvidenceRecord`, `.NewEmail`, `.HandleAsync`, `UpdateCompanySettingsCommand`, `.NewEmail`?**
-  _High betweenness centrality (0.076) - this node is a cross-community bridge._
+  _High betweenness centrality (0.056) - this node is a cross-community bridge._
 - **Why does `AccessDbContext` connect `AccessDbContext` to `AuthorizedPrincipalDirectory`, `TenantLifecycleDbContext`, `FakeEmailSender`, `TenantModuleEnablement`, `Access.Persistence`, `.GivenGrantAsync`, `.CreateAsync`, `.EnsureSeededAsync`, `Role`, `.HandleAsync`, `.Create`, `IEntityTypeConfiguration`, `.CreateAdminContext`, `AuthEvent`, `EnableTenantModuleHandler`, `.RunAsync`, `.LoginAsync`, `RoleAssignment`, `AccountToken`, `InvitationDelivery`, `AuthApiFixture`, `.HandleAsync`, `ActorContext`, `Task`, `AuthEventWriter`, `OpportunityAuthorizationDeniedException`, `.BootstrappedTenantAsync`, `OpportunityEndpointsTests`, `.HandleAsync`, `IdempotencyRecord`, `.ProvisionAsync`, `.HandleAsync`, `TenantMembership`, `OutboxMessage`, `AuthorizedPrincipalDirectoryTests`, `ModuleCapabilityCatalog`, `AuthSession`, `InvitationDeliveryService`, `CalendarEntryConstraintTests`, `.Create`, `IClassFixture`, `BackfillCrmPipelinesCommandTests`, `AuthenticateResult`, `.HandleAsync`, `EvidenceRecord`, `.NewEmail`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+  _High betweenness centrality (0.040) - this node is a cross-community bridge._
 - **Are the 42 inferred relationships involving `PrincipalRef` (e.g. with `.InvokeAsync()` and `.BackfillWonLostStagesAsync()`) actually correct?**
   _`PrincipalRef` has 42 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `Stack`, `Code Conventions`, `Architecture Rules (binding — enforced by fitness functions, doc 12)` to the rest of the system?**
+- **What connects `Task 0 — Decision`, `Task 1 — Envelope and contracts`, `Task 2 — Relay role and `messaging` schema` to the rest of the system?**
   _2634 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Opportunity` be split into smaller, more focused modules?**
   _Cohesion score 0.06028368794326241 - nodes in this community are weakly interconnected._
