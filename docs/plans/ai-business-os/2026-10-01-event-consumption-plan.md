@@ -58,7 +58,8 @@ Note: the route is `/opportunities/{id}/activity` (the opportunity endpoints are
 Note: the browser check (dev DB, 2026-10-01) showed the 24 pending outbox rows fanned out and two live reassignments appear without a reload; it surfaced the hidden-tab polling gap fixed in `fcd6a7e`. The code review surfaced nothing; my own review found the late-registration history gap, fixed in `9535b68` "fix(messaging): backfill history for a from-beginning consumer registered later".
 
 ## Task 7 — Wrap-up
-- [ ] `docs/schema/*` revisions (`messaging-schema.md` new, CRM revision 13, collaboration causation note), AGENTS.md status line, README runbook. Test evidence: .NET 1504/1504, web 743/743 (typecheck, lint, build clean).
+- [x] `docs/schema/*` revisions (`messaging-schema.md` new, CRM revision 13, collaboration causation note), AGENTS.md status line, README runbook. Test evidence: .NET 1504/1504, web 743/743 (typecheck, lint, build clean).
+→ Commit: `ef72110` "docs: event consumption schema, status and plan"
 - [ ] Merge to `main` after owner review.
 
 ## Open items (not in this plan)
