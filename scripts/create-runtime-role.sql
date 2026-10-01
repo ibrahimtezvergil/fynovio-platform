@@ -74,3 +74,8 @@ REVOKE UPDATE, DELETE ON access.evidence_records FROM fynovio_app;
 
 -- identity.auth_events is append-only (authentication audit log; never modify or delete).
 REVOKE UPDATE, DELETE ON identity.auth_events FROM fynovio_app;
+
+-- Messaging (delivery ledger). The runtime role reads and re-arms its own tenant's deliveries; only the relay role
+-- (create-relay-role.sql) creates them. consumer_registrations is relay-only.
+GRANT USAGE ON SCHEMA messaging TO fynovio_app;
+GRANT SELECT, UPDATE ON messaging.event_deliveries TO fynovio_app;

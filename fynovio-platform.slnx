@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Contracts/Contracts.csproj" />
     <Project Path="src/Host/Host.csproj" />
+    <Project Path="src/Messaging/Messaging.csproj" />
     <Project Path="src/Worker/Worker.csproj" />
   </Folder>
   <Folder Name="/src/Modules/">
@@ -18,6 +19,7 @@
     <Project Path="tests/Collaboration.Tests/Collaboration.Tests.csproj" />
     <Project Path="tests/Host.Tests/Host.Tests.csproj" />
     <Project Path="tests/MasterData.Tests/MasterData.Tests.csproj" />
+    <Project Path="tests/Messaging.Tests/Messaging.Tests.csproj" />
     <Project Path="tests/TenantLifecycle.Tests/TenantLifecycle.Tests.csproj" />
   </Folder>
 </Solution>

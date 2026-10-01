@@ -102,3 +102,5 @@ Deviations from the text above, made while implementing; none changes a decision
 6. **`last_error`** holds the exception type, plus the SQLSTATE for database errors — never an exception message or detail, which can carry key values.
 7. **Backlog caveat.** On the dev DB no outbox row had `processed_at` set (measured 2026-10-01), so `FromBeginning` sees the full history. In an environment where the old dispatcher ran under a privileged role, rows it marked processed were never delivered and are not replayed.
 8. **Collaboration `causation_id`.** The schema doc already described the column; the v1 migrations lacked it. `AddOutboxCausationId` closes that drift.
+9. **No `Collaboration` reference in `Worker`.** The relay addresses outboxes by schema name (`OutboxSources`), not through module entities, so E-6's "Worker gains the missing Collaboration reference" is unnecessary.
+10. **A worker claims only its own consumers' deliveries.** The claim filters on the consumer names registered in that process, so during a rolling deploy an older build never fails a newer build's consumer's work.
