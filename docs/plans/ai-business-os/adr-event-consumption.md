@@ -1,6 +1,6 @@
 # ADR: Event consumption (prerequisite for the workflow runtime)
 
-**Status:** Proposed — 2026-10-01. Needs owner decisions **E-1** and **E-2** before any code; E-3..E-5 carry a recommendation the owner may accept as written.
+**Status:** Accepted — 2026-10-01. The owner replied "başla" (start) to the proposal of E-1 (a) / E-2 (a) and the recommendations E-3..E-6. Implementation deviations are recorded under *Implementation notes* at the end.
 **Related:** `adr-workflow-runtime.md` (decision 1 makes this a prerequisite of phase 5), `2026-09-30-owner-decisions.md` (OD-2, OD-4), `adr-business-os-principles.md`. Plan: `2026-10-01-event-consumption-plan.md`.
 
 ## Context
@@ -32,7 +32,7 @@ The relay must find pending rows of every tenant. Options:
 
 | | Option | Assessment |
 |---|---|---|
-| **(a)** | **Dedicated relay role, pointer-only.** New login role `fynovio_relay` (`NOSUPERUSER NOBYPASSRLS`). On each `<schema>.outbox_messages` only: column-level `SELECT (id, tenant_id, event_type, processed_at)` and `UPDATE (processed_at)`, plus a role-targeted permissive policy `CREATE POLICY relay_scan ON <schema>.outbox_messages TO fynovio_relay USING (true)`. No grant on any other table. The relay reads `(tenant_id, id)` pointers; delivery then opens a `fynovio_app` connection, sets `app.tenant_id` from the pointer, and reads the full row (payload included) under the normal tenant policy. | **Recommended.** The runtime role and every business table keep exactly today's policies. The new cross-tenant surface is four columns of five tables, never payloads. Provable by a test that `fynovio_relay` cannot read `payload` or any business table. |
+| **(a)** | **Dedicated relay role, pointer-only.** New login role `fynovio_relay` (`NOSUPERUSER NOBYPASSRLS`). On each `<schema>.outbox_messages` only: column-level `SELECT` on the pointer columns (see *Implementation notes*) and `UPDATE (processed_at)`, plus a permissive policy `relay_scan` that admits only the relay role. No grant on any other table. The relay reads `(tenant_id, id)` pointers; delivery then opens a `fynovio_app` connection, sets `app.tenant_id` from the pointer, and reads the full row (payload included) under the normal tenant policy. | **Recommended.** The runtime role and every business table keep exactly today's policies. The new cross-tenant surface is the pointer columns of five tables, never payloads. Provable by a test that `fynovio_relay` cannot read `payload` or any business table. |
 | (b) | **Per-tenant iteration.** Loop over tenants, set `app.tenant_id`, scan each outbox. | Needs a tenant list readable without a tenant context, which does not exist — it would need the same kind of narrow exception as (a), and costs `tenants × 5` queries per poll. |
 | (c) | **`SECURITY DEFINER` function** returning pending pointers. | Rejected. FORCE RLS applies to a non-superuser table owner too, so the function returns rows only where the owner is a superuser or `BYPASSRLS` — true in dev (migrations run as a superuser, see the table above), not something to rely on in production. A dev/prod divergence trap. |
 | (d) | Run the relay as the migration role or a `BYPASSRLS` role. | Rejected: contradicts doc 07 §3 and the runtime-role rule in `scripts/create-runtime-role.sql`. |
@@ -89,3 +89,16 @@ Selection constraints: idempotent; observable end to end (API or UI); **no aggre
 ## Not in scope
 
 Tenant-defined subscriptions, webhooks/external brokers, the workflow runtime, a system actor, AI, Semantic Catalog, outbox retention/cleanup (recorded as an open item).
+
+## Implementation notes (2026-10-01)
+
+Deviations from the text above, made while implementing; none changes a decision.
+
+1. **`Messaging` is its own project** (`src/Messaging`), not code inside `Worker`. `Worker` hosts it and `Host` uses it for the redeliver command; the migrations need a project of their own either way. It references `Contracts` only.
+2. **Policy mechanism.** `CREATE POLICY … TO fynovio_relay` needs the role to exist when the migration runs, but roles are created by `scripts/` after migrations. The policies are therefore `TO PUBLIC` with `USING / WITH CHECK (current_user = 'fynovio_relay')` — the same effect, and stricter than `TO` (no role-membership inheritance). They live in the Messaging migration, which touches the other modules' outbox tables; **Messaging is migrated last.**
+3. **Pointer columns.** Fan-out and per-aggregate ordering need more than four columns: the relay may `SELECT (id, tenant_id, event_id, event_type, aggregate_type, aggregate_id, aggregate_version, occurred_at, processed_at)`. Still never `source`, `subject`, correlation/causation ids or `payload`.
+4. **Single fan-out writer per schema.** Two relays using `SKIP LOCKED` could commit a later outbox row before an earlier one is in the ledger, breaking per-aggregate ordering (E-3.7). Fan-out takes a transaction-scoped advisory lock per schema (`pg_try_advisory_xact_lock`); delivery claiming stays concurrent.
+5. **Claiming is a lease.** A claimed delivery is `processing` with `locked_until`; an expired lease is reclaimable. No transaction is held while a consumer runs.
+6. **`last_error`** holds the exception type, plus the SQLSTATE for database errors — never an exception message or detail, which can carry key values.
+7. **Backlog caveat.** On the dev DB no outbox row had `processed_at` set (measured 2026-10-01), so `FromBeginning` sees the full history. In an environment where the old dispatcher ran under a privileged role, rows it marked processed were never delivered and are not replayed.
+8. **Collaboration `causation_id`.** The schema doc already described the column; the v1 migrations lacked it. `AddOutboxCausationId` closes that drift.

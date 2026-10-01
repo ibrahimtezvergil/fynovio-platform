@@ -1,10 +1,10 @@
 # Plan: Event consumption (phase B)
 
-**Status:** Draft — waiting for owner decisions E-1 and E-2 in `adr-event-consumption.md`. No task starts before the ADR is Accepted.
+**Status:** In progress — ADR accepted 2026-10-01 with E-1 (a) and E-2 (a).
 **Branch:** `docs/event-consumption-adr` (ADR + plan); implementation on `feat/event-consumption` once accepted.
 **Order agreed by the owner (2026-10-01):** B (this) → A (tier-2 relations/stored views) → C (Semantic Catalog stage 2).
 
-Assumes the recommended options (E-1 (a), E-2 (a)). If the owner picks differently, Tasks 2 and 6 are rewritten before starting.
+Implements the accepted options E-1 (a) and E-2 (a); see the ADR's implementation notes for deviations.
 
 ## Task 0 — Decision
 - [x] Write the ADR with the measured dispatcher finding and the options.
