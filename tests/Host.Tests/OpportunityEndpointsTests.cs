@@ -10,6 +10,7 @@ using CRM.Domain;
 using CRM.Persistence;
 using MasterData.Domain;
 using MasterData.Persistence;
+using Host.Tests.Fixtures;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +47,9 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
         // migration inserts into masterdata.parties, which must already exist.
         await using (var masterData = CreateMasterDataContext(connectionString))
             await masterData.Database.MigrateAsync();
+        // SemanticCatalog before CRM (adr-semantic-catalog-changeset.md S-3).
+        await using (var semantic = AuthTestFixture.CreateSemanticCatalogContext(connectionString))
+            await semantic.Database.MigrateAsync();
         await using (var crm = CreateCrmContext(connectionString))
             await crm.Database.MigrateAsync();
         await using (var access = CreateAccessContext(connectionString))
@@ -66,6 +70,7 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
         // ICollectionFixture serialization to avoid cross-class env-var races under xUnit's
         // default parallel test-class execution.
         Environment.SetEnvironmentVariable("ConnectionStrings__Crm", runtimeConnectionString);
+        Environment.SetEnvironmentVariable("ConnectionStrings__SemanticCatalog", runtimeConnectionString);
         Environment.SetEnvironmentVariable("ConnectionStrings__Access", runtimeConnectionString);
         Environment.SetEnvironmentVariable("ConnectionStrings__MasterData", runtimeConnectionString);
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
@@ -277,6 +282,11 @@ public sealed class OpportunityEndpointsTests : IAsyncLifetime
             GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA crm TO fynovio_app;
             GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA crm TO fynovio_app;
             REVOKE UPDATE, DELETE ON crm.evidence_records FROM fynovio_app;
+
+            GRANT USAGE ON SCHEMA semantic TO fynovio_app;
+            GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA semantic TO fynovio_app;
+            GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA semantic TO fynovio_app;
+            REVOKE UPDATE, DELETE ON semantic.evidence_records FROM fynovio_app;
 
             GRANT USAGE ON SCHEMA masterdata TO fynovio_app;
             GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA masterdata TO fynovio_app;

@@ -1,3 +1,4 @@
+using Contracts;
 using System.Text.Json.Nodes;
 
 namespace CRM.Customization;
@@ -10,18 +11,18 @@ public static class CustomFieldFilter
 {
     public const int MaxFilters = 5;
 
-    public static bool IsFilterable(TenantFieldValueType type) =>
-        type is TenantFieldValueType.Select or TenantFieldValueType.MultiSelect or TenantFieldValueType.Boolean;
+    public static bool IsFilterable(FieldType type) =>
+        type is FieldType.Select or FieldType.MultiSelect or FieldType.Boolean;
 
     /// <returns>The containment document, or null when there is nothing to filter on.</returns>
-    public static string? ToContainmentJson(IReadOnlyCollection<TenantFieldDefinition> definitions, IReadOnlyDictionary<string, string>? filters)
+    public static string? ToContainmentJson(IReadOnlyCollection<FieldDefinition> definitions, IReadOnlyDictionary<string, string>? filters)
     {
         if (filters is null || filters.Count == 0)
             return null;
         if (filters.Count > MaxFilters)
             throw new CustomFieldValidationException([new("$", "too_many_filters", $"At most {MaxFilters} custom field filters are allowed.")]);
 
-        var byKey = definitions.ToDictionary(definition => definition.FieldName, StringComparer.Ordinal);
+        var byKey = definitions.ToDictionary(definition => definition.Key, StringComparer.Ordinal);
         var errors = new List<CustomFieldError>();
         var document = new JsonObject();
 
@@ -33,21 +34,21 @@ public static class CustomFieldFilter
                 continue;
             }
 
-            switch (definition.FieldType)
+            switch (definition.Type)
             {
-                case TenantFieldValueType.Select when definition.Config.HasOption(value):
+                case FieldType.Select when definition.Config.HasOption(value):
                     document[key] = value;
                     break;
-                case TenantFieldValueType.MultiSelect when definition.Config.HasOption(value):
+                case FieldType.MultiSelect when definition.Config.HasOption(value):
                     document[key] = new JsonArray(value);
                     break;
-                case TenantFieldValueType.Select or TenantFieldValueType.MultiSelect:
+                case FieldType.Select or FieldType.MultiSelect:
                     errors.Add(new(key, "invalid_option", $"'{value}' is not an option of '{key}'."));
                     break;
-                case TenantFieldValueType.Boolean when value is "true" or "false":
+                case FieldType.Boolean when value is "true" or "false":
                     document[key] = value == "true";
                     break;
-                case TenantFieldValueType.Boolean:
+                case FieldType.Boolean:
                     errors.Add(new(key, "invalid_value", $"'{key}' filters on true or false."));
                     break;
                 default:

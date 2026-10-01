@@ -2,6 +2,7 @@ using Access.Persistence;
 using Collaboration.Persistence;
 using CRM.Persistence;
 using MasterData.Persistence;
+using SemanticCatalog.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Host.Tests.Fixtures;
@@ -21,6 +22,18 @@ internal static class AuthTestFixture
             .Options;
 
         return new MasterDataDbContext(options);
+    }
+
+    public static SemanticCatalogDbContext CreateSemanticCatalogContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<SemanticCatalogDbContext>()
+            .UseNpgsql(
+                connectionString,
+                npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", SemanticCatalogDbContext.Schema))
+            .UseSnakeCaseNamingConvention()
+            .Options;
+
+        return new SemanticCatalogDbContext(options);
     }
 
     public static CrmDbContext CreateCrmContext(string connectionString)
@@ -71,6 +84,11 @@ internal static class AuthTestFixture
             GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA crm TO fynovio_app;
             GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA crm TO fynovio_app;
             REVOKE UPDATE, DELETE ON crm.evidence_records FROM fynovio_app;
+
+            GRANT USAGE ON SCHEMA semantic TO fynovio_app;
+            GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA semantic TO fynovio_app;
+            GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA semantic TO fynovio_app;
+            REVOKE UPDATE, DELETE ON semantic.evidence_records FROM fynovio_app;
 
             GRANT USAGE ON SCHEMA masterdata TO fynovio_app;
             GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA masterdata TO fynovio_app;

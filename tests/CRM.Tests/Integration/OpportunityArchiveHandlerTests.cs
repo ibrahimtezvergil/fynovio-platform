@@ -37,9 +37,9 @@ public sealed class OpportunityArchiveHandlerTests(PostgresFixture fixture)
                 .HandleAsync(Command(tenant, id, "archive-list", version: 1, archive: true));
 
         await using var queryContext = fixture.CreateAdminContext();
-        var active = await new ListOpportunitiesHandler(queryContext, new StubScopeResolver(new AccessScope.All()))
+        var active = await new ListOpportunitiesHandler(queryContext, new StubScopeResolver(new AccessScope.All()), StubDefinitionReader.None)
             .HandleAsync(new ListOpportunitiesQuery(tenant, TestData.Seller, Guid.NewGuid(), null, 0, 50));
-        var archived = await new ListOpportunitiesHandler(queryContext, new StubScopeResolver(new AccessScope.All()))
+        var archived = await new ListOpportunitiesHandler(queryContext, new StubScopeResolver(new AccessScope.All()), StubDefinitionReader.None)
             .HandleAsync(new ListOpportunitiesQuery(tenant, TestData.Seller, Guid.NewGuid(), null, 0, 50, ArchivedOnly: true));
         Assert.DoesNotContain(active, item => item.Id == id);
         Assert.Contains(archived, item => item.Id == id && item.IsArchived);

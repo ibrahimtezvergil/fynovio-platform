@@ -9,15 +9,15 @@ public sealed class CustomFieldFilterTests
 {
     private static readonly TenantId Tenant = new(1);
 
-    private static TenantFieldDefinition Select(string key, bool multi = false) =>
-        TenantFieldDefinition.Create(Tenant, TenantFieldAggregateType.Opportunity, key, key,
-            multi ? TenantFieldValueType.MultiSelect : TenantFieldValueType.Select,
-            config: new TenantFieldConfig(Options: [new TenantFieldOption("a", "A"), new TenantFieldOption("old", "Old", IsDeprecated: true)]));
+    private static FieldDefinition Select(string key, bool multi = false) =>
+        TestFields.Create(Tenant, key, key,
+            multi ? FieldType.MultiSelect : FieldType.Select,
+            config: new FieldConfig(Options: [new FieldOption("a", "A"), new FieldOption("old", "Old", IsDeprecated: true)]));
 
     [Fact]
     public void Builds_one_containment_document_with_the_stored_shape_of_each_type()
     {
-        var vip = TenantFieldDefinition.Create(Tenant, TenantFieldAggregateType.Opportunity, "vip", "VIP", TenantFieldValueType.Boolean);
+        var vip = TestFields.Create(Tenant, "vip", "VIP", FieldType.Boolean);
         var json = CustomFieldFilter.ToContainmentJson([Select("region"), Select("tags", multi: true), vip],
             new Dictionary<string, string> { ["region"] = "a", ["tags"] = "a", ["vip"] = "true" });
 
@@ -30,8 +30,7 @@ public sealed class CustomFieldFilterTests
     [Fact]
     public void Deprecated_fields_and_options_stay_filterable()
     {
-        var region = Select("region");
-        region.Deprecate();
+        var region = Select("region") with { Status = FieldStatus.Deprecated };
 
         Assert.NotNull(CustomFieldFilter.ToContainmentJson([region], new Dictionary<string, string> { ["region"] = "old" }));
     }
@@ -50,7 +49,7 @@ public sealed class CustomFieldFilterTests
     [Fact]
     public void A_boolean_filter_takes_only_true_or_false()
     {
-        var vip = TenantFieldDefinition.Create(Tenant, TenantFieldAggregateType.Opportunity, "vip", "VIP", TenantFieldValueType.Boolean);
+        var vip = TestFields.Create(Tenant, "vip", "VIP", FieldType.Boolean);
         var exception = Assert.Throws<CustomFieldValidationException>(() =>
             CustomFieldFilter.ToContainmentJson([vip], new Dictionary<string, string> { ["vip"] = "yes" }));
         Assert.Equal("invalid_value", Assert.Single(exception.Errors).Code);

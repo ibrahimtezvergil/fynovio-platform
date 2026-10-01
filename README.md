@@ -105,11 +105,15 @@ Then apply each module's migrations to create its schema (`crm.*` and `masterdat
 ```bash
 dotnet tool restore   # one-time per clone: restores dotnet-ef
 dotnet ef database update \
-  --project src/Modules/CRM/CRM.csproj \
-  --startup-project src/Modules/CRM/CRM.csproj
-dotnet ef database update \
   --project src/Modules/MasterData/MasterData.csproj \
   --startup-project src/Modules/MasterData/MasterData.csproj
+# SemanticCatalog BEFORE CRM: it copies CRM's old field-definition rows (ids preserved) and CRM then drops that table.
+dotnet ef database update \
+  --project src/Modules/SemanticCatalog/SemanticCatalog.csproj \
+  --startup-project src/Modules/SemanticCatalog/SemanticCatalog.csproj
+dotnet ef database update \
+  --project src/Modules/CRM/CRM.csproj \
+  --startup-project src/Modules/CRM/CRM.csproj
 dotnet ef database update \
   --project src/Modules/Collaboration/Collaboration.csproj \
   --startup-project src/Modules/Collaboration/Collaboration.csproj
@@ -117,7 +121,7 @@ dotnet ef database update \
 
 ### Runtime role (Row-Level Security)
 
-Migrations run as `postgres`, a superuser — and superusers bypass Row-Level Security entirely. **An application connected as `postgres` gets no tenant isolation from the database.** After applying migrations, create the unprivileged runtime role once (edit the password in the script first) — `scripts/create-runtime-role.sql` grants it access to the `crm`, `masterdata` and `collaboration` schemas (and the identity/access ones):
+Migrations run as `postgres`, a superuser — and superusers bypass Row-Level Security entirely. **An application connected as `postgres` gets no tenant isolation from the database.** After applying migrations, create the unprivileged runtime role once (edit the password in the script first) — `scripts/create-runtime-role.sql` grants it access to the `crm`, `masterdata`, `collaboration` and `semantic` schemas (and the identity/access ones):
 
 ```bash
 psql -h localhost -U postgres -d fynovio_platform -f scripts/create-runtime-role.sql
@@ -129,9 +133,10 @@ Then point the application at that role:
 export ConnectionStrings__Crm="Host=localhost;Database=fynovio_platform;Username=fynovio_app;Password=<password>"
 export ConnectionStrings__MasterData="Host=localhost;Database=fynovio_platform;Username=fynovio_app;Password=<password>"
 export ConnectionStrings__Collaboration="Host=localhost;Database=fynovio_platform;Username=fynovio_app;Password=<password>"
+export ConnectionStrings__SemanticCatalog="Host=localhost;Database=fynovio_platform;Username=fynovio_app;Password=<password>"
 ```
 
-`ConnectionStrings__Crm`/`ConnectionStrings__MasterData`/`ConnectionStrings__Collaboration` are what `Host` reads first; `FYNOVIO_CRM_CONNECTION_STRING`/`FYNOVIO_MASTERDATA_CONNECTION_STRING`/`FYNOVIO_COLLABORATION_CONNECTION_STRING` are the fallbacks, and are also what `dotnet ef` uses — keep those on the `postgres` role, since migrations need it.
+`ConnectionStrings__Crm`/`ConnectionStrings__MasterData`/`ConnectionStrings__Collaboration`/`ConnectionStrings__SemanticCatalog` are what `Host` reads first; `FYNOVIO_CRM_CONNECTION_STRING`/`FYNOVIO_MASTERDATA_CONNECTION_STRING`/`FYNOVIO_COLLABORATION_CONNECTION_STRING`/`FYNOVIO_SEMANTICCATALOG_CONNECTION_STRING` are the fallbacks, and are also what `dotnet ef` uses — keep those on the `postgres` role, since migrations need it.
 
 ## Running locally: API, web and signing in
 
@@ -142,7 +147,7 @@ Requires the local PostgreSQL from above, with the `fynovio_platform` database c
 ```bash
 # 1. Migrations for every module, as the migration role (postgres)
 dotnet tool restore
-for module in MasterData CRM Access Collaboration TenantLifecycle; do   # CRM's migrations reference masterdata tables
+for module in MasterData SemanticCatalog CRM Access Collaboration TenantLifecycle; do   # CRM's migrations reference masterdata tables; SemanticCatalog must precede CRM (it copies the old field definitions before CRM drops them)
   dotnet ef database update \
     --project src/Modules/$module/$module.csproj \
     --startup-project src/Modules/$module/$module.csproj

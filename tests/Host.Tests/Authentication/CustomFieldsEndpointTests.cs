@@ -241,4 +241,39 @@ public sealed class CustomFieldsEndpointTests : IClassFixture<AuthApiFixture>
             new { expectedVersion = version, customFields = new Dictionary<string, object> { [key] = "x" } }));
         Assert.Contains(viewerWrite.StatusCode, new[] { HttpStatusCode.Forbidden, HttpStatusCode.NotFound });
     }
+
+    /// <summary>Definitions moved to the Semantic Catalog; the error contract of the field endpoints must not have moved with
+    /// them (adr-semantic-catalog-changeset.md S-2): same statuses, same `type` codes.</summary>
+    [Fact]
+    public async Task The_catalog_keeps_the_error_contract_of_the_field_endpoints()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+        var admin = await TokenAsync(client, DevSeeder.AdminEmail, 1);
+
+        async Task<(HttpStatusCode Status, string? Type)> SendAsync(HttpMethod method, string path, object body, string? idempotencyKey = null)
+        {
+            var response = await client.SendAsync(Authorized(method, path, admin, body, idempotencyKey));
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            return (response.StatusCode, json.TryGetProperty("type", out var type) ? type.GetString() : null);
+        }
+
+        var key = UniqueKey("err");
+        var (id, version) = await DefineAsync(client, admin, new { key, label = "Err", type = "text", isRequired = false, sortOrder = 1 });
+
+        Assert.Equal((HttpStatusCode.Conflict, "concurrency_conflict"),
+            await SendAsync(HttpMethod.Put, $"/crm/settings/custom-fields/{id}", new { label = "Err", isRequired = false, sortOrder = 1, expectedRowVersion = version + 7 }));
+        Assert.Equal((HttpStatusCode.NotFound, "not_found"),
+            await SendAsync(HttpMethod.Post, "/crm/settings/custom-fields/999999999/deprecate", new { expectedRowVersion = 1 }));
+        Assert.Equal((HttpStatusCode.BadRequest, "validation_error"),
+            await SendAsync(HttpMethod.Post, "/crm/settings/custom-fields", new { key = UniqueKey("bad"), label = "Bad", type = "select", isRequired = false, sortOrder = 0 }));
+        Assert.Equal((HttpStatusCode.BadRequest, "validation_error"),
+            await SendAsync(HttpMethod.Post, "/crm/settings/custom-fields", new { key = UniqueKey("odd"), label = "Odd", type = "money", isRequired = false, sortOrder = 0 }));
+
+        var reused = Guid.NewGuid().ToString();
+        Assert.Equal(HttpStatusCode.Created,
+            (await SendAsync(HttpMethod.Post, "/crm/settings/custom-fields", new { key = UniqueKey("idem"), label = "Idem", type = "text", isRequired = false, sortOrder = 0 }, reused)).Status);
+        Assert.Equal((HttpStatusCode.Conflict, "idempotency_key_reused"),
+            await SendAsync(HttpMethod.Post, "/crm/settings/custom-fields", new { key = UniqueKey("idem"), label = "Different", type = "text", isRequired = false, sortOrder = 0 }, reused));
+    }
 }

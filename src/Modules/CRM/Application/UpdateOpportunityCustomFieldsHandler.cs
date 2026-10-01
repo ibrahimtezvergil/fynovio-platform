@@ -15,7 +15,7 @@ namespace CRM.Application;
 
 /// <summary>Not risk-catalogued, so no evidence record (ADR decision 8); the outbox fact carries changed keys only,
 /// never values, and is written only when something actually changed.</summary>
-public sealed class UpdateOpportunityCustomFieldsHandler(CrmDbContext context, IAuthorizer authorizer)
+public sealed class UpdateOpportunityCustomFieldsHandler(CrmDbContext context, IAuthorizer authorizer, ISemanticDefinitionReader definitionReader)
 {
     private const string Operation = "UpdateOpportunityCustomFields";
     private const string ActionKeyValue = "crm.opportunity.update_custom_fields";
@@ -66,9 +66,7 @@ public sealed class UpdateOpportunityCustomFieldsHandler(CrmDbContext context, I
         if (opportunity.IsArchived)
             throw new InvalidOperationException("Archived opportunities cannot change their custom fields.");
 
-        var definitions = await context.TenantFieldDefinitions.AsNoTracking()
-            .Where(x => x.TenantId == command.TenantId && x.AggregateType == TenantFieldAggregateType.Opportunity)
-            .ToListAsync(cancellationToken);
+        var definitions = await definitionReader.ListFieldsAsync(command.TenantId, OpportunityFields.OwnerContext, OpportunityFields.ObjectType, cancellationToken);
         var before = opportunity.CustomFields;
         var after = CustomFieldValues.Normalize(definitions, command.CustomFields, before);
         var changedKeys = CustomFieldValues.ChangedKeys(before, after);

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Application;
 
-public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeResolver scopeResolver, IAuthorizedPrincipalDirectory? principalDirectory = null)
+public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeResolver scopeResolver, ISemanticDefinitionReader definitionReader, IAuthorizedPrincipalDirectory? principalDirectory = null)
 {
     private const string ActionKeyValue = "crm.opportunity.list";
 
@@ -33,9 +33,7 @@ public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeR
 
         if (query.CustomFieldFilters is { Count: > 0 })
         {
-            var definitions = await context.TenantFieldDefinitions.AsNoTracking()
-                .Where(x => x.TenantId == query.TenantId && x.AggregateType == TenantFieldAggregateType.Opportunity)
-                .ToListAsync(cancellationToken);
+            var definitions = await definitionReader.ListFieldsAsync(query.TenantId, OpportunityFields.OwnerContext, OpportunityFields.ObjectType, cancellationToken);
             var containment = CustomFieldFilter.ToContainmentJson(definitions, query.CustomFieldFilters);
             if (containment is not null)
                 filtered = filtered.Where(o => o.CustomFields != null && EF.Functions.JsonContains(o.CustomFields, containment));

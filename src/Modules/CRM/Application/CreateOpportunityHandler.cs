@@ -14,7 +14,7 @@ using Npgsql;
 
 namespace CRM.Application;
 
-public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer authorizer, IPartyIdentityResolver partyResolver, IAuthorizedPrincipalDirectory? principalDirectory = null)
+public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer authorizer, IPartyIdentityResolver partyResolver, ISemanticDefinitionReader definitions, IAuthorizedPrincipalDirectory? principalDirectory = null)
 {
     private const string Operation = "CreateOpportunity";
     private const string ActionKeyValue = "crm.opportunity.create";
@@ -74,9 +74,7 @@ public sealed class CreateOpportunityHandler(CrmDbContext context, IAuthorizer a
                 CrmAssignmentPolicy.RequiredAssigneeActions, cancellationToken))
             throw new PrincipalNotAssignableException(assignedPrincipal);
 
-        var fieldDefinitions = await context.TenantFieldDefinitions.AsNoTracking()
-            .Where(x => x.TenantId == command.TenantId && x.AggregateType == TenantFieldAggregateType.Opportunity)
-            .ToListAsync(cancellationToken);
+        var fieldDefinitions = await definitions.ListFieldsAsync(command.TenantId, OpportunityFields.OwnerContext, OpportunityFields.ObjectType, cancellationToken);
         var customFields = CustomFieldValues.Normalize(fieldDefinitions, command.CustomFields, existingJson: null);
 
         var opportunity = Opportunity.Create(

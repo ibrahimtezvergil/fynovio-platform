@@ -40,6 +40,19 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA collaboration
 ALTER DEFAULT PRIVILEGES IN SCHEMA collaboration
     GRANT USAGE, SELECT ON SEQUENCES TO fynovio_app;
 
+-- SemanticCatalog module.
+-- Definitions of tenant fields (adr-semantic-catalog-changeset.md); values stay in the owning module.
+GRANT USAGE ON SCHEMA semantic TO fynovio_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA semantic TO fynovio_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA semantic TO fynovio_app;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA semantic
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO fynovio_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA semantic
+    GRANT USAGE, SELECT ON SEQUENCES TO fynovio_app;
+
+REVOKE UPDATE, DELETE ON semantic.evidence_records FROM fynovio_app;
+
 -- TenantLifecycle module.
 GRANT USAGE ON SCHEMA tenant_lifecycle TO fynovio_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA tenant_lifecycle TO fynovio_app;

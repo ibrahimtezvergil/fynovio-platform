@@ -21,6 +21,8 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using SemanticCatalog.Application;
+using SemanticCatalog.Persistence;
 using TenantLifecycle.Application;
 using TenantLifecycle.Persistence;
 
@@ -30,6 +32,12 @@ builder.Services.AddDbContext<CrmDbContext>(options => options
     .UseNpgsql(
         builder.Configuration.GetConnectionString("Crm") ?? CrmConnectionString.Resolve(),
         npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", CrmDbContext.Schema))
+    .UseSnakeCaseNamingConvention());
+
+builder.Services.AddDbContext<SemanticCatalogDbContext>(options => options
+    .UseNpgsql(
+        builder.Configuration.GetConnectionString("SemanticCatalog") ?? SemanticCatalogConnectionString.Resolve(),
+        npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", SemanticCatalogDbContext.Schema))
     .UseSnakeCaseNamingConvention());
 
 builder.Services.AddDbContext<CollaborationDbContext>(options => options
@@ -264,12 +272,15 @@ builder.Services.AddScoped<DiscardPipelineDraftHandler>();
 builder.Services.AddScoped<ValidatePipelineDraftHandler>();
 builder.Services.AddScoped<SetPipelineLifecycleHandler>();
 builder.Services.AddScoped<ManageCrmCatalogHandler>();
-builder.Services.AddScoped<ManageCustomFieldDefinitionHandler>();
-builder.Services.AddScoped<ListCustomFieldDefinitionsHandler>();
+builder.Services.AddScoped<ISemanticDefinitionReader, SemanticDefinitionReader>();
+builder.Services.AddScoped<ManageFieldDefinitionHandler>();
+builder.Services.AddScoped<ListFieldDefinitionsHandler>();
 builder.Services.AddScoped<GetCustomFieldImpactHandler>();
 builder.Services.AddScoped<GetOpportunityAvailableActionsHandler>();
 
 builder.Services.AddExceptionHandler<AccessProblemDetailsExceptionHandler>();
+// Before the CRM handler: its catch-all InvalidOperationException/ArgumentException arms would otherwise claim the catalog's exceptions.
+builder.Services.AddExceptionHandler<SemanticCatalogProblemDetailsExceptionHandler>();
 builder.Services.AddExceptionHandler<CrmProblemDetailsExceptionHandler>();
 builder.Services.AddExceptionHandler<CollaborationProblemDetailsExceptionHandler>();
 builder.Services.AddExceptionHandler<TenantLifecycleProblemDetailsExceptionHandler>();

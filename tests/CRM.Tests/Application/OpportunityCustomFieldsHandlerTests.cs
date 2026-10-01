@@ -13,6 +13,7 @@ namespace CRM.Tests.Application;
 public sealed class OpportunityCustomFieldsHandlerTests
 {
     private readonly PostgresFixture _fixture;
+    private readonly StubDefinitionReader _definitions = new();
 
     public OpportunityCustomFieldsHandlerTests(PostgresFixture fixture) => _fixture = fixture;
 
@@ -22,7 +23,7 @@ public sealed class OpportunityCustomFieldsHandlerTests
     public async Task Create_stores_validated_custom_fields_in_canonical_form()
     {
         var tenant = TestData.NextTenant();
-        await SeedFieldsAsync(tenant);
+        SeedFields(tenant);
         var partyRef = new PartyRef(tenant, 1);
         var command = new CreateOpportunityCommand(tenant, partyRef, TestData.Seller, "TRY", 1000m, "create-cf", Guid.NewGuid())
         {
@@ -30,7 +31,7 @@ public sealed class OpportunityCustomFieldsHandlerTests
         };
 
         await using var context = _fixture.CreateAdminContext();
-        var result = await new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity).HandleAsync(command);
+        var result = await new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity, _definitions).HandleAsync(command);
 
         var stored = await context.Opportunities.AsNoTracking().SingleAsync(o => o.Id == result.OpportunityId);
         var values = CustomFieldValues.Parse(stored.CustomFields);
@@ -42,7 +43,7 @@ public sealed class OpportunityCustomFieldsHandlerTests
     public async Task Create_rejects_a_missing_required_field_and_an_unknown_key()
     {
         var tenant = TestData.NextTenant();
-        await SeedFieldsAsync(tenant);
+        SeedFields(tenant);
         var command = new CreateOpportunityCommand(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", 1000m, "create-invalid", Guid.NewGuid())
         {
             CustomFields = Json("""{"nope": 1}""")
@@ -50,7 +51,7 @@ public sealed class OpportunityCustomFieldsHandlerTests
 
         await using var context = _fixture.CreateAdminContext();
         var exception = await Assert.ThrowsAsync<CustomFieldValidationException>(() =>
-            new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity).HandleAsync(command));
+            new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity, _definitions).HandleAsync(command));
 
         Assert.Contains(exception.Errors, e => e.Field == "budget_code" && e.Code == "required");
         Assert.Contains(exception.Errors, e => e.Field == "nope" && e.Code == "unknown_field");
@@ -61,21 +62,21 @@ public sealed class OpportunityCustomFieldsHandlerTests
     public async Task Create_with_the_same_key_but_different_custom_fields_is_a_key_reuse()
     {
         var tenant = TestData.NextTenant();
-        await SeedFieldsAsync(tenant);
+        SeedFields(tenant);
         var command = new CreateOpportunityCommand(tenant, new PartyRef(tenant, 1), TestData.Seller, "TRY", 1000m, "create-reuse", Guid.NewGuid())
         {
             CustomFields = Json("""{"budget_code": "A"}""")
         };
 
         await using (var first = _fixture.CreateAdminContext())
-            await new CreateOpportunityHandler(first, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity).HandleAsync(command);
+            await new CreateOpportunityHandler(first, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity, _definitions).HandleAsync(command);
 
         await using var second = _fixture.CreateAdminContext();
-        var replay = await new CreateOpportunityHandler(second, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity).HandleAsync(command);
+        var replay = await new CreateOpportunityHandler(second, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity, _definitions).HandleAsync(command);
         Assert.True(replay.Replayed);
 
         await Assert.ThrowsAsync<IdempotencyKeyReusedException>(() =>
-            new CreateOpportunityHandler(second, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity)
+            new CreateOpportunityHandler(second, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity, _definitions)
                 .HandleAsync(command with { CustomFields = Json("""{"budget_code": "B"}""") }));
     }
 
@@ -83,14 +84,14 @@ public sealed class OpportunityCustomFieldsHandlerTests
     public async Task Update_replaces_values_bumps_the_version_and_emits_changed_keys_only()
     {
         var tenant = TestData.NextTenant();
-        await SeedFieldsAsync(tenant);
+        SeedFields(tenant);
         var opportunity = await SeedOpportunityAsync(tenant, """{"budget_code": "A", "priority": "low"}""");
 
         var command = new UpdateOpportunityCustomFieldsCommand(tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion,
             Json("""{"budget_code": "A", "priority": "high"}"""), "update-1", Guid.NewGuid());
 
         await using var context = _fixture.CreateAdminContext();
-        var result = await new UpdateOpportunityCustomFieldsHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command);
+        var result = await new UpdateOpportunityCustomFieldsHandler(context, StubAuthorizer.AlwaysAllow, _definitions).HandleAsync(command);
 
         Assert.False(result.Replayed);
         var reloaded = await context.Opportunities.AsNoTracking().SingleAsync(o => o.Id == opportunity.Id);
@@ -110,14 +111,14 @@ public sealed class OpportunityCustomFieldsHandlerTests
     public async Task Update_that_changes_nothing_keeps_the_version_and_emits_nothing()
     {
         var tenant = TestData.NextTenant();
-        await SeedFieldsAsync(tenant);
+        SeedFields(tenant);
         var opportunity = await SeedOpportunityAsync(tenant, """{"budget_code": "A", "tags": ["x", "y"]}""");
 
         var command = new UpdateOpportunityCustomFieldsCommand(tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion,
             Json("""{"tags":["x","y"],"budget_code":"A"}"""), "update-noop", Guid.NewGuid());
 
         await using var context = _fixture.CreateAdminContext();
-        await new UpdateOpportunityCustomFieldsHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(command);
+        await new UpdateOpportunityCustomFieldsHandler(context, StubAuthorizer.AlwaysAllow, _definitions).HandleAsync(command);
 
         var reloaded = await context.Opportunities.AsNoTracking().SingleAsync(o => o.Id == opportunity.Id);
         Assert.Equal(opportunity.RowVersion, reloaded.RowVersion);
@@ -128,21 +129,21 @@ public sealed class OpportunityCustomFieldsHandlerTests
     public async Task Update_replays_and_rejects_a_reused_key_with_a_different_body()
     {
         var tenant = TestData.NextTenant();
-        await SeedFieldsAsync(tenant);
+        SeedFields(tenant);
         var opportunity = await SeedOpportunityAsync(tenant, """{"budget_code": "A"}""");
         var command = new UpdateOpportunityCustomFieldsCommand(tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion,
             Json("""{"budget_code": "B"}"""), "update-replay", Guid.NewGuid());
 
         await using (var first = _fixture.CreateAdminContext())
-            await new UpdateOpportunityCustomFieldsHandler(first, StubAuthorizer.AlwaysAllow).HandleAsync(command);
+            await new UpdateOpportunityCustomFieldsHandler(first, StubAuthorizer.AlwaysAllow, _definitions).HandleAsync(command);
 
         await using var second = _fixture.CreateAdminContext();
-        var replay = await new UpdateOpportunityCustomFieldsHandler(second, StubAuthorizer.AlwaysAllow).HandleAsync(command);
+        var replay = await new UpdateOpportunityCustomFieldsHandler(second, StubAuthorizer.AlwaysAllow, _definitions).HandleAsync(command);
         Assert.True(replay.Replayed);
         Assert.Single(await second.OutboxMessages.AsNoTracking().Where(m => m.TenantId == tenant && m.AggregateId == opportunity.Id).ToListAsync());
 
         await Assert.ThrowsAsync<IdempotencyKeyReusedException>(() =>
-            new UpdateOpportunityCustomFieldsHandler(second, StubAuthorizer.AlwaysAllow)
+            new UpdateOpportunityCustomFieldsHandler(second, StubAuthorizer.AlwaysAllow, _definitions)
                 .HandleAsync(command with { CustomFields = Json("""{"budget_code": "C"}""") }));
     }
 
@@ -150,17 +151,12 @@ public sealed class OpportunityCustomFieldsHandlerTests
     public async Task Update_rejects_a_deprecated_key_but_carries_its_stored_value_forward()
     {
         var tenant = TestData.NextTenant();
-        var (_, priority) = await SeedFieldsAsync(tenant);
+        var (_, priority) = SeedFields(tenant);
         var opportunity = await SeedOpportunityAsync(tenant, """{"budget_code": "A", "priority": "low"}""");
-        await using (var admin = _fixture.CreateAdminContext())
-        {
-            var definition = await admin.TenantFieldDefinitions.SingleAsync(d => d.Id == priority);
-            definition.Deprecate();
-            await admin.SaveChangesAsync();
-        }
+        _definitions.Change(priority, d => d with { Status = FieldStatus.Deprecated });
 
         await using var context = _fixture.CreateAdminContext();
-        var handler = new UpdateOpportunityCustomFieldsHandler(context, StubAuthorizer.AlwaysAllow);
+        var handler = new UpdateOpportunityCustomFieldsHandler(context, StubAuthorizer.AlwaysAllow, _definitions);
         var rejected = await Assert.ThrowsAsync<CustomFieldValidationException>(() => handler.HandleAsync(
             new UpdateOpportunityCustomFieldsCommand(tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion,
                 Json("""{"budget_code": "A", "priority": "high"}"""), "update-deprecated", Guid.NewGuid())));
@@ -179,11 +175,11 @@ public sealed class OpportunityCustomFieldsHandlerTests
     public async Task Update_is_refused_on_an_archived_opportunity()
     {
         var tenant = TestData.NextTenant();
-        await SeedFieldsAsync(tenant);
+        SeedFields(tenant);
         var opportunity = await SeedOpportunityAsync(tenant, """{"budget_code": "A"}""", archive: true);
 
         await using var context = _fixture.CreateAdminContext();
-        var handler = new UpdateOpportunityCustomFieldsHandler(context, StubAuthorizer.AlwaysAllow);
+        var handler = new UpdateOpportunityCustomFieldsHandler(context, StubAuthorizer.AlwaysAllow, _definitions);
         await Assert.ThrowsAsync<InvalidOperationException>(() => handler.HandleAsync(new UpdateOpportunityCustomFieldsCommand(
             tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion, Json("""{"budget_code": "B"}"""), "update-archived", Guid.NewGuid())));
         await Assert.ThrowsAsync<InvalidOperationException>(() => handler.HandleAsync(new UpdateOpportunityCustomFieldsCommand(
@@ -194,17 +190,17 @@ public sealed class OpportunityCustomFieldsHandlerTests
     public async Task Update_is_denied_without_the_action_and_conflicts_on_a_stale_version()
     {
         var tenant = TestData.NextTenant();
-        await SeedFieldsAsync(tenant);
+        SeedFields(tenant);
         var opportunity = await SeedOpportunityAsync(tenant, """{"budget_code": "A"}""");
 
         await using var context = _fixture.CreateAdminContext();
         var denied = await Assert.ThrowsAsync<OpportunityAuthorizationDeniedException>(() =>
-            new UpdateOpportunityCustomFieldsHandler(context, StubAuthorizer.AlwaysDeny).HandleAsync(new UpdateOpportunityCustomFieldsCommand(
+            new UpdateOpportunityCustomFieldsHandler(context, StubAuthorizer.AlwaysDeny, _definitions).HandleAsync(new UpdateOpportunityCustomFieldsCommand(
                 tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion, Json("""{"budget_code": "B"}"""), "update-denied", Guid.NewGuid())));
         Assert.Equal(CrmActionKeys.OpportunityUpdateCustomFields, denied.ActionKey);
 
         await Assert.ThrowsAsync<OpportunityConcurrencyConflictException>(() =>
-            new UpdateOpportunityCustomFieldsHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(new UpdateOpportunityCustomFieldsCommand(
+            new UpdateOpportunityCustomFieldsHandler(context, StubAuthorizer.AlwaysAllow, _definitions).HandleAsync(new UpdateOpportunityCustomFieldsCommand(
                 tenant, opportunity.Id, TestData.Seller, opportunity.RowVersion + 5, Json("""{"budget_code": "B"}"""), "update-stale", Guid.NewGuid())));
     }
 
@@ -212,7 +208,7 @@ public sealed class OpportunityCustomFieldsHandlerTests
     public async Task Get_exposes_the_stored_custom_fields()
     {
         var tenant = TestData.NextTenant();
-        await SeedFieldsAsync(tenant);
+        SeedFields(tenant);
         var opportunity = await SeedOpportunityAsync(tenant, """{"budget_code": "A"}""");
 
         await using var context = _fixture.CreateAdminContext();
@@ -227,12 +223,8 @@ public sealed class OpportunityCustomFieldsHandlerTests
     public async Task List_filters_by_select_multi_select_and_boolean_values_within_the_callers_scope()
     {
         var tenant = TestData.NextTenant();
-        await SeedFieldsAsync(tenant);
-        await using (var admin = _fixture.CreateAdminContext())
-        {
-            admin.TenantFieldDefinitions.Add(TenantFieldDefinition.Create(tenant, TenantFieldAggregateType.Opportunity, "vip", "VIP", TenantFieldValueType.Boolean));
-            await admin.SaveChangesAsync();
-        }
+        SeedFields(tenant);
+        _definitions.Add(TestFields.Create(tenant, "vip", "VIP", FieldType.Boolean));
 
         var highTagged = await SeedOpportunityAsync(tenant, """{"budget_code": "A", "priority": "high", "tags": ["x", "y"], "vip": true}""");
         var high = await SeedOpportunityAsync(tenant, """{"budget_code": "B", "priority": "high", "vip": false}""");
@@ -249,7 +241,7 @@ public sealed class OpportunityCustomFieldsHandlerTests
         async Task<long[]> ListAsync(AccessScope scope, Dictionary<string, string> filters)
         {
             await using var context = _fixture.CreateAdminContext();
-            var rows = await new ListOpportunitiesHandler(context, new StubScopeResolver(scope))
+            var rows = await new ListOpportunitiesHandler(context, new StubScopeResolver(scope), _definitions)
                 .HandleAsync(new ListOpportunitiesQuery(tenant, TestData.Seller, Guid.NewGuid(), null, 0, 50, CustomFieldFilters: filters));
             return rows.Select(r => r.Id).Order().ToArray();
         }
@@ -266,11 +258,11 @@ public sealed class OpportunityCustomFieldsHandlerTests
     public async Task List_rejects_unknown_non_filterable_and_out_of_range_filters()
     {
         var tenant = TestData.NextTenant();
-        await SeedFieldsAsync(tenant);
+        SeedFields(tenant);
 
         await using var context = _fixture.CreateAdminContext();
         var exception = await Assert.ThrowsAsync<CustomFieldValidationException>(() =>
-            new ListOpportunitiesHandler(context, new StubScopeResolver(new AccessScope.All())).HandleAsync(new ListOpportunitiesQuery(
+            new ListOpportunitiesHandler(context, new StubScopeResolver(new AccessScope.All()), _definitions).HandleAsync(new ListOpportunitiesQuery(
                 tenant, TestData.Seller, Guid.NewGuid(), null, 0, 50,
                 CustomFieldFilters: new Dictionary<string, string> { ["nope"] = "1", ["budget_code"] = "A", ["priority"] = "urgent" })));
 
@@ -280,16 +272,13 @@ public sealed class OpportunityCustomFieldsHandlerTests
     }
 
     /// <summary>budget_code (text, required), priority (select), tags (multi_select).</summary>
-    private async Task<(long BudgetCode, long Priority)> SeedFieldsAsync(TenantId tenant)
+    private (long BudgetCode, long Priority) SeedFields(TenantId tenant)
     {
-        await using var admin = _fixture.CreateAdminContext();
-        var budgetCode = TenantFieldDefinition.Create(tenant, TenantFieldAggregateType.Opportunity, "budget_code", "Budget code", TenantFieldValueType.Text, isRequired: true);
-        var priority = TenantFieldDefinition.Create(tenant, TenantFieldAggregateType.Opportunity, "priority", "Priority", TenantFieldValueType.Select,
-            config: new TenantFieldConfig(Options: [new TenantFieldOption("low", "Low"), new TenantFieldOption("high", "High")]));
-        var tags = TenantFieldDefinition.Create(tenant, TenantFieldAggregateType.Opportunity, "tags", "Tags", TenantFieldValueType.MultiSelect,
-            config: new TenantFieldConfig(Options: [new TenantFieldOption("x", "X"), new TenantFieldOption("y", "Y")]));
-        admin.TenantFieldDefinitions.AddRange(budgetCode, priority, tags);
-        await admin.SaveChangesAsync();
+        var budgetCode = _definitions.Add(TestFields.Create(tenant, "budget_code", "Budget code", FieldType.Text, isRequired: true));
+        var priority = _definitions.Add(TestFields.Create(tenant, "priority", "Priority", FieldType.Select,
+            config: new FieldConfig(Options: [new FieldOption("low", "Low"), new FieldOption("high", "High")])));
+        _definitions.Add(TestFields.Create(tenant, "tags", "Tags", FieldType.MultiSelect,
+            config: new FieldConfig(Options: [new FieldOption("x", "X"), new FieldOption("y", "Y")])));
         return (budgetCode.Id, priority.Id);
     }
 

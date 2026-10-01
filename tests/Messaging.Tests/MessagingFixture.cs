@@ -2,6 +2,7 @@ using Access.Persistence;
 using Collaboration.Persistence;
 using CRM.Persistence;
 using MasterData.Persistence;
+using SemanticCatalog.Persistence;
 using Messaging.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -34,6 +35,8 @@ public sealed class MessagingFixture : IAsyncLifetime
         await _container.StartAsync();
 
         await Migrate(new MasterDataDbContext(Options<MasterDataDbContext>(MasterDataDbContext.Schema)));
+        // SemanticCatalog before CRM (adr-semantic-catalog-changeset.md S-3).
+        await Migrate(new SemanticCatalogDbContext(Options<SemanticCatalogDbContext>(SemanticCatalogDbContext.Schema)));
         await Migrate(new CrmDbContext(Options<CrmDbContext>(CrmDbContext.Schema)));
         await Migrate(new AccessDbContext(Options<AccessDbContext>(AccessDbContext.AccessSchema)));
         await Migrate(new CollaborationDbContext(Options<CollaborationDbContext>(CollaborationDbContext.Schema)));

@@ -1,76 +1,77 @@
 using System.Text.RegularExpressions;
 using Contracts;
 
-namespace CRM.Customization;
+namespace SemanticCatalog.Domain;
 
-/// <summary>Tier-1 tenant custom fields (doc 15 §3; adr-tier1-custom-fields.md) — metadata governing the
-/// `custom_fields` jsonb column of the owning aggregate. Not a generic EAV table set: this only describes
-/// shape, values live on the aggregate itself. `FieldName` is the immutable key a stored value is filed
-/// under; `Label` is what people see and may change.</summary>
-public sealed partial class TenantFieldDefinition
+/// <summary>A tenant field definition owned by the Semantic Catalog (OD-5; adr-semantic-catalog-changeset.md S-1). It
+/// only describes shape: values live on the owning aggregate (OD-6). `Key` is the immutable key a stored value is filed
+/// under; `Label` is what people see and may change. Behavior is carried over unchanged from the tier-1 definition in
+/// CRM (adr-tier1-custom-fields.md).</summary>
+public sealed partial class CatalogFieldDefinition
 {
     public const int MaxLabelLength = 100;
     public const int MaxSortOrder = 10_000;
 
     public long Id { get; private set; }
     public TenantId TenantId { get; private set; }
-    public TenantFieldAggregateType AggregateType { get; private set; }
-    public string FieldName { get; private set; } = null!;
+    public string OwnerContext { get; private set; } = null!;
+    public string ObjectType { get; private set; } = null!;
+    public string Key { get; private set; } = null!;
     public string Label { get; private set; } = null!;
-    public TenantFieldValueType FieldType { get; private set; }
+    public FieldType Type { get; private set; }
     public bool IsRequired { get; private set; }
     public string ConfigJson { get; private set; } = "{}";
-    public TenantFieldStatus Status { get; private set; }
+    public FieldStatus Status { get; private set; }
     public int SortOrder { get; private set; }
-    public TenantFieldOwnerScope OwnerScope { get; private set; }
     public long RowVersion { get; private set; } = 1;
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
-    public TenantFieldConfig Config => TenantFieldConfig.FromJson(ConfigJson);
-    public bool IsActive => Status == TenantFieldStatus.Active;
+    public FieldConfig Config => FieldConfigRules.FromJson(ConfigJson);
+    public bool IsActive => Status == FieldStatus.Active;
 
-    private TenantFieldDefinition() { }
+    private CatalogFieldDefinition() { }
 
-    public static TenantFieldDefinition Create(
+    public static CatalogFieldDefinition Create(
         TenantId tenantId,
-        TenantFieldAggregateType aggregateType,
-        string fieldName,
+        string ownerContext,
+        string objectType,
+        string key,
         string label,
-        TenantFieldValueType fieldType,
+        FieldType type,
         bool isRequired = false,
-        TenantFieldConfig? config = null,
+        FieldConfig? config = null,
         int sortOrder = 0)
     {
-        if (!Enum.IsDefined(aggregateType))
-            throw new ArgumentException("Unknown aggregate type.", nameof(aggregateType));
-        if (!Enum.IsDefined(fieldType))
-            throw new ArgumentException("Unknown field type.", nameof(fieldType));
-        if (fieldName is null || !KeyFormat().IsMatch(fieldName))
-            throw new ArgumentException("Field key must start with a lowercase letter and contain 2–63 lowercase letters, digits or underscores.", nameof(fieldName));
+        if (!CatalogOwners.IsKnown(ownerContext, objectType))
+            throw new ArgumentException($"Unknown definition owner '{ownerContext}/{objectType}'.", nameof(objectType));
+        if (!Enum.IsDefined(type))
+            throw new ArgumentException("Unknown field type.", nameof(type));
+        if (key is null || !KeyFormat().IsMatch(key))
+            throw new ArgumentException("Field key must start with a lowercase letter and contain 2–63 lowercase letters, digits or underscores.", nameof(key));
 
         var now = DateTimeOffset.UtcNow;
-        return new TenantFieldDefinition
+        return new CatalogFieldDefinition
         {
             TenantId = tenantId,
-            AggregateType = aggregateType,
-            FieldName = fieldName,
+            OwnerContext = ownerContext,
+            ObjectType = objectType,
+            Key = key,
             Label = RequiredLabel(label),
-            FieldType = fieldType,
+            Type = type,
             IsRequired = isRequired,
-            ConfigJson = (config ?? TenantFieldConfig.Empty).Validate(fieldType).ToJson(),
-            Status = TenantFieldStatus.Active,
+            ConfigJson = (config ?? FieldConfig.Empty).Validate(type).ToJson(),
+            Status = FieldStatus.Active,
             SortOrder = ValidSortOrder(sortOrder),
-            OwnerScope = TenantFieldOwnerScope.Tenant,
             CreatedAt = now,
             UpdatedAt = now
         };
     }
 
     /// <summary>Key, type and decimal scale are fixed at creation; a change there is deprecate + new field.</summary>
-    public void Update(string label, bool isRequired, TenantFieldConfig config, int sortOrder)
+    public void Update(string label, bool isRequired, FieldConfig config, int sortOrder)
     {
-        var normalized = config.Validate(FieldType);
+        var normalized = config.Validate(Type);
         Config.EnsureCompatibleReplacement(normalized);
 
         Label = RequiredLabel(label);
@@ -82,20 +83,23 @@ public sealed partial class TenantFieldDefinition
 
     public void Deprecate()
     {
-        if (Status == TenantFieldStatus.Deprecated)
+        if (Status == FieldStatus.Deprecated)
             throw new InvalidOperationException("The field is already deprecated.");
-        Status = TenantFieldStatus.Deprecated;
+        Status = FieldStatus.Deprecated;
         Touch();
     }
 
     /// <summary>Possible because the key never disappears: values written before deprecation become editable again.</summary>
     public void Reactivate()
     {
-        if (Status == TenantFieldStatus.Active)
+        if (Status == FieldStatus.Active)
             throw new InvalidOperationException("The field is already active.");
-        Status = TenantFieldStatus.Active;
+        Status = FieldStatus.Active;
         Touch();
     }
+
+    public FieldDefinition ToReadModel() =>
+        new(Id, TenantId, OwnerContext, ObjectType, Key, Label, Type, IsRequired, Config, Status, SortOrder, RowVersion);
 
     private void Touch()
     {

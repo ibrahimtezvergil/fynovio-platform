@@ -28,7 +28,6 @@ public sealed class CrmDbContext : DbContext
     public DbSet<OpportunityLine> OpportunityLines => Set<OpportunityLine>();
     public DbSet<OpportunityNeed> OpportunityNeeds => Set<OpportunityNeed>();
     public DbSet<OpportunityStageHistoryEntry> OpportunityStageHistory => Set<OpportunityStageHistoryEntry>();
-    public DbSet<TenantFieldDefinition> TenantFieldDefinitions => Set<TenantFieldDefinition>();
     public DbSet<PipelineDefinition> PipelineDefinitions => Set<PipelineDefinition>();
     public DbSet<PipelineDefinitionVersion> PipelineDefinitionVersions => Set<PipelineDefinitionVersion>();
     public DbSet<PipelineStage> PipelineStages => Set<PipelineStage>();
@@ -53,8 +52,6 @@ public sealed class CrmDbContext : DbContext
                 ? Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('crm.lost_reasons', 'id')) AS \"Value\"")
             : typeof(TEntity) == typeof(CustomerNeed)
                 ? Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('crm.customer_needs', 'id')) AS \"Value\"")
-            : typeof(TEntity) == typeof(TenantFieldDefinition)
-                ? Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('crm.tenant_field_definitions', 'id')) AS \"Value\"")
             : throw new ArgumentOutOfRangeException(nameof(TEntity));
 
         return query.SingleAsync(cancellationToken);

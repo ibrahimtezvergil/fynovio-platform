@@ -15,13 +15,13 @@ Two tables, both written only by the `crm.opportunity-activity` event consumer (
 `crm.opportunities` has a GIN index `ix_opportunities_custom_fields` on `custom_fields` with `jsonb_path_ops`.
 - **What it serves:** the Opportunity list's custom field filters.
   - Filters are equality only, on select, multi_select and boolean fields.
-  - The handler validates them against `tenant_field_definitions`, then applies them as one jsonb containment predicate (`custom_fields @> '{...}'`).
+  - The handler validates them against the field definitions it reads from the Semantic Catalog (`semantic.field_definitions`, via `ISemanticDefinitionReader`), then applies them as one jsonb containment predicate (`custom_fields @> '{...}'`).
   - They are ANDed with the caller's access scope and the RLS tenant predicate.
 - **No change** to the columns, CHECK constraints or RLS.
 
 ## Revision 11 (2026-09-30): Tier-1 tenant custom field schema expansion
 
-`crm.tenant_field_definitions` expanded with new columns and CHECK constraints. New columns: `label` (varchar 100, required, user-facing field name), `config` (jsonb, default '{}', validates as object), `status` (varchar 16, default 'Active', lifecycle: Active|Deprecated), `sort_order` (integer, default 0, range 0–10000), `owner_scope` (varchar 16, fixed to 'Tenant'), `row_version` (bigint, default 1, concurrency token), `updated_at` (timestamp with time zone, default now()). Existing `field_name` column changed from text to varchar(63). New CHECK constraints validate aggregate_type ('Party'|'Opportunity'), field_type (11 types: text, long_text, number, decimal, boolean, date, select, multi_select, email, phone, url), field_name (regex: lowercase start, 2–63 chars), status, owner_scope, sort_order range, and config as valid JSON object. Unique constraint on (tenant_id, aggregate_type, field_name) was already present. RLS (ENABLE+FORCE + tenant policy) already in place from Phase 1. See `docs/plans/ai-business-os/adr-tier1-custom-fields.md`.
+**Moved (phase 2, 2026-10-01): `crm.tenant_field_definitions` no longer exists** — its Opportunity rows were copied (ids preserved) into `semantic.field_definitions` and the table was dropped; see `semantic-catalog-schema.md`. What follows is the historical tier-1 shape. `crm.tenant_field_definitions` had expanded with new columns and CHECK constraints. New columns: `label` (varchar 100, required, user-facing field name), `config` (jsonb, default '{}', validates as object), `status` (varchar 16, default 'Active', lifecycle: Active|Deprecated), `sort_order` (integer, default 0, range 0–10000), `owner_scope` (varchar 16, fixed to 'Tenant'), `row_version` (bigint, default 1, concurrency token), `updated_at` (timestamp with time zone, default now()). Existing `field_name` column changed from text to varchar(63). New CHECK constraints validate aggregate_type ('Party'|'Opportunity'), field_type (11 types: text, long_text, number, decimal, boolean, date, select, multi_select, email, phone, url), field_name (regex: lowercase start, 2–63 chars), status, owner_scope, sort_order range, and config as valid JSON object. Unique constraint on (tenant_id, aggregate_type, field_name) was already present. RLS (ENABLE+FORCE + tenant policy) already in place from Phase 1. See `docs/plans/ai-business-os/adr-tier1-custom-fields.md`.
 
 ## Revision 10 (2026-09-24): Opportunity archive lifecycle
 
@@ -282,7 +282,7 @@ No `deleted_at` anywhere. Cancellation is `status = 'canceled'` + `cancel_reason
 `outbox_messages` lives in this same `crm` schema, written by the same `SaveChanges()` call as the aggregate change it describes — one transaction.
 
 ### Tier-1 tenant custom fields ([15](.) §7)
-`custom_fields jsonb` governed by `tenant_field_definitions`, unique on `(tenant_id, aggregate_type, field_name)` — not a generic EAV table set.
+`custom_fields jsonb` governed by the Semantic Catalog's field definitions (`semantic.field_definitions`, unique on `(tenant_id, owner_context, object_type, key)`) — not a generic EAV table set. Values stay here (OD-6); definitions live in the catalog.
 
 ## Contracts primitives already added (`src/Contracts/`)
 

@@ -26,7 +26,7 @@ public sealed record OpportunityActivityDto(
 
 /// <summary>The opportunity's activity timeline, newest first (adr-event-consumption.md, E-2 (a)). Authorized exactly like
 /// <see cref="GetOpportunityHandler"/> — same action key and resource descriptor — and a denial looks like not-found.</summary>
-public sealed class GetOpportunityActivityHandler(CrmDbContext context, IAuthorizer authorizer, IAuthorizedPrincipalDirectory? principalDirectory = null)
+public sealed class GetOpportunityActivityHandler(CrmDbContext context, IAuthorizer authorizer, ISemanticDefinitionReader definitionReader, IAuthorizedPrincipalDirectory? principalDirectory = null)
 {
     public const int MaxEntries = 100;
 
@@ -55,9 +55,11 @@ public sealed class GetOpportunityActivityHandler(CrmDbContext context, IAuthori
             .ToDictionaryAsync(s => s.Id, s => s.Name, cancellationToken);
 
         var fieldKeys = facts.SelectMany(f => f.Fact.ChangedKeys ?? []).Distinct().ToList();
-        var fieldLabels = await context.TenantFieldDefinitions.AsNoTracking()
-            .Where(d => d.TenantId == query.TenantId && d.AggregateType == TenantFieldAggregateType.Opportunity && fieldKeys.Contains(d.FieldName))
-            .ToDictionaryAsync(d => d.FieldName, d => d.Label, cancellationToken);
+        var fieldLabels = fieldKeys.Count == 0
+            ? new Dictionary<string, string>()
+            : (await definitionReader.ListFieldsAsync(query.TenantId, OpportunityFields.OwnerContext, OpportunityFields.ObjectType, cancellationToken))
+                .Where(d => fieldKeys.Contains(d.Key))
+                .ToDictionary(d => d.Key, d => d.Label);
 
         var principals = facts.Select(f => f.Fact.NewPrincipal).OfType<PrincipalRef>().Distinct().ToList();
         var names = principals.Count > 0 && principalDirectory is not null

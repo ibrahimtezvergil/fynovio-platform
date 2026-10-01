@@ -16,7 +16,7 @@ public sealed class ModuleBoundaryTests
     {
         var result = Types.InAssembly(CrmAssembly)
             .ShouldNot()
-            .HaveDependencyOnAny("Access", "MasterData", "Organization", "TenantLifecycle")
+            .HaveDependencyOnAny("Access", "MasterData", "Organization", "TenantLifecycle", "SemanticCatalog")
             .GetResult();
 
         Assert.True(result.IsSuccessful, Describe(result));

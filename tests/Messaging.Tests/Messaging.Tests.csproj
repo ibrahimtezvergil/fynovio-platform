@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\src\Modules\CRM\CRM.csproj" />
     <ProjectReference Include="..\..\src\Modules\Collaboration\Collaboration.csproj" />
     <ProjectReference Include="..\..\src\Modules\MasterData\MasterData.csproj" />
+    <ProjectReference Include="..\..\src\Modules\SemanticCatalog\SemanticCatalog.csproj" />
     <ProjectReference Include="..\..\src\Modules\TenantLifecycle\TenantLifecycle.csproj" />
   </ItemGroup>
 

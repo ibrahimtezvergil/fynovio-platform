@@ -33,9 +33,9 @@ occurred before `registered_at` fanned out as `skipped`. Not tenant data; relay 
 
 - `event_deliveries`: `ENABLE` + `FORCE`, standard `tenant_isolation`, plus `relay_access`.
 - `relay_access` (`USING / WITH CHECK (current_user = 'fynovio_relay')`) also exists on `crm`, `masterdata`, `access`,
-  `collaboration` and `tenant_lifecycle` `.outbox_messages`. It is keyed on `current_user` rather than `TO fynovio_relay`
+  `collaboration`, `tenant_lifecycle` and `semantic` `.outbox_messages` (`semantic` added by migration `AddSemanticRelaySource`). It is keyed on `current_user` rather than `TO fynovio_relay`
   because the role is created by a script after migrations run.
-- `fynovio_relay` (`scripts/create-relay-role.sql`): on the five outboxes only column `SELECT (id, tenant_id, event_id,
+- `fynovio_relay` (`scripts/create-relay-role.sql`): on the six outboxes only column `SELECT (id, tenant_id, event_id,
   event_type, aggregate_type, aggregate_id, aggregate_version, occurred_at, processed_at)` and `UPDATE (processed_at)`;
   `SELECT, INSERT, UPDATE` on the two messaging tables. No other table.
 - `fynovio_app` (`scripts/create-runtime-role.sql`): `SELECT, UPDATE` on `event_deliveries`, under its tenant.
