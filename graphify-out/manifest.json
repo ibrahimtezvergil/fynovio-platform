@@ -9006,9 +9006,9 @@
     "semantic_hash": ""
   },
   "docs/plans/ai-business-os/2026-09-30-tier1-custom-fields-plan.md": {
-    "mtime": 1790787087.5381424,
-    "seen": 1790787101.521636,
-    "ast_hash": "4205c5ceb64a93db1bdf024658dd4313",
+    "mtime": 1790787239.674355,
+    "seen": 1790787252.8290188,
+    "ast_hash": "689244284c6d00003653f31530a19580",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Persistence/Migrations/20260930132713_ExpandTenantFieldDefinitions.Designer.cs": {
@@ -9147,6 +9147,12 @@
     "mtime": 1790786226.4860203,
     "seen": 1790786510.963787,
     "ast_hash": "47145801e9d74f48fb8e10ca3d6e326f",
+    "semantic_hash": ""
+  },
+  "docs/plans/ai-business-os/2026-09-30-tier1-slice-report.md": {
+    "mtime": 1790787235.9040325,
+    "seen": 1790787252.8290188,
+    "ast_hash": "d2bf76312e7a3b0a62853fcec09f0540",
     "semantic_hash": ""
   }
 }
