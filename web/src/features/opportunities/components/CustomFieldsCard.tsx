@@ -88,7 +88,7 @@ export function CustomFieldsCard({ opportunity, onSaved }: { opportunity: Opport
             <dl className="divide-border/60 divide-y">
               {retired.map((definition) => (
                 <div key={definition.id} className="text-muted-foreground grid grid-cols-[150px_1fr] gap-3 py-1.5 text-[13px]">
-                  <dt className="flex items-center gap-2">{definition.label}<Badge variant="secondary">{t('customFields.deprecated')}</Badge></dt>
+                  <dt className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">{definition.label}<Badge variant="secondary">{t('customFields.deprecated')}</Badge></dt>
                   <dd className="min-w-0 break-words">{formatCustomFieldValue(definition, values[definition.fieldName], yesNo, i18n.language)}</dd>
                 </div>
               ))}
