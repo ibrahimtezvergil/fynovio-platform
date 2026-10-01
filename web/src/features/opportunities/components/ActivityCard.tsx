@@ -1,10 +1,11 @@
 import type { TFunction } from 'i18next'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { relativeTime } from '@/lib/datetime'
-import { useOpportunityActivity } from '../api'
+import { ACTIVITY_CATCH_UP_MS, useOpportunityActivity } from '../api'
 import { formatMoney } from '../lib/format'
 import type { OpportunityActivity } from '../schema'
 
@@ -45,9 +46,20 @@ function describeActivity(t: TFunction<'opportunities'>, entry: OpportunityActiv
  * change (adr-event-consumption.md, E-2 (a)). Read access is the opportunity's own, so this card never shows a fact
  * the page itself could not.
  */
-export function ActivityCard({ opportunityId }: { opportunityId: number }) {
+export function ActivityCard({ opportunityId, rowVersion }: { opportunityId: number; rowVersion: number }) {
   const { t, i18n } = useTranslation('opportunities')
   const activity = useOpportunityActivity(opportunityId)
+  const { refetch } = activity
+
+  // A change to the record means a new fact is on its way: look again once the Worker has had time to project it,
+  // even when interval polling is paused (a hidden tab).
+  const seenVersion = useRef(rowVersion)
+  useEffect(() => {
+    if (seenVersion.current === rowVersion) return
+    seenVersion.current = rowVersion
+    const timers = ACTIVITY_CATCH_UP_MS.map((delay) => setTimeout(() => void refetch(), delay))
+    return () => timers.forEach(clearTimeout)
+  }, [rowVersion, refetch])
   const fullDate = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' })
 
   return (

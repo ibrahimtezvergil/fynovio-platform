@@ -109,6 +109,9 @@ export function useOpportunity(id: number) {
  */
 export const ACTIVITY_REFRESH_MS = 10_000
 
+/** When the timeline re-reads after the record itself changed — the Worker polls every 2 s. */
+export const ACTIVITY_CATCH_UP_MS = [3_000, 8_000] as const
+
 /** The opportunity's activity timeline, newest first. Polled only while the tab is visible. */
 export function useOpportunityActivity(id: number, enabled = true) {
   const tenantId = useTenantId()

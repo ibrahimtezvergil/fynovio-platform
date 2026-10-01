@@ -138,7 +138,7 @@ export default function OpportunityDetailPage() {
         </div>
         <div className="grid content-start gap-5">
           <PipelineCard opportunity={data} actions={actions} onReload={() => void reload()} />
-          <ActivityCard opportunityId={data.id} />
+          <ActivityCard opportunityId={data.id} rowVersion={data.rowVersion} />
         </div>
       </div>
 

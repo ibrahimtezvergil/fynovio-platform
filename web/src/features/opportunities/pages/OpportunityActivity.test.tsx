@@ -4,7 +4,7 @@ import { HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useSessionStore } from '@/lib/auth'
 import { authenticated } from '@/test/authHandlers'
-import { mockDetailApi, mockParties, problemResponse, recordRequests } from '@/test/opportunities'
+import { mockDetailApi, mockParties, problemResponse, recordRequests, wireOpportunity } from '@/test/opportunities'
 import { renderRoutes, tr } from '@/test/render'
 import { resetSession } from '@/test/session'
 import { formatMoney } from '../lib/format'
@@ -77,4 +77,27 @@ describe('opportunity detail — activity timeline', () => {
     fireEvent.click(screen.getByRole('button', { name: t('activity.retry') }))
     expect(await screen.findByText(t('activity.kinds.archived'))).toBeInTheDocument()
   })
+})
+
+describe('opportunity detail — activity catch-up', () => {
+  it('looks again shortly after the record changes, without waiting for the next poll', async () => {
+    let version = 1
+    let activityCalls = 0
+    mockDetailApi(12, recordRequests(), {
+      detail: () => HttpResponse.json(wireOpportunity({ id: 12, rowVersion: version })),
+      activity: () => {
+        activityCalls += 1
+        return HttpResponse.json(version === 1 ? [] : [entry('archived')])
+      },
+    })
+    const { queryClient } = render()
+    expect(await screen.findByText(t('activity.empty'))).toBeInTheDocument()
+    const before = activityCalls
+
+    version = 2
+    await queryClient.invalidateQueries({ queryKey: ['opportunities'], predicate: (query) => query.queryKey.includes('detail') })
+
+    expect(await screen.findByText(t('activity.kinds.archived'), undefined, { timeout: 5_000 })).toBeInTheDocument()
+    expect(activityCalls).toBeGreaterThan(before)
+  }, 10_000)
 })
