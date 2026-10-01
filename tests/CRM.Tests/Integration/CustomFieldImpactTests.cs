@@ -73,4 +73,20 @@ public sealed class CustomFieldImpactTests(PostgresFixture fixture)
         await Assert.ThrowsAsync<KeyNotFoundException>(() => handler.HandleAsync(new GetCustomFieldImpactQuery(tenant, Administrator, foreign.Id, Guid.NewGuid())));
         await Assert.ThrowsAsync<KeyNotFoundException>(() => handler.HandleAsync(new GetCustomFieldImpactQuery(tenant, Administrator, 987_654, Guid.NewGuid())));
     }
+
+    [Fact]
+    public async Task Impact_also_lists_the_active_views_that_place_the_field()
+    {
+        var tenant = TestData.NextTenant();
+        var reader = new StubDefinitionReader();
+        var definition = reader.Add(TestFields.Create(tenant, "region", "Region", FieldType.Text));
+        reader.DependentViews.Add(new DependentView(5, "pipeline_review", "Pipeline review"));
+
+        await using var context = fixture.CreateAdminContext();
+        var impact = await new GetCustomFieldImpactHandler(context, StubAuthorizer.AlwaysAllow, reader)
+            .HandleAsync(new GetCustomFieldImpactQuery(tenant, Administrator, definition.Id, Guid.NewGuid()));
+
+        Assert.Equal([new DependentView(5, "pipeline_review", "Pipeline review")], impact.DependentViews);
+        Assert.Equal(0, impact.OpportunitiesWithValue);
+    }
 }

@@ -12,7 +12,7 @@ namespace SemanticCatalog.Application;
 public sealed record ManageFieldDefinitionCommand(
     TenantId TenantId,
     PrincipalRef Principal,
-    FieldOperation Operation,
+    ChangeOperation Operation,
     long? DefinitionId,
     long ExpectedRowVersion,
     string OwnerContext,
@@ -49,70 +49,22 @@ public sealed class ManageFieldDefinitionHandler(SemanticCatalogDbContext contex
     public async Task<ManageFieldDefinitionResult> HandleAsync(ManageFieldDefinitionCommand command, CancellationToken cancellationToken = default)
     {
         ValidateCommand(command);
-        var operation = $"ManageCustomFieldDefinition:{command.Operation}";
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-        await context.SetTenantContextAsync(command.TenantId, cancellationToken);
-        await CatalogAuthorization.AuthorizeAsync(command.TenantId, command.Principal, command.CorrelationId, command.OwnerContext, write: true, authorizer, cancellationToken);
-
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(command with { IdempotencyKey = string.Empty, CorrelationId = Guid.Empty }))));
-        var prior = await context.IdempotencyRecords.SingleOrDefaultAsync(
-            x => x.TenantId == command.TenantId && x.PrincipalIssuer == command.Principal.Issuer
-                && x.PrincipalSubject == command.Principal.Subject && x.Operation == operation && x.IdempotencyKey == command.IdempotencyKey,
+
+        var result = await OneItemChange.RunAsync(
+            context, authorizer,
+            new OneItemChange.Request(command.TenantId, command.Principal, command.CorrelationId, command.OwnerContext,
+                $"ManageCustomFieldDefinition:{command.Operation}", command.IdempotencyKey, hash),
+            () => ToItem(command),
+            outcome =>
+            {
+                var definition = outcome.Fields.Single();
+                return new ManageFieldDefinitionResult(definition.Id, definition.RowVersion, false, outcome.ChangeSet.Id);
+            },
+            replay => replay with { Replayed = true },
+            exception => IsFieldKeyViolation(exception) ? new FieldKeyConflictException(command.Key) : null,
             cancellationToken);
 
-        if (prior is not null)
-        {
-            if (prior.RequestHash != hash) throw new IdempotencyKeyReusedException(operation, command.IdempotencyKey);
-            return Replay(prior.ResponsePayload);
-        }
-
-        var publisher = new ChangeSetPublisher(context);
-        var set = await publisher.DraftAsync(command.TenantId, command.Principal, [ToItem(command)], authorUnderLock: true, cancellationToken);
-        set.Validate();
-        set.SubmitForApproval();
-        set.Approve();
-        var outcome = await publisher.PublishAsync(set, command.Principal, command.CorrelationId, cancellationToken);
-        if (!outcome.Published)
-            throw new InvalidOperationException("A one-item change set authored under the revision lock cannot be stale.");
-
-        var definition = outcome.Definitions.Single();
-        var result = new ManageFieldDefinitionResult(definition.Id, definition.RowVersion, false, set.Id);
-
-        context.IdempotencyRecords.Add(IdempotencyRecord.Create(
-            command.TenantId,
-            command.Principal,
-            operation,
-            command.IdempotencyKey,
-            hash,
-            200,
-            JsonSerializer.Serialize(result),
-            TimeSpan.FromDays(1)));
-
-        try
-        {
-            await context.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            throw new CatalogConcurrencyConflictException();
-        }
-        catch (DbUpdateException exception) when (exception.InnerException is Npgsql.PostgresException { ConstraintName: "pk_idempotency_records" })
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            var winner = await context.IdempotencyRecords.AsNoTracking().SingleOrDefaultAsync(
-                x => x.TenantId == command.TenantId && x.PrincipalIssuer == command.Principal.Issuer
-                    && x.PrincipalSubject == command.Principal.Subject && x.Operation == operation && x.IdempotencyKey == command.IdempotencyKey,
-                cancellationToken);
-            if (winner is null) throw;
-            if (winner.RequestHash != hash) throw new IdempotencyKeyReusedException(operation, command.IdempotencyKey);
-            return Replay(winner.ResponsePayload);
-        }
-        catch (DbUpdateException exception) when (IsFieldKeyViolation(exception))
-        {
-            throw new FieldKeyConflictException(command.Key);
-        }
-
-        await transaction.CommitAsync(cancellationToken);
         return result;
     }
 
@@ -126,18 +78,13 @@ public sealed class ManageFieldDefinitionHandler(SemanticCatalogDbContext contex
                 command.Config.Target is null ? null : new FieldTarget(command.Config.Target.BoundedContext, command.Config.Target.EntityType));
         var content = new FieldChangeContent(
             command.OwnerContext, command.ObjectType, command.Key, command.Label,
-            command.Operation == FieldOperation.Create ? command.Type : null,
+            command.Operation == ChangeOperation.Create ? command.Type : null,
             command.IsRequired, config, command.SortOrder, command.ExpectedRowVersion);
 
-        if (command.Operation == FieldOperation.Create && command.DefinitionId is not null)
+        if (command.Operation == ChangeOperation.Create && command.DefinitionId is not null)
             throw new ArgumentException("Definition ID must be null for create operations.");
         return ChangeSetItem.ForField(command.Operation, command.DefinitionId, content);
     }
-
-    private static ManageFieldDefinitionResult Replay(string responsePayload) =>
-        (JsonSerializer.Deserialize<ManageFieldDefinitionResult>(responsePayload)
-            ?? throw new InvalidOperationException("Stored field definition response is empty.")) with
-        { Replayed = true };
 
     private static bool IsFieldKeyViolation(DbUpdateException exception) =>
         exception.InnerException is Npgsql.PostgresException { SqlState: "23505" } postgres
@@ -152,7 +99,7 @@ public sealed class ManageFieldDefinitionHandler(SemanticCatalogDbContext contex
         if (string.IsNullOrWhiteSpace(command.IdempotencyKey) || command.IdempotencyKey.Length > 200)
             throw new ArgumentException("An idempotency key is required.");
 
-        if (command.Operation == FieldOperation.Create)
+        if (command.Operation == ChangeOperation.Create)
         {
             if (!Enum.IsDefined(command.Type))
                 throw new ArgumentException("Unknown field type.", nameof(command.Type));

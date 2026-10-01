@@ -18,6 +18,8 @@ public sealed class SemanticCatalogDbContext : DbContext
     }
 
     public DbSet<CatalogFieldDefinition> FieldDefinitions => Set<CatalogFieldDefinition>();
+    public DbSet<CatalogViewDefinition> ViewDefinitions => Set<CatalogViewDefinition>();
+    public DbSet<DependencyEdge> DependencyEdges => Set<DependencyEdge>();
     public DbSet<ChangeSet> ChangeSets => Set<ChangeSet>();
     public DbSet<ChangeSetItem> ChangeSetItems => Set<ChangeSetItem>();
     public DbSet<CatalogRevision> CatalogRevisions => Set<CatalogRevision>();
@@ -27,6 +29,10 @@ public sealed class SemanticCatalogDbContext : DbContext
 
     public Task<long> AllocateFieldDefinitionIdAsync(CancellationToken cancellationToken = default) =>
         Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('semantic.field_definitions', 'id')) AS \"Value\"")
+            .SingleAsync(cancellationToken);
+
+    public Task<long> AllocateViewDefinitionIdAsync(CancellationToken cancellationToken = default) =>
+        Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('semantic.view_definitions', 'id')) AS \"Value\"")
             .SingleAsync(cancellationToken);
 
     public Task<long> AllocateChangeSetIdAsync(CancellationToken cancellationToken = default) =>

@@ -275,6 +275,8 @@ builder.Services.AddScoped<ManageCrmCatalogHandler>();
 builder.Services.AddScoped<ISemanticDefinitionReader, SemanticDefinitionReader>();
 builder.Services.AddScoped<ManageFieldDefinitionHandler>();
 builder.Services.AddScoped<ListFieldDefinitionsHandler>();
+builder.Services.AddScoped<ManageViewDefinitionHandler>();
+builder.Services.AddScoped<ListViewDefinitionsHandler>();
 builder.Services.AddScoped<GetCustomFieldImpactHandler>();
 builder.Services.AddScoped<GetOpportunityAvailableActionsHandler>();
 

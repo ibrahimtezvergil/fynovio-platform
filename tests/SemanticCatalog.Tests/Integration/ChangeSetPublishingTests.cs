@@ -16,7 +16,7 @@ public sealed class ChangeSetPublishingTests(PostgresFixture fixture)
     private static readonly PrincipalRef Administrator = new("https://identity.test", "crm-settings-admin");
 
     private static ChangeSetItem Create(string key, string label = "Label", FieldType type = FieldType.Text, FieldConfig? config = null) =>
-        ChangeSetItem.ForField(FieldOperation.Create, null, new FieldChangeContent("crm", "opportunity", key, label, type, false, config, 0, 0));
+        ChangeSetItem.ForField(ChangeOperation.Create, null, new FieldChangeContent("crm", "opportunity", key, label, type, false, config, 0, 0));
 
     /// <summary>Drives a set through the human approval path and publishes it in one transaction, like the settings handler.</summary>
     private async Task<(PublishOutcome Outcome, SemanticCatalogDbContext Context)> PublishAsync(
@@ -47,7 +47,7 @@ public sealed class ChangeSetPublishingTests(PostgresFixture fixture)
             Assert.True(outcome.Published);
             Assert.Equal(ChangeSetStatus.Active, outcome.ChangeSet.Status);
             Assert.Equal(1, outcome.ChangeSet.PublishedRevision);
-            Assert.Equal(["alpha", "beta"], outcome.Definitions.Select(d => d.Key));
+            Assert.Equal(["alpha", "beta"], outcome.Fields.Select(d => d.Key));
         }
 
         await using var verify = fixture.CreateAdminContext();
@@ -147,7 +147,7 @@ public sealed class ChangeSetPublishingTests(PostgresFixture fixture)
         {
             var handler = new ManageFieldDefinitionHandler(fixture.CreateAdminContext(), StubAuthorizer.AlwaysAllow);
             return await handler.HandleAsync(new ManageFieldDefinitionCommand(
-                tenant, Administrator, FieldOperation.Create, null, 0, "crm", "opportunity", $"field_{i}", $"Field {i}", FieldType.Text, false, null, 0, $"concurrent-{tenant.Value}-{i}", Guid.NewGuid()));
+                tenant, Administrator, ChangeOperation.Create, null, 0, "crm", "opportunity", $"field_{i}", $"Field {i}", FieldType.Text, false, null, 0, $"concurrent-{tenant.Value}-{i}", Guid.NewGuid()));
         }));
 
         Assert.Equal(6, results.Select(r => r.ChangeSetId).Distinct().Count());

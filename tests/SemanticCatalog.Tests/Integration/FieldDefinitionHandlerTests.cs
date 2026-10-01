@@ -20,7 +20,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         var command = new ManageFieldDefinitionCommand(
             tenant,
             Administrator,
-            FieldOperation.Create,
+            ChangeOperation.Create,
             null,
             0,
             "crm", "opportunity",
@@ -68,14 +68,14 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         var idempotencyKey = "duplicate-key";
         var correlationId = Guid.NewGuid();
 
-        var command1 = new ManageFieldDefinitionCommand(tenant, Administrator, FieldOperation.Create, null, 0,
+        var command1 = new ManageFieldDefinitionCommand(tenant, Administrator, ChangeOperation.Create, null, 0,
             "crm", "opportunity", "field_one", "Field One", FieldType.Text, false, null, 0, idempotencyKey, correlationId);
 
         await using (var context = fixture.CreateAdminContext())
             await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow)
                 .HandleAsync(command1);
 
-        var command2 = new ManageFieldDefinitionCommand(tenant, Administrator, FieldOperation.Create, null, 0,
+        var command2 = new ManageFieldDefinitionCommand(tenant, Administrator, ChangeOperation.Create, null, 0,
             "crm", "opportunity", "field_two", "Field Two", FieldType.Text, false, null, 0, idempotencyKey, Guid.NewGuid());
 
         await using (var context = fixture.CreateAdminContext())
@@ -94,7 +94,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         var command = new ManageFieldDefinitionCommand(
             tenant,
             Administrator,
-            FieldOperation.Create,
+            ChangeOperation.Create,
             null,
             0,
             "crm",
@@ -122,14 +122,14 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
     {
         var tenant = TestTenants.Next();
 
-        var command1 = new ManageFieldDefinitionCommand(tenant, Administrator, FieldOperation.Create, null, 0,
+        var command1 = new ManageFieldDefinitionCommand(tenant, Administrator, ChangeOperation.Create, null, 0,
             "crm", "opportunity", "region", "Region", FieldType.Text, false, null, 0, "first-field", Guid.NewGuid());
 
         await using (var context = fixture.CreateAdminContext())
             await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow)
                 .HandleAsync(command1);
 
-        var command2 = new ManageFieldDefinitionCommand(tenant, Administrator, FieldOperation.Create, null, 0,
+        var command2 = new ManageFieldDefinitionCommand(tenant, Administrator, ChangeOperation.Create, null, 0,
             "crm", "opportunity", "region", "Region (different label)", FieldType.Text, false, null, 0, "second-field", Guid.NewGuid());
 
         await using (var context = fixture.CreateAdminContext())
@@ -151,7 +151,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
             for (int i = 0; i < 100; i++)
             {
                 var cmd = new ManageFieldDefinitionCommand(
-                    tenant, Administrator, FieldOperation.Create, null, 0,
+                    tenant, Administrator, ChangeOperation.Create, null, 0,
                     "crm", "opportunity", $"field_{i:D3}", $"Field {i}", FieldType.Text,
                     false, null, 0, $"idempotency-{i}", Guid.NewGuid());
                 await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow)
@@ -160,7 +160,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         }
 
         var commandFor101 = new ManageFieldDefinitionCommand(
-            tenant, Administrator, FieldOperation.Create, null, 0,
+            tenant, Administrator, ChangeOperation.Create, null, 0,
             "crm", "opportunity", "field_100", "Field 100", FieldType.Text,
             false, null, 0, "idempotency-100", Guid.NewGuid());
 
@@ -181,7 +181,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         ManageFieldDefinitionResult created;
         await using (var context = fixture.CreateAdminContext())
         {
-            var createCmd = new ManageFieldDefinitionCommand(tenant, Administrator, FieldOperation.Create, null, 0,
+            var createCmd = new ManageFieldDefinitionCommand(tenant, Administrator, ChangeOperation.Create, null, 0,
                 "crm", "opportunity", "status_field", "Status", FieldType.Select,
                 false,
                 new FieldConfigInput(
@@ -193,7 +193,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         }
 
         var updateCmd = new ManageFieldDefinitionCommand(
-            tenant, Administrator, FieldOperation.Update, created.DefinitionId, 0, // Wrong version
+            tenant, Administrator, ChangeOperation.Update, created.DefinitionId, 0, // Wrong version
             "crm", "opportunity", "status_field", "Status (Updated)", FieldType.Select,
             false,
             new FieldConfigInput(
@@ -217,7 +217,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         ManageFieldDefinitionResult created;
         await using (var context = fixture.CreateAdminContext())
         {
-            var cmd = new ManageFieldDefinitionCommand(tenant, Administrator, FieldOperation.Create, null, 0,
+            var cmd = new ManageFieldDefinitionCommand(tenant, Administrator, ChangeOperation.Create, null, 0,
                 "crm", "opportunity", "temp_field", "Temporary Field", FieldType.Text, false, null, 0, "temp-field", Guid.NewGuid());
             created = await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow)
                 .HandleAsync(cmd);
@@ -226,7 +226,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         await using (var context = fixture.CreateAdminContext())
         {
             var deprecateCmd = new ManageFieldDefinitionCommand(
-                tenant, Administrator, FieldOperation.Deprecate, created.DefinitionId, created.RowVersion,
+                tenant, Administrator, ChangeOperation.Deprecate, created.DefinitionId, created.RowVersion,
                 "crm", "opportunity", "", "", FieldType.Text, false, null, 0, "deprecate-temp", Guid.NewGuid());
             var deprecated = await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow)
                 .HandleAsync(deprecateCmd);
@@ -240,7 +240,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         {
             var def = await context.FieldDefinitions.SingleAsync(x => x.Id == created.DefinitionId);
             var reactivateCmd = new ManageFieldDefinitionCommand(
-                tenant, Administrator, FieldOperation.Reactivate, created.DefinitionId, def.RowVersion,
+                tenant, Administrator, ChangeOperation.Reactivate, created.DefinitionId, def.RowVersion,
                 "crm", "opportunity", "", "", FieldType.Text, false, null, 0, "reactivate-temp", Guid.NewGuid());
             var reactivated = await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow)
                 .HandleAsync(reactivateCmd);
@@ -261,7 +261,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
             for (int i = 0; i < 3; i++)
             {
                 var cmd = new ManageFieldDefinitionCommand(
-                    tenant, Administrator, FieldOperation.Create, null, 0,
+                    tenant, Administrator, ChangeOperation.Create, null, 0,
                     "crm", "opportunity", $"field_{i}", $"Field {i}", FieldType.Text,
                     false, null, i % 2 == 0 ? 10 : 5, $"list-test-{i}", Guid.NewGuid());
                 await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow)
@@ -293,7 +293,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         await using (var context = fixture.CreateAdminContext())
         {
             var cmd = new ManageFieldDefinitionCommand(
-                tenant, Administrator, FieldOperation.Create, null, 0,
+                tenant, Administrator, ChangeOperation.Create, null, 0,
                 "crm", "opportunity", "test_field", "Test Field", FieldType.Text,
                 false, null, 0, "list-auth-test", Guid.NewGuid());
             await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow)
@@ -315,7 +315,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
     {
         var tenant = TestTenants.Next();
         var command = new ManageFieldDefinitionCommand(
-            tenant, Administrator, FieldOperation.Create, null, 0,
+            tenant, Administrator, ChangeOperation.Create, null, 0,
             "crm", "opportunity", "secure_field", "Secure Field", FieldType.Text,
             false, null, 0, "secure-field", Guid.NewGuid());
 
@@ -339,7 +339,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
             for (int i = 0; i < 99; i++)
             {
                 var cmd = new ManageFieldDefinitionCommand(
-                    tenant, Administrator, FieldOperation.Create, null, 0,
+                    tenant, Administrator, ChangeOperation.Create, null, 0,
                     "crm", "opportunity", $"active_{i:D3}", $"Active {i}", FieldType.Text,
                     false, null, 0, $"active-{i}", Guid.NewGuid());
                 await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow)
@@ -348,7 +348,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
 
             // Create one more that we'll deprecate
             var cmd101 = new ManageFieldDefinitionCommand(
-                tenant, Administrator, FieldOperation.Create, null, 0,
+                tenant, Administrator, ChangeOperation.Create, null, 0,
                 "crm", "opportunity", "to_deprecate", "To Deprecate", FieldType.Text,
                 false, null, 0, "to-deprecate", Guid.NewGuid());
             fieldToReactivate = await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow)
@@ -360,7 +360,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         {
             var def = await context.FieldDefinitions.SingleAsync(x => x.Id == fieldToReactivate.DefinitionId);
             var deprecateCmd = new ManageFieldDefinitionCommand(
-                tenant, Administrator, FieldOperation.Deprecate, fieldToReactivate.DefinitionId, def.RowVersion,
+                tenant, Administrator, ChangeOperation.Deprecate, fieldToReactivate.DefinitionId, def.RowVersion,
                 "crm", "opportunity", "", "", FieldType.Text, false, null, 0, "deprecate-101", Guid.NewGuid());
             await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow)
                 .HandleAsync(deprecateCmd);
@@ -369,7 +369,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         // Fill the freed slot so 100 fields are active again
         await using (var context = fixture.CreateAdminContext())
             await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(new ManageFieldDefinitionCommand(
-                tenant, Administrator, FieldOperation.Create, null, 0,
+                tenant, Administrator, ChangeOperation.Create, null, 0,
                 "crm", "opportunity", "active_099", "Active 99", FieldType.Text,
                 false, null, 0, "active-99", Guid.NewGuid()));
 
@@ -378,7 +378,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         {
             var def = await context.FieldDefinitions.SingleAsync(x => x.Id == fieldToReactivate.DefinitionId);
             var reactivateCmd = new ManageFieldDefinitionCommand(
-                tenant, Administrator, FieldOperation.Reactivate, fieldToReactivate.DefinitionId, def.RowVersion,
+                tenant, Administrator, ChangeOperation.Reactivate, fieldToReactivate.DefinitionId, def.RowVersion,
                 "crm", "opportunity", "", "", FieldType.Text, false, null, 0, "reactivate-101", Guid.NewGuid());
 
             var ex = await Assert.ThrowsAsync<FieldLimitExceededException>(
@@ -397,7 +397,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         ManageFieldDefinitionResult created;
         await using (var context = fixture.CreateAdminContext())
             created = await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(new ManageFieldDefinitionCommand(
-                tenant, Administrator, FieldOperation.Create, null, 0, "crm", "opportunity", "account", "Account", FieldType.Reference, false,
+                tenant, Administrator, ChangeOperation.Create, null, 0, "crm", "opportunity", "account", "Account", FieldType.Reference, false,
                 new FieldConfigInput(Target: target), 0, "reference-create", Guid.NewGuid()));
 
         await using (var context = fixture.CreateAdminContext())
@@ -411,7 +411,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         await using (var context = fixture.CreateAdminContext())
         {
             await Assert.ThrowsAsync<ArgumentException>(() => new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(
-                new ManageFieldDefinitionCommand(tenant, Administrator, FieldOperation.Update, created.DefinitionId, created.RowVersion, "crm", "opportunity", "", "Account",
+                new ManageFieldDefinitionCommand(tenant, Administrator, ChangeOperation.Update, created.DefinitionId, created.RowVersion, "crm", "opportunity", "", "Account",
                     FieldType.Text, false, new FieldConfigInput(), 0, "reference-retarget", Guid.NewGuid())));
         }
 
@@ -426,7 +426,7 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
         await using var context = fixture.CreateAdminContext();
 
         await Assert.ThrowsAsync<ArgumentException>(() => new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(
-            new ManageFieldDefinitionCommand(tenant, Administrator, FieldOperation.Create, null, 0, "crm", "opportunity", "account", "Account", FieldType.Reference, false,
+            new ManageFieldDefinitionCommand(tenant, Administrator, ChangeOperation.Create, null, 0, "crm", "opportunity", "account", "Account", FieldType.Reference, false,
                 new FieldConfigInput(Target: new FieldTargetInput("masterdata", "product")), 0, "reference-bad-target", Guid.NewGuid())));
 
         await using var verify = fixture.CreateAdminContext();

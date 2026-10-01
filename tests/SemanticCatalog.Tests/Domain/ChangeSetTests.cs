@@ -9,7 +9,7 @@ public sealed class ChangeSetTests
     private static readonly PrincipalRef Author = new("https://identity.test", "admin");
 
     private static ChangeSetItem Create(string key = "region", string label = "Region") =>
-        ChangeSetItem.ForField(FieldOperation.Create, null,
+        ChangeSetItem.ForField(ChangeOperation.Create, null,
             new FieldChangeContent("crm", "opportunity", key, label, FieldType.Text, false, null, 0, 0));
 
     private static ChangeSet NewSet(long baseRevision = 0) => ChangeSet.Draft(Tenant, Author, baseRevision, [Create()]);
@@ -148,7 +148,7 @@ public sealed class ChangeSetTests
         Assert.Throws<ArgumentException>(() => ChangeSet.Draft(Tenant, Author, 0, [Create("region"), Create("region", "Again")]));
         var update = new FieldChangeContent("crm", "opportunity", "region", "Region", null, false, null, 0, 1);
         Assert.Throws<ArgumentException>(() => ChangeSet.Draft(Tenant, Author, 0,
-            [ChangeSetItem.ForField(FieldOperation.Update, 5, update), ChangeSetItem.ForField(FieldOperation.Deprecate, 5, update)]));
+            [ChangeSetItem.ForField(ChangeOperation.Update, 5, update), ChangeSetItem.ForField(ChangeOperation.Deprecate, 5, update)]));
     }
 
     [Fact]
@@ -156,8 +156,8 @@ public sealed class ChangeSetTests
     {
         var content = new FieldChangeContent("crm", "opportunity", "region", "Region", FieldType.Text, false, null, 0, 1);
 
-        Assert.Throws<ArgumentException>(() => ChangeSetItem.ForField(FieldOperation.Create, 5, content));
-        Assert.Throws<ArgumentException>(() => ChangeSetItem.ForField(FieldOperation.Update, null, content));
-        Assert.Throws<ArgumentException>(() => ChangeSetItem.ForField(FieldOperation.Deprecate, 0, content));
+        Assert.Throws<ArgumentException>(() => ChangeSetItem.ForField(ChangeOperation.Create, 5, content));
+        Assert.Throws<ArgumentException>(() => ChangeSetItem.ForField(ChangeOperation.Update, null, content));
+        Assert.Throws<ArgumentException>(() => ChangeSetItem.ForField(ChangeOperation.Deprecate, 0, content));
     }
 }

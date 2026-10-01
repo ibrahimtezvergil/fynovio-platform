@@ -9,4 +9,8 @@ public interface ISemanticDefinitionReader
     Task<IReadOnlyList<FieldDefinition>> ListFieldsAsync(TenantId tenantId, string ownerContext, string objectType, CancellationToken cancellationToken = default);
 
     Task<FieldDefinition?> GetFieldAsync(TenantId tenantId, long definitionId, CancellationToken cancellationToken = default);
+
+    /// <summary>The active views whose columns include this field (the dependency edges computed when a view is published).
+    /// Deprecating a field is allowed regardless; this is what the person is shown first.</summary>
+    Task<IReadOnlyList<DependentView>> ListDependentViewsAsync(TenantId tenantId, long fieldDefinitionId, CancellationToken cancellationToken = default);
 }

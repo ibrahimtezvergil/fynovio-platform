@@ -20,6 +20,10 @@ public sealed class SemanticCatalogProblemDetailsExceptionHandler : IExceptionHa
             FieldKeyConflictException => (StatusCodes.Status409Conflict, "custom_field_key_conflict"),
             FieldLimitExceededException => (StatusCodes.Status422UnprocessableEntity, "field_limit_exceeded"),
             IdempotencyKeyReusedException => (StatusCodes.Status409Conflict, "idempotency_key_reused"),
+            ViewKeyConflictException => (StatusCodes.Status409Conflict, "view_key_conflict"),
+            ViewLimitExceededException => (StatusCodes.Status422UnprocessableEntity, "view_limit_exceeded"),
+            ViewColumnUnknownException => (StatusCodes.Status422UnprocessableEntity, "view_column_unknown"),
+            ViewColumnDeprecatedException => (StatusCodes.Status422UnprocessableEntity, "view_column_deprecated"),
             _ => (0, (string?)null)
         };
 

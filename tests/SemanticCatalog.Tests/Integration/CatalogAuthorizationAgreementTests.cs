@@ -32,7 +32,7 @@ public sealed class CatalogAuthorizationAgreementTests(PostgresFixture fixture)
         await using var context = fixture.CreateAdminContext();
 
         await new ManageFieldDefinitionHandler(context, recorder).HandleAsync(new ManageFieldDefinitionCommand(
-            tenant, Administrator, FieldOperation.Create, null, 0, "crm", "opportunity", "asked", "Asked", FieldType.Text, false, null, 0, "agree-write", Guid.NewGuid()));
+            tenant, Administrator, ChangeOperation.Create, null, 0, "crm", "opportunity", "asked", "Asked", FieldType.Text, false, null, 0, "agree-write", Guid.NewGuid()));
         await new ListFieldDefinitionsHandler(context, recorder).HandleAsync(
             new ListFieldDefinitionsQuery(tenant, Administrator, "crm", "opportunity", Guid.NewGuid()));
 

@@ -1,5 +1,6 @@
 using Contracts;
 using Microsoft.EntityFrameworkCore;
+using SemanticCatalog.Domain;
 using SemanticCatalog.Persistence;
 
 namespace SemanticCatalog.Application;
@@ -29,5 +30,19 @@ public sealed class SemanticDefinitionReader(SemanticCatalogDbContext context) :
             .SingleOrDefaultAsync(x => x.TenantId == tenantId && x.Id == definitionId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return row?.ToReadModel();
+    }
+
+    public async Task<IReadOnlyList<DependentView>> ListDependentViewsAsync(TenantId tenantId, long fieldDefinitionId, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        await context.SetTenantContextAsync(tenantId, cancellationToken);
+        var views = await (from edge in context.DependencyEdges.AsNoTracking()
+                           join view in context.ViewDefinitions.AsNoTracking() on edge.FromId equals view.Id
+                           where edge.TenantId == tenantId && edge.ToKind == DependencyEdge.FieldKind && edge.ToId == fieldDefinitionId && view.Status == FieldStatus.Active
+                           orderby view.SortOrder, view.Key
+                           select new DependentView(view.Id, view.Key, view.Name))
+            .ToListAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return views;
     }
 }

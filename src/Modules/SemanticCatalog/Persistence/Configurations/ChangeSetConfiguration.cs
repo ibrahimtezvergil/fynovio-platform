@@ -55,11 +55,14 @@ public sealed class ChangeSetItemConfiguration : IEntityTypeConfiguration<Change
         builder.Property(i => i.TargetKind).HasMaxLength(16).IsRequired();
         builder.Property(i => i.Operation).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(i => i.PayloadJson).HasColumnName("payload").HasColumnType("jsonb").IsRequired();
-        builder.Ignore(i => i.Content);
+        builder.Ignore(i => i.Field);
+        builder.Ignore(i => i.View);
+        builder.Ignore(i => i.Key);
+        builder.Ignore(i => i.TargetIdentity);
 
         builder.ToTable(t =>
         {
-            t.HasCheckConstraint("ck_change_set_items_kind", "target_kind IN ('field')");
+            t.HasCheckConstraint("ck_change_set_items_kind", "target_kind IN ('field','view')");
             t.HasCheckConstraint("ck_change_set_items_operation", "operation IN ('Create','Update','Deprecate','Reactivate')");
             t.HasCheckConstraint("ck_change_set_items_target", "(operation = 'Create') = (target_id IS NULL)");
         });

@@ -29,6 +29,11 @@ public sealed class StubDefinitionReader : ISemanticDefinitionReader
             .Where(d => d.TenantId == tenantId && d.OwnerContext == ownerContext && d.ObjectType == objectType)
             .OrderBy(d => d.SortOrder).ThenBy(d => d.Key, StringComparer.Ordinal).ToList());
 
+    public List<DependentView> DependentViews { get; } = [];
+
+    public Task<IReadOnlyList<DependentView>> ListDependentViewsAsync(TenantId tenantId, long fieldDefinitionId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<DependentView>>(DependentViews.ToList());
+
     public Task<FieldDefinition?> GetFieldAsync(TenantId tenantId, long definitionId, CancellationToken cancellationToken = default) =>
         Task.FromResult(_definitions.SingleOrDefault(d => d.TenantId == tenantId && d.Id == definitionId));
 }

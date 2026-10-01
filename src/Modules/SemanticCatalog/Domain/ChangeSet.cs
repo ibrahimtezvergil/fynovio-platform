@@ -88,7 +88,7 @@ public sealed class ChangeSet
             throw new ArgumentOutOfRangeException(nameof(baseRevision));
 
         // One set must not touch the same definition twice: the items would be applied in order against stale reads.
-        var targets = list.Select(item => item.Operation == FieldOperation.Create ? $"new:{item.Content.OwnerContext}/{item.Content.ObjectType}/{item.Content.Key}" : $"id:{item.TargetId}").ToList();
+        var targets = list.Select(item => item.TargetIdentity).ToList();
         if (targets.Distinct(StringComparer.Ordinal).Count() != targets.Count)
             throw new ArgumentException("A change set cannot contain two items for the same definition.", nameof(items));
 

@@ -335,4 +335,81 @@ public sealed class CustomFieldsEndpointTests : IClassFixture<AuthApiFixture>
         Assert.False(asViewer.GetProperty("accessible").GetBoolean());
         Assert.Equal(JsonValueKind.Null, asViewer.GetProperty("label").ValueKind);
     }
+
+    [Fact]
+    public async Task Shared_views_are_managed_as_change_sets_read_by_every_crm_reader_and_shown_in_the_impact_of_a_field()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+        var admin = await TokenAsync(client, DevSeeder.AdminEmail, 1);
+        var field = UniqueKey("vf");
+        var (fieldId, fieldVersion) = await DefineAsync(client, admin, new { key = field, label = "View field", type = "text", isRequired = false, sortOrder = 1 });
+        var viewKey = UniqueKey("view");
+
+        var created = await client.SendAsync(Authorized(HttpMethod.Post, "/crm/settings/views", admin, new
+        {
+            key = viewKey,
+            name = "Pipeline review",
+            sortOrder = 1,
+            columns = new object[] { new { kind = "builtin", key = "id" }, new { kind = "field", key = field }, new { kind = "builtin", key = "status" } },
+        }));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var createdBody = await created.Content.ReadFromJsonAsync<JsonElement>();
+        var viewId = createdBody.GetProperty("definitionId").GetInt64();
+        Assert.True(createdBody.GetProperty("changeSetId").GetInt64() > 0);
+
+        // Every CRM reader (the viewer) can read views; only a settings manager can change them.
+        var viewer = await TokenAsync(client, DevSeeder.ViewerEmail);
+        var listed = (await (await client.SendAsync(Authorized(HttpMethod.Get, "/crm/settings/views", viewer))).Content.ReadFromJsonAsync<JsonElement>())
+            .EnumerateArray().Single(v => v.GetProperty("key").GetString() == viewKey);
+        Assert.Equal(["id", field, "status"], listed.GetProperty("columns").EnumerateArray().Select(c => c.GetProperty("key").GetString()));
+        Assert.Equal("Active", listed.GetProperty("status").GetString());
+        var denied = await client.SendAsync(Authorized(HttpMethod.Post, "/crm/settings/views", viewer, new { key = UniqueKey("nope"), name = "Nope", columns = new[] { new { kind = "builtin", key = "id" } } }));
+        Assert.Equal(HttpStatusCode.Forbidden, denied.StatusCode);
+
+        // The deprecate dialog's first question: what depends on this field?
+        var impact = await (await client.SendAsync(Authorized(HttpMethod.Get, $"/crm/settings/custom-fields/{fieldId}/impact", admin))).Content.ReadFromJsonAsync<JsonElement>();
+        var dependent = Assert.Single(impact.GetProperty("dependentViews").EnumerateArray());
+        Assert.Equal(viewKey, dependent.GetProperty("key").GetString());
+
+        // Deprecating the field is still allowed; the view keeps its (now retired) column.
+        var deprecated = await client.SendAsync(Authorized(HttpMethod.Post, $"/crm/settings/custom-fields/{fieldId}/deprecate", admin, new { expectedRowVersion = fieldVersion }));
+        Assert.Equal(HttpStatusCode.OK, deprecated.StatusCode);
+
+        // Edit and retire the view; the error contract is the catalog's.
+        var updated = await client.SendAsync(Authorized(HttpMethod.Put, $"/crm/settings/views/{viewId}", admin, new
+        {
+            name = "Pipeline review v2",
+            sortOrder = 2,
+            expectedRowVersion = 1,
+            columns = new[] { new { kind = "builtin", key = "id" } },
+        }));
+        Assert.Equal(HttpStatusCode.OK, updated.StatusCode);
+        Assert.Equal(2, (await updated.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("rowVersion").GetInt64());
+
+        async Task<(HttpStatusCode Status, string? Type)> SendAsync(HttpMethod method, string path, object body)
+        {
+            var response = await client.SendAsync(Authorized(method, path, admin, body));
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            return (response.StatusCode, json.TryGetProperty("type", out var type) ? type.GetString() : null);
+        }
+
+        Assert.Equal((HttpStatusCode.Conflict, "view_key_conflict"),
+            await SendAsync(HttpMethod.Post, "/crm/settings/views", new { key = viewKey, name = "Again", columns = new[] { new { kind = "builtin", key = "id" } } }));
+        Assert.Equal((HttpStatusCode.UnprocessableEntity, "view_column_unknown"),
+            await SendAsync(HttpMethod.Post, "/crm/settings/views", new { key = UniqueKey("ghost"), name = "Ghost", columns = new[] { new { kind = "field", key = "no_such_field" } } }));
+        Assert.Equal((HttpStatusCode.UnprocessableEntity, "view_column_deprecated"),
+            await SendAsync(HttpMethod.Post, "/crm/settings/views", new { key = UniqueKey("old"), name = "Old", columns = new[] { new { kind = "field", key = field } } }));
+        Assert.Equal((HttpStatusCode.BadRequest, "validation_error"),
+            await SendAsync(HttpMethod.Post, "/crm/settings/views", new { key = UniqueKey("bad"), name = "Bad", columns = new[] { new { kind = "builtin", key = "serviceDuration" } } }));
+        Assert.Equal((HttpStatusCode.Conflict, "concurrency_conflict"),
+            await SendAsync(HttpMethod.Put, $"/crm/settings/views/{viewId}", new { name = "Stale", columns = new[] { new { kind = "builtin", key = "id" } }, expectedRowVersion = 1 }));
+        Assert.Equal((HttpStatusCode.NotFound, "not_found"), await SendAsync(HttpMethod.Post, "/crm/settings/views/999999999/deprecate", new { expectedRowVersion = 1 }));
+
+        var retired = await client.SendAsync(Authorized(HttpMethod.Post, $"/crm/settings/views/{viewId}/deprecate", admin, new { expectedRowVersion = 2 }));
+        Assert.Equal(HttpStatusCode.OK, retired.StatusCode);
+        var afterwards = (await (await client.SendAsync(Authorized(HttpMethod.Get, "/crm/settings/views", admin))).Content.ReadFromJsonAsync<JsonElement>())
+            .EnumerateArray().Single(v => v.GetProperty("key").GetString() == viewKey);
+        Assert.Equal("Deprecated", afterwards.GetProperty("status").GetString());
+    }
 }

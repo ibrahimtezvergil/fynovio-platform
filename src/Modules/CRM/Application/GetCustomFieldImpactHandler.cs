@@ -12,10 +12,13 @@ public sealed record GetCustomFieldImpactQuery(
     long DefinitionId,
     Guid CorrelationId);
 
+/// <summary>What deprecating a field touches: the opportunities that hold a value (CRM's data) and the active shared views that place
+/// the field as a column (the catalog's dependency edges). Deprecation stays allowed either way; this is what the person sees first.</summary>
 public sealed record CustomFieldImpactDto(
     long DefinitionId,
     string FieldName,
-    int OpportunitiesWithValue);
+    int OpportunitiesWithValue,
+    IReadOnlyList<DependentView> DependentViews);
 
 public sealed class GetCustomFieldImpactHandler(CrmDbContext context, IAuthorizer authorizer, ISemanticDefinitionReader definitionReader)
 {
@@ -30,10 +33,11 @@ public sealed class GetCustomFieldImpactHandler(CrmDbContext context, IAuthorize
             throw new KeyNotFoundException($"Field definition {query.DefinitionId} was not found.");
 
         var opportunitiesWithValue = await CountOpportunitiesWithFieldAsync(query.TenantId, definition.Key, cancellationToken);
+        var dependentViews = await definitionReader.ListDependentViewsAsync(query.TenantId, definition.Id, cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
 
-        return new CustomFieldImpactDto(definition.Id, definition.Key, opportunitiesWithValue);
+        return new CustomFieldImpactDto(definition.Id, definition.Key, opportunitiesWithValue, dependentViews);
     }
 
     // jsonb key-exists (`custom_fields ? key`); archived opportunities count too, since their values stay readable.
