@@ -62,10 +62,12 @@ Note: tests added — SemanticCatalog.Tests 209, CRM.Tests 353, Host.Tests 407, 
 
 ## A-2 — Shared table views + `dependency_edges`
 ### Task 9
-- [ ] `semantic.view_definitions`, `dependency_edges` (computed at publish), view items in ChangeSets.
-- [ ] API: list/read shared views (`crm.opportunity.read`-gated like the list), manage via settings; impact endpoint lists dependent views.
-- [ ] Web: view picker on the opportunity list; settings UI for shared views; deprecate dialog shows dependent views.
-- [ ] Tests incl. field deprecation with a dependent view.
+- [x] `semantic.view_definitions`, `dependency_edges` (computed at publish), view items in ChangeSets.
+- [x] API: list/read shared views (read at `crm.settings.read` — see the ADR note: every CRM reader holds it, so no template change), manage via settings; impact endpoint lists dependent views.
+- [x] Web: view picker on the opportunity list; settings UI for shared views; deprecate dialog shows dependent views.
+- [x] Tests incl. field deprecation with a dependent view.
+→ Commit: `c99d062` "feat(semantic-catalog): shared table views and dependency edges, backend (A-2)"; web: `51fabd8` "feat(web): shared list views, a view manager in settings and dependent views on field deprecation (A-2)"
+Note: before the views the item model was made kind-discriminated (advisor review) under the existing 209 tests, then views added. Deviations recorded in the ADR: a view has columns only, no default sort (the list API cannot sort the full result set, so a page-local order would pass for a complete one); a new or edited view may not place a deprecated field, an existing one keeps working. Tests after A-2: SemanticCatalog 240, CRM 354, Host 408, Messaging 49, Access 313, Collaboration 306, MasterData 44, TenantLifecycle 20 = 1734 .NET; web 772.
 
 ## Task 10 — Wrap-up
 - [ ] Browser E2E on the dev DB; code review; schema doc, AGENTS.md status, phase table, memory; report to the owner (Turkish), listing Task 5 of event consumption as still deferred.
