@@ -350,6 +350,22 @@ export default {
       forbidden: 'You are not allowed to reassign this opportunity.',
     },
   },
+  activity: {
+    title: 'Activity', description: 'What happened to this opportunity, newest first. A change shows up here a few seconds after it is saved.',
+    loading: 'Loading activity…', empty: 'No activity recorded yet.', error: 'Could not load the activity.', retry: 'Try again',
+    kinds: {
+      created: 'Opportunity created', createdWithAmount: 'Opportunity created with an estimate of {{amount}}',
+      opened: 'Opened', openedIn: 'Opened in {{stage}}',
+      stage_changed: 'Stage changed', stageChangedTo: 'Moved to {{to}}', stageChangedFromTo: 'Moved from {{from}} to {{to}}',
+      moved_pipeline: 'Moved to another pipeline', movedPipelineTo: 'Moved to another pipeline, at {{stage}}',
+      reassigned: 'Reassigned', reassignedTo: 'Reassigned to {{name}}',
+      won: 'Won', wonWithAmount: 'Won at {{amount}}',
+      lost: 'Lost', lostWithReason: 'Lost: {{reason}}',
+      archived: 'Archived', restored: 'Restored from the archive',
+      custom_fields_changed: 'Additional fields updated', customFieldsChangedNamed: 'Updated {{fields}}',
+      unknown: 'Updated',
+    },
+  },
   customFields: {
     title: 'Additional fields', formDescription: 'Extra information your workspace keeps for this opportunity.', noValue: 'Not selected', yes: 'Yes', no: 'No',
     edit: 'Edit', save: 'Save', saving: 'Saving…', cancel: 'Cancel', empty: 'No values yet.', deprecated: 'Deprecated', deprecatedHint: 'These fields are no longer in use; their stored values are read-only.',

@@ -30,6 +30,7 @@ export const endpoints = {
     restore: (id: number) => `/opportunities/${id}/restore`,
     assignablePrincipals: (id: number) => `/opportunities/${id}/assignable-principals`,
     customFields: (id: number) => `/opportunities/${id}/custom-fields`,
+    activity: (id: number) => `/opportunities/${id}/activity`,
   },
   references: {
     parties: '/crm/references/parties',
