@@ -5,6 +5,7 @@ using CRM.Domain;
 using Host.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using SemanticCatalog.Application;
+using SemanticCatalog.Domain;
 
 namespace Host.Endpoints;
 

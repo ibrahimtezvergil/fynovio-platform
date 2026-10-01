@@ -18,12 +18,19 @@ public sealed class SemanticCatalogDbContext : DbContext
     }
 
     public DbSet<CatalogFieldDefinition> FieldDefinitions => Set<CatalogFieldDefinition>();
+    public DbSet<ChangeSet> ChangeSets => Set<ChangeSet>();
+    public DbSet<ChangeSetItem> ChangeSetItems => Set<ChangeSetItem>();
+    public DbSet<CatalogRevision> CatalogRevisions => Set<CatalogRevision>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
     public DbSet<EvidenceRecord> EvidenceRecords => Set<EvidenceRecord>();
 
     public Task<long> AllocateFieldDefinitionIdAsync(CancellationToken cancellationToken = default) =>
         Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('semantic.field_definitions', 'id')) AS \"Value\"")
+            .SingleAsync(cancellationToken);
+
+    public Task<long> AllocateChangeSetIdAsync(CancellationToken cancellationToken = default) =>
+        Database.SqlQueryRaw<long>("SELECT nextval(pg_get_serial_sequence('semantic.change_sets', 'id')) AS \"Value\"")
             .SingleAsync(cancellationToken);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

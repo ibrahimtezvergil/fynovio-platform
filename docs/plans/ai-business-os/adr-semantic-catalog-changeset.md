@@ -76,3 +76,10 @@ The catalog's outbox is a **sixth relay source**: `OutboxSources.All` gains `sem
 - One more module, one more schema, one more outbox source — the cost of OD-5.
 - Definition edits get history, a content hash, stale-write protection and an impact view, without any capability-template change.
 - CRM loses its definition tables and write handler but keeps value validation; its tests that created definitions through its own DbContext move to the catalog or use a stub reader.
+
+## Implementation notes (C-2, 2026-10-01)
+- **The base revision of a settings edit is read under the tenant lock.** A one-item set is drafted and published in one transaction, so `ChangeSetPublisher.DraftAsync(..., authorUnderLock: true)` takes the `catalog_revisions` lock *before* it reads the revision it authors against. Reading it first and locking at publish time (the first implementation) made concurrent edits for one tenant supersede each other; the concurrency test caught it. A draft that waits for review reads the revision unlocked, which is what the publish-time stale check is for.
+- **Evidence:** one `ChangeSet.Published` (or `ChangeSet.Superseded`) record per set, carrying the transitions walked, the content hash, the base and published revisions and `approval: "self"`; the per-definition `TenantFieldDefinition.*` evidence and outbox facts of tier 1 are kept unchanged (the evidence now also names `changeSetId`).
+- **API:** the settings responses gain an additive `changeSetId`; nothing else on the wire changed.
+- **Not built (as decided):** a draft/review API, multi-item sets from the UI, an approver other than the author. `ChangeSetPublisher` is public and tested with multi-item and stale sets so those can be added without reshaping the engine.
+

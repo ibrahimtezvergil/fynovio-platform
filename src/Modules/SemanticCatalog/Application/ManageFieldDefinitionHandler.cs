@@ -4,20 +4,10 @@ using System.Text.Json;
 using Contracts;
 using Microsoft.EntityFrameworkCore;
 using SemanticCatalog.Domain;
-using SemanticCatalog.Evidence;
 using SemanticCatalog.Idempotency;
-using SemanticCatalog.Outbox;
 using SemanticCatalog.Persistence;
 
 namespace SemanticCatalog.Application;
-
-public enum FieldOperation
-{
-    Create,
-    Update,
-    Deprecate,
-    Reactivate
-}
 
 public sealed record ManageFieldDefinitionCommand(
     TenantId TenantId,
@@ -45,14 +35,14 @@ public sealed record FieldConfigInput(
 
 public sealed record FieldOptionInput(string Key, string Label, bool IsDeprecated = false);
 
-public sealed record ManageFieldDefinitionResult(long DefinitionId, long RowVersion, bool Replayed);
+public sealed record ManageFieldDefinitionResult(long DefinitionId, long RowVersion, bool Replayed, long? ChangeSetId = null);
 
-/// <summary>Creates, edits, deprecates and reactivates field definitions — behavior carried over unchanged from CRM's
-/// tier-1 handler (adr-tier1-custom-fields.md). State, outbox, evidence and the idempotency record commit together.</summary>
+/// <summary>Creates, edits, deprecates and reactivates field definitions. Since C-2 every edit is a **one-item change set**
+/// that this handler walks `Draft → Validated → AwaitingApproval → Approved` (the writer approves their own set; recorded in
+/// evidence) and hands to <see cref="ChangeSetPublisher"/>, which publishes and activates it in the same transaction. Limits,
+/// validation, errors and the response are those of the tier-1 handler (adr-tier1-custom-fields.md).</summary>
 public sealed class ManageFieldDefinitionHandler(SemanticCatalogDbContext context, IAuthorizer authorizer)
 {
-    private const int MaxActiveFieldsPerObjectType = 100;
-
     public async Task<ManageFieldDefinitionResult> HandleAsync(ManageFieldDefinitionCommand command, CancellationToken cancellationToken = default)
     {
         ValidateCommand(command);
@@ -73,44 +63,17 @@ public sealed class ManageFieldDefinitionHandler(SemanticCatalogDbContext contex
             return Replay(prior.ResponsePayload);
         }
 
-        var definition = await MutateAsync(command, cancellationToken);
-        var result = new ManageFieldDefinitionResult(definition.Id, definition.RowVersion, false);
+        var publisher = new ChangeSetPublisher(context);
+        var set = await publisher.DraftAsync(command.TenantId, command.Principal, [ToItem(command)], authorUnderLock: true, cancellationToken);
+        set.Validate();
+        set.SubmitForApproval();
+        set.Approve();
+        var outcome = await publisher.PublishAsync(set, command.Principal, command.CorrelationId, cancellationToken);
+        if (!outcome.Published)
+            throw new InvalidOperationException("A one-item change set authored under the revision lock cannot be stale.");
 
-        var responsePayload = JsonSerializer.Serialize(result);
-        context.OutboxMessages.Add(OutboxMessage.Create(
-            command.TenantId,
-            "TenantFieldDefinition",
-            result.DefinitionId,
-            result.RowVersion,
-            "enterprise.crm.custom_field_definition.changed.v1",
-            "semantic-catalog",
-            $"crm-customization/field-definition/{result.DefinitionId}",
-            command.CorrelationId,
-            null,
-            JsonSerializer.Serialize(new
-            {
-                id = result.DefinitionId,
-                aggregateType = "Opportunity",
-                fieldName = definition.Key,
-                operation = command.Operation.ToString(),
-                rowVersion = result.RowVersion
-            })));
-
-        context.EvidenceRecords.Add(EvidenceRecord.Create(
-            command.TenantId,
-            "TenantFieldDefinition",
-            result.DefinitionId,
-            result.RowVersion,
-            command.Principal,
-            $"TenantFieldDefinition.{command.Operation}",
-            JsonSerializer.Serialize(new
-            {
-                fieldName = definition.Key,
-                aggregateType = "Opportunity",
-                operation = command.Operation.ToString(),
-                rowVersion = result.RowVersion
-            }),
-            command.CorrelationId));
+        var definition = outcome.Definitions.Single();
+        var result = new ManageFieldDefinitionResult(definition.Id, definition.RowVersion, false, set.Id);
 
         context.IdempotencyRecords.Add(IdempotencyRecord.Create(
             command.TenantId,
@@ -119,7 +82,7 @@ public sealed class ManageFieldDefinitionHandler(SemanticCatalogDbContext contex
             command.IdempotencyKey,
             hash,
             200,
-            responsePayload,
+            JsonSerializer.Serialize(result),
             TimeSpan.FromDays(1)));
 
         try
@@ -150,90 +113,27 @@ public sealed class ManageFieldDefinitionHandler(SemanticCatalogDbContext contex
         return result;
     }
 
+    private static ChangeSetItem ToItem(ManageFieldDefinitionCommand command)
+    {
+        var config = command.Config is null
+            ? null
+            : new FieldConfig(
+                command.Config.Options?.Select(o => new FieldOption(o.Key, o.Label, o.IsDeprecated)).ToList(),
+                command.Config.Scale, command.Config.Min, command.Config.Max, command.Config.MaxLength);
+        var content = new FieldChangeContent(
+            command.OwnerContext, command.ObjectType, command.Key, command.Label,
+            command.Operation == FieldOperation.Create ? command.Type : null,
+            command.IsRequired, config, command.SortOrder, command.ExpectedRowVersion);
+
+        if (command.Operation == FieldOperation.Create && command.DefinitionId is not null)
+            throw new ArgumentException("Definition ID must be null for create operations.");
+        return ChangeSetItem.ForField(command.Operation, command.DefinitionId, content);
+    }
+
     private static ManageFieldDefinitionResult Replay(string responsePayload) =>
         (JsonSerializer.Deserialize<ManageFieldDefinitionResult>(responsePayload)
             ?? throw new InvalidOperationException("Stored field definition response is empty.")) with
         { Replayed = true };
-
-    private async Task<CatalogFieldDefinition> MutateAsync(ManageFieldDefinitionCommand command, CancellationToken ct)
-    {
-        CatalogFieldDefinition definition;
-
-        switch (command.Operation)
-        {
-            case FieldOperation.Create:
-                {
-                    if (command.DefinitionId is not null)
-                        throw new ArgumentException("Definition ID must be null for create operations.");
-
-                    await EnsureRoomForActiveFieldAsync(command, ct);
-
-                    definition = CatalogFieldDefinition.Create(
-                        command.TenantId, command.OwnerContext, command.ObjectType, command.Key, command.Label, command.Type,
-                        command.IsRequired, ToConfig(command.Config), command.SortOrder);
-
-                    context.Entry(definition).Property(x => x.Id).CurrentValue = await context.AllocateFieldDefinitionIdAsync(ct);
-                    context.FieldDefinitions.Add(definition);
-                    break;
-                }
-            case FieldOperation.Update:
-                {
-                    definition = await LoadAsync(command, "update", ct);
-                    CheckVersion(definition.RowVersion, command.ExpectedRowVersion);
-                    definition.Update(command.Label, command.IsRequired, ToConfig(command.Config) ?? FieldConfig.Empty, command.SortOrder);
-                    break;
-                }
-            case FieldOperation.Deprecate:
-                {
-                    definition = await LoadAsync(command, "deprecate", ct);
-                    CheckVersion(definition.RowVersion, command.ExpectedRowVersion);
-                    definition.Deprecate();
-                    break;
-                }
-            case FieldOperation.Reactivate:
-                {
-                    definition = await LoadAsync(command, "reactivate", ct);
-                    CheckVersion(definition.RowVersion, command.ExpectedRowVersion);
-                    await EnsureRoomForActiveFieldAsync(command with { ObjectType = definition.ObjectType }, ct);
-                    definition.Reactivate();
-                    break;
-                }
-            default:
-                throw new ArgumentOutOfRangeException(nameof(command.Operation));
-        }
-
-        return definition;
-    }
-
-    private async Task<CatalogFieldDefinition> LoadAsync(ManageFieldDefinitionCommand command, string verb, CancellationToken ct)
-    {
-        if (command.DefinitionId is null)
-            throw new ArgumentException($"Definition ID is required for {verb} operations.");
-
-        return await context.FieldDefinitions
-            .SingleOrDefaultAsync(x => x.TenantId == command.TenantId && x.OwnerContext == command.OwnerContext && x.Id == command.DefinitionId, ct)
-            ?? throw new KeyNotFoundException($"Field definition {command.DefinitionId} was not found.");
-    }
-
-    private async Task EnsureRoomForActiveFieldAsync(ManageFieldDefinitionCommand command, CancellationToken ct)
-    {
-        var activeCount = await context.FieldDefinitions
-            .CountAsync(x => x.TenantId == command.TenantId && x.OwnerContext == command.OwnerContext && x.ObjectType == command.ObjectType && x.Status == FieldStatus.Active, ct);
-
-        if (activeCount >= MaxActiveFieldsPerObjectType)
-            throw new FieldLimitExceededException(MaxActiveFieldsPerObjectType);
-    }
-
-    private static FieldConfig? ToConfig(FieldConfigInput? input) => input is null
-        ? null
-        : new FieldConfig(
-            input.Options?.Select(o => new FieldOption(o.Key, o.Label, o.IsDeprecated)).ToList(),
-            input.Scale, input.Min, input.Max, input.MaxLength);
-
-    private static void CheckVersion(long actual, long expected)
-    {
-        if (actual != expected) throw new CatalogConcurrencyConflictException();
-    }
 
     private static bool IsFieldKeyViolation(DbUpdateException exception) =>
         exception.InnerException is Npgsql.PostgresException { SqlState: "23505" } postgres
