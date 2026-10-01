@@ -44,11 +44,13 @@ Note: .NET suites after C-1: Access 313, Collaboration 306, CRM 334, Host 405, M
 
 ## C-2 — ChangeSet v1 for fields
 ### Task 7
-- [ ] `semantic.change_sets`, `change_set_items`, `catalog_revisions` + migration + RLS; lifecycle state machine with a transition table.
-- [ ] `content_hash`; `base_revision` check under a per-tenant row lock → `Superseded`.
-- [ ] Field edits publish as one-item sets (Draft→…→Active in one call, self-approval in evidence); zero-participant activation documented in code and ADR.
-- [ ] Outbox `enterprise.semantic.change_set.published.v1`; the field-changed event is still emitted.
-- [ ] Tests: transition table (illegal moves refused), hash stability, stale base → Superseded, concurrent publish, replay, RLS.
+- [x] `semantic.change_sets`, `change_set_items`, `catalog_revisions` + migration + RLS; lifecycle state machine with a transition table.
+- [x] `content_hash`; `base_revision` check under a per-tenant row lock → `Superseded`.
+- [x] Field edits publish as one-item sets (Draft→…→Active in one call, self-approval in evidence); zero-participant activation documented in code and ADR.
+- [x] Outbox `enterprise.semantic.change_set.published.v1`; the field-changed event is still emitted.
+- [x] Tests: transition table (illegal moves refused), hash stability, stale base → Superseded, concurrent publish, replay, RLS.
+→ Commit: `812cdcf` "feat(semantic-catalog): publish field edits as one-item change sets (C-2)"
+Note: the concurrency test found that the one-item flow read the base revision before taking the lock, so concurrent edits superseded each other; fixed in the same commit (`authorUnderLock`), see the ADR implementation notes. SemanticCatalog.Tests: 200; the other suites unchanged (Host 405, CRM 334, Messaging 49).
 
 ## A-1 — `reference` field type
 ### Task 8
