@@ -141,7 +141,7 @@ export default {
       title: 'No opportunities yet',
       description: 'Create the first opportunity to start tracking a sale.',
       filteredTitle: 'Nothing matches this view',
-      filteredDescription: 'No opportunity matches the chosen status or page.',
+      filteredDescription: 'No opportunity matches the chosen status, page or field filter.',
       clearFilter: 'Show all',
     },
     refreshing: 'Refreshing…',

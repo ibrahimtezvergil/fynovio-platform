@@ -28,6 +28,8 @@ export const PICKER_PAGE_SIZE = 20
 export interface OpportunityListFilter {
   status?: OpportunityStatus
   archivedOnly?: boolean
+  /** Equality filters on select, multi-select and boolean custom fields: field key → option key or 'true'/'false'. */
+  customFields?: Readonly<Record<string, string>>
   /** Zero-based page. */
   page: number
 }
@@ -65,7 +67,7 @@ const retryTransient = (failureCount: number, error: unknown) => {
 /** These screens render their own loading/forbidden/not-found/error states, so errors must not bubble to a boundary. */
 const READ_OPTIONS = { throwOnError: false, retry: retryTransient } as const
 
-async function get<S extends z.ZodType>(url: string, schema: S, params?: Record<string, unknown>): Promise<z.output<S>> {
+async function get<S extends z.ZodType>(url: string, schema: S, params?: Record<string, unknown> | URLSearchParams): Promise<z.output<S>> {
   const { data } = await apiClient.get<unknown>(url, { params })
   return parseApiResponse(data, schema) as z.output<S>
 }
@@ -78,12 +80,11 @@ export function useOpportunityList(filter: OpportunityListFilter) {
     enabled: tenantId !== null,
     // The list contract has no total: one extra row tells us whether a next page exists.
     queryFn: async () => {
-      const rows = await get(endpoints.opportunities.list, opportunitySummarySchema.array(), {
-        status: filter.status,
-        skip: filter.page * PAGE_SIZE,
-        take: PAGE_SIZE + 1,
-        archivedOnly: filter.archivedOnly ?? false,
-      })
+      // URLSearchParams, not an object: axios would send an array as `cf[]=`, the API reads repeated `cf=key:value`.
+      const params = new URLSearchParams({ skip: String(filter.page * PAGE_SIZE), take: String(PAGE_SIZE + 1), archivedOnly: String(filter.archivedOnly ?? false) })
+      if (filter.status) params.set('status', filter.status)
+      for (const [key, value] of Object.entries(filter.customFields ?? {})) params.append('cf', `${key}:${value}`)
+      const rows = await get(endpoints.opportunities.list, opportunitySummarySchema.array(), params)
       return { items: rows.slice(0, PAGE_SIZE), hasNext: rows.length > PAGE_SIZE }
     },
   })

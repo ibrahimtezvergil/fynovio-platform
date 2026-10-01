@@ -141,7 +141,7 @@ export default {
       title: 'Henüz fırsat yok',
       description: 'Bir satışı takip etmeye başlamak için ilk fırsatı oluşturun.',
       filteredTitle: 'Bu görünümde sonuç yok',
-      filteredDescription: 'Seçilen duruma veya sayfaya uyan fırsat yok.',
+      filteredDescription: 'Seçilen duruma, sayfaya veya alan filtresine uyan fırsat yok.',
       clearFilter: 'Tümünü göster',
     },
     refreshing: 'Yenileniyor…',

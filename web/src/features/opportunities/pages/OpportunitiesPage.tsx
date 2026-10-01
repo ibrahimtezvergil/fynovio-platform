@@ -6,6 +6,8 @@ import { EmptyState } from '@/components/common/EmptyState'
 import { PageHeader } from '@/components/common/PageHeader'
 import { SegmentedControl, type Segment } from '@/components/common/SegmentedControl'
 import { Button } from '@/components/ui/button'
+import { useCustomFieldDefinitions } from '@/lib/custom-fields/api'
+import { readCustomFieldFilters } from '@/lib/custom-fields/values'
 import { paths } from '@/routes/paths'
 import { useDefaultPipelineStages, usePartyNames, usePipelineStageNames, useOpportunityList, stageKey, type OpportunityListFilter } from '../api'
 import { OpportunitiesBoard } from '../components/OpportunitiesBoard'
@@ -28,8 +30,11 @@ function readFilter(params: URLSearchParams): OpportunityListFilter {
     status: OPPORTUNITY_STATUSES.filter((candidate) => !archivedOnly || candidate === 'Draft' || candidate === 'Open').find((candidate) => candidate === status),
     page: Number.isInteger(page) && page > 0 ? page : 0,
     archivedOnly,
+    customFields: readCustomFieldFilters(params),
   }
 }
+
+const hasFieldFilters = (filter: OpportunityListFilter) => Object.keys(filter.customFields ?? {}).length > 0
 
 function readRowFilters(params: URLSearchParams): RowFilters {
   return {
@@ -47,6 +52,7 @@ export default function OpportunitiesPage() {
   const view = readView(searchParams)
   const list = useOpportunityList(filter)
   const defaultStages = useDefaultPipelineStages(view === 'board')
+  const definitions = useCustomFieldDefinitions().data
   const rowFilters = readRowFilters(searchParams)
 
   const items = list.data?.items
@@ -70,6 +76,7 @@ export default function OpportunitiesPage() {
     if (next.status) params.set('status', next.status)
     if (next.page > 0) params.set('page', String(next.page))
     if (next.archivedOnly) params.set('archive', '1')
+    for (const [key, value] of Object.entries(next.customFields ?? {})) params.set(`cf.${key}`, value)
     if (nextView === 'board') params.set('view', 'board')
     if (nextRowFilters.query.trim()) params.set('q', nextRowFilters.query)
     if (nextRowFilters.owner !== 'all') params.set('owner', nextRowFilters.owner)
@@ -78,6 +85,8 @@ export default function OpportunitiesPage() {
   }
   const goTo = (next: OpportunityListFilter) => navigateTo(next, view)
   const changeRowFilters = (next: RowFilters) => navigateTo({ ...filter, page: 0 }, view, next)
+  const changeFieldFilters = (customFields: Record<string, string>) => navigateTo({ ...filter, customFields, page: 0 }, view)
+  const narrowed = Boolean(filter.status) || filter.page > 0 || hasFieldFilters(filter)
   const returnTo = `${location.pathname}${location.search}`
 
   const createAction = (
@@ -94,15 +103,21 @@ export default function OpportunitiesPage() {
     body = (
       <EmptyState
         icon={Inbox}
-        title={filter.archivedOnly ? t('list.archive.emptyTitle') : filter.status || filter.page > 0 ? t('list.empty.filteredTitle') : t('list.empty.title')}
-        description={filter.archivedOnly ? t('list.archive.emptyDescription') : filter.status || filter.page > 0 ? t('list.empty.filteredDescription') : t('list.empty.description')}
-        action={filter.archivedOnly ? undefined : filter.status || filter.page > 0 ? <Button variant="outline" onClick={() => goTo({ page: 0 })}>{t('list.empty.clearFilter')}</Button> : createAction}
+        title={filter.archivedOnly ? t('list.archive.emptyTitle') : narrowed ? t('list.empty.filteredTitle') : t('list.empty.title')}
+        description={filter.archivedOnly ? t('list.archive.emptyDescription') : narrowed ? t('list.empty.filteredDescription') : t('list.empty.description')}
+        action={filter.archivedOnly ? undefined : narrowed ? <Button variant="outline" onClick={() => goTo({ page: 0 })}>{t('list.empty.clearFilter')}</Button> : createAction}
       />
     )
   } else {
     body = (
       <>
-        <OpportunitiesFilters filters={rowFilters} onChange={changeRowFilters} owners={owners} showDensity={view === 'grid'} />
+        <OpportunitiesFilters
+          filters={rowFilters}
+          onChange={changeRowFilters}
+          owners={owners}
+          showDensity={view === 'grid'}
+          fieldFilters={definitions && { definitions, value: filter.customFields ?? {}, onChange: changeFieldFilters }}
+        />
         {view === 'grid' ? (
           <OpportunitiesGrid
             rows={rows}
@@ -127,11 +142,11 @@ export default function OpportunitiesPage() {
             returnTo={returnTo}
           />
         )}
-        {hasRowFilters(rowFilters) && (
+        {(hasRowFilters(rowFilters) || hasFieldFilters(filter)) && (
           <p className="text-muted-foreground text-[12.5px]">
             <button
               type="button"
-              onClick={() => changeRowFilters(NO_ROW_FILTERS)}
+              onClick={() => navigateTo({ ...filter, customFields: {}, page: 0 }, view, NO_ROW_FILTERS)}
               className="cursor-pointer font-[550] text-[var(--nx-tint)] underline-offset-4 hover:underline"
             >
               {t('list.filters.clear')}

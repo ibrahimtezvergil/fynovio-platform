@@ -96,3 +96,17 @@ export function formatCustomFieldValue(definition: CustomFieldDefinition, value:
 /** Turkish letters and anything else fold into the key alphabet (`^[a-z][a-z0-9_]{1,62}$`). */
 export const keyFromLabel = (label: string) => label.trim().toLocaleLowerCase('tr').replace(/ı/g, 'i').normalize('NFKD').replace(/[̀-ͯ]/g, '')
   .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').replace(/^(\d)/, 'f_$1').slice(0, 63)
+
+/** The API filters the list on these types only (equality on an option key or a flag), at most this many at once. */
+export const MAX_CUSTOM_FIELD_FILTERS = 5
+export const filterableFields = (definitions: readonly CustomFieldDefinition[]) =>
+  activeFields(definitions).filter((definition) => definition.fieldType === 'select' || definition.fieldType === 'multi_select' || definition.fieldType === 'boolean')
+
+/** `cf.<key>=<value>` URL parameters → the list filter's custom field map. */
+export function readCustomFieldFilters(params: URLSearchParams): Record<string, string> {
+  const filters: Record<string, string> = {}
+  for (const [name, value] of params) {
+    if (name.startsWith('cf.') && name.length > 3 && value !== '') filters[name.slice(3)] = value
+  }
+  return filters
+}
