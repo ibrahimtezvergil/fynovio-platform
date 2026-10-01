@@ -118,6 +118,47 @@ public sealed class CustomFieldsEndpointTests : IClassFixture<AuthApiFixture>
     }
 
     [Fact]
+    public async Task The_list_filters_on_an_option_value_and_refuses_an_unfilterable_or_malformed_filter()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+        var admin = await TokenAsync(client, DevSeeder.AdminEmail, 1);
+        var key = UniqueKey("tier");
+        var note = UniqueKey("note");
+        await DefineAsync(client, admin, new
+        {
+            key,
+            label = "Tier",
+            type = "select",
+            isRequired = false,
+            sortOrder = 6,
+            config = new { options = new[] { new { key = "gold", label = "Gold" }, new { key = "silver", label = "Silver" } } }
+        });
+        await DefineAsync(client, admin, new { key = note, label = "Note", type = "text", isRequired = false, sortOrder = 7 });
+
+        var partyId = await SeededPartyIdAsync(client, admin);
+        async Task<long> CreateAsync(string tier)
+        {
+            var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", admin,
+                new Dictionary<string, object> { ["partyId"] = partyId, ["currency"] = "EUR", ["estimatedAmount"] = 10, ["customFields"] = new Dictionary<string, object> { [key] = tier } }));
+            return (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("opportunityId").GetInt64();
+        }
+
+        var gold = await CreateAsync("gold");
+        await CreateAsync("silver");
+
+        var filtered = await client.SendAsync(Authorized(HttpMethod.Get, $"/opportunities?take=200&cf={key}:gold", admin));
+        Assert.Equal(HttpStatusCode.OK, filtered.StatusCode);
+        Assert.Equal([gold], (await filtered.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray().Select(s => s.GetProperty("id").GetInt64()).ToArray());
+
+        var unfilterable = await client.SendAsync(Authorized(HttpMethod.Get, $"/opportunities?cf={note}:x", admin));
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, unfilterable.StatusCode);
+        Assert.Equal("not_filterable", (await unfilterable.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("codes").GetProperty(note)[0].GetString());
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.SendAsync(Authorized(HttpMethod.Get, $"/opportunities?cf={key}", admin))).StatusCode);
+    }
+
+    [Fact]
     public async Task Invalid_values_are_a_422_with_per_field_errors()
     {
         using var host = await _fixture.StartHostAsync(SeedEnabled);

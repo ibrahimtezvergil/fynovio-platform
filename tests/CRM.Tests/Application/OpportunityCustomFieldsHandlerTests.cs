@@ -223,6 +223,62 @@ public sealed class OpportunityCustomFieldsHandlerTests
         Assert.Equal("A", dto.CustomFields!.Value.GetProperty("budget_code").GetString());
     }
 
+    [Fact]
+    public async Task List_filters_by_select_multi_select_and_boolean_values_within_the_callers_scope()
+    {
+        var tenant = TestData.NextTenant();
+        await SeedFieldsAsync(tenant);
+        await using (var admin = _fixture.CreateAdminContext())
+        {
+            admin.TenantFieldDefinitions.Add(TenantFieldDefinition.Create(tenant, TenantFieldAggregateType.Opportunity, "vip", "VIP", TenantFieldValueType.Boolean));
+            await admin.SaveChangesAsync();
+        }
+
+        var highTagged = await SeedOpportunityAsync(tenant, """{"budget_code": "A", "priority": "high", "tags": ["x", "y"], "vip": true}""");
+        var high = await SeedOpportunityAsync(tenant, """{"budget_code": "B", "priority": "high", "vip": false}""");
+        await SeedOpportunityAsync(tenant, """{"budget_code": "C", "priority": "low", "tags": ["x"]}""");
+        await SeedOpportunityAsync(tenant, """{"budget_code": "D"}""");
+        var otherOwner = Opportunity.Create(tenant, new PartyRef(tenant, 1), new PrincipalRef("https://idp.local", "seller-2"), "TRY", 1m,
+            customFields: """{"budget_code": "E", "priority": "high"}""");
+        await using (var admin = _fixture.CreateAdminContext())
+        {
+            admin.Opportunities.Add(otherOwner);
+            await admin.SaveChangesAsync();
+        }
+
+        async Task<long[]> ListAsync(AccessScope scope, Dictionary<string, string> filters)
+        {
+            await using var context = _fixture.CreateAdminContext();
+            var rows = await new ListOpportunitiesHandler(context, new StubScopeResolver(scope))
+                .HandleAsync(new ListOpportunitiesQuery(tenant, TestData.Seller, Guid.NewGuid(), null, 0, 50, CustomFieldFilters: filters));
+            return rows.Select(r => r.Id).Order().ToArray();
+        }
+
+        var all = new AccessScope.All();
+        Assert.Equal(new[] { highTagged.Id, high.Id, otherOwner.Id }.Order(), await ListAsync(all, new() { ["priority"] = "high" }));
+        Assert.Equal([highTagged.Id], await ListAsync(all, new() { ["priority"] = "high", ["tags"] = "y" }));
+        Assert.Equal([high.Id], await ListAsync(all, new() { ["vip"] = "false" }));
+        Assert.Equal(new[] { highTagged.Id, high.Id }.Order(),
+            await ListAsync(new AccessScope.AnyOf([new ScopeTerm.OwnedBy(TestData.Seller)]), new() { ["priority"] = "high" }));
+    }
+
+    [Fact]
+    public async Task List_rejects_unknown_non_filterable_and_out_of_range_filters()
+    {
+        var tenant = TestData.NextTenant();
+        await SeedFieldsAsync(tenant);
+
+        await using var context = _fixture.CreateAdminContext();
+        var exception = await Assert.ThrowsAsync<CustomFieldValidationException>(() =>
+            new ListOpportunitiesHandler(context, new StubScopeResolver(new AccessScope.All())).HandleAsync(new ListOpportunitiesQuery(
+                tenant, TestData.Seller, Guid.NewGuid(), null, 0, 50,
+                CustomFieldFilters: new Dictionary<string, string> { ["nope"] = "1", ["budget_code"] = "A", ["priority"] = "urgent" })));
+
+        Assert.Contains(exception.Errors, e => e.Field == "nope" && e.Code == "unknown_field");
+        Assert.Contains(exception.Errors, e => e.Field == "budget_code" && e.Code == "not_filterable");
+        Assert.Contains(exception.Errors, e => e.Field == "priority" && e.Code == "invalid_option");
+    }
+
     /// <summary>budget_code (text, required), priority (select), tags (multi_select).</summary>
     private async Task<(long BudgetCode, long Priority)> SeedFieldsAsync(TenantId tenant)
     {

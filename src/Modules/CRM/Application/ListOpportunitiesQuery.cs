@@ -10,4 +10,5 @@ public sealed record ListOpportunitiesQuery(
     OpportunityStatus? Status,
     int Skip,
     int Take,
-    bool ArchivedOnly = false);
+    bool ArchivedOnly = false,
+    IReadOnlyDictionary<string, string>? CustomFieldFilters = null);

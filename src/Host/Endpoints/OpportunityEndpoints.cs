@@ -156,7 +156,8 @@ public static class OpportunityEndpoints
             var actor = httpContext.GetActorContext();
             if (request.Skip < 0 || request.Take <= 0 || request.Take > 1000)
                 throw new ArgumentException("Skip must be >= 0, Take must be between 1 and 1000.");
-            var query = new ListOpportunitiesQuery(actor.TenantId, actor.Principal, actor.CorrelationId, request.Status, request.Skip, request.Take, request.ArchivedOnly);
+            var query = new ListOpportunitiesQuery(actor.TenantId, actor.Principal, actor.CorrelationId, request.Status, request.Skip, request.Take, request.ArchivedOnly,
+                ParseCustomFieldFilters(request.Cf));
             return Results.Ok(await handler.HandleAsync(query, cancellationToken));
         });
 
@@ -232,6 +233,26 @@ public static class OpportunityEndpoints
 
         return parsed;
     }
+
+    /// <summary>`cf=region:north&amp;cf=vip:true` → {region: north, vip: true}; a malformed or repeated key is a 400.
+    /// Whether the key and value fit a definition is the handler's check (422 custom_field_invalid).</summary>
+    private static IReadOnlyDictionary<string, string>? ParseCustomFieldFilters(string[]? filters)
+    {
+        if (filters is null || filters.Length == 0)
+            return null;
+
+        var parsed = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var filter in filters)
+        {
+            var separator = filter.IndexOf(':');
+            if (separator <= 0 || separator == filter.Length - 1)
+                throw new ArgumentException("cf must be key:value.");
+            if (!parsed.TryAdd(filter[..separator], filter[(separator + 1)..]))
+                throw new ArgumentException("cf names each field at most once.");
+        }
+
+        return parsed;
+    }
 }
 
 public sealed record CreateOpportunityRequest(long PartyId, string Currency, decimal EstimatedAmount, JsonElement? CustomFields = null);
@@ -248,4 +269,5 @@ public sealed record LoseOpportunityRequest(long ExpectedVersion, string LostRea
 public sealed record ReassignOpportunityRequest(long ExpectedVersion, string NewPrincipalIssuer, string NewPrincipalSubject);
 public sealed record OpportunityArchiveRequest(long ExpectedVersion, bool ConfirmOpenOpportunity = false);
 public sealed record OpportunityRestoreRequest(long ExpectedVersion, long? StageId = null);
-public sealed record ListOpportunitiesRequest(CRM.Domain.OpportunityStatus? Status, int Skip = 0, int Take = 50, bool ArchivedOnly = false);
+/// <summary>`cf` repeats as `key:value` — an equality filter on a select, multi-select or boolean custom field.</summary>
+public sealed record ListOpportunitiesRequest(CRM.Domain.OpportunityStatus? Status, int Skip = 0, int Take = 50, bool ArchivedOnly = false, string[]? Cf = null);

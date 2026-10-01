@@ -31,6 +31,16 @@ public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeR
 
         filtered = filtered.Where(o => o.IsArchived == query.ArchivedOnly);
 
+        if (query.CustomFieldFilters is { Count: > 0 })
+        {
+            var definitions = await context.TenantFieldDefinitions.AsNoTracking()
+                .Where(x => x.TenantId == query.TenantId && x.AggregateType == TenantFieldAggregateType.Opportunity)
+                .ToListAsync(cancellationToken);
+            var containment = CustomFieldFilter.ToContainmentJson(definitions, query.CustomFieldFilters);
+            if (containment is not null)
+                filtered = filtered.Where(o => o.CustomFields != null && EF.Functions.JsonContains(o.CustomFields, containment));
+        }
+
         var rows = await filtered
             .OrderByDescending(o => o.CreatedAt)
             .ThenByDescending(o => o.Id)
