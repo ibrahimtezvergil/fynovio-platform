@@ -150,6 +150,14 @@ public static class OpportunityEndpoints
             return dto is null ? Results.NotFound() : Results.Ok(dto);
         });
 
+        group.MapGet("/{id:long}/activity", async (
+            long id, GetOpportunityActivityHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
+        {
+            var actor = httpContext.GetActorContext();
+            var entries = await handler.HandleAsync(new GetOpportunityActivityQuery(actor.TenantId, id, actor.Principal, actor.CorrelationId), cancellationToken);
+            return entries is null ? Results.NotFound() : Results.Ok(entries);
+        });
+
         group.MapGet("/", async (
             [AsParameters] ListOpportunitiesRequest request, ListOpportunitiesHandler handler, HttpContext httpContext, CancellationToken cancellationToken) =>
         {

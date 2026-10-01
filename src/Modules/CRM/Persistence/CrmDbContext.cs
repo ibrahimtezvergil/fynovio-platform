@@ -1,3 +1,4 @@
+using CRM.Activity;
 using CRM.Customization;
 using CRM.Domain;
 using CRM.Evidence;
@@ -35,6 +36,8 @@ public sealed class CrmDbContext : DbContext
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
     public DbSet<EvidenceRecord> EvidenceRecords => Set<EvidenceRecord>();
+    public DbSet<OpportunityActivityEntry> OpportunityActivity => Set<OpportunityActivityEntry>();
+    public DbSet<ConsumedEvent> ConsumedEvents => Set<ConsumedEvent>();
 
     public Task<long> AllocateConfigurationIdAsync<TEntity>(CancellationToken cancellationToken = default) where TEntity : class
     {
