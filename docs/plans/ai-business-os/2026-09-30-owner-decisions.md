@@ -81,9 +81,10 @@ Uzun vadeli model: **yatay mimari + dikey ürün/GTM.** 10 temel ilke `adr-busin
 
 | Aşama | İçerik | Yöneten kararlar | Durum |
 |---|---|---|---|
-| 1 | Tier-1 custom fields (Opportunity) | K1, K2, K3, OD-6 | **Uygulanıyor** |
+| 1 | Tier-1 custom fields (Opportunity) | K1, K2, K3, OD-6 | **Tamamlandı** — main `ab2fe24` |
 | 2 | Semantic Catalog + ChangeSet v1 | OD-4, OD-5, OD-6 | Bekliyor |
 | 3 | AI Gateway + yapılandırma asistanı | OD-7 | Bekliyor |
 | 4 | Semantik metrikler / NL raporlama | OD-7 (kayıt verisi için yeni karar) | Bekliyor |
-| 5 | Olay tüketme altyapısı → workflow spike | OD-2 | Bekliyor |
+| 5a | Olay tüketme altyapısı (`adr-event-consumption.md`) | OD-2 ön koşulu, E-1…E-6 | **Tamamlandı** — `feat/event-consumption` (Task 5 redeliver komutu owner kararına ertelendi) |
+| 5b | Workflow spike | OD-2 | Bekliyor |
 | 6 | İş eylemleri, tenant objeleri | OD-3, OD-1 (tetikleyiciyle) | Bekliyor |

@@ -128,6 +128,25 @@ export type PartyReference = z.infer<typeof partyReferenceSchema>
 // The command results carry only what the caller needs; the canonical state is refetched after every command.
 export const createPartyResultSchema = z.object({ id: z.number(), replayed: z.boolean() })
 export const createResultSchema = z.object({ opportunityId: z.number(), replayed: z.boolean() })
+/**
+ * One row of the activity timeline (`GET /opportunities/{id}/activity`): a published fact, labelled by the server at
+ * read time. `kind` stays an open string — a fact kind this build does not know is shown generically, never dropped.
+ */
+export const opportunityActivitySchema = z.object({
+  eventId: z.string(),
+  kind: z.string(),
+  occurredAt: z.string(),
+  version: z.number(),
+  stageName: z.string().nullish(),
+  fromStageName: z.string().nullish(),
+  principalName: z.string().nullish(),
+  amount: z.number().nullish(),
+  currency: z.string().nullish(),
+  lostReason: z.string().nullish(),
+  changedFields: z.array(z.string()).nullish(),
+})
+export type OpportunityActivity = z.infer<typeof opportunityActivitySchema>
+
 export const commandResultSchema = z.object({ opportunityId: z.number(), replayed: z.boolean().optional() }).loose()
 
 // ---- form input schemas (immediate UX only; the backend stays authoritative) ----

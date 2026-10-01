@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Skeleton } from '@/components/ui/skeleton'
 import { paths } from '@/routes/paths'
 import { useAvailableActions, useOpportunity, usePartyNames, usePipelineStages, useReloadOpportunity, useSetOpportunityArchive } from '../api'
+import { ActivityCard } from '../components/ActivityCard'
 import { CustomFieldsCard } from '../components/CustomFieldsCard'
 import { LinesCard } from '../components/LinesCard'
 import { LoseDialog, OpenDialog, WinDialog } from '../components/LifecycleDialogs'
@@ -137,6 +138,7 @@ export default function OpportunityDetailPage() {
         </div>
         <div className="grid content-start gap-5">
           <PipelineCard opportunity={data} actions={actions} onReload={() => void reload()} />
+          <ActivityCard opportunityId={data.id} rowVersion={data.rowVersion} />
         </div>
       </div>
 

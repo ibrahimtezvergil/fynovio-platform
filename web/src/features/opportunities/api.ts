@@ -13,6 +13,7 @@ import {
   commandResultSchema,
   createPartyResultSchema,
   createResultSchema,
+  opportunityActivitySchema,
   opportunitySchema,
   opportunitySummarySchema,
   partyReferenceSchema,
@@ -45,6 +46,7 @@ export const opportunityKeys = {
   list: (tenantId: number | null, filter: OpportunityListFilter) => [...opportunityKeys.lists(tenantId), filter] as const,
   detail: (tenantId: number | null, id: number) => [...opportunityKeys.all(tenantId), 'detail', id] as const,
   actions: (tenantId: number | null, id: number) => [...opportunityKeys.all(tenantId), 'actions', id] as const,
+  activity: (tenantId: number | null, id: number) => [...opportunityKeys.all(tenantId), 'activity', id] as const,
   stages: (tenantId: number | null, versionId: number) => ['crm-pipeline-stages', tenantId, versionId] as const,
   defaultStages: (tenantId: number | null) => ['crm-pipeline-stages', tenantId, 'default'] as const,
   assignable: (tenantId: number | null, id: number, search: string) => [...opportunityKeys.all(tenantId), 'assignable', id, search] as const,
@@ -98,6 +100,27 @@ export function useOpportunity(id: number) {
     // A malformed route id must never reach the API as a request for /opportunities/0 or /opportunities/NaN.
     enabled: tenantId !== null && Number.isInteger(id) && id > 0,
     queryFn: () => get(endpoints.opportunities.detail(id), opportunitySchema),
+  })
+}
+
+/**
+ * How often an open timeline re-reads. The timeline is a projection the Worker fills a moment AFTER a command commits,
+ * so invalidating it on the command alone would usually re-read it just before the new fact lands.
+ */
+export const ACTIVITY_REFRESH_MS = 10_000
+
+/** When the timeline re-reads after the record itself changed — the Worker polls every 2 s. */
+export const ACTIVITY_CATCH_UP_MS = [3_000, 8_000] as const
+
+/** The opportunity's activity timeline, newest first. Polled only while the tab is visible. */
+export function useOpportunityActivity(id: number, enabled = true) {
+  const tenantId = useTenantId()
+  return useQuery({
+    ...READ_OPTIONS,
+    queryKey: opportunityKeys.activity(tenantId, id),
+    enabled: enabled && tenantId !== null,
+    refetchInterval: ACTIVITY_REFRESH_MS,
+    queryFn: () => get(endpoints.opportunities.activity(id), opportunityActivitySchema.array()),
   })
 }
 
@@ -274,6 +297,7 @@ function useOpportunityCommand<V extends CommandBase>(name: string, toRequest: (
     invalidateKeys: (_data, variables): QueryKey[] => [
       opportunityKeys.detail(tenantId, variables.id),
       opportunityKeys.actions(tenantId, variables.id),
+      opportunityKeys.activity(tenantId, variables.id),
       opportunityKeys.lists(tenantId),
     ],
     successToast: () => ({ title: t(`toast.${name}`) }),

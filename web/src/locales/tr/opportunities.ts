@@ -350,6 +350,22 @@ export default {
       forbidden: 'Bu fırsatı yeniden atama yetkiniz yok.',
     },
   },
+  activity: {
+    title: 'Hareketler', description: 'Bu fırsatta olanlar, en yeniden eskiye. Bir değişiklik kaydedildikten birkaç saniye sonra burada görünür.',
+    loading: 'Hareketler yükleniyor…', empty: 'Henüz kayıtlı hareket yok.', error: 'Hareketler yüklenemedi.', retry: 'Tekrar dene',
+    kinds: {
+      created: 'Fırsat oluşturuldu', createdWithAmount: 'Fırsat {{amount}} tahminle oluşturuldu',
+      opened: 'Açıldı', openedIn: '{{stage}} aşamasında açıldı',
+      stage_changed: 'Aşama değişti', stageChangedTo: '{{to}} aşamasına geçti', stageChangedFromTo: '{{from}} aşamasından {{to}} aşamasına geçti',
+      moved_pipeline: 'Başka bir satış hattına taşındı', movedPipelineTo: 'Başka bir satış hattına taşındı, aşama: {{stage}}',
+      reassigned: 'Sorumlu değişti', reassignedTo: 'Sorumlu {{name}} oldu',
+      won: 'Kazanıldı', wonWithAmount: '{{amount}} ile kazanıldı',
+      lost: 'Kaybedildi', lostWithReason: 'Kaybedildi: {{reason}}',
+      archived: 'Arşivlendi', restored: 'Arşivden geri alındı',
+      custom_fields_changed: 'Ek alanlar güncellendi', customFieldsChangedNamed: 'Güncellenen alanlar: {{fields}}',
+      unknown: 'Güncellendi',
+    },
+  },
   customFields: {
     title: 'Ek alanlar', formDescription: 'Çalışma alanınızın bu fırsat için tuttuğu ek bilgiler.', noValue: 'Seçilmedi', yes: 'Evet', no: 'Hayır',
     edit: 'Düzenle', save: 'Kaydet', saving: 'Kaydediliyor…', cancel: 'Vazgeç', empty: 'Henüz değer girilmedi.', deprecated: 'Kullanımdan kaldırıldı', deprecatedHint: 'Bu alanlar artık kullanılmıyor; kayıtlı değerler yalnızca okunabilir.',

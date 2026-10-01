@@ -23,6 +23,84 @@ namespace CRM.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("CRM.Activity.ConsumedEvent", b =>
+                {
+                    b.Property<string>("Consumer")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("consumer");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<DateTimeOffset>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consumed_at");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Consumer", "EventId")
+                        .HasName("pk_consumed_events");
+
+                    b.ToTable("consumed_events", "crm");
+                });
+
+            modelBuilder.Entity("CRM.Activity.OpportunityActivityEntry", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("AggregateVersion")
+                        .HasColumnType("bigint")
+                        .HasColumnName("aggregate_version");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("kind");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<long>("OpportunityId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("opportunity_id");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_opportunity_activity");
+
+                    b.HasIndex("TenantId", "EventId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_opportunity_activity_tenant_id_event_id");
+
+                    b.HasIndex("TenantId", "OpportunityId", "OccurredAt")
+                        .HasDatabaseName("ix_opportunity_activity_tenant_id_opportunity_id_occurred_at");
+
+                    b.ToTable("opportunity_activity", "crm");
+                });
+
             modelBuilder.Entity("CRM.Customization.TenantFieldDefinition", b =>
                 {
                     b.Property<long>("Id")

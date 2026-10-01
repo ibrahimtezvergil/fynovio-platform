@@ -218,6 +218,10 @@ namespace Collaboration.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("aggregate_version");
 
+                    b.Property<Guid?>("CausationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("causation_id");
+
                     b.Property<Guid>("CorrelationId")
                         .HasColumnType("uuid")
                         .HasColumnName("correlation_id");

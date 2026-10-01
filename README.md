@@ -52,6 +52,7 @@ docs/
   ai-tooling.md                Record of the AI development-environment setup for this repo
 scripts/
   create-runtime-role.sql      Creates the RLS-bound application role (run after migrations)
+  create-relay-role.sql        Creates the outbox relay role (pointer columns only; run after the runtime role)
 tests/
   CRM.Tests/               Domain, architecture (NetArchTest) and PostgreSQL
                             integration tests (Testcontainers)
@@ -141,18 +142,25 @@ Requires the local PostgreSQL from above, with the `fynovio_platform` database c
 ```bash
 # 1. Migrations for every module, as the migration role (postgres)
 dotnet tool restore
-for module in MasterData CRM Access; do   # this order: CRM's migrations reference masterdata tables
+for module in MasterData CRM Access Collaboration TenantLifecycle; do   # CRM's migrations reference masterdata tables
   dotnet ef database update \
     --project src/Modules/$module/$module.csproj \
     --startup-project src/Modules/$module/$module.csproj
 done
+# Messaging last: its RLS migration adds the relay policy to every module's outbox table.
+dotnet ef database update --project src/Messaging/Messaging.csproj --startup-project src/Messaging/Messaging.csproj
 
-# 2. Runtime role. appsettings.Development.json expects the password `runtime`
+# 2. Roles. appsettings.Development.json expects the password `runtime`; the Worker's relay default is `relay`
 sed "s/change-me/runtime/" scripts/create-runtime-role.sql \
+  | psql -h localhost -U postgres -d fynovio_platform
+sed "s/change-me/relay/" scripts/create-relay-role.sql \
   | psql -h localhost -U postgres -d fynovio_platform
 
 # 3. Start the API (the launch profile also switches the development seed on)
 dotnet run --project src/Host --launch-profile http     # http://localhost:5208
+
+# Optional, in another terminal: the outbox relay and event consumers (e.g. the opportunity activity timeline)
+dotnet run --project src/Worker
 ```
 
 If the API stops at start-up with `relation "access.actions" does not exist` (or any other missing relation), step 1 was skipped or your database predates the current migrations — run the migration loop again. `curl http://localhost:5208/health/db` returns `200` when the API is up.

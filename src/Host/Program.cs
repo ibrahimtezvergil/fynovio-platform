@@ -251,6 +251,7 @@ builder.Services.AddScoped<ProvisionPipelineHandler>(); // operator command `pro
 builder.Services.AddScoped<SearchPartyReferencesHandler>();
 builder.Services.AddScoped<CreatePartyReferenceHandler>();
 builder.Services.AddScoped<GetOpportunityHandler>();
+builder.Services.AddScoped<GetOpportunityActivityHandler>();
 builder.Services.AddScoped<ListOpportunitiesHandler>();
 builder.Services.AddScoped<GetPipelineStagesHandler>();
 builder.Services.AddScoped<GetDefaultPipelineStagesHandler>();

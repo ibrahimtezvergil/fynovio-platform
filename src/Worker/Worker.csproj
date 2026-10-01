@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Contracts\Contracts.csproj" />
+    <ProjectReference Include="..\Messaging\Messaging.csproj" />
     <ProjectReference Include="..\Modules\TenantLifecycle\TenantLifecycle.csproj" />
     <ProjectReference Include="..\Modules\Access\Access.csproj" />
     <ProjectReference Include="..\Modules\Organization\Organization.csproj" />

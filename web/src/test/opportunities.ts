@@ -68,6 +68,8 @@ export interface DetailMocks {
   detail?: () => Response | Promise<Response>
   actions?: () => Response | Promise<Response>
   stages?: () => Response | Promise<Response>
+  /** The timeline is not recorded: it polls, so recording it would make request-count assertions timing-dependent. */
+  activity?: () => Response | Promise<Response>
 }
 
 export function mockDetailApi(id: number, recorder: ReturnType<typeof recordRequests>, mocks: DetailMocks = {}) {
@@ -84,6 +86,7 @@ export function mockDetailApi(id: number, recorder: ReturnType<typeof recordRequ
       await recorder.record(request)
       return mocks.stages ? mocks.stages() : HttpResponse.json(stages)
     }),
+    http.get(url(endpoints.opportunities.activity(id)), () => (mocks.activity ? mocks.activity() : HttpResponse.json([]))),
   )
 }
 

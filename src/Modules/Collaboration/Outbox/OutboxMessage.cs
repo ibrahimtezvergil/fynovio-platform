@@ -14,12 +14,13 @@ public sealed class OutboxMessage
     public string Source { get; private set; } = null!;
     public string Subject { get; private set; } = null!;
     public Guid CorrelationId { get; private set; }
+    public Guid? CausationId { get; private set; }
     public string Payload { get; private set; } = null!;
     public DateTimeOffset OccurredAt { get; private set; }
     public DateTimeOffset? ProcessedAt { get; private set; }
 
     private OutboxMessage() { }
 
-    public static OutboxMessage Create(TenantId tenantId, string aggregateType, long aggregateId, long version, string eventType, string source, string subject, Guid correlationId, string payload) =>
-        new() { TenantId = tenantId, AggregateType = aggregateType, AggregateId = aggregateId, AggregateVersion = version, EventId = Guid.NewGuid(), EventType = eventType, Source = source, Subject = subject, CorrelationId = correlationId, Payload = payload, OccurredAt = DateTimeOffset.UtcNow };
+    public static OutboxMessage Create(TenantId tenantId, string aggregateType, long aggregateId, long version, string eventType, string source, string subject, Guid correlationId, string payload, Guid? causationId = null) =>
+        new() { TenantId = tenantId, AggregateType = aggregateType, AggregateId = aggregateId, AggregateVersion = version, EventId = Guid.NewGuid(), EventType = eventType, Source = source, Subject = subject, CorrelationId = correlationId, CausationId = causationId, Payload = payload, OccurredAt = DateTimeOffset.UtcNow };
 }

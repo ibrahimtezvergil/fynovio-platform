@@ -154,7 +154,13 @@ Module-local CloudEvents-shaped durable intent. The unique `event_id`, source,
 subject, correlation/causation IDs and aggregate version use the established module
 outbox shape. Payloads are deliberately thin: entry id, owner principal, timing and
 link ref only; never title, notes, or a hydrated target label. `processed_at IS NULL`
-has a partial index. v1 has no Worker dispatcher.
+has a partial index. v1 had no Worker dispatcher; the outbox relay
+(`docs/plans/ai-business-os/adr-event-consumption.md`) reads it from 2026-10-01.
+
+The v1 migrations shipped without the `causation_id` column this section and the
+diagram describe. `20261001134932_AddOutboxCausationId` (2026-10-01) adds it as a
+nullable `uuid`; existing rows stay `NULL`, as do the calendar commands, which have
+no causing event.
 
 Event types (all `enterprise.collaboration.calendar-entry.<verb>.v1`, subject
 `calendar-entries/{id}`, source `/enterprise/collaboration`):
