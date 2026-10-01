@@ -375,8 +375,13 @@ export default {
       required: 'Bu alan zorunlu.', unknown_field: 'Bu alan tanımlı değil.', field_deprecated: 'Bu alan kullanımdan kaldırıldı.', invalid_type: 'Değer bu alan türüne uymuyor.',
       invalid_value: 'Geçerli bir değer girin.', out_of_range: 'Değer izin verilen aralığın dışında.', too_long: 'Değer çok uzun.', invalid_option: 'Geçerli bir seçenek seçin.',
       option_deprecated: 'Bu seçenek artık kullanılmıyor.', payload_too_large: 'Ek alanların toplam boyutu çok büyük.',
+      invalid_reference: 'Erişiminiz olan bir müşteri seçin.',
     },
-    types: { text: 'Kısa metin', long_text: 'Uzun metin', number: 'Tam sayı', decimal: 'Ondalıklı sayı', boolean: 'Evet / Hayır', date: 'Tarih', select: 'Tek seçim', multi_select: 'Çoklu seçim', email: 'E-posta', phone: 'Telefon', url: 'Web adresi' },
+    types: { text: 'Kısa metin', long_text: 'Uzun metin', number: 'Tam sayı', decimal: 'Ondalıklı sayı', boolean: 'Evet / Hayır', date: 'Tarih', select: 'Tek seçim', multi_select: 'Çoklu seçim', email: 'E-posta', phone: 'Telefon', url: 'Web adresi', reference: 'Müşteri bağlantısı' },
+    reference: {
+      unavailable: '#{{id}} numaralı müşteri (erişiminiz yok)', unavailableShort: 'Erişilemiyor', clear: '{{name}} alanını temizle',
+      target: 'Bağlandığı kayıt', targetParty: 'Bir müşteri (Party)', targetHint: 'Değerin işaret ettiği müşteri. Oluşturulduktan sonra değiştirilemez.',
+    },
     settings: {
       title: 'Fırsat alanları', description: 'Fırsatlarda tutmak istediğiniz ek bilgileri tanımlayın. Alanlar yeni fırsat formunda, fırsat detayında ve listede görünür.',
       add: 'Alan ekle', empty: 'Henüz ek alan yok. "Alan ekle" ile ilk alanı tanımlayın.', required: 'Zorunlu', active: 'Kullanımda', deprecated: 'Kullanımdan kaldırıldı',

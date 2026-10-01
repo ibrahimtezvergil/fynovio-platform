@@ -1,11 +1,12 @@
 using Contracts;
+using CRM.Customization;
 using CRM.Domain;
 using CRM.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Application;
 
-public sealed class GetOpportunityHandler(CrmDbContext context, IAuthorizer authorizer, IAuthorizedPrincipalDirectory? principalDirectory = null)
+public sealed class GetOpportunityHandler(CrmDbContext context, IAuthorizer authorizer, ISemanticDefinitionReader definitionReader, ILinkTargetDirectory linkTargets, IAuthorizedPrincipalDirectory? principalDirectory = null)
 {
     public async Task<OpportunityDto?> HandleAsync(GetOpportunityQuery query, CancellationToken cancellationToken = default)
     {
@@ -31,10 +32,19 @@ public sealed class GetOpportunityHandler(CrmDbContext context, IAuthorizer auth
             names.TryGetValue(principal, out assignedPrincipalDisplayName);
         }
 
+        // Hydrated only after an allowed read decision, at this reader's own authorization.
+        IReadOnlyDictionary<string, CustomFieldReferenceDto>? references = null;
+        if (decision.IsAllowed && opportunity.CustomFields is not null)
+        {
+            var definitions = await definitionReader.ListFieldsAsync(query.TenantId, OpportunityFields.OwnerContext, OpportunityFields.ObjectType, cancellationToken);
+            var hydrated = await CustomFieldReferences.HydrateAsync(linkTargets, actor, definitions, [(opportunity.Id, opportunity.CustomFields)], cancellationToken);
+            references = hydrated.GetValueOrDefault(opportunity.Id);
+        }
+
         await transaction.CommitAsync(cancellationToken);
 
         // Record-level denial looks identical to not-found — never 403 for "exists, not
         // yours" (architecture plan §15, binding spec §12's tenant-non-leak rule).
-        return decision.IsAllowed ? OpportunityDto.From(opportunity) with { AssignedPrincipalDisplayName = assignedPrincipalDisplayName } : null;
+        return decision.IsAllowed ? OpportunityDto.From(opportunity) with { AssignedPrincipalDisplayName = assignedPrincipalDisplayName, CustomFieldReferences = references } : null;
     }
 }

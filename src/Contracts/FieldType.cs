@@ -14,7 +14,10 @@ public enum FieldType
     MultiSelect,
     Email,
     Phone,
-    Url
+    Url,
+    /// <summary>A pointer to one record of a fixed target type (adr-semantic-catalog-changeset.md S-6). The stored value is the
+    /// target id only; the target lives in the field's config and never changes.</summary>
+    Reference
 }
 
 /// <summary>The snake_case wire/storage name of each type — one mapping shared by the database CHECK, the API and
@@ -33,7 +36,8 @@ public static class FieldTypeNames
         [FieldType.MultiSelect] = "multi_select",
         [FieldType.Email] = "email",
         [FieldType.Phone] = "phone",
-        [FieldType.Url] = "url"
+        [FieldType.Url] = "url",
+        [FieldType.Reference] = "reference"
     };
 
     private static readonly IReadOnlyDictionary<string, FieldType> Types =

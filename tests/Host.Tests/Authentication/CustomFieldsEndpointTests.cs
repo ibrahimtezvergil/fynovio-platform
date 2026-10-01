@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Host.Authentication;
 using Host.Tests.Fixtures;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Host.Tests.Authentication;
@@ -275,5 +276,63 @@ public sealed class CustomFieldsEndpointTests : IClassFixture<AuthApiFixture>
             (await SendAsync(HttpMethod.Post, "/crm/settings/custom-fields", new { key = UniqueKey("idem"), label = "Idem", type = "text", isRequired = false, sortOrder = 0 }, reused)).Status);
         Assert.Equal((HttpStatusCode.Conflict, "idempotency_key_reused"),
             await SendAsync(HttpMethod.Post, "/crm/settings/custom-fields", new { key = UniqueKey("idem"), label = "Different", type = "text", isRequired = false, sortOrder = 0 }, reused));
+    }
+
+    [Fact]
+    public async Task Every_allow_listed_reference_target_has_a_registered_link_resolver()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var scope = host.Services.CreateScope();
+        var resolvers = scope.ServiceProvider.GetServices<Contracts.ILinkTargetResolver>().Select(r => (r.BoundedContext, r.EntityType)).ToHashSet();
+
+        // An allow-listed target with no resolver would make every write of that reference a silent 422.
+        Assert.All(SemanticCatalog.Domain.ReferenceTargets.Allowed, target => Assert.Contains((target.BoundedContext, target.EntityType), resolvers));
+    }
+
+    [Fact]
+    public async Task A_reference_field_is_defined_verified_on_write_and_hydrated_per_reader_through_the_api()
+    {
+        using var host = await _fixture.StartHostAsync(SeedEnabled);
+        using var client = host.CreateClient();
+        var admin = await TokenAsync(client, DevSeeder.AdminEmail, 1);
+        var key = UniqueKey("account");
+        await DefineAsync(client, admin, new { key, label = "Account", type = "reference", isRequired = false, sortOrder = 1, config = new { target = new { boundedContext = "masterdata", entityType = "party" } } });
+
+        var listed = (await (await client.SendAsync(Authorized(HttpMethod.Get, "/crm/settings/custom-fields", admin))).Content.ReadFromJsonAsync<JsonElement>())
+            .EnumerateArray().Single(d => d.GetProperty("fieldName").GetString() == key);
+        Assert.Equal("reference", listed.GetProperty("fieldType").GetString());
+        Assert.Equal("party", listed.GetProperty("config").GetProperty("target").GetProperty("entityType").GetString());
+
+        var partyId = await SeededPartyIdAsync(client, admin);
+        var created = await client.SendAsync(Authorized(HttpMethod.Post, "/opportunities", admin,
+            new Dictionary<string, object> { ["partyId"] = partyId, ["currency"] = "EUR", ["estimatedAmount"] = 10, ["customFields"] = new Dictionary<string, object> { [key] = partyId } }));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var id = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("opportunityId").GetInt64();
+
+        var detail = await DetailAsync(client, admin, id);
+        Assert.Equal(partyId, detail.GetProperty("customFields").GetProperty(key).GetInt64());
+        var hydrated = detail.GetProperty("customFieldReferences").GetProperty(key);
+        Assert.True(hydrated.GetProperty("accessible").GetBoolean());
+        Assert.False(string.IsNullOrWhiteSpace(hydrated.GetProperty("label").GetString()));
+
+        var summaries = await (await client.SendAsync(Authorized(HttpMethod.Get, "/opportunities?take=200", admin))).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(summaries.EnumerateArray().Single(s => s.GetProperty("id").GetInt64() == id).GetProperty("customFieldReferences").GetProperty(key).GetProperty("accessible").GetBoolean());
+
+        // An id that is not a visible party is a 422 with the reference code, and says nothing about why.
+        var refused = await client.SendAsync(Authorized(HttpMethod.Put, $"/opportunities/{id}/custom-fields", admin,
+            new { expectedVersion = detail.GetProperty("rowVersion").GetInt64(), customFields = new Dictionary<string, object> { [key] = 987654321 } }));
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, refused.StatusCode);
+        var problem = await refused.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("custom_field_invalid", problem.GetProperty("type").GetString());
+        Assert.Equal("invalid_reference", problem.GetProperty("codes").GetProperty(key)[0].GetString());
+
+        // A reader without the party-search action sees the id but no label (the resolver's authorization is the reader's own).
+        var viewer = await TokenAsync(client, DevSeeder.ViewerEmail);
+        var viewerDetail = await client.SendAsync(Authorized(HttpMethod.Get, $"/opportunities/{id}", viewer));
+        Assert.Equal(HttpStatusCode.OK, viewerDetail.StatusCode);
+        var asViewer = (await viewerDetail.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("customFieldReferences").GetProperty(key);
+        Assert.Equal(partyId, asViewer.GetProperty("id").GetInt64());
+        Assert.False(asViewer.GetProperty("accessible").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, asViewer.GetProperty("label").ValueKind);
     }
 }

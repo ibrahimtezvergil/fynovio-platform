@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next'
 import type { ApiError } from '@/types'
 
-const KNOWN_CODES = new Set(['required', 'unknown_field', 'field_deprecated', 'invalid_type', 'invalid_value', 'out_of_range', 'too_long', 'invalid_option', 'option_deprecated', 'payload_too_large'])
+const KNOWN_CODES = new Set(['required', 'unknown_field', 'field_deprecated', 'invalid_type', 'invalid_value', 'out_of_range', 'too_long', 'invalid_option', 'option_deprecated', 'payload_too_large', 'invalid_reference'])
 
 /** A 422 `custom_field_invalid` as one message per field, worded in the user's language from the machine code. */
 export function customFieldErrors(t: TFunction<'opportunities'>, error: ApiError | null | undefined): Record<string, string> {

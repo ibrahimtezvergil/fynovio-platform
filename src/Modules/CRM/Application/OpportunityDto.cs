@@ -32,6 +32,10 @@ public sealed record OpportunityDto(
     /// <summary>Stored custom field object, including values of deprecated fields (read-only in the UI).</summary>
     public JsonElement? CustomFields { get; init; }
 
+    /// <summary>Reference-field values of this record as the *reader* may see them (label, or unavailable). Resolved at read time
+    /// and never stored; null when the record has none.</summary>
+    public IReadOnlyDictionary<string, CustomFieldReferenceDto>? CustomFieldReferences { get; init; }
+
     public static OpportunityDto From(Opportunity opportunity) => new(
         opportunity.Id,
         opportunity.Status,

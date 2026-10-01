@@ -15,7 +15,7 @@ namespace CRM.Application;
 
 /// <summary>Not risk-catalogued, so no evidence record (ADR decision 8); the outbox fact carries changed keys only,
 /// never values, and is written only when something actually changed.</summary>
-public sealed class UpdateOpportunityCustomFieldsHandler(CrmDbContext context, IAuthorizer authorizer, ISemanticDefinitionReader definitionReader)
+public sealed class UpdateOpportunityCustomFieldsHandler(CrmDbContext context, IAuthorizer authorizer, ISemanticDefinitionReader definitionReader, ILinkTargetDirectory linkTargets)
 {
     private const string Operation = "UpdateOpportunityCustomFields";
     private const string ActionKeyValue = "crm.opportunity.update_custom_fields";
@@ -69,6 +69,7 @@ public sealed class UpdateOpportunityCustomFieldsHandler(CrmDbContext context, I
         var definitions = await definitionReader.ListFieldsAsync(command.TenantId, OpportunityFields.OwnerContext, OpportunityFields.ObjectType, cancellationToken);
         var before = opportunity.CustomFields;
         var after = CustomFieldValues.Normalize(definitions, command.CustomFields, before);
+        await CustomFieldReferences.VerifyAsync(linkTargets, actor, definitions, before, after, cancellationToken);
         var changedKeys = CustomFieldValues.ChangedKeys(before, after);
 
         var payloadJson = JsonSerializer.Serialize(new CustomFieldsChangedPayload(opportunity.Id, changedKeys));

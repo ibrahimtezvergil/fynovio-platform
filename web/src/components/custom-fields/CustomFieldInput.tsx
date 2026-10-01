@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Field } from '@/components/common/Field'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -9,23 +10,29 @@ import type { CustomFieldDraft, CustomFieldDrafts } from '@/lib/custom-fields/va
 
 const inputType: Partial<Record<CustomFieldDefinition['fieldType'], string>> = { email: 'email', phone: 'tel', url: 'url', date: 'date' }
 
+/** Renders a `reference` field. Supplied by the feature that owns the target (the shared kit knows no entity types). */
+export type ReferenceRenderer = (props: { definition: CustomFieldDefinition; value: CustomFieldDraft; onChange: (value: CustomFieldDraft) => void; error?: string; disabled?: boolean }) => ReactNode
+
 interface CustomFieldInputProps {
   definition: CustomFieldDefinition
   value: CustomFieldDraft
   onChange: (value: CustomFieldDraft) => void
   error?: string
   disabled?: boolean
+  renderReference?: ReferenceRenderer
 }
 
 /**
  * One input for one field definition, chosen by its type. Only active options are offered; an option that was
  * deprecated but is still stored stays selected (and visible) so an unrelated edit does not silently drop it.
  */
-export function CustomFieldInput({ definition, value, onChange, error, disabled }: CustomFieldInputProps) {
+export function CustomFieldInput({ definition, value, onChange, error, disabled, renderReference }: CustomFieldInputProps) {
   const { t } = useTranslation('opportunities')
   const label = definition.isRequired ? `${definition.label} *` : definition.label
   const options = definition.config.options ?? []
   const offered = (selected: readonly string[]) => options.filter((option) => !option.isDeprecated || selected.includes(option.key))
+
+  if (definition.fieldType === 'reference') return <>{renderReference?.({ definition, value, onChange, error, disabled })}</>
 
   if (definition.fieldType === 'boolean') {
     return (
@@ -98,10 +105,11 @@ interface CustomFieldInputsProps {
   onChange: (drafts: CustomFieldDrafts) => void
   errors?: Record<string, string>
   disabled?: boolean
+  renderReference?: ReferenceRenderer
 }
 
 /** The active fields as one grid of inputs — used by the create form and the detail editor alike. */
-export function CustomFieldInputs({ definitions, drafts, onChange, errors, disabled }: CustomFieldInputsProps) {
+export function CustomFieldInputs({ definitions, drafts, onChange, errors, disabled, renderReference }: CustomFieldInputsProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       {definitions.map((definition) => (
@@ -111,6 +119,7 @@ export function CustomFieldInputs({ definitions, drafts, onChange, errors, disab
             value={drafts[definition.fieldName] ?? ''}
             error={errors?.[definition.fieldName]}
             disabled={disabled}
+            renderReference={renderReference}
             onChange={(value) => onChange({ ...drafts, [definition.fieldName]: value })}
           />
         </div>

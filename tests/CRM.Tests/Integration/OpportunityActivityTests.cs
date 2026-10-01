@@ -137,7 +137,7 @@ public sealed class OpportunityActivityTests(PostgresFixture fixture)
         await using var context = fixture.CreateAdminContext();
 
         await new GetOpportunityActivityHandler(context, recorder, StubDefinitionReader.None).HandleAsync(new GetOpportunityActivityQuery(tenant, opportunityId, TestData.Seller, Guid.NewGuid()));
-        await new GetOpportunityHandler(context, recorder).HandleAsync(new GetOpportunityQuery(tenant, opportunityId, TestData.Seller, Guid.NewGuid()));
+        await new GetOpportunityHandler(context, recorder, StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(new GetOpportunityQuery(tenant, opportunityId, TestData.Seller, Guid.NewGuid()));
 
         Assert.Equal(2, recorder.Requests.Count);
         Assert.Equal(recorder.Requests[1].Action, recorder.Requests[0].Action);

@@ -19,6 +19,8 @@ public static partial class FieldConfigRules
     /// not fit <paramref name="type"/>.</summary>
     public static FieldConfig Validate(this FieldConfig config, FieldType type)
     {
+        ValidateTarget(config, type);
+
         var isSelect = type is FieldType.Select or FieldType.MultiSelect;
         var isNumeric = type is FieldType.Number or FieldType.Decimal;
         var lengthCap = FieldConfig.TextLengthCap(type);
@@ -73,6 +75,27 @@ public static partial class FieldConfigRules
 
         if (current.Scale != replacement.Scale)
             throw new ArgumentException("A decimal field's scale cannot change after creation.", nameof(current.Scale));
+
+        if (current.Target != replacement.Target)
+            throw new ArgumentException("A reference field's target cannot change after creation.", nameof(current.Target));
+    }
+
+    /// <summary>A reference field names exactly one allow-listed target and nothing else; no other type may carry a target.</summary>
+    private static void ValidateTarget(FieldConfig config, FieldType type)
+    {
+        if (type != FieldType.Reference)
+        {
+            if (config.Target is not null)
+                throw new ArgumentException("Only reference fields can define a target.", nameof(config.Target));
+            return;
+        }
+
+        if (config.Target is null)
+            throw new ArgumentException("A reference field needs a target.", nameof(config.Target));
+        if (!ReferenceTargets.IsAllowed(config.Target))
+            throw new ArgumentException($"'{config.Target.BoundedContext}/{config.Target.EntityType}' is not a supported reference target.", nameof(config.Target));
+        if (config.Options is { Count: > 0 } || config.Scale is not null || config.Min is not null || config.Max is not null || config.MaxLength is not null)
+            throw new ArgumentException("A reference field takes no options, scale, limits or length.", nameof(config));
     }
 
     private static void ValidateOptions(IReadOnlyList<FieldOption>? options)

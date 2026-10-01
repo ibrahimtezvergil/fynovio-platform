@@ -19,7 +19,7 @@ public sealed class GetOpportunityHandlerTests
         var (tenant, opportunityId) = await SeedAsync();
         await using var context = _fixture.CreateAdminContext();
 
-        var dto = await new GetOpportunityHandler(context, StubAuthorizer.AlwaysAllow)
+        var dto = await new GetOpportunityHandler(context, StubAuthorizer.AlwaysAllow, StubDefinitionReader.None, StubLinkTargetDirectory.None)
             .HandleAsync(new GetOpportunityQuery(tenant, opportunityId, TestData.Seller, Guid.NewGuid()));
 
         Assert.NotNull(dto);
@@ -32,7 +32,7 @@ public sealed class GetOpportunityHandlerTests
         var (tenant, opportunityId) = await SeedAsync();
         await using var context = _fixture.CreateAdminContext();
 
-        var dto = await new GetOpportunityHandler(context, StubAuthorizer.AlwaysDeny)
+        var dto = await new GetOpportunityHandler(context, StubAuthorizer.AlwaysDeny, StubDefinitionReader.None, StubLinkTargetDirectory.None)
             .HandleAsync(new GetOpportunityQuery(tenant, opportunityId, TestData.Seller, Guid.NewGuid()));
 
         Assert.Null(dto);
@@ -44,7 +44,7 @@ public sealed class GetOpportunityHandlerTests
         var tenant = TestData.NextTenant();
         await using var context = _fixture.CreateAdminContext();
 
-        var dto = await new GetOpportunityHandler(context, StubAuthorizer.AlwaysAllow)
+        var dto = await new GetOpportunityHandler(context, StubAuthorizer.AlwaysAllow, StubDefinitionReader.None, StubLinkTargetDirectory.None)
             .HandleAsync(new GetOpportunityQuery(tenant, 999_999, TestData.Seller, Guid.NewGuid()));
 
         Assert.Null(dto);

@@ -128,6 +128,52 @@ public sealed class CatalogFieldDefinitionTests
         Assert.Equal(3, field.RowVersion);
     }
 
+    private static readonly FieldTarget Party = new("masterdata", "party");
+
+    [Fact]
+    public void A_reference_field_needs_exactly_one_allow_listed_target_and_nothing_else()
+    {
+        var field = Create(FieldType.Reference, new(Target: Party));
+        Assert.Equal(Party, field.Config.Target);
+        Assert.Equal(Party, field.ToReadModel().Config.Target);
+
+        Assert.Throws<ArgumentException>(() => Create(FieldType.Reference, FieldConfig.Empty));
+        Assert.Throws<ArgumentException>(() => Create(FieldType.Reference, new(Target: new("masterdata", "product"))));
+        Assert.Throws<ArgumentException>(() => Create(FieldType.Reference, new(Target: new("collaboration", "party"))));
+        Assert.Throws<ArgumentException>(() => Create(FieldType.Reference, new(Target: Party, MaxLength: 5)));
+        Assert.Throws<ArgumentException>(() => Create(FieldType.Reference, new(Target: Party, Scale: 2)));
+        Assert.Throws<ArgumentException>(() => Create(FieldType.Reference, new(Target: Party, Min: 1)));
+        Assert.Throws<ArgumentException>(() => Create(FieldType.Reference, new(Target: Party, Options: [O("a1", "A")])));
+    }
+
+    [Theory]
+    [InlineData(FieldType.Text)]
+    [InlineData(FieldType.Number)]
+    [InlineData(FieldType.Boolean)]
+    [InlineData(FieldType.Url)]
+    public void No_other_type_may_carry_a_target(FieldType type) =>
+        Assert.Throws<ArgumentException>(() => Create(type, new(Target: Party)));
+
+    [Fact]
+    public void A_reference_target_never_changes_but_the_label_and_order_can()
+    {
+        var field = Create(FieldType.Reference, new(Target: Party));
+
+        field.Update("Account owner", true, new(Target: Party), 7);
+        Assert.Equal("Account owner", field.Label);
+
+        Assert.Throws<ArgumentException>(() => field.Update("Account owner", true, FieldConfig.Empty, 7));
+        Assert.Throws<ArgumentException>(() => field.Update("Account owner", true, new(Target: new("masterdata", "product")), 7));
+    }
+
+    [Fact]
+    public void The_stored_config_of_a_definition_that_predates_targets_reads_back_without_one()
+    {
+        Assert.Null(FieldConfigRules.FromJson("""{"options":[{"key":"a","label":"A","isDeprecated":false}],"scale":null}""").Target);
+        Assert.Equal(FieldType.Reference, FieldTypeNames.Parse("reference"));
+        Assert.Equal("reference", FieldTypeNames.ToName(FieldType.Reference));
+    }
+
     private static CatalogFieldDefinition Create(FieldType type, FieldConfig config) =>
         CatalogFieldDefinition.Create(Tenant, "crm", "opportunity", "field_a", "Field A", type, config: config);
 }

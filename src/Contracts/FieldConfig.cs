@@ -4,6 +4,10 @@ namespace Contracts;
 /// so values already stored keep resolving to a label.</summary>
 public sealed record FieldOption(string Key, string Label, bool IsDeprecated = false);
 
+/// <summary>The one entity type a `reference` field points at, in the same `(bounded context, entity type)` terms as an
+/// <c>ILinkTargetResolver</c>: the resolver is what answers whether a given id is visible to the caller.</summary>
+public sealed record FieldTarget(string BoundedContext, string EntityType);
+
 /// <summary>Type-specific shape of a field definition. Every member is optional; the catalog decides which ones a
 /// given type allows when a definition is written (definition-side rules live there only). This read model carries
 /// what a consumer needs to validate a *value*: option keys, decimal scale, bounds and length caps.</summary>
@@ -12,7 +16,8 @@ public sealed record FieldConfig(
     int? Scale = null,
     decimal? Min = null,
     decimal? Max = null,
-    int? MaxLength = null)
+    int? MaxLength = null,
+    FieldTarget? Target = null)
 {
     public const int MaxOptions = 50;
     public const int MaxOptionLabelLength = 100;

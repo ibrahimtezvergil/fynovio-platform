@@ -17,7 +17,9 @@ public sealed record FieldDefinitionDto(
     int SortOrder,
     long RowVersion);
 
-public sealed record FieldConfigDto(IReadOnlyList<FieldOptionDto>? Options, int? Scale, decimal? Min, decimal? Max, int? MaxLength);
+public sealed record FieldConfigDto(IReadOnlyList<FieldOptionDto>? Options, int? Scale, decimal? Min, decimal? Max, int? MaxLength, FieldTargetDto? Target = null);
+
+public sealed record FieldTargetDto(string BoundedContext, string EntityType);
 
 public sealed record FieldOptionDto(string Key, string Label, bool IsDeprecated);
 
@@ -51,7 +53,8 @@ public sealed class ListFieldDefinitionsHandler(SemanticCatalogDbContext context
             definition.Config.Scale,
             definition.Config.Min,
             definition.Config.Max,
-            definition.Config.MaxLength),
+            definition.Config.MaxLength,
+            definition.Config.Target is null ? null : new FieldTargetDto(definition.Config.Target.BoundedContext, definition.Config.Target.EntityType)),
         definition.Status.ToString(),
         definition.SortOrder,
         definition.RowVersion);

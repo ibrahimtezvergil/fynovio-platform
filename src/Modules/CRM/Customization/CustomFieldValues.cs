@@ -207,6 +207,12 @@ public static partial class CustomFieldValues
                         ? JsonValue.Create(text)
                         : Fail("invalid_value", $"'{definition.Label}' must be an http or https address.");
                 }
+            case FieldType.Reference:
+                // Shape only: that the id points at something this caller may see is asked of the link directory by
+                // CustomFieldReferences, which must run after Normalize and only for ids that actually changed.
+                return value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var referenceId) && referenceId > 0
+                    ? JsonValue.Create(referenceId)
+                    : Fail("invalid_type", $"'{definition.Label}' must be the id of an existing record.");
             default:
                 return Fail("invalid_type", $"'{definition.Label}' has an unsupported type.");
         }

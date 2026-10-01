@@ -235,7 +235,7 @@ public sealed class CrmSettingsManagementTests(PostgresFixture fixture)
         var command = new CreateOpportunityCommand(tenant, new PartyRef(tenant, 998), TestData.Seller,
             "TRY", 500m, "settings-defaults-create", Guid.NewGuid());
         await using var context = fixture.CreateAdminContext();
-        var created = await new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity, StubDefinitionReader.None).HandleAsync(command);
+        var created = await new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity, StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(command);
         var opportunity = await context.Opportunities.AsNoTracking().SingleAsync(x => x.Id == created.OpportunityId);
         Assert.Equal(type.Id, opportunity.OpportunityTypeId);
         Assert.Equal(defaultAssignee, opportunity.AssignedPrincipal);

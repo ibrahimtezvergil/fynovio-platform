@@ -31,9 +31,12 @@ public sealed record FieldConfigInput(
     int? Scale = null,
     decimal? Min = null,
     decimal? Max = null,
-    int? MaxLength = null);
+    int? MaxLength = null,
+    FieldTargetInput? Target = null);
 
 public sealed record FieldOptionInput(string Key, string Label, bool IsDeprecated = false);
+
+public sealed record FieldTargetInput(string BoundedContext, string EntityType);
 
 public sealed record ManageFieldDefinitionResult(long DefinitionId, long RowVersion, bool Replayed, long? ChangeSetId = null);
 
@@ -119,7 +122,8 @@ public sealed class ManageFieldDefinitionHandler(SemanticCatalogDbContext contex
             ? null
             : new FieldConfig(
                 command.Config.Options?.Select(o => new FieldOption(o.Key, o.Label, o.IsDeprecated)).ToList(),
-                command.Config.Scale, command.Config.Min, command.Config.Max, command.Config.MaxLength);
+                command.Config.Scale, command.Config.Min, command.Config.Max, command.Config.MaxLength,
+                command.Config.Target is null ? null : new FieldTarget(command.Config.Target.BoundedContext, command.Config.Target.EntityType));
         var content = new FieldChangeContent(
             command.OwnerContext, command.ObjectType, command.Key, command.Label,
             command.Operation == FieldOperation.Create ? command.Type : null,

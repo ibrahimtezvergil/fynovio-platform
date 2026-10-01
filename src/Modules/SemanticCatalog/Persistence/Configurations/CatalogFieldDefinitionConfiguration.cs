@@ -40,7 +40,7 @@ public sealed class CatalogFieldDefinitionConfiguration : IEntityTypeConfigurati
         {
             t.HasCheckConstraint("ck_field_definitions_owner", "owner_context = 'crm' AND object_type = 'opportunity'");
             t.HasCheckConstraint("ck_field_definitions_field_type",
-                "field_type IN ('text','long_text','number','decimal','boolean','date','select','multi_select','email','phone','url')");
+                "field_type IN ('text','long_text','number','decimal','boolean','date','select','multi_select','email','phone','url','reference')");
             t.HasCheckConstraint("ck_field_definitions_key", "key ~ '^[a-z][a-z0-9_]{1,62}$'");
             t.HasCheckConstraint("ck_field_definitions_status", "status IN ('Active','Deprecated')");
             t.HasCheckConstraint("ck_field_definitions_sort_order", "sort_order BETWEEN 0 AND 10000");

@@ -25,6 +25,7 @@ import { NewPartyDialog } from './NewPartyDialog'
 import { OpportunityStartBlocker, OpportunityStartInfo } from './OpportunityStartSummary'
 import { PartyPicker } from './PartyPicker'
 import { ProblemNotice } from './ProblemNotice'
+import { ReferenceFieldInput } from './ReferenceFieldInput'
 import { SelectedParty } from './SelectedParty'
 
 const WIZARD_STEPS = ['customer', 'amount'] as const
@@ -214,6 +215,7 @@ export function OpportunityForm() {
                     drafts={customDrafts}
                     errors={customErrors}
                     disabled={command.isPending}
+                    renderReference={(props) => <ReferenceFieldInput {...props} />}
                     onChange={(drafts) => { setCustomDrafts(drafts); setMissing([]) }}
                   />
                 </CardContent>

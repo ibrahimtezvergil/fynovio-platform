@@ -20,7 +20,7 @@ public sealed class ListOpportunitiesHandlerTests
         var tenant = await SeedTwoOpportunitiesAsync();
         await using var context = _fixture.CreateAdminContext();
 
-        var results = await new ListOpportunitiesHandler(context, new StubScopeResolver(new AccessScope.All()), StubDefinitionReader.None)
+        var results = await new ListOpportunitiesHandler(context, new StubScopeResolver(new AccessScope.All()), StubDefinitionReader.None, StubLinkTargetDirectory.None)
             .HandleAsync(new ListOpportunitiesQuery(tenant, TestData.Seller, Guid.NewGuid(), Status: null, Skip: 0, Take: 50));
 
         Assert.Equal(2, results.Count);
@@ -32,7 +32,7 @@ public sealed class ListOpportunitiesHandlerTests
         var tenant = await SeedTwoOpportunitiesAsync();
         await using var context = _fixture.CreateAdminContext();
 
-        var results = await new ListOpportunitiesHandler(context, new StubScopeResolver(new AccessScope.None()), StubDefinitionReader.None)
+        var results = await new ListOpportunitiesHandler(context, new StubScopeResolver(new AccessScope.None()), StubDefinitionReader.None, StubLinkTargetDirectory.None)
             .HandleAsync(new ListOpportunitiesQuery(tenant, TestData.Seller, Guid.NewGuid(), Status: null, Skip: 0, Take: 50));
 
         Assert.Empty(results);
@@ -52,7 +52,7 @@ public sealed class ListOpportunitiesHandlerTests
 
         await using var context = _fixture.CreateAdminContext();
         var scope = new AccessScope.AnyOf([new ScopeTerm.OwnedBy(TestData.Seller)]);
-        var results = await new ListOpportunitiesHandler(context, new StubScopeResolver(scope), StubDefinitionReader.None)
+        var results = await new ListOpportunitiesHandler(context, new StubScopeResolver(scope), StubDefinitionReader.None, StubLinkTargetDirectory.None)
             .HandleAsync(new ListOpportunitiesQuery(tenant, TestData.Seller, Guid.NewGuid(), Status: null, Skip: 0, Take: 50));
 
         Assert.Single(results);
@@ -71,7 +71,7 @@ public sealed class ListOpportunitiesHandlerTests
         await seed.SaveChangesAsync();
 
         await using var context = _fixture.CreateAdminContext();
-        var results = await new ListOpportunitiesHandler(context, new StubScopeResolver(new AccessScope.All()), StubDefinitionReader.None)
+        var results = await new ListOpportunitiesHandler(context, new StubScopeResolver(new AccessScope.All()), StubDefinitionReader.None, StubLinkTargetDirectory.None)
             .HandleAsync(new ListOpportunitiesQuery(tenant, TestData.Seller, Guid.NewGuid(), Status: null, Skip: 0, Take: 50));
 
         var summary = Assert.Single(results);

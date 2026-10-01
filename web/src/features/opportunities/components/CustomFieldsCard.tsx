@@ -12,6 +12,7 @@ import { useUpdateOpportunityCustomFields } from '../api'
 import { useKeyedCommand } from '../lib/useKeyedCommand'
 import type { Opportunity } from '../schema'
 import { ProblemNotice } from './ProblemNotice'
+import { ReferenceFieldInput } from './ReferenceFieldInput'
 
 /**
  * The opportunity's tenant-defined fields, rendered from the definitions. Deprecated fields that still hold a value
@@ -29,13 +30,14 @@ export function CustomFieldsCard({ opportunity, onSaved }: { opportunity: Opport
   const values = opportunity.customFields ?? {}
   const retired = all.filter((definition) => definition.status === 'Deprecated' && hasValue(values[definition.fieldName]))
   const errors = useMemo(() => ({ ...customFieldErrors(t, mutation.error), ...requiredErrors(t, missing) }), [t, mutation.error, missing])
-  const yesNo = { yes: t('customFields.yes'), no: t('customFields.no') }
+  const yesNo = { yes: t('customFields.yes'), no: t('customFields.no'), unavailable: t('customFields.reference.unavailableShort') }
+  const references = opportunity.customFieldReferences ?? {}
 
   if (fields.length === 0 && retired.length === 0) return null
 
   const editing = drafts !== null
   const canEdit = !opportunity.isArchived && fields.length > 0
-  const begin = () => { mutation.reset(); setMissing([]); setDrafts(toDrafts(fields, values)) }
+  const begin = () => { mutation.reset(); setMissing([]); setDrafts(toDrafts(fields, values, references)) }
   const save = async (event: FormEvent) => {
     event.preventDefault()
     if (!drafts) return
@@ -62,7 +64,7 @@ export function CustomFieldsCard({ opportunity, onSaved }: { opportunity: Opport
       <CardContent className="grid gap-4">
         {editing ? (
           <form onSubmit={(event) => void save(event)} noValidate aria-label={t('customFields.title')} className="grid gap-4">
-            <CustomFieldInputs definitions={fields} drafts={drafts} errors={errors} disabled={command.isPending}
+            <CustomFieldInputs definitions={fields} drafts={drafts} errors={errors} disabled={command.isPending} renderReference={(props) => <ReferenceFieldInput {...props} />}
               onChange={(next) => { setDrafts(next); setMissing([]) }} />
             {command.problem && command.problem.kind !== 'validation' && <ProblemNotice problem={command.problem} />}
             <div className="flex gap-2">
@@ -76,7 +78,7 @@ export function CustomFieldsCard({ opportunity, onSaved }: { opportunity: Opport
               {fields.map((definition) => (
                 <div key={definition.id} className="grid grid-cols-[150px_1fr] gap-3 py-1.5 text-[13px]">
                   <dt className="text-muted-foreground">{definition.label}</dt>
-                  <dd className="min-w-0 break-words">{formatCustomFieldValue(definition, values[definition.fieldName], yesNo, i18n.language) || '—'}</dd>
+                  <dd className="min-w-0 break-words">{formatCustomFieldValue(definition, values[definition.fieldName], yesNo, i18n.language, references[definition.fieldName]) || '—'}</dd>
                 </div>
               ))}
             </dl>
@@ -89,7 +91,7 @@ export function CustomFieldsCard({ opportunity, onSaved }: { opportunity: Opport
               {retired.map((definition) => (
                 <div key={definition.id} className="text-muted-foreground grid grid-cols-[150px_1fr] gap-3 py-1.5 text-[13px]">
                   <dt className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">{definition.label}<Badge variant="secondary">{t('customFields.deprecated')}</Badge></dt>
-                  <dd className="min-w-0 break-words">{formatCustomFieldValue(definition, values[definition.fieldName], yesNo, i18n.language)}</dd>
+                  <dd className="min-w-0 break-words">{formatCustomFieldValue(definition, values[definition.fieldName], yesNo, i18n.language, references[definition.fieldName])}</dd>
                 </div>
               ))}
             </dl>

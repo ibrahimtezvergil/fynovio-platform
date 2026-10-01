@@ -25,7 +25,7 @@ public sealed class CreateOpportunityHandlerTests
         var command = new CreateOpportunityCommand(tenant, partyRef, TestData.Seller, "TRY", 1000m, "key-1", Guid.NewGuid());
 
         await using var context = _fixture.CreateAdminContext();
-        var result = await new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, Resolver(_fixture), StubDefinitionReader.None).HandleAsync(command);
+        var result = await new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, Resolver(_fixture), StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(command);
 
         Assert.False(result.Replayed);
         Assert.True(result.OpportunityId > 0);
@@ -46,7 +46,7 @@ public sealed class CreateOpportunityHandlerTests
 
         await using var context = _fixture.CreateAdminContext();
         await Assert.ThrowsAsync<OpportunityAuthorizationDeniedException>(() =>
-            new CreateOpportunityHandler(context, StubAuthorizer.AlwaysDeny, StubPartyIdentityResolver.Identity, StubDefinitionReader.None).HandleAsync(command));
+            new CreateOpportunityHandler(context, StubAuthorizer.AlwaysDeny, StubPartyIdentityResolver.Identity, StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(command));
 
         Assert.Empty(await context.Opportunities.AsNoTracking().Where(o => o.PartyRefPartyId == partyRef.PartyId).ToListAsync());
     }
@@ -60,10 +60,10 @@ public sealed class CreateOpportunityHandlerTests
         var command = new CreateOpportunityCommand(tenant, partyRef, TestData.Seller, "TRY", 1000m, "key-2", Guid.NewGuid());
 
         await using var first = _fixture.CreateAdminContext();
-        var firstResult = await new CreateOpportunityHandler(first, StubAuthorizer.AlwaysAllow, Resolver(_fixture), StubDefinitionReader.None).HandleAsync(command);
+        var firstResult = await new CreateOpportunityHandler(first, StubAuthorizer.AlwaysAllow, Resolver(_fixture), StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(command);
 
         await using var second = _fixture.CreateAdminContext();
-        var replay = await new CreateOpportunityHandler(second, StubAuthorizer.AlwaysAllow, Resolver(_fixture), StubDefinitionReader.None).HandleAsync(command);
+        var replay = await new CreateOpportunityHandler(second, StubAuthorizer.AlwaysAllow, Resolver(_fixture), StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(command);
 
         Assert.True(replay.Replayed);
         Assert.Equal(firstResult.OpportunityId, replay.OpportunityId);
@@ -80,7 +80,7 @@ public sealed class CreateOpportunityHandlerTests
 
         await using var context = _fixture.CreateAdminContext();
         await Assert.ThrowsAsync<PartyNotFoundException>(() =>
-            new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, Resolver(_fixture), StubDefinitionReader.None).HandleAsync(command));
+            new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, Resolver(_fixture), StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(command));
 
         Assert.Empty(await context.Opportunities.AsNoTracking().Where(o => o.TenantId == tenant).ToListAsync());
         Assert.Empty(await context.IdempotencyRecords.AsNoTracking().Where(r => r.TenantId == tenant).ToListAsync());
@@ -97,7 +97,7 @@ public sealed class CreateOpportunityHandlerTests
 
         await using var context = _fixture.CreateAdminContext();
         await Assert.ThrowsAsync<PartyNotFoundException>(() =>
-            new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, Resolver(_fixture), StubDefinitionReader.None).HandleAsync(command));
+            new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, Resolver(_fixture), StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(command));
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public sealed class CreateOpportunityHandlerTests
         var command = new CreateOpportunityCommand(tenant, merged, TestData.Seller, "TRY", 1000m, "key-merged", Guid.NewGuid());
 
         await using var context = _fixture.CreateAdminContext();
-        var result = await new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, resolver, StubDefinitionReader.None).HandleAsync(command);
+        var result = await new CreateOpportunityHandler(context, StubAuthorizer.AlwaysAllow, resolver, StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(command);
 
         var stored = await context.Opportunities.AsNoTracking().SingleAsync(o => o.Id == result.OpportunityId);
         Assert.Equal(survivor.PartyId, stored.PartyRefPartyId);
@@ -127,11 +127,11 @@ public sealed class CreateOpportunityHandlerTests
         var command = new CreateOpportunityCommand(tenant, party, TestData.Seller, "TRY", 1000m, "key-replay-gone", Guid.NewGuid());
 
         await using var first = _fixture.CreateAdminContext();
-        var created = await new CreateOpportunityHandler(first, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity, StubDefinitionReader.None).HandleAsync(command);
+        var created = await new CreateOpportunityHandler(first, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity, StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(command);
 
         var gone = new StubPartyIdentityResolver(_ => null);
         await using var second = _fixture.CreateAdminContext();
-        var replay = await new CreateOpportunityHandler(second, StubAuthorizer.AlwaysAllow, gone, StubDefinitionReader.None).HandleAsync(command);
+        var replay = await new CreateOpportunityHandler(second, StubAuthorizer.AlwaysAllow, gone, StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(command);
 
         Assert.True(replay.Replayed);
         Assert.Equal(created.OpportunityId, replay.OpportunityId);
@@ -146,10 +146,10 @@ public sealed class CreateOpportunityHandlerTests
         var command = new CreateOpportunityCommand(tenant, merged, TestData.Seller, "TRY", 1000m, "key-retry-after-merge", Guid.NewGuid());
 
         await using var first = _fixture.CreateAdminContext();
-        var created = await new CreateOpportunityHandler(first, StubAuthorizer.AlwaysAllow, new StubPartyIdentityResolver(p => p == merged ? new PartyRef(tenant, 55) : p), StubDefinitionReader.None).HandleAsync(command);
+        var created = await new CreateOpportunityHandler(first, StubAuthorizer.AlwaysAllow, new StubPartyIdentityResolver(p => p == merged ? new PartyRef(tenant, 55) : p), StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(command);
 
         await using var second = _fixture.CreateAdminContext();
-        var replay = await new CreateOpportunityHandler(second, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity, StubDefinitionReader.None).HandleAsync(command);
+        var replay = await new CreateOpportunityHandler(second, StubAuthorizer.AlwaysAllow, StubPartyIdentityResolver.Identity, StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(command);
 
         Assert.True(replay.Replayed);
         Assert.Equal(created.OpportunityId, replay.OpportunityId);

@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next'
 import { z } from 'zod'
-import { customFieldValuesSchema } from '@/lib/custom-fields/schema'
+import { customFieldReferencesSchema, customFieldValuesSchema } from '@/lib/custom-fields/schema'
 import { pipelineStageKindSchema, type PipelineStageKind } from '@/types/schemas'
 
 export type { PipelineStageKind }
@@ -54,6 +54,7 @@ export const opportunitySchema = z.object({
   lines: z.array(opportunityLineSchema).default([]),
   /** Stored custom field object, including values of deprecated fields (shown read-only). */
   customFields: customFieldValuesSchema.nullish(),
+  customFieldReferences: customFieldReferencesSchema.nullish(),
 })
 export type Opportunity = z.infer<typeof opportunitySchema>
 
@@ -78,6 +79,7 @@ export const opportunitySummarySchema = z.object({
   archivedAt: z.string().nullish(),
   rowVersion: z.number().optional(),
   customFields: customFieldValuesSchema.nullish(),
+  customFieldReferences: customFieldReferencesSchema.nullish(),
 })
 export type OpportunitySummary = z.infer<typeof opportunitySummarySchema>
 

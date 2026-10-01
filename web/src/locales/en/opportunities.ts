@@ -375,8 +375,13 @@ export default {
       required: 'This field is required.', unknown_field: 'This field is not defined.', field_deprecated: 'This field is deprecated.', invalid_type: 'The value does not match the field type.',
       invalid_value: 'Enter a valid value.', out_of_range: 'The value is outside the allowed range.', too_long: 'The value is too long.', invalid_option: 'Choose a valid option.',
       option_deprecated: 'This option is no longer in use.', payload_too_large: 'The additional fields are too large in total.',
+      invalid_reference: 'Choose a customer you have access to.',
     },
-    types: { text: 'Short text', long_text: 'Long text', number: 'Whole number', decimal: 'Decimal number', boolean: 'Yes / No', date: 'Date', select: 'Single choice', multi_select: 'Multiple choice', email: 'Email', phone: 'Phone', url: 'Web address' },
+    types: { text: 'Short text', long_text: 'Long text', number: 'Whole number', decimal: 'Decimal number', boolean: 'Yes / No', date: 'Date', select: 'Single choice', multi_select: 'Multiple choice', email: 'Email', phone: 'Phone', url: 'Web address', reference: 'Customer link' },
+    reference: {
+      unavailable: 'Customer #{{id}} (not available to you)', unavailableShort: 'Not available', clear: 'Clear {{name}}',
+      target: 'Links to', targetParty: 'A customer (Party)', targetHint: 'The customer a value points at. Cannot change after creation.',
+    },
     settings: {
       title: 'Opportunity fields', description: 'Define extra information to keep on opportunities. Fields appear on the new opportunity form, the opportunity detail and the list.',
       add: 'Add field', empty: 'No additional fields yet. Use "Add field" to define the first one.', required: 'Required', active: 'In use', deprecated: 'Deprecated',

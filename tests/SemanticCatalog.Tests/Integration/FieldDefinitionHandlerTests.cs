@@ -387,4 +387,50 @@ public sealed class FieldDefinitionHandlerTests(PostgresFixture fixture)
             Assert.Contains("100", ex.Message);
         }
     }
+
+    [Fact]
+    public async Task A_reference_field_is_created_listed_and_its_target_is_immutable()
+    {
+        var tenant = TestTenants.Next();
+        var target = new FieldTargetInput("masterdata", "party");
+
+        ManageFieldDefinitionResult created;
+        await using (var context = fixture.CreateAdminContext())
+            created = await new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(new ManageFieldDefinitionCommand(
+                tenant, Administrator, FieldOperation.Create, null, 0, "crm", "opportunity", "account", "Account", FieldType.Reference, false,
+                new FieldConfigInput(Target: target), 0, "reference-create", Guid.NewGuid()));
+
+        await using (var context = fixture.CreateAdminContext())
+        {
+            var listed = Assert.Single(await new ListFieldDefinitionsHandler(context, StubAuthorizer.AlwaysAllow)
+                .HandleAsync(new ListFieldDefinitionsQuery(tenant, Administrator, "crm", "opportunity", Guid.NewGuid())));
+            Assert.Equal("reference", listed.FieldType);
+            Assert.Equal(new FieldTargetDto("masterdata", "party"), listed.Config.Target);
+        }
+
+        await using (var context = fixture.CreateAdminContext())
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(
+                new ManageFieldDefinitionCommand(tenant, Administrator, FieldOperation.Update, created.DefinitionId, created.RowVersion, "crm", "opportunity", "", "Account",
+                    FieldType.Text, false, new FieldConfigInput(), 0, "reference-retarget", Guid.NewGuid())));
+        }
+
+        await using (var context = fixture.CreateAdminContext())
+            Assert.Equal(1, (await context.FieldDefinitions.SingleAsync(d => d.Id == created.DefinitionId)).RowVersion);
+    }
+
+    [Fact]
+    public async Task A_reference_field_without_a_supported_target_is_refused_and_nothing_is_written()
+    {
+        var tenant = TestTenants.Next();
+        await using var context = fixture.CreateAdminContext();
+
+        await Assert.ThrowsAsync<ArgumentException>(() => new ManageFieldDefinitionHandler(context, StubAuthorizer.AlwaysAllow).HandleAsync(
+            new ManageFieldDefinitionCommand(tenant, Administrator, FieldOperation.Create, null, 0, "crm", "opportunity", "account", "Account", FieldType.Reference, false,
+                new FieldConfigInput(Target: new FieldTargetInput("masterdata", "product")), 0, "reference-bad-target", Guid.NewGuid())));
+
+        await using var verify = fixture.CreateAdminContext();
+        Assert.False(await verify.FieldDefinitions.AnyAsync(d => d.TenantId == tenant));
+        Assert.False(await verify.ChangeSets.AnyAsync(c => c.TenantId == tenant));
+    }
 }

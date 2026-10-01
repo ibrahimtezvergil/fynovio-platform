@@ -50,6 +50,30 @@ describe('CRM settings — opportunity fields', () => {
     expect(body).toEqual({ key: 'butce_kodu', label: 'Bütçe Kodu', type: 'number', isRequired: false, sortOrder: 10, config: { min: null, max: 50 } })
   })
 
+  it('creates a reference field whose only target is a customer, sending it as the field config', async () => {
+    let body: Record<string, unknown> | undefined
+    server.use(
+      http.get(url(endpoints.crmSettings.customFields), () => HttpResponse.json([])),
+      http.post(url(endpoints.crmSettings.customFields), async ({ request }) => {
+        body = await request.json() as Record<string, unknown>
+        return HttpResponse.json({ definitionId: 9, rowVersion: 1, replayed: false, changeSetId: 31 }, { status: 201 })
+      }),
+    )
+    render()
+
+    fireEvent.click(await screen.findByRole('button', { name: t('customFields.settings.add') }))
+    fireEvent.change(screen.getByRole('textbox', { name: t('customFields.settings.label') }), { target: { value: 'Account owner' } })
+    fireEvent.change(screen.getByRole('combobox', { name: t('customFields.settings.type') }), { target: { value: 'reference' } })
+    const target = screen.getByRole('combobox', { name: t('customFields.reference.target') })
+    expect(target).toBeDisabled()
+    expect(target).toHaveDisplayValue(t('customFields.reference.targetParty'))
+    expect(screen.queryByRole('textbox', { name: t('customFields.settings.maxLength') })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: t('customFields.save') }))
+
+    await waitFor(() => expect(body).toBeDefined())
+    expect(body).toEqual({ key: 'account_owner', label: 'Account owner', type: 'reference', isRequired: false, sortOrder: 10, config: { target: { boundedContext: 'masterdata', entityType: 'party' } } })
+  })
+
   it('shows the data impact before deprecating and sends the definition row version', async () => {
     let transition: { path: string; body: unknown } | undefined
     server.use(

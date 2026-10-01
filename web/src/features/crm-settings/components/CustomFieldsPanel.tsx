@@ -62,6 +62,9 @@ function toConfig(editor: EditorState): CustomFieldConfigInput | null {
       return { min: numberOrNull(editor.min), max: numberOrNull(editor.max) }
     case 'decimal':
       return { min: numberOrNull(editor.min), max: numberOrNull(editor.max), scale: numberOrNull(editor.scale) }
+    case 'reference':
+      // The one target v1 allows; fixed at creation, so an edit sends it back unchanged.
+      return { target: { boundedContext: 'masterdata', entityType: 'party' } }
     case 'select':
     case 'multi_select':
       return { options: editor.options.filter((option) => option.label.trim() !== '').map((option) => ({
@@ -186,6 +189,11 @@ export function CustomFieldsPanel() {
           <Field label={t('customFields.settings.sortOrder')}>
             {(props) => <Input {...props} type="number" min="0" max="10000" value={editor.sortOrder} onChange={(event) => setEditor({ ...editor, sortOrder: event.target.value })} />}
           </Field>
+          {editor.type === 'reference' && (
+            <Field label={t('customFields.reference.target')} hint={t('customFields.reference.targetHint')}>
+              {(props) => <Select {...props} value="masterdata/party" disabled><option value="masterdata/party">{t('customFields.reference.targetParty')}</option></Select>}
+            </Field>
+          )}
           {(editor.type === 'text' || editor.type === 'long_text') && (
             <Field label={t('customFields.settings.maxLength')}>
               {(props) => <Input {...props} type="number" min="1" value={editor.maxLength} onChange={(event) => setEditor({ ...editor, maxLength: event.target.value })} />}
