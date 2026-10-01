@@ -7,7 +7,8 @@
 Assumes the recommended options (E-1 (a), E-2 (a)). If the owner picks differently, Tasks 2 and 6 are rewritten before starting.
 
 ## Task 0 — Decision
-- [ ] Write the ADR with the measured dispatcher finding and the options.
+- [x] Write the ADR with the measured dispatcher finding and the options.
+→ Commit: `7724d59` "docs(adr): propose event consumption design and plan (phase B)"
 - [ ] Owner decides E-1 and E-2; ADR status → Accepted.
 
 ## Task 1 — Envelope and contracts
