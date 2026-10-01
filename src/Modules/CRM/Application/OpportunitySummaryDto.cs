@@ -1,4 +1,5 @@
 using System.Text.Json;
+using CRM.Customization;
 using CRM.Domain;
 
 namespace CRM.Application;
@@ -24,4 +25,7 @@ public sealed record OpportunitySummaryDto(
     string? AssignedPrincipalDisplayName)
 {
     public JsonElement? CustomFields { get; init; }
+
+    /// <summary>See <see cref="OpportunityDto.CustomFieldReferences"/>.</summary>
+    public IReadOnlyDictionary<string, CustomFieldReferenceDto>? CustomFieldReferences { get; init; }
 }

@@ -34,7 +34,7 @@ export function createOpportunityColumns(
   customFields: readonly CustomFieldDefinition[] = [],
   locale?: string,
 ) {
-  const yesNo = { yes: t('customFields.yes'), no: t('customFields.no') }
+  const yesNo = { yes: t('customFields.yes'), no: t('customFields.no'), unavailable: t('customFields.reference.unavailableShort') }
   return helper.columns([
     helper.display({
       id: 'select',
@@ -94,7 +94,7 @@ export function createOpportunityColumns(
     }),
     // One column per active tenant field, after the built-in ones (ADR decision 7: rendered from the definitions).
     ...customFields.map((definition) =>
-      helper.accessor((row) => formatCustomFieldValue(definition, row.customFields[definition.fieldName], yesNo, locale), {
+      helper.accessor((row) => formatCustomFieldValue(definition, row.customFields[definition.fieldName], yesNo, locale, row.customFieldReferences[definition.fieldName]), {
         id: `cf:${definition.fieldName}`,
         header: definition.label,
         meta: { label: definition.label, cellClassName: 'max-w-[220px] truncate' },

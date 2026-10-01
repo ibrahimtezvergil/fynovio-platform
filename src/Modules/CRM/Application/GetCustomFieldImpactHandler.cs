@@ -1,4 +1,5 @@
 using Contracts;
+using CRM.Customization;
 using CRM.Domain;
 using CRM.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -11,12 +12,15 @@ public sealed record GetCustomFieldImpactQuery(
     long DefinitionId,
     Guid CorrelationId);
 
+/// <summary>What deprecating a field touches: the opportunities that hold a value (CRM's data) and the active shared views that place
+/// the field as a column (the catalog's dependency edges). Deprecation stays allowed either way; this is what the person sees first.</summary>
 public sealed record CustomFieldImpactDto(
     long DefinitionId,
     string FieldName,
-    int OpportunitiesWithValue);
+    int OpportunitiesWithValue,
+    IReadOnlyList<DependentView> DependentViews);
 
-public sealed class GetCustomFieldImpactHandler(CrmDbContext context, IAuthorizer authorizer)
+public sealed class GetCustomFieldImpactHandler(CrmDbContext context, IAuthorizer authorizer, ISemanticDefinitionReader definitionReader)
 {
     public async Task<CustomFieldImpactDto> HandleAsync(GetCustomFieldImpactQuery query, CancellationToken cancellationToken = default)
     {
@@ -24,16 +28,16 @@ public sealed class GetCustomFieldImpactHandler(CrmDbContext context, IAuthorize
         await context.SetTenantContextAsync(query.TenantId, cancellationToken);
         await GetCrmSettingsHandler.AuthorizeAsync(query.TenantId, query.Principal, query.CorrelationId, CrmActionKeys.SettingsUpdate, authorizer, cancellationToken);
 
-        var definition = await context.TenantFieldDefinitions
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.TenantId == query.TenantId && x.Id == query.DefinitionId, cancellationToken)
-            ?? throw new KeyNotFoundException($"Field definition {query.DefinitionId} was not found.");
+        var definition = await definitionReader.GetFieldAsync(query.TenantId, query.DefinitionId, cancellationToken);
+        if (definition is not { OwnerContext: OpportunityFields.OwnerContext, ObjectType: OpportunityFields.ObjectType })
+            throw new KeyNotFoundException($"Field definition {query.DefinitionId} was not found.");
 
-        var opportunitiesWithValue = await CountOpportunitiesWithFieldAsync(query.TenantId, definition.FieldName, cancellationToken);
+        var opportunitiesWithValue = await CountOpportunitiesWithFieldAsync(query.TenantId, definition.Key, cancellationToken);
+        var dependentViews = await definitionReader.ListDependentViewsAsync(query.TenantId, definition.Id, cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
 
-        return new CustomFieldImpactDto(definition.Id, definition.FieldName, opportunitiesWithValue);
+        return new CustomFieldImpactDto(definition.Id, definition.Key, opportunitiesWithValue, dependentViews);
     }
 
     // jsonb key-exists (`custom_fields ? key`); archived opportunities count too, since their values stay readable.

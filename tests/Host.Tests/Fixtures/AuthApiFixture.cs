@@ -145,6 +145,9 @@ public sealed class AuthApiFixture : IAsyncLifetime
 
         await using (var masterData = AuthTestFixture.CreateMasterDataContext(AdminConnectionString))
             await masterData.Database.MigrateAsync();
+        // SemanticCatalog before CRM (adr-semantic-catalog-changeset.md S-3).
+        await using (var semantic = AuthTestFixture.CreateSemanticCatalogContext(AdminConnectionString))
+            await semantic.Database.MigrateAsync();
         await using (var crm = AuthTestFixture.CreateCrmContext(AdminConnectionString))
             await crm.Database.MigrateAsync();
         await using (var access = AuthTestFixture.CreateAccessContext(AdminConnectionString))
@@ -174,6 +177,7 @@ public sealed class AuthApiFixture : IAsyncLifetime
         var effective = new Dictionary<string, string?>
         {
             ["ConnectionStrings__Crm"] = _runtimeConnectionString,
+            ["ConnectionStrings__SemanticCatalog"] = _runtimeConnectionString,
             ["ConnectionStrings__Collaboration"] = _runtimeConnectionString,
             ["ConnectionStrings__Access"] = _runtimeConnectionString,
             ["ConnectionStrings__MasterData"] = _runtimeConnectionString,

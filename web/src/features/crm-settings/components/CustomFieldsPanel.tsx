@@ -62,6 +62,9 @@ function toConfig(editor: EditorState): CustomFieldConfigInput | null {
       return { min: numberOrNull(editor.min), max: numberOrNull(editor.max) }
     case 'decimal':
       return { min: numberOrNull(editor.min), max: numberOrNull(editor.max), scale: numberOrNull(editor.scale) }
+    case 'reference':
+      // The one target v1 allows; fixed at creation, so an edit sends it back unchanged.
+      return { target: { boundedContext: 'masterdata', entityType: 'party' } }
     case 'select':
     case 'multi_select':
       return { options: editor.options.filter((option) => option.label.trim() !== '').map((option) => ({
@@ -122,6 +125,7 @@ export function CustomFieldsPanel() {
     setEditor((current) => current && { ...current, options: current.options.map((option, at) => (at === index ? { ...option, ...change } : option)) })
 
   const impactCount = impact.data?.opportunitiesWithValue
+  const impactViews = impact.data?.dependentViews ?? []
   return (
     <Card className="min-w-0 gap-4 px-6 pt-[22px] pb-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -186,6 +190,11 @@ export function CustomFieldsPanel() {
           <Field label={t('customFields.settings.sortOrder')}>
             {(props) => <Input {...props} type="number" min="0" max="10000" value={editor.sortOrder} onChange={(event) => setEditor({ ...editor, sortOrder: event.target.value })} />}
           </Field>
+          {editor.type === 'reference' && (
+            <Field label={t('customFields.reference.target')} hint={t('customFields.reference.targetHint')}>
+              {(props) => <Select {...props} value="masterdata/party" disabled><option value="masterdata/party">{t('customFields.reference.targetParty')}</option></Select>}
+            </Field>
+          )}
           {(editor.type === 'text' || editor.type === 'long_text') && (
             <Field label={t('customFields.settings.maxLength')}>
               {(props) => <Input {...props} type="number" min="1" value={editor.maxLength} onChange={(event) => setEditor({ ...editor, maxLength: event.target.value })} />}
@@ -248,6 +257,13 @@ export function CustomFieldsPanel() {
               : impact.isError ? t('customFields.settings.impactError')
                 : impactCount === 0 ? t('customFields.settings.impactNone') : t('customFields.settings.impact', { count: impactCount })}
           </p>
+          {impact.isSuccess && impactViews.length > 0 && (
+            <div role="status" className="grid gap-1 text-[13px]">
+              <p className="font-[550]">{t('customFields.settings.impactViews', { count: impactViews.length })}</p>
+              <ul className="text-muted-foreground list-disc pl-5">{impactViews.map((view) => <li key={view.id}>{view.name}</li>)}</ul>
+              <p className="text-muted-foreground text-[12.5px]">{t('customFields.settings.impactViewsHint')}</p>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>{t('customFields.cancel')}</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={() => {

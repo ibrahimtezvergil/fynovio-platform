@@ -1,3 +1,4 @@
+using Contracts;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -18,7 +19,7 @@ public static partial class CustomFieldValues
     public const int MaxUrlLength = 2000;
 
     /// <returns>The canonical JSON to store, or null when no field has a value.</returns>
-    public static string? Normalize(IReadOnlyCollection<TenantFieldDefinition> definitions, JsonElement? input, string? existingJson)
+    public static string? Normalize(IReadOnlyCollection<FieldDefinition> definitions, JsonElement? input, string? existingJson)
     {
         var errors = new List<CustomFieldError>();
         var existing = Parse(existingJson);
@@ -34,7 +35,7 @@ public static partial class CustomFieldValues
             throw new CustomFieldValidationException([new("$", "invalid_type", "Custom fields must be a JSON object.")]);
         }
 
-        var byKey = definitions.ToDictionary(definition => definition.FieldName, StringComparer.Ordinal);
+        var byKey = definitions.ToDictionary(definition => definition.Key, StringComparer.Ordinal);
         foreach (var key in provided.Keys)
         {
             if (!byKey.TryGetValue(key, out var definition))
@@ -44,17 +45,17 @@ public static partial class CustomFieldValues
         }
 
         var result = new JsonObject();
-        foreach (var definition in definitions.Where(d => d.IsActive).OrderBy(d => d.SortOrder).ThenBy(d => d.FieldName, StringComparer.Ordinal))
+        foreach (var definition in definitions.Where(d => d.IsActive).OrderBy(d => d.SortOrder).ThenBy(d => d.Key, StringComparer.Ordinal))
         {
-            var hasValue = provided.TryGetValue(definition.FieldName, out var value) && value.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined);
+            var hasValue = provided.TryGetValue(definition.Key, out var value) && value.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined);
             JsonNode? normalized = null;
             if (hasValue)
-                normalized = NormalizeValue(definition, value, existing.GetValueOrDefault(definition.FieldName), errors);
+                normalized = NormalizeValue(definition, value, existing.GetValueOrDefault(definition.Key), errors);
             else if (definition.IsRequired)
-                errors.Add(new(definition.FieldName, "required", $"'{definition.Label}' is required."));
+                errors.Add(new(definition.Key, "required", $"'{definition.Label}' is required."));
 
             if (normalized is not null)
-                result[definition.FieldName] = normalized;
+                result[definition.Key] = normalized;
         }
 
         // Carried forward untouched: deprecated fields, and any stored key without a definition (definitions are
@@ -109,9 +110,9 @@ public static partial class CustomFieldValues
         return document.RootElement.EnumerateObject().ToDictionary(p => p.Name, p => p.Value.Clone(), StringComparer.Ordinal);
     }
 
-    private static JsonNode? NormalizeValue(TenantFieldDefinition definition, JsonElement value, JsonElement? stored, List<CustomFieldError> errors)
+    private static JsonNode? NormalizeValue(FieldDefinition definition, JsonElement value, JsonElement? stored, List<CustomFieldError> errors)
     {
-        var key = definition.FieldName;
+        var key = definition.Key;
         var config = definition.Config;
 
         CustomFieldError Error(string code, string message) => new(key, code, message);
@@ -121,46 +122,46 @@ public static partial class CustomFieldValues
             return null;
         }
 
-        switch (definition.FieldType)
+        switch (definition.Type)
         {
-            case TenantFieldValueType.Text:
-            case TenantFieldValueType.LongText:
+            case FieldType.Text:
+            case FieldType.LongText:
                 {
                     if (value.ValueKind != JsonValueKind.String)
                         return Fail("invalid_type", $"'{definition.Label}' must be text.");
                     var text = value.GetString()!;
                     if (string.IsNullOrWhiteSpace(text))
                         return RequiredOrNothing(definition, errors);
-                    var cap = config.MaxLength ?? TenantFieldConfig.TextLengthCap(definition.FieldType);
+                    var cap = config.MaxLength ?? FieldConfig.TextLengthCap(definition.Type);
                     return text.Length > cap ? Fail("too_long", $"'{definition.Label}' can be at most {cap} characters.") : JsonValue.Create(text);
                 }
-            case TenantFieldValueType.Number:
+            case FieldType.Number:
                 {
                     if (value.ValueKind != JsonValueKind.Number || !value.TryGetInt64(out var number))
                         return Fail("invalid_type", $"'{definition.Label}' must be a whole number.");
                     return InRange(number, config) ? JsonValue.Create(number) : Fail("out_of_range", RangeMessage(definition, config));
                 }
-            case TenantFieldValueType.Decimal:
+            case FieldType.Decimal:
                 {
                     if (value.ValueKind != JsonValueKind.Number || !value.TryGetDecimal(out var number))
                         return Fail("invalid_type", $"'{definition.Label}' must be a number.");
-                    var scale = config.Scale ?? TenantFieldConfig.DefaultDecimalScale;
+                    var scale = config.Scale ?? FieldConfig.DefaultDecimalScale;
                     if (decimal.Round(number, scale) != number)
                         return Fail("invalid_value", $"'{definition.Label}' can have at most {scale} decimal places.");
                     return InRange(number, config) ? JsonValue.Create(number) : Fail("out_of_range", RangeMessage(definition, config));
                 }
-            case TenantFieldValueType.Boolean:
+            case FieldType.Boolean:
                 return value.ValueKind is JsonValueKind.True or JsonValueKind.False
                     ? JsonValue.Create(value.GetBoolean())
                     : Fail("invalid_type", $"'{definition.Label}' must be true or false.");
-            case TenantFieldValueType.Date:
+            case FieldType.Date:
                 {
                     if (value.ValueKind != JsonValueKind.String
                         || !DateOnly.TryParseExact(value.GetString(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
                         return Fail("invalid_type", $"'{definition.Label}' must be a date (YYYY-MM-DD).");
                     return JsonValue.Create(date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
                 }
-            case TenantFieldValueType.Select:
+            case FieldType.Select:
                 {
                     if (value.ValueKind != JsonValueKind.String)
                         return Fail("invalid_type", $"'{definition.Label}' must be one option key.");
@@ -170,7 +171,7 @@ public static partial class CustomFieldValues
                         ? Fail(code, OptionMessage(definition, option, code))
                         : JsonValue.Create(option);
                 }
-            case TenantFieldValueType.MultiSelect:
+            case FieldType.MultiSelect:
                 {
                     if (value.ValueKind != JsonValueKind.Array || value.EnumerateArray().Any(item => item.ValueKind != JsonValueKind.String))
                         return Fail("invalid_type", $"'{definition.Label}' must be a list of option keys.");
@@ -189,11 +190,11 @@ public static partial class CustomFieldValues
                     }
                     return new JsonArray(options.Select(option => (JsonNode?)JsonValue.Create(option)).ToArray());
                 }
-            case TenantFieldValueType.Email:
+            case FieldType.Email:
                 return FormattedText(definition, value, MaxEmailLength, EmailFormat(), "an e-mail address", errors);
-            case TenantFieldValueType.Phone:
+            case FieldType.Phone:
                 return FormattedText(definition, value, MaxPhoneLength, PhoneFormat(), "a phone number", errors);
-            case TenantFieldValueType.Url:
+            case FieldType.Url:
                 {
                     if (value.ValueKind != JsonValueKind.String)
                         return Fail("invalid_type", $"'{definition.Label}' must be a web address.");
@@ -206,16 +207,22 @@ public static partial class CustomFieldValues
                         ? JsonValue.Create(text)
                         : Fail("invalid_value", $"'{definition.Label}' must be an http or https address.");
                 }
+            case FieldType.Reference:
+                // Shape only: that the id points at something this caller may see is asked of the link directory by
+                // CustomFieldReferences, which must run after Normalize and only for ids that actually changed.
+                return value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var referenceId) && referenceId > 0
+                    ? JsonValue.Create(referenceId)
+                    : Fail("invalid_type", $"'{definition.Label}' must be the id of an existing record.");
             default:
                 return Fail("invalid_type", $"'{definition.Label}' has an unsupported type.");
         }
     }
 
-    private static JsonNode? FormattedText(TenantFieldDefinition definition, JsonElement value, int maxLength, Regex format, string description, List<CustomFieldError> errors)
+    private static JsonNode? FormattedText(FieldDefinition definition, JsonElement value, int maxLength, Regex format, string description, List<CustomFieldError> errors)
     {
         if (value.ValueKind != JsonValueKind.String)
         {
-            errors.Add(new(definition.FieldName, "invalid_type", $"'{definition.Label}' must be {description}."));
+            errors.Add(new(definition.Key, "invalid_type", $"'{definition.Label}' must be {description}."));
             return null;
         }
 
@@ -224,39 +231,39 @@ public static partial class CustomFieldValues
             return RequiredOrNothing(definition, errors);
         if (text.Length > maxLength)
         {
-            errors.Add(new(definition.FieldName, "too_long", $"'{definition.Label}' can be at most {maxLength} characters."));
+            errors.Add(new(definition.Key, "too_long", $"'{definition.Label}' can be at most {maxLength} characters."));
             return null;
         }
         if (!format.IsMatch(text))
         {
-            errors.Add(new(definition.FieldName, "invalid_value", $"'{definition.Label}' must be {description}."));
+            errors.Add(new(definition.Key, "invalid_value", $"'{definition.Label}' must be {description}."));
             return null;
         }
         return JsonValue.Create(text);
     }
 
     /// <summary>An empty string or empty list means "no value"; that is only an error for a required field.</summary>
-    private static JsonNode? RequiredOrNothing(TenantFieldDefinition definition, List<CustomFieldError> errors)
+    private static JsonNode? RequiredOrNothing(FieldDefinition definition, List<CustomFieldError> errors)
     {
         if (definition.IsRequired)
-            errors.Add(new(definition.FieldName, "required", $"'{definition.Label}' is required."));
+            errors.Add(new(definition.Key, "required", $"'{definition.Label}' is required."));
         return null;
     }
 
     /// <summary>A deprecated option is refused for new writes but may be kept by a record that already holds it.</summary>
-    private static string? OptionError(TenantFieldConfig config, string option, bool keptFromStored) =>
+    private static string? OptionError(FieldConfig config, string option, bool keptFromStored) =>
         !config.HasOption(option) ? "invalid_option"
         : !config.IsOptionActive(option) && !keptFromStored ? "option_deprecated"
         : null;
 
-    private static string OptionMessage(TenantFieldDefinition definition, string option, string code) => code == "invalid_option"
+    private static string OptionMessage(FieldDefinition definition, string option, string code) => code == "invalid_option"
         ? $"'{option}' is not an option of '{definition.Label}'."
         : $"Option '{option}' of '{definition.Label}' is deprecated.";
 
-    private static bool InRange(decimal value, TenantFieldConfig config) =>
+    private static bool InRange(decimal value, FieldConfig config) =>
         (config.Min is not { } min || value >= min) && (config.Max is not { } max || value <= max);
 
-    private static string RangeMessage(TenantFieldDefinition definition, TenantFieldConfig config) =>
+    private static string RangeMessage(FieldDefinition definition, FieldConfig config) =>
         $"'{definition.Label}' must be between {config.Min?.ToString(CultureInfo.InvariantCulture) ?? "-∞"} and {config.Max?.ToString(CultureInfo.InvariantCulture) ?? "∞"}.";
 
     [GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")]

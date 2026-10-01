@@ -75,7 +75,7 @@ public sealed class CrmLinkTargetResolverTests
             await using var h = await Harness.CreateAsync(_fixture);
             var actor = new ActorContext(actorTenant, principal, Guid.NewGuid());
 
-            var viaHandler = await new GetOpportunityHandler(h.Crm, h.Authorizer)
+            var viaHandler = await new GetOpportunityHandler(h.Crm, h.Authorizer, StubDefinitionReader.None, StubLinkTargetDirectory.None)
                 .HandleAsync(new GetOpportunityQuery(actorTenant, opportunityId, principal, Guid.NewGuid()));
             var viaResolver = (await h.OpportunityResolver.ResolveAsync(actor, [opportunityId])).GetValueOrDefault(opportunityId);
 
@@ -252,7 +252,7 @@ public sealed class CrmLinkTargetResolverTests
 
         await using var h = await Harness.CreateAsync(_fixture);
         var viaHandler = new RecordingAuthorizer();
-        await new GetOpportunityHandler(h.Crm, viaHandler)
+        await new GetOpportunityHandler(h.Crm, viaHandler, StubDefinitionReader.None, StubLinkTargetDirectory.None)
             .HandleAsync(new GetOpportunityQuery(tenant, opportunityId, actor.Principal, actor.CorrelationId));
         var viaResolver = new RecordingAuthorizer();
         await new OpportunityLinkTargetResolver(h.Crm, viaResolver, new ThrowingPartyDirectory())

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Application;
 
-public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeResolver scopeResolver, IAuthorizedPrincipalDirectory? principalDirectory = null)
+public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeResolver scopeResolver, ISemanticDefinitionReader definitionReader, ILinkTargetDirectory linkTargets, IAuthorizedPrincipalDirectory? principalDirectory = null)
 {
     private const string ActionKeyValue = "crm.opportunity.list";
 
@@ -31,11 +31,10 @@ public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeR
 
         filtered = filtered.Where(o => o.IsArchived == query.ArchivedOnly);
 
+        IReadOnlyList<FieldDefinition>? definitions = null;
         if (query.CustomFieldFilters is { Count: > 0 })
         {
-            var definitions = await context.TenantFieldDefinitions.AsNoTracking()
-                .Where(x => x.TenantId == query.TenantId && x.AggregateType == TenantFieldAggregateType.Opportunity)
-                .ToListAsync(cancellationToken);
+            definitions = await definitionReader.ListFieldsAsync(query.TenantId, OpportunityFields.OwnerContext, OpportunityFields.ObjectType, cancellationToken);
             var containment = CustomFieldFilter.ToContainmentJson(definitions, query.CustomFieldFilters);
             if (containment is not null)
                 filtered = filtered.Where(o => o.CustomFields != null && EF.Functions.JsonContains(o.CustomFields, containment));
@@ -56,6 +55,14 @@ public sealed class ListOpportunitiesHandler(CrmDbContext context, IAccessScopeR
             })
             .ToListAsync(cancellationToken);
         var results = rows.Select(x => x.Summary with { CustomFields = CustomFieldValues.ToElement(x.CustomFields) }).ToList();
+
+        // One definitions read and one directory call for the whole page; the rows are already the caller's list scope.
+        if (rows.Any(x => x.CustomFields is not null))
+        {
+            definitions ??= await definitionReader.ListFieldsAsync(query.TenantId, OpportunityFields.OwnerContext, OpportunityFields.ObjectType, cancellationToken);
+            var hydrated = await CustomFieldReferences.HydrateAsync(linkTargets, actor, definitions, rows.Select(x => (x.Summary.Id, x.CustomFields)), cancellationToken);
+            results = results.Select(x => x with { CustomFieldReferences = hydrated.GetValueOrDefault(x.Id) }).ToList();
+        }
 
         var opportunityIds = results.Select(x => x.Id).ToArray();
         var needRows = await (from link in context.OpportunityNeeds

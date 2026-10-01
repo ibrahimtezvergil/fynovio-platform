@@ -89,9 +89,8 @@ public sealed class OpportunityActivityTests(PostgresFixture fixture)
             (_, fromStage) = await TestData.CreatePublishedPipelineWithEntryStageAsync(admin, tenant);
             (_, toStage) = await TestData.CreatePublishedPipelineWithEntryStageAsync(admin, tenant);
             await admin.Database.ExecuteSqlInterpolatedAsync($"UPDATE crm.pipeline_stages SET name = 'Proposal' WHERE id = {toStage}");
-            admin.TenantFieldDefinitions.Add(TenantFieldDefinition.Create(tenant, TenantFieldAggregateType.Opportunity, "region", "Region", TenantFieldValueType.Text));
-            await admin.SaveChangesAsync();
         }
+        var definitions = new StubDefinitionReader(TestFields.Create(tenant, "region", "Region", FieldType.Text));
         var newOwner = new PrincipalRef("https://idp.local", "seller-2");
         var start = DateTimeOffset.UtcNow.AddMinutes(-10);
         await ConsumeAsync(Envelope(tenant, opportunityId, "created", 1, new { OpportunityId = opportunityId, Currency = "TRY", EstimatedAmount = 1000m }, start));
@@ -103,7 +102,7 @@ public sealed class OpportunityActivityTests(PostgresFixture fixture)
         await ConsumeAsync(Envelope(tenant, opportunityId + 1, "created", 1, new { OpportunityId = opportunityId + 1 }));
 
         await using var context = fixture.CreateAdminContext();
-        var timeline = await new GetOpportunityActivityHandler(context, StubAuthorizer.AlwaysAllow, StubPrincipalDirectory.Permitting(newOwner))
+        var timeline = await new GetOpportunityActivityHandler(context, StubAuthorizer.AlwaysAllow, definitions, StubPrincipalDirectory.Permitting(newOwner))
             .HandleAsync(new GetOpportunityActivityQuery(tenant, opportunityId, TestData.Seller, Guid.NewGuid()));
 
         Assert.NotNull(timeline);
@@ -122,11 +121,11 @@ public sealed class OpportunityActivityTests(PostgresFixture fixture)
         await ConsumeAsync(Envelope(tenant, opportunityId, "created", 1, new { OpportunityId = opportunityId }));
         await using var context = fixture.CreateAdminContext();
 
-        Assert.Null(await new GetOpportunityActivityHandler(context, StubAuthorizer.RecordDenied)
+        Assert.Null(await new GetOpportunityActivityHandler(context, StubAuthorizer.RecordDenied, StubDefinitionReader.None)
             .HandleAsync(new GetOpportunityActivityQuery(tenant, opportunityId, TestData.Seller, Guid.NewGuid())));
-        Assert.Null(await new GetOpportunityActivityHandler(context, StubAuthorizer.AlwaysAllow)
+        Assert.Null(await new GetOpportunityActivityHandler(context, StubAuthorizer.AlwaysAllow, StubDefinitionReader.None)
             .HandleAsync(new GetOpportunityActivityQuery(tenant, 999_999_999, TestData.Seller, Guid.NewGuid())));
-        Assert.Null(await new GetOpportunityActivityHandler(context, StubAuthorizer.AlwaysAllow)
+        Assert.Null(await new GetOpportunityActivityHandler(context, StubAuthorizer.AlwaysAllow, StubDefinitionReader.None)
             .HandleAsync(new GetOpportunityActivityQuery(TestData.NextTenant(), opportunityId, TestData.Seller, Guid.NewGuid())));
     }
 
@@ -137,8 +136,8 @@ public sealed class OpportunityActivityTests(PostgresFixture fixture)
         var recorder = new RecordingAuthorizer();
         await using var context = fixture.CreateAdminContext();
 
-        await new GetOpportunityActivityHandler(context, recorder).HandleAsync(new GetOpportunityActivityQuery(tenant, opportunityId, TestData.Seller, Guid.NewGuid()));
-        await new GetOpportunityHandler(context, recorder).HandleAsync(new GetOpportunityQuery(tenant, opportunityId, TestData.Seller, Guid.NewGuid()));
+        await new GetOpportunityActivityHandler(context, recorder, StubDefinitionReader.None).HandleAsync(new GetOpportunityActivityQuery(tenant, opportunityId, TestData.Seller, Guid.NewGuid()));
+        await new GetOpportunityHandler(context, recorder, StubDefinitionReader.None, StubLinkTargetDirectory.None).HandleAsync(new GetOpportunityQuery(tenant, opportunityId, TestData.Seller, Guid.NewGuid()));
 
         Assert.Equal(2, recorder.Requests.Count);
         Assert.Equal(recorder.Requests[1].Action, recorder.Requests[0].Action);

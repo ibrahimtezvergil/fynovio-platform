@@ -12,9 +12,9 @@
     "semantic_hash": ""
   },
   "fynovio-platform.slnx": {
-    "mtime": 1790865675.5827758,
-    "seen": 1790865686.225386,
-    "ast_hash": "6fb8334833e1305bfe1be848ddaae40c",
+    "mtime": 1790880365.6776338,
+    "seen": 1790880973.1671622,
+    "ast_hash": "9878079b54d3fb50d048d5656beab5de",
     "semantic_hash": ""
   },
   "src/Contracts/Contracts.csproj": {
@@ -48,15 +48,15 @@
     "semantic_hash": "7ba6eef7c12b5eb8b48d435e75300bea"
   },
   "src/Host/Host.csproj": {
-    "mtime": 1790023782.9476824,
-    "seen": 1790024389.329016,
-    "ast_hash": "7d300cbec16cb63e2a611dcc26e37d1d",
+    "mtime": 1790879710.049492,
+    "seen": 1790880973.167226,
+    "ast_hash": "a7202f44e26b687a95f289a7d5d51a3c",
     "semantic_hash": ""
   },
   "src/Host/Program.cs": {
-    "mtime": 1790865675.6739035,
-    "seen": 1790865686.2254589,
-    "ast_hash": "c03b57fe79610b7f03cf669ee051753b",
+    "mtime": 1790882436.499322,
+    "seen": 1790882842.3462558,
+    "ast_hash": "9efad528af11160fa1c8e651dec5300f",
     "semantic_hash": ""
   },
   "src/Host/Properties/launchSettings.json": {
@@ -66,9 +66,9 @@
     "semantic_hash": ""
   },
   "src/Host/appsettings.Development.json": {
-    "mtime": 1789913055.6518672,
-    "seen": 1790024389.329018,
-    "ast_hash": "38cd437ccf9e9b9032ea51c888f2d6d5",
+    "mtime": 1790880257.482164,
+    "seen": 1790880973.167228,
+    "ast_hash": "7d8f4a3669a30a68df5a6db887cb27f4",
     "semantic_hash": ""
   },
   "src/Host/appsettings.json": {
@@ -87,12 +87,6 @@
     "mtime": 1789547340.2020257,
     "seen": 1790024389.32914,
     "ast_hash": "13e7b13d27cd753e16e4146ba978e01a",
-    "semantic_hash": ""
-  },
-  "src/Modules/CRM/Customization/TenantFieldDefinition.cs": {
-    "mtime": 1790858435.8941405,
-    "seen": 1790862003.5124311,
-    "ast_hash": "c77637c95898d6ee1c802cba34711eba",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Domain/CustomerNeed.cs": {
@@ -179,16 +173,10 @@
     "ast_hash": "7fff8bf3eb2b9e5b04cbe6cb328ceb9d",
     "semantic_hash": "7fff8bf3eb2b9e5b04cbe6cb328ceb9d"
   },
-  "src/Modules/CRM/Persistence/Configurations/TenantFieldDefinitionConfiguration.cs": {
-    "mtime": 1790858435.9051857,
-    "seen": 1790862003.512453,
-    "ast_hash": "c09d56c6e8750ac959846c04f3e8e7b1",
-    "semantic_hash": ""
-  },
   "src/Modules/CRM/Persistence/CrmDbContext.cs": {
-    "mtime": 1790865675.6843283,
-    "seen": 1790865686.2256808,
-    "ast_hash": "9983cb22531f1900ad8ce39ce810dd99",
+    "mtime": 1790879668.334963,
+    "seen": 1790880973.1674292,
+    "ast_hash": "6eea3342a97e3ff9370af71d60207514",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Persistence/CrmDbContextFactory.cs": {
@@ -210,9 +198,9 @@
     "semantic_hash": "6ca7e70257293d4d05980caa81d01d29"
   },
   "src/Modules/CRM/Persistence/Migrations/CrmDbContextModelSnapshot.cs": {
-    "mtime": 1790865675.6864254,
-    "seen": 1790865686.225724,
-    "ast_hash": "b8343e7e9de1225a4752b700efb77450",
+    "mtime": 1790879675.9363253,
+    "seen": 1790880973.1674712,
+    "ast_hash": "20b6e514a5cb0f343c9746e4c4d24b4d",
     "semantic_hash": ""
   },
   "src/Modules/MasterData/MasterData.csproj": {
@@ -342,9 +330,9 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1790865675.5772426,
-    "seen": 1790865686.226451,
-    "ast_hash": "4919e316596511443abdb571e7d41b41",
+    "mtime": 1790883266.3425784,
+    "seen": 1790883276.467504,
+    "ast_hash": "d1af112850b17784523e08b259df42b8",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -360,15 +348,15 @@
     "semantic_hash": ""
   },
   "docs/schema/crm-sales-schema.md": {
-    "mtime": 1790865675.58153,
-    "seen": 1790865686.226497,
-    "ast_hash": "4e1442944e8d9e685d4a15f01b64e1e6",
+    "mtime": 1790880813.25581,
+    "seen": 1790880973.168229,
+    "ast_hash": "cffefee57e925775aaea3de1d7ac18ef",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1790865675.5777473,
-    "seen": 1790865686.2264519,
-    "ast_hash": "76337dd172977ab3a3211965fa5f1527",
+    "mtime": 1790880794.5976224,
+    "seen": 1790880973.168193,
+    "ast_hash": "0e2733f2ef9f910927c03a2649f0c8a4",
     "semantic_hash": ""
   },
   "src/Contracts/IHasRowVersion.cs": {
@@ -540,9 +528,9 @@
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Architecture/ModuleBoundaryTests.cs": {
-    "mtime": 1789857212.857115,
-    "seen": 1790024389.329267,
-    "ast_hash": "730b0d5253fba21d6a750340f0751f73",
+    "mtime": 1790880496.7860026,
+    "seen": 1790880973.1676202,
+    "ast_hash": "46ba7f398195ed336d56abd2c005d8c7",
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Integration/OpportunityPersistenceTests.cs": {
@@ -618,9 +606,9 @@
     "semantic_hash": ""
   },
   "scripts/create-runtime-role.sql": {
-    "mtime": 1790865675.6693578,
-    "seen": 1790865686.225389,
-    "ast_hash": "8eb4d570288f3b8d181c24b88d36b5ee",
+    "mtime": 1790880922.2988226,
+    "seen": 1790880973.167165,
+    "ast_hash": "c63fcdc2f8fdd2a397bcf26f809a6a9b",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/IdempotencyKeyReusedException.cs": {
@@ -1632,9 +1620,9 @@
     "semantic_hash": ""
   },
   "src/Host/Endpoints/CrmProblemDetailsExceptionHandler.cs": {
-    "mtime": 1790858435.7569764,
-    "seen": 1790862003.512279,
-    "ast_hash": "5e8263e519f45893480a579cbb1ef1c5",
+    "mtime": 1790879722.1079247,
+    "seen": 1790880973.167221,
+    "ast_hash": "17a3538dde85869aa0da57a1e2b653f8",
     "semantic_hash": ""
   },
   "src/Host/Endpoints/OpportunityEndpoints.cs": {
@@ -1716,9 +1704,9 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/CreateOpportunityHandler.cs": {
-    "mtime": 1790858435.8333573,
-    "seen": 1790862003.512379,
-    "ast_hash": "bd975579636f57913210e203e4260d98",
+    "mtime": 1790881630.8809428,
+    "seen": 1790882213.192535,
+    "ast_hash": "bc6f33cc9402fe2e034e4596ab0d1e2b",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/CreateOpportunityResult.cs": {
@@ -1752,9 +1740,9 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/GetOpportunityHandler.cs": {
-    "mtime": 1790287559.8532014,
-    "seen": 1790287712.9667141,
-    "ast_hash": "bd85171b4485435756ac1fba06d2ccb7",
+    "mtime": 1790881630.881773,
+    "seen": 1790882213.192548,
+    "ast_hash": "4264fa904a7653eb164eb1ff6f3f46ed",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/GetOpportunityQuery.cs": {
@@ -1782,9 +1770,9 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/ListOpportunitiesHandler.cs": {
-    "mtime": 1790858435.8545399,
-    "seen": 1790862003.512396,
-    "ast_hash": "a7467f71fc2da278ca7fffca2334e6fe",
+    "mtime": 1790881630.8820043,
+    "seen": 1790882213.192554,
+    "ast_hash": "cd2f877803b739458477a96f2f7d599b",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/ListOpportunitiesQuery.cs": {
@@ -1860,15 +1848,15 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/OpportunityDto.cs": {
-    "mtime": 1790858435.861003,
-    "seen": 1790862003.512406,
-    "ast_hash": "a6a9f7c49d66f41022699137d76b4b4a",
+    "mtime": 1790881630.8803241,
+    "seen": 1790882213.192565,
+    "ast_hash": "b1a087f91f2e94246c1a1f21eead8c65",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/OpportunitySummaryDto.cs": {
-    "mtime": 1790858435.8623037,
-    "seen": 1790862003.512409,
-    "ast_hash": "402d9d068710efaeb1122f43720e8355",
+    "mtime": 1790881630.8804724,
+    "seen": 1790882213.192567,
+    "ast_hash": "7eb2513ac02caaf284b361bd95d5af73",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/PipelineStageDto.cs": {
@@ -1980,9 +1968,9 @@
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Application/CreateOpportunityHandlerTests.cs": {
-    "mtime": 1789933845.2646832,
-    "seen": 1790024389.329259,
-    "ast_hash": "099dc5c8bda7cf96e7b3a36a44b6b126",
+    "mtime": 1790881656.7793055,
+    "seen": 1790882213.1928031,
+    "ast_hash": "a7edda40700b4dbeb1792e68112fda1f",
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Application/GetOpportunityAvailableActionsHandlerTests.cs": {
@@ -1992,9 +1980,9 @@
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Application/GetOpportunityHandlerTests.cs": {
-    "mtime": 1789857212.8557274,
-    "seen": 1790024389.329262,
-    "ast_hash": "dad92b4f4e903587582bbfe63f27cc36",
+    "mtime": 1790881656.7787127,
+    "seen": 1790882213.192808,
+    "ast_hash": "7b67f9fcae8005e93fe796e662f02740",
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Application/GetPipelineStagesHandlerTests.cs": {
@@ -2004,9 +1992,9 @@
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Application/ListOpportunitiesHandlerTests.cs": {
-    "mtime": 1789945073.32746,
-    "seen": 1790024389.3292632,
-    "ast_hash": "8cea4501d1890401eb5c3b06d231f81c",
+    "mtime": 1790881656.7795959,
+    "seen": 1790882213.19281,
+    "ast_hash": "467840aa3278580e4a2c22c874a8a11a",
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Application/LoseOpportunityHandlerTests.cs": {
@@ -2052,9 +2040,9 @@
     "semantic_hash": ""
   },
   "tests/Host.Tests/OpportunityEndpointsTests.cs": {
-    "mtime": 1790770413.6183295,
-    "seen": 1790773962.720922,
-    "ast_hash": "4e9a9b03d85af41669f87c222d6f51c5",
+    "mtime": 1790880479.5345294,
+    "seen": 1790880973.167681,
+    "ast_hash": "7c06b51630c53f8b94fad8ea352922a1",
     "semantic_hash": ""
   },
   "docs/architecture-analysis/CLAUDE_PHASE_2_EXECUTION_PROMPT.md": {
@@ -2772,15 +2760,15 @@
     "semantic_hash": ""
   },
   "tests/Host.Tests/Fixtures/AuthApiFixture.cs": {
-    "mtime": 1790107635.0703208,
-    "seen": 1790155173.2266428,
-    "ast_hash": "bfc93bc3a249009bd418b3b5c075b629",
+    "mtime": 1790880251.943654,
+    "seen": 1790880973.167677,
+    "ast_hash": "7a0c8162bfa8ffbe479d93224fae20ea",
     "semantic_hash": ""
   },
   "tests/Host.Tests/Fixtures/AuthTestFixture.cs": {
-    "mtime": 1790068913.2446713,
-    "seen": 1790073310.045011,
-    "ast_hash": "03f33a396e4436ad43472cc6f1164247",
+    "mtime": 1790880233.2694283,
+    "seen": 1790880973.1676779,
+    "ast_hash": "2d8918a97632371b6ab7932ca5d02c5b",
     "semantic_hash": ""
   },
   "web/.claude/.bootstrap-manifest.json": {
@@ -2898,9 +2886,9 @@
     "semantic_hash": ""
   },
   "web/src/api/endpoints.ts": {
-    "mtime": 1790865675.6938207,
-    "seen": 1790865686.226012,
-    "ast_hash": "8c927ad661f546d112af6902eeff4a88",
+    "mtime": 1790882880.133923,
+    "seen": 1790883130.6959271,
+    "ast_hash": "76d1fd7a7f5ef21bf2003b49338b24b8",
     "semantic_hash": ""
   },
   "web/src/api/queryClient.ts": {
@@ -6372,9 +6360,9 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/OpportunityForm.tsx": {
-    "mtime": 1790858435.9261503,
-    "seen": 1790862003.5129669,
-    "ast_hash": "6761da413d92ecfc79619a31ea448ec4",
+    "mtime": 1790881913.17604,
+    "seen": 1790882213.193235,
+    "ast_hash": "31fa7f7157c0547a0547b2875c682647",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/OpportunityStatusBadge.tsx": {
@@ -6480,9 +6468,9 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/schema.ts": {
-    "mtime": 1790865675.6978314,
-    "seen": 1790865686.2263098,
-    "ast_hash": "2be531eb9043e2ed4282d466d1722a5d",
+    "mtime": 1790881852.1685426,
+    "seen": 1790882213.193268,
+    "ast_hash": "19fcad1356980dcae2f1ac5601ab292a",
     "semantic_hash": ""
   },
   "web/src/lib/apiMode.ts": {
@@ -6510,15 +6498,15 @@
     "semantic_hash": ""
   },
   "web/src/locales/en/opportunities.ts": {
-    "mtime": 1790865675.6992764,
-    "seen": 1790865686.226398,
-    "ast_hash": "d9344a54af3e1f106c6f28988ecd9a27",
+    "mtime": 1790883005.576675,
+    "seen": 1790883130.696346,
+    "ast_hash": "6d5356b8018aa612694451681adbeba4",
     "semantic_hash": ""
   },
   "web/src/locales/tr/opportunities.ts": {
-    "mtime": 1790865675.7001567,
-    "seen": 1790865686.226414,
-    "ast_hash": "08d95f24cd36114120cd69134ca31414",
+    "mtime": 1790883005.576888,
+    "seen": 1790883130.696362,
+    "ast_hash": "b1af08d3fc23044e3ea7c83e3a718d57",
     "semantic_hash": ""
   },
   "web/src/test/opportunities.ts": {
@@ -7014,27 +7002,27 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/OpportunitiesGrid.tsx": {
-    "mtime": 1790858435.9258447,
-    "seen": 1790862003.5129669,
-    "ast_hash": "1d985b4f03e3013205a5874bed9374b7",
+    "mtime": 1790882916.664043,
+    "seen": 1790883130.69622,
+    "ast_hash": "339c2835b0e77c9eb3aebfcc263216ab",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/opportunitiesTable.tsx": {
-    "mtime": 1790858435.926913,
-    "seen": 1790862003.5129752,
-    "ast_hash": "6c8a7b9ae582b5b0f1397e3514a58d31",
+    "mtime": 1790881891.387115,
+    "seen": 1790882213.193244,
+    "ast_hash": "010b6d4d93b2dfe3e5e738761e294d22",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/lib/rows.test.ts": {
-    "mtime": 1790858435.9282284,
-    "seen": 1790862003.512983,
-    "ast_hash": "561ae9f1870604ac5e0e01ec111518b8",
+    "mtime": 1790881926.0942392,
+    "seen": 1790882213.193253,
+    "ast_hash": "86b3341ab83244c903ddb521d27d7843",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/lib/rows.ts": {
-    "mtime": 1790858435.928564,
-    "seen": 1790862003.512983,
-    "ast_hash": "56ad9dbbd4daad829bc02730e7796615",
+    "mtime": 1790881926.0940974,
+    "seen": 1790882213.193254,
+    "ast_hash": "8316db365ff80d63b33ad2831495c688",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/nav.ts": {
@@ -7050,9 +7038,9 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/pages/OpportunitiesPage.tsx": {
-    "mtime": 1790858435.9296777,
-    "seen": 1790862003.512987,
-    "ast_hash": "b792ff21243910636f437b383305dc05",
+    "mtime": 1790882896.9225004,
+    "seen": 1790883130.696248,
+    "ast_hash": "797079d18ec9f4082658458032eb8bfa",
     "semantic_hash": ""
   },
   "web/src/routes/shellSurfaces.test.ts": {
@@ -7410,9 +7398,9 @@
     "semantic_hash": ""
   },
   "tests/CRM.Tests/LinkTargets/CrmLinkTargetResolverTests.cs": {
-    "mtime": 1790023782.9880538,
-    "seen": 1790024389.329279,
-    "ast_hash": "c43309bee5150a3ba560053a4cf68959",
+    "mtime": 1790881656.777037,
+    "seen": 1790882213.192838,
+    "ast_hash": "b23d41be34a940916a2c4d9b65b8193d",
     "semantic_hash": ""
   },
   "tests/CRM.Tests/LinkTargets/LinkTargetDirectoryTests.cs": {
@@ -8292,9 +8280,9 @@
     "semantic_hash": ""
   },
   "src/Host/Endpoints/CrmSettingsEndpoints.cs": {
-    "mtime": 1790858435.794173,
-    "seen": 1790862003.51228,
-    "ast_hash": "3fe5644a6cdc3a914dcb08e7995afeb6",
+    "mtime": 1790882436.4995852,
+    "seen": 1790882842.346251,
+    "ast_hash": "5a470d18321c475c47e78f5b7011d2a5",
     "semantic_hash": ""
   },
   "src/Modules/Access/Application/EnsureTenantAdministratorActionsHandler.cs": {
@@ -8520,15 +8508,15 @@
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Integration/CrmSettingsManagementTests.cs": {
-    "mtime": 1790636694.170242,
-    "seen": 1790636876.7061021,
-    "ast_hash": "10181169b1031e31b5b7bd29ef872b0c",
+    "mtime": 1790881656.7775993,
+    "seen": 1790882213.192826,
+    "ast_hash": "a7d650f8b474d868914beaf2e2c78472",
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Integration/OpportunityArchiveHandlerTests.cs": {
-    "mtime": 1790279890.4243658,
-    "seen": 1790281032.399561,
-    "ast_hash": "fc7582e3875156b8d73627bf0e3cbfbd",
+    "mtime": 1790881656.7780309,
+    "seen": 1790882213.1928298,
+    "ast_hash": "72f84a27ec9d5ca87b933bec0c93b556",
     "semantic_hash": ""
   },
   "web/e2e/crm-settings.e2e.ts": {
@@ -8556,9 +8544,9 @@
     "semantic_hash": ""
   },
   "web/src/features/crm-settings/pages/CrmSettingsPage.tsx": {
-    "mtime": 1790858435.921715,
-    "seen": 1790862003.512845,
-    "ast_hash": "e6d062881c22dd71b38cd7725aed6885",
+    "mtime": 1790882980.2921197,
+    "seen": 1790883130.696084,
+    "ast_hash": "7941f9da87add214798b0633f46140ba",
     "semantic_hash": ""
   },
   "web/src/features/crm-settings/routes.ts": {
@@ -8904,9 +8892,9 @@
     "semantic_hash": ""
   },
   "docs/plans/ai-business-os/2026-09-30-owner-decisions.md": {
-    "mtime": 1790866508.6627092,
-    "seen": 1790866515.9457548,
-    "ast_hash": "93a3b74c58106059be31d93076d8a26a",
+    "mtime": 1790883266.3428612,
+    "seen": 1790883276.467521,
+    "ast_hash": "e6fde792ab74d417ab644c7a0f6a082f",
     "semantic_hash": ""
   },
   "docs/plans/ai-business-os/adr-business-os-principles.md": {
@@ -8934,63 +8922,21 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Customization/CustomFieldValues.cs": {
-    "mtime": 1790858435.885859,
-    "seen": 1790862003.512429,
-    "ast_hash": "7ce2de5215cb95f8a02fb4899aad5b5e",
-    "semantic_hash": ""
-  },
-  "src/Modules/CRM/Customization/TenantFieldAggregateType.cs": {
-    "mtime": 1790858435.889505,
-    "seen": 1790862003.5124302,
-    "ast_hash": "de1cdb06315dc8007323fa0f1339f4d3",
-    "semantic_hash": ""
-  },
-  "src/Modules/CRM/Customization/TenantFieldConfig.cs": {
-    "mtime": 1790858435.8916013,
-    "seen": 1790862003.5124302,
-    "ast_hash": "92b99752bf6bb56b48c73e3406d27b92",
-    "semantic_hash": ""
-  },
-  "src/Modules/CRM/Customization/TenantFieldOption.cs": {
-    "mtime": 1790858435.8973947,
-    "seen": 1790862003.5124311,
-    "ast_hash": "67c91b5f504297d1a562ca8336205929",
-    "semantic_hash": ""
-  },
-  "src/Modules/CRM/Customization/TenantFieldOwnerScope.cs": {
-    "mtime": 1790858435.898155,
-    "seen": 1790862003.512432,
-    "ast_hash": "1497d929e36862d7f20bfba9c6199477",
-    "semantic_hash": ""
-  },
-  "src/Modules/CRM/Customization/TenantFieldStatus.cs": {
-    "mtime": 1790858435.900979,
-    "seen": 1790862003.5124328,
-    "ast_hash": "a859d1ccf16b79f7fb3eb7acea6bb251",
-    "semantic_hash": ""
-  },
-  "src/Modules/CRM/Customization/TenantFieldValueType.cs": {
-    "mtime": 1790858435.9022176,
-    "seen": 1790862003.5124328,
-    "ast_hash": "7d7c95cd72f4973cb83b4443802d99ef",
+    "mtime": 1790881608.1480067,
+    "seen": 1790882213.192592,
+    "ast_hash": "1ffb65b04da944b63c9b38c57b9b53c3",
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Domain/CustomFieldValuesTests.cs": {
-    "mtime": 1790858435.9119122,
-    "seen": 1790862003.512609,
-    "ast_hash": "721f8f0f3545f936627f8a5565615b91",
+    "mtime": 1790880472.42538,
+    "seen": 1790880973.1676228,
+    "ast_hash": "aa40ae7e9932c64d23073734f0ba4d30",
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Domain/OpportunityCustomFieldsTests.cs": {
     "mtime": 1790858435.912089,
     "seen": 1790862003.512609,
     "ast_hash": "e34624d5abd34400d459e18daf1268e0",
-    "semantic_hash": ""
-  },
-  "tests/CRM.Tests/Domain/TenantFieldDefinitionTests.cs": {
-    "mtime": 1790858435.9124446,
-    "seen": 1790862003.5126138,
-    "ast_hash": "7c1bfa519abdbdf2d752fe1980e62814",
     "semantic_hash": ""
   },
   "docs/plans/ai-business-os/2026-09-30-tier1-custom-fields-plan.md": {
@@ -9011,34 +8957,10 @@
     "ast_hash": "c54018e93e69fd900d4af0fb5e1615b9",
     "semantic_hash": ""
   },
-  "tests/CRM.Tests/Integration/TenantFieldDefinitionPersistenceTests.cs": {
-    "mtime": 1790858435.9146054,
-    "seen": 1790862003.512624,
-    "ast_hash": "d141fdcdca272c942546d7424a97f186",
-    "semantic_hash": ""
-  },
   "src/Modules/CRM/Application/GetCustomFieldImpactHandler.cs": {
-    "mtime": 1790858435.8503518,
-    "seen": 1790862003.512388,
-    "ast_hash": "46ceacfdf864624812300da4314a04b5",
-    "semantic_hash": ""
-  },
-  "src/Modules/CRM/Application/ListCustomFieldDefinitionsHandler.cs": {
-    "mtime": 1790858435.852343,
-    "seen": 1790862003.512395,
-    "ast_hash": "3b1326af17a14f28dd17b680c0de8597",
-    "semantic_hash": ""
-  },
-  "src/Modules/CRM/Application/ManageCustomFieldDefinitionHandler.cs": {
-    "mtime": 1790858435.8567667,
-    "seen": 1790862003.5124,
-    "ast_hash": "f1d0254967e6d80cfe7bd5262bbba468",
-    "semantic_hash": ""
-  },
-  "tests/CRM.Tests/Integration/CustomFieldDefinitionHandlerTests.cs": {
-    "mtime": 1790858435.913572,
-    "seen": 1790862003.512616,
-    "ast_hash": "3c3ba5381c1b62c0eff839bb20b9b2d0",
+    "mtime": 1790882436.4997742,
+    "seen": 1790882842.3463838,
+    "ast_hash": "846bc525a31dc2bcf9e6d7c82515aee9",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/UpdateOpportunityCustomFieldsCommand.cs": {
@@ -9048,51 +8970,45 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/UpdateOpportunityCustomFieldsHandler.cs": {
-    "mtime": 1790858435.8691113,
-    "seen": 1790862003.5124228,
-    "ast_hash": "483a0ccca77d521f4e605fea1eba93e1",
+    "mtime": 1790881630.8814163,
+    "seen": 1790882213.192584,
+    "ast_hash": "fcd27bc086959a3ac095abe97f9e8fc6",
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Application/OpportunityCustomFieldsHandlerTests.cs": {
-    "mtime": 1790858435.911119,
-    "seen": 1790862003.5126028,
-    "ast_hash": "3c6ccc9fffe08832a6d337d7958b1230",
-    "semantic_hash": ""
-  },
-  "src/Modules/CRM/Customization/TenantFieldValueTypeNames.cs": {
-    "mtime": 1790858435.9028492,
-    "seen": 1790862003.512434,
-    "ast_hash": "d593c252e9d13fd410aa6a119d6d6738",
+    "mtime": 1790881730.804304,
+    "seen": 1790882213.192812,
+    "ast_hash": "aaf0e61213e5422b63af1ad39ce40884",
     "semantic_hash": ""
   },
   "tests/Host.Tests/Authentication/CustomFieldsEndpointTests.cs": {
-    "mtime": 1790858435.9173353,
-    "seen": 1790862003.512647,
-    "ast_hash": "66e009791fe5797bcdcaa771dff698e4",
+    "mtime": 1790882801.5916526,
+    "seen": 1790882842.3466969,
+    "ast_hash": "747e0c8116538868e2450165f5fd45cd",
     "semantic_hash": ""
   },
   "web/src/components/custom-fields/CustomFieldInput.tsx": {
-    "mtime": 1790858435.9201267,
-    "seen": 1790862003.51277,
-    "ast_hash": "778d020d7769d425886054fe9c043c3d",
+    "mtime": 1790881891.3869078,
+    "seen": 1790882213.1930199,
+    "ast_hash": "2e7f526cad9f55a961e683be9c83308c",
     "semantic_hash": ""
   },
   "web/src/features/crm-settings/components/CustomFieldsPanel.tsx": {
-    "mtime": 1790858435.9207401,
-    "seen": 1790862003.512842,
-    "ast_hash": "b14c492b3b097e01bc1ddf159a16d5e6",
+    "mtime": 1790882980.2924862,
+    "seen": 1790883130.696079,
+    "ast_hash": "a9c0a174f031a73c567079de2b1e4870",
     "semantic_hash": ""
   },
   "web/src/features/crm-settings/pages/CustomFieldsSettings.test.tsx": {
-    "mtime": 1790858435.922243,
-    "seen": 1790862003.512846,
-    "ast_hash": "0016d21bf64a9a075af93b24aa5ca9c6",
+    "mtime": 1790883072.0312812,
+    "seen": 1790883130.696085,
+    "ast_hash": "8a0380a58f1e5451b8c8a74125ac862c",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/CustomFieldsCard.tsx": {
-    "mtime": 1790858435.924295,
-    "seen": 1790862003.512962,
-    "ast_hash": "84e8e2066124ff0e60811ef675af6dba",
+    "mtime": 1790881891.3872151,
+    "seen": 1790882213.193229,
+    "ast_hash": "1106d05abf0f6a7ebe45fa9fb0129a86",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/opportunitiesTable.test.tsx": {
@@ -9108,33 +9024,33 @@
     "semantic_hash": ""
   },
   "web/src/lib/custom-fields/api.ts": {
-    "mtime": 1790858435.9339206,
-    "seen": 1790862003.513035,
-    "ast_hash": "a85afd36b525d13740fe07acd4ec14a0",
+    "mtime": 1790881845.9231234,
+    "seen": 1790882213.193315,
+    "ast_hash": "128022ef3c52cefe50d007585646dca0",
     "semantic_hash": ""
   },
   "web/src/lib/custom-fields/errors.ts": {
-    "mtime": 1790858435.9363909,
-    "seen": 1790862003.513036,
-    "ast_hash": "3bd33bacec9bb1dd7df59b24c03938d9",
+    "mtime": 1790881845.923033,
+    "seen": 1790882213.193315,
+    "ast_hash": "ae1acf8ec2719f7ff5a0663f850e314f",
     "semantic_hash": ""
   },
   "web/src/lib/custom-fields/schema.ts": {
-    "mtime": 1790858435.936636,
-    "seen": 1790862003.513036,
-    "ast_hash": "fc313bf30bd5cb21f269db9726b12534",
+    "mtime": 1790882880.1340656,
+    "seen": 1790883130.696307,
+    "ast_hash": "3d4c8358458a2365caef62fd7852f39c",
     "semantic_hash": ""
   },
   "web/src/lib/custom-fields/values.test.ts": {
-    "mtime": 1790858435.9372907,
-    "seen": 1790862003.513037,
-    "ast_hash": "7dfd514f514f7082c70141feaa748c4b",
+    "mtime": 1790881968.450359,
+    "seen": 1790882213.193316,
+    "ast_hash": "e02d1447bc88889f02315fcd398b003e",
     "semantic_hash": ""
   },
   "web/src/lib/custom-fields/values.ts": {
-    "mtime": 1790858435.9379795,
-    "seen": 1790862003.513037,
-    "ast_hash": "42fa5dac7f4c3c770502645bfd01e5f2",
+    "mtime": 1790881845.9229286,
+    "seen": 1790882213.1933172,
+    "ast_hash": "3fdae4f7c686c51d06ceabf9e10807cd",
     "semantic_hash": ""
   },
   "docs/plans/ai-business-os/2026-09-30-tier1-slice-report.md": {
@@ -9144,9 +9060,9 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Customization/CustomFieldFilter.cs": {
-    "mtime": 1790858435.8795178,
-    "seen": 1790862003.512428,
-    "ast_hash": "f89d6ccbd5eccf85cbb753f148fa4b88",
+    "mtime": 1790879641.7979991,
+    "seen": 1790880973.167402,
+    "ast_hash": "7eec0c133692acc5738a0124d8f26b2b",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Persistence/Migrations/20261001112906_OpportunityCustomFieldsGinIndex.Designer.cs": {
@@ -9162,9 +9078,9 @@
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Domain/CustomFieldFilterTests.cs": {
-    "mtime": 1790858435.9116204,
-    "seen": 1790862003.512608,
-    "ast_hash": "15f051db7e34fda1373f37769ab6fc45",
+    "mtime": 1790880339.6220367,
+    "seen": 1790880973.1676228,
+    "ast_hash": "017808306e719378f17c97500db22306",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/CustomFieldFilterPills.tsx": {
@@ -9216,9 +9132,9 @@
     "semantic_hash": ""
   },
   "scripts/create-relay-role.sql": {
-    "mtime": 1790865675.6690342,
-    "seen": 1790865686.225387,
-    "ast_hash": "bc942b07f9ba0d94bc464528836bdc67",
+    "mtime": 1790880186.8163333,
+    "seen": 1790880973.167163,
+    "ast_hash": "aa6385649d92ff6a3c219f4373cb64b6",
     "semantic_hash": ""
   },
   "src/Messaging/ConsumerCatalog.cs": {
@@ -9276,9 +9192,9 @@
     "semantic_hash": ""
   },
   "src/Messaging/OutboxSources.cs": {
-    "mtime": 1790865675.6779943,
-    "seen": 1790865686.2254689,
-    "ast_hash": "83728221c197342c546db0a030abfb0a",
+    "mtime": 1790880186.8159142,
+    "seen": 1790880973.167236,
+    "ast_hash": "e36229fb177f83c71b733b95f0ff95c2",
     "semantic_hash": ""
   },
   "src/Messaging/Persistence/MessagingDbContext.cs": {
@@ -9318,8 +9234,8 @@
     "semantic_hash": ""
   },
   "src/Messaging/Persistence/Migrations/MessagingDbContextModelSnapshot.cs": {
-    "mtime": 1790865675.6813266,
-    "seen": 1790865686.225473,
+    "mtime": 1790880188.8858109,
+    "seen": 1790880973.167242,
     "ast_hash": "2b6dfbc50bdacac17781ceb06df0c45f",
     "semantic_hash": ""
   },
@@ -9348,9 +9264,9 @@
     "semantic_hash": ""
   },
   "src/Modules/CRM/Application/GetOpportunityActivityHandler.cs": {
-    "mtime": 1790865675.683701,
-    "seen": 1790865686.2256,
-    "ast_hash": "2e23ea2d5173f8dab5ae9f0972a152bc",
+    "mtime": 1790879668.3347182,
+    "seen": 1790880973.1673589,
+    "ast_hash": "b43e3fb6eb65ff47bf94a6f8385c5a02",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Persistence/Configurations/OpportunityActivityConfiguration.cs": {
@@ -9378,9 +9294,9 @@
     "semantic_hash": ""
   },
   "tests/CRM.Tests/Integration/OpportunityActivityTests.cs": {
-    "mtime": 1790865675.6895895,
-    "seen": 1790865686.2258701,
-    "ast_hash": "621085339802407c9659884a5c30bc4c",
+    "mtime": 1790881656.7772374,
+    "seen": 1790882213.192829,
+    "ast_hash": "4c6e00fcfeafc12dcf012706ffb65cc6",
     "semantic_hash": ""
   },
   "tests/Host.Tests/Authentication/OpportunityActivityEndpointTests.cs": {
@@ -9396,15 +9312,15 @@
     "semantic_hash": ""
   },
   "tests/Messaging.Tests/Messaging.Tests.csproj": {
-    "mtime": 1790865675.6920373,
-    "seen": 1790865686.225931,
-    "ast_hash": "1c26e8b6cba493432bb57d1f759f93a0",
+    "mtime": 1790880203.541038,
+    "seen": 1790880973.167735,
+    "ast_hash": "7f24e7b1176a259747706fcb4fb2e065",
     "semantic_hash": ""
   },
   "tests/Messaging.Tests/MessagingFixture.cs": {
-    "mtime": 1790865675.692258,
-    "seen": 1790865686.225931,
-    "ast_hash": "5d48bbbf17e1d7359646d8b980d586ff",
+    "mtime": 1790880198.6998847,
+    "seen": 1790880973.167736,
+    "ast_hash": "0797c40b6f169a8d0ec4536ad637c670",
     "semantic_hash": ""
   },
   "tests/Messaging.Tests/OutboxRelayTests.cs": {
@@ -9414,9 +9330,9 @@
     "semantic_hash": ""
   },
   "tests/Messaging.Tests/RelayRoleTests.cs": {
-    "mtime": 1790865675.6927996,
-    "seen": 1790865686.225933,
-    "ast_hash": "658dcae3aeae02a865ee5632f8784667",
+    "mtime": 1790880198.6999903,
+    "seen": 1790880973.167737,
+    "ast_hash": "1df22e154ac497dc9d73c830ba0da303",
     "semantic_hash": ""
   },
   "tests/Messaging.Tests/TestConsumers.cs": {
@@ -9426,9 +9342,9 @@
     "semantic_hash": ""
   },
   "docs/schema/messaging-schema.md": {
-    "mtime": 1790865675.582316,
-    "seen": 1790865686.226499,
-    "ast_hash": "fd923ff50e76b7c2c7575e04cc0b0bb6",
+    "mtime": 1790880813.2561255,
+    "seen": 1790880973.168231,
+    "ast_hash": "4e09f3119ca2d14bc9b858bd2cbc2e56",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/ActivityCard.tsx": {
@@ -9441,6 +9357,510 @@
     "mtime": 1790865675.6962404,
     "seen": 1790865695.5815449,
     "ast_hash": "c568afa5b502c18b53d0e749882bb10f",
+    "semantic_hash": ""
+  },
+  "docs/plans/ai-business-os/2026-10-01-semantic-catalog-plan.md": {
+    "mtime": 1790883127.6132472,
+    "seen": 1790883130.696419,
+    "ast_hash": "4136c9f39155a16189311c229a9dd59f",
+    "semantic_hash": ""
+  },
+  "docs/plans/ai-business-os/adr-semantic-catalog-changeset.md": {
+    "mtime": 1790882832.0767436,
+    "seen": 1790882842.347234,
+    "ast_hash": "ab5698de4d45c400d6c62f8c1bcf092e",
+    "semantic_hash": ""
+  },
+  "src/Contracts/FieldConfig.cs": {
+    "mtime": 1790881584.786777,
+    "seen": 1790882213.192357,
+    "ast_hash": "73b0ae5ffee3298472a234fc1300ba95",
+    "semantic_hash": ""
+  },
+  "src/Contracts/FieldDefinition.cs": {
+    "mtime": 1790882317.9732604,
+    "seen": 1790882842.3462029,
+    "ast_hash": "24536f4edcb113f126e97da0484ab349",
+    "semantic_hash": ""
+  },
+  "src/Contracts/FieldStatus.cs": {
+    "mtime": 1790879479.5875483,
+    "seen": 1790880973.167176,
+    "ast_hash": "cf706a7db15266e848b02560fc76d872",
+    "semantic_hash": ""
+  },
+  "src/Contracts/FieldType.cs": {
+    "mtime": 1790881584.786544,
+    "seen": 1790882213.19236,
+    "ast_hash": "9edbccb982cbe758923461e995a4f938",
+    "semantic_hash": ""
+  },
+  "src/Contracts/ISemanticDefinitionReader.cs": {
+    "mtime": 1790882317.9910858,
+    "seen": 1790882842.3462138,
+    "ast_hash": "44d12051f95701c8bfb08f3f6614e6c1",
+    "semantic_hash": ""
+  },
+  "src/Host/Endpoints/SemanticCatalogProblemDetailsExceptionHandler.cs": {
+    "mtime": 1790882436.4982088,
+    "seen": 1790882842.3462532,
+    "ast_hash": "26d29691627c894b78b73290a9b43908",
+    "semantic_hash": ""
+  },
+  "src/Messaging/Persistence/Migrations/20261001184308_AddSemanticRelaySource.Designer.cs": {
+    "mtime": 1790880188.885705,
+    "seen": 1790880973.1672409,
+    "ast_hash": "d682ac65a8003fad4d6f72023f1fa51b",
+    "semantic_hash": ""
+  },
+  "src/Messaging/Persistence/Migrations/20261001184308_AddSemanticRelaySource.cs": {
+    "mtime": 1790880198.6997228,
+    "seen": 1790880973.1672409,
+    "ast_hash": "3bb0490698cf272cd94c108fc520a89b",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Customization/OpportunityFields.cs": {
+    "mtime": 1790879659.3832972,
+    "seen": 1790880973.167404,
+    "ast_hash": "2882b7987e0555ec9b436da63429b7b6",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Persistence/Migrations/20261001183435_MoveFieldDefinitionsToSemanticCatalog.Designer.cs": {
+    "mtime": 1790879675.9359004,
+    "seen": 1790880973.16747,
+    "ast_hash": "fd18fc690e69a2b1cefef6d0cef9d314",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Persistence/Migrations/20261001183435_MoveFieldDefinitionsToSemanticCatalog.cs": {
+    "mtime": 1790879686.0478914,
+    "seen": 1790880973.1674712,
+    "ast_hash": "6b700c9e369f69a4cd8749ea6a2d4037",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Application/CatalogAuthorization.cs": {
+    "mtime": 1790879561.8640535,
+    "seen": 1790880973.1675289,
+    "ast_hash": "cb03a239aff5523823a952d1fbd61d10",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Application/CatalogExceptions.cs": {
+    "mtime": 1790882334.0557694,
+    "seen": 1790882842.346555,
+    "ast_hash": "1066ed8b1be02d57157d2f78f6c67285",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Application/ListFieldDefinitionsHandler.cs": {
+    "mtime": 1790881584.8082724,
+    "seen": 1790882213.1927218,
+    "ast_hash": "102d56e6a0c3452cb1fa3e0d3982e932",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Application/ManageFieldDefinitionHandler.cs": {
+    "mtime": 1790882402.3158755,
+    "seen": 1790882842.3465579,
+    "ast_hash": "4f4a30b099c0146ca3d25adcc9412bcd",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Application/SemanticDefinitionReader.cs": {
+    "mtime": 1790882384.037918,
+    "seen": 1790882842.346559,
+    "ast_hash": "083708647e671f657afbdaf113794395",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Domain/CatalogFieldDefinition.cs": {
+    "mtime": 1790879523.5968468,
+    "seen": 1790880973.167532,
+    "ast_hash": "8edf5bf8f436cda9c7be7b3bc40237b8",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Domain/CatalogOwners.cs": {
+    "mtime": 1790882318.0140035,
+    "seen": 1790882842.346561,
+    "ast_hash": "6205d07ad8da33fe6a65baa09196c691",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Domain/FieldConfigRules.cs": {
+    "mtime": 1790881584.8070614,
+    "seen": 1790882213.192727,
+    "ast_hash": "c6a9b96511b451bbf66c67ed34d7c2d3",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Evidence/EvidenceRecord.cs": {
+    "mtime": 1790879492.509582,
+    "seen": 1790880973.167534,
+    "ast_hash": "9e34a3198960a277aae81710861375e8",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Idempotency/IdempotencyRecord.cs": {
+    "mtime": 1790879492.508221,
+    "seen": 1790880973.167535,
+    "ast_hash": "b14af7fe88eb37228f961ba2c74f6df6",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Outbox/OutboxMessage.cs": {
+    "mtime": 1790879492.5067868,
+    "seen": 1790880973.167535,
+    "ast_hash": "1d393519be31c08f16466ebbe1203b11",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Configurations/CatalogFieldDefinitionConfiguration.cs": {
+    "mtime": 1790881584.8073742,
+    "seen": 1790882213.192731,
+    "ast_hash": "eb79a2f7a304cf244943033c453d31ba",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Configurations/EvidenceRecordConfiguration.cs": {
+    "mtime": 1790879492.51387,
+    "seen": 1790880973.167536,
+    "ast_hash": "bb3441b5d33df3548d2323fe94a34006",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Configurations/IdempotencyRecordConfiguration.cs": {
+    "mtime": 1790879492.512325,
+    "seen": 1790880973.167537,
+    "ast_hash": "cb1fb39810dc3d75f3059d49ee87c3d0",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Configurations/OutboxMessageConfiguration.cs": {
+    "mtime": 1790879492.5110202,
+    "seen": 1790880973.167537,
+    "ast_hash": "8eff3e34847866db0165c3971d8a66b6",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Migrations/20261001183321_InitialSemanticCatalog.Designer.cs": {
+    "mtime": 1790879601.8929362,
+    "seen": 1790880973.167538,
+    "ast_hash": "5913a397484caee29dda5f2906c67df8",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Migrations/20261001183321_InitialSemanticCatalog.cs": {
+    "mtime": 1790879628.5607052,
+    "seen": 1790880973.167539,
+    "ast_hash": "18e22d5bcd877ed0d7f6a2cf88ebece5",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Migrations/SemanticCatalogDbContextModelSnapshot.cs": {
+    "mtime": 1790882414.0427368,
+    "seen": 1790882842.346578,
+    "ast_hash": "80b34dd9db6f2dc53f41e40c4c407f48",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/SemanticCatalogConnectionString.cs": {
+    "mtime": 1790879492.5171108,
+    "seen": 1790880973.16754,
+    "ast_hash": "cad6c29056c98a0164a7a570411e8607",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/SemanticCatalogDbContext.cs": {
+    "mtime": 1790882334.0535712,
+    "seen": 1790882842.3465788,
+    "ast_hash": "121d4096f16fc8cf41ecec37a8f3b705",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/SemanticCatalogDbContextFactory.cs": {
+    "mtime": 1790879492.5185716,
+    "seen": 1790880973.167541,
+    "ast_hash": "3e4548e786d911e6e2f67657bb5b3325",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/SemanticCatalogDbContextTenantExtensions.cs": {
+    "mtime": 1790879492.5152237,
+    "seen": 1790880973.167541,
+    "ast_hash": "db5890fec901d3ab510bafe8d276e1a2",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/SemanticCatalog.csproj": {
+    "mtime": 1790879492.503914,
+    "seen": 1790880973.167542,
+    "ast_hash": "13e7b13d27cd753e16e4146ba978e01a",
+    "semantic_hash": ""
+  },
+  "tests/CRM.Tests/Application/CrmSettingsAuthorizationAgreementTests.cs": {
+    "mtime": 1790880496.779467,
+    "seen": 1790880973.167608,
+    "ast_hash": "4bbab25b860ab0e0c367280d13134c84",
+    "semantic_hash": ""
+  },
+  "tests/CRM.Tests/Integration/CustomFieldImpactTests.cs": {
+    "mtime": 1790882563.6648695,
+    "seen": 1790882842.3466618,
+    "ast_hash": "40c615e12563e5f3c958563d605fc487",
+    "semantic_hash": ""
+  },
+  "tests/CRM.Tests/StubDefinitionReader.cs": {
+    "mtime": 1790882454.8107867,
+    "seen": 1790882842.346674,
+    "ast_hash": "26ae7ad2aace5a6631dd72011e977752",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/Architecture/ModuleBoundaryTests.cs": {
+    "mtime": 1790880532.1951804,
+    "seen": 1790880973.167739,
+    "ast_hash": "495701db61d5eed3873a9a7ab1906cf7",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/Domain/CatalogFieldDefinitionTests.cs": {
+    "mtime": 1790881685.1255963,
+    "seen": 1790882213.1929421,
+    "ast_hash": "0e13925e6f4f560bf26710b14779723e",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/Integration/CatalogAuthorizationAgreementTests.cs": {
+    "mtime": 1790882275.006442,
+    "seen": 1790882842.346773,
+    "ast_hash": "e07148344cd6bb0c13d17de5956bcfcc",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/Integration/FieldDefinitionDataMoveTests.cs": {
+    "mtime": 1790880568.8927865,
+    "seen": 1790880973.1677408,
+    "ast_hash": "706cb057cf860c1daf968b5ec1906f18",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/Integration/FieldDefinitionHandlerTests.cs": {
+    "mtime": 1790882275.0046492,
+    "seen": 1790882842.346775,
+    "ast_hash": "c9745b5b92a83de0c6954b3f90ea4d49",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/Integration/FieldDefinitionPersistenceTests.cs": {
+    "mtime": 1790880555.732564,
+    "seen": 1790880973.167742,
+    "ast_hash": "e3e8bf529831ea3eb897a3af82072420",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/Integration/PostgresFixture.cs": {
+    "mtime": 1790880403.2626793,
+    "seen": 1790880973.167742,
+    "ast_hash": "947a16c0eb8fff5d5483e43e276ca71a",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/Integration/SemanticDefinitionReaderTests.cs": {
+    "mtime": 1790880449.0071607,
+    "seen": 1790880973.167743,
+    "ast_hash": "36a7a4b8e9b6a24a1cd4d994dde1cd80",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/SemanticCatalog.Tests.csproj": {
+    "mtime": 1790880365.6739335,
+    "seen": 1790880973.167743,
+    "ast_hash": "958f7bc43428d281706a76b7fc9e5fc2",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/StubAuthorizer.cs": {
+    "mtime": 1790880403.2611198,
+    "seen": 1790880973.167744,
+    "ast_hash": "1aca8e3a8283dc911f62b42bdbe85ac4",
+    "semantic_hash": ""
+  },
+  "docs/schema/semantic-catalog-schema.md": {
+    "mtime": 1790880813.2584434,
+    "seen": 1790880973.168231,
+    "ast_hash": "a3da8b64d5bd5d8e05825523719bb244",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Application/ChangeSetPublisher.cs": {
+    "mtime": 1790882454.8105295,
+    "seen": 1790882842.346556,
+    "ast_hash": "8e7ef95c25c570c9093ebb691898ea51",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Domain/CatalogRevision.cs": {
+    "mtime": 1790881048.394102,
+    "seen": 1790881378.899076,
+    "ast_hash": "08e7843b882b544134821b16b61adc99",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Domain/ChangeSet.cs": {
+    "mtime": 1790882275.0276632,
+    "seen": 1790882842.346564,
+    "ast_hash": "9ec86e59a6b7fdc42cd97f14c26b2aec",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Domain/ChangeSetItem.cs": {
+    "mtime": 1790882275.0303648,
+    "seen": 1790882842.346565,
+    "ast_hash": "a64cdf890e426daa7c2484ec64c79659",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Configurations/ChangeSetConfiguration.cs": {
+    "mtime": 1790882275.047636,
+    "seen": 1790882842.34657,
+    "ast_hash": "6b72daab04eb56f5c1bb19fc445cc5e5",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Migrations/20261001185845_AddChangeSets.Designer.cs": {
+    "mtime": 1790881125.5122352,
+    "seen": 1790881378.899086,
+    "ast_hash": "3830164720d38f743ffa822b5ec23b28",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Migrations/20261001185845_AddChangeSets.cs": {
+    "mtime": 1790881133.3610225,
+    "seen": 1790881378.899086,
+    "ast_hash": "5784a5eefab04967fbd9daa57947d54f",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/Domain/ChangeSetTests.cs": {
+    "mtime": 1790882275.0099778,
+    "seen": 1790882842.346772,
+    "ast_hash": "93e4acf63b4b582523c80054ebbe78a7",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/Integration/ChangeSetPublishingTests.cs": {
+    "mtime": 1790882364.3641107,
+    "seen": 1790882842.346773,
+    "ast_hash": "006deab3889d43e73156f03d98823412",
+    "semantic_hash": ""
+  },
+  "src/Modules/CRM/Customization/CustomFieldReferences.cs": {
+    "mtime": 1790881608.1503751,
+    "seen": 1790882213.19259,
+    "ast_hash": "0e8ddf681d8c43052d5a361215d43598",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Domain/ReferenceTargets.cs": {
+    "mtime": 1790881584.7893744,
+    "seen": 1790882213.192729,
+    "ast_hash": "7021e18bf22ffa811f8edd3a2407710e",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Migrations/20261001190721_AllowReferenceFieldType.Designer.cs": {
+    "mtime": 1790881641.2110584,
+    "seen": 1790882213.192738,
+    "ast_hash": "f63636b6f7781f1810f417aed165457e",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Migrations/20261001190721_AllowReferenceFieldType.cs": {
+    "mtime": 1790881641.2109365,
+    "seen": 1790882213.192739,
+    "ast_hash": "1f667cc11320ab12e65e14f0fff23e26",
+    "semantic_hash": ""
+  },
+  "tests/CRM.Tests/Domain/CustomFieldReferencesTests.cs": {
+    "mtime": 1790881714.662201,
+    "seen": 1790882213.1928189,
+    "ast_hash": "f07257d5864bb4751377ff9501c01c40",
+    "semantic_hash": ""
+  },
+  "tests/CRM.Tests/StubLinkTargetDirectory.cs": {
+    "mtime": 1790881656.3522992,
+    "seen": 1790882213.1928399,
+    "ast_hash": "f569d92a8c60463fef0ebfe619758d4a",
+    "semantic_hash": ""
+  },
+  "web/src/features/opportunities/components/ReferenceFieldInput.tsx": {
+    "mtime": 1790881891.3699884,
+    "seen": 1790882213.1932411,
+    "ast_hash": "c854f98cc4542293d268148b99895178",
+    "semantic_hash": ""
+  },
+  "web/src/features/opportunities/pages/OpportunityReferenceFields.test.tsx": {
+    "mtime": 1790882005.5097654,
+    "seen": 1790882213.1932642,
+    "ast_hash": "f6c6d79ec15be3fb704f6e95b1f35e61",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Application/OneItemChange.cs": {
+    "mtime": 1790882402.315741,
+    "seen": 1790882842.346559,
+    "ast_hash": "7ec1819ceaa338ae21830729e53bd47f",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Application/ViewDefinitionHandlers.cs": {
+    "mtime": 1790882402.3186698,
+    "seen": 1790882842.34656,
+    "ast_hash": "f9cbf7e372e4458fcd6d51cf2b01e36e",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Domain/CatalogViewDefinition.cs": {
+    "mtime": 1790882317.994363,
+    "seen": 1790882842.346563,
+    "ast_hash": "d23548f4d933ccbd2831ba7f87e87d01",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Domain/ChangeOperation.cs": {
+    "mtime": 1790882275.027444,
+    "seen": 1790882842.346563,
+    "ast_hash": "1cafb62501b562c518a4234e04e2aeb1",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Configurations/CatalogViewDefinitionConfiguration.cs": {
+    "mtime": 1790882334.0372586,
+    "seen": 1790882842.346569,
+    "ast_hash": "efcbaad167df28781ea4bc0c20aac8bd",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Migrations/20261001192014_AddViewDefinitions.Designer.cs": {
+    "mtime": 1790882414.0426362,
+    "seen": 1790882842.346576,
+    "ast_hash": "3dcc7db14a81331f57acf1c0468ff965",
+    "semantic_hash": ""
+  },
+  "src/Modules/SemanticCatalog/Persistence/Migrations/20261001192014_AddViewDefinitions.cs": {
+    "mtime": 1790882414.0822098,
+    "seen": 1790882842.346577,
+    "ast_hash": "b13750c1855a0e0be06a77c536a74def",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/Domain/CatalogViewDefinitionTests.cs": {
+    "mtime": 1790882533.3342,
+    "seen": 1790882842.346771,
+    "ast_hash": "74e1bad9723ffe4288744a493d598912",
+    "semantic_hash": ""
+  },
+  "tests/SemanticCatalog.Tests/Integration/ViewDefinitionHandlerTests.cs": {
+    "mtime": 1790882533.3361244,
+    "seen": 1790882842.3467772,
+    "ast_hash": "58f52a834742fc039ba4da543d9154e8",
+    "semantic_hash": ""
+  },
+  "web/src/features/crm-settings/components/SharedViewsPanel.tsx": {
+    "mtime": 1790882955.8520253,
+    "seen": 1790883130.6960819,
+    "ast_hash": "c88cee60ea02ea13a15bbac1edcb2d74",
+    "semantic_hash": ""
+  },
+  "web/src/features/crm-settings/pages/SharedViewsSettings.test.tsx": {
+    "mtime": 1790883087.3793204,
+    "seen": 1790883130.696085,
+    "ast_hash": "37c204a15339aa81d0e49dd0e5b33fff",
+    "semantic_hash": ""
+  },
+  "web/src/features/opportunities/components/TableViewPicker.tsx": {
+    "mtime": 1790882896.9047706,
+    "seen": 1790883130.696231,
+    "ast_hash": "11dc06b088d1335a01bedf441ed39b3e",
+    "semantic_hash": ""
+  },
+  "web/src/features/opportunities/lib/views.test.ts": {
+    "mtime": 1790883005.579717,
+    "seen": 1790883130.696244,
+    "ast_hash": "594990d8c15e631addee9de342245328",
+    "semantic_hash": ""
+  },
+  "web/src/features/opportunities/lib/views.ts": {
+    "mtime": 1790882896.9017494,
+    "seen": 1790883130.696245,
+    "ast_hash": "0c3f73b02aefdb3c670808e95fc9eb45",
+    "semantic_hash": ""
+  },
+  "web/src/features/opportunities/pages/OpportunitiesSharedViews.test.tsx": {
+    "mtime": 1790883045.4146442,
+    "seen": 1790883130.696249,
+    "ast_hash": "2c9f8122d16a120b6d4b780c08c93b13",
+    "semantic_hash": ""
+  },
+  "web/src/lib/shared-views/api.ts": {
+    "mtime": 1790882880.1384068,
+    "seen": 1790883130.696328,
+    "ast_hash": "fc924ca260487b15adba4776ef5e6a95",
+    "semantic_hash": ""
+  },
+  "web/src/lib/shared-views/schema.ts": {
+    "mtime": 1790882880.136875,
+    "seen": 1790883130.696328,
+    "ast_hash": "88d98257cf1f560480b017084419b639",
     "semantic_hash": ""
   }
 }

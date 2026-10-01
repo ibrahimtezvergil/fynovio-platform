@@ -50,6 +50,7 @@ export interface CustomFieldConfigInput {
   min?: number | null
   max?: number | null
   maxLength?: number | null
+  target?: { boundedContext: string; entityType: string } | null
 }
 
 export type ManageCustomFieldVariables =

@@ -1,3 +1,4 @@
+import type { CustomFieldReferences } from '@/lib/custom-fields/schema'
 import type { OpportunityStatus, OpportunitySummary } from '../schema'
 import { formatMoney } from './format'
 
@@ -23,6 +24,8 @@ export interface OpportunityRow {
   rowVersion: number | null
   /** Stored custom field values keyed by field key; rendered through the tenant's definitions. */
   customFields: Record<string, unknown>
+  /** Reference-field values as this reader may see them (label or unavailable). */
+  customFieldReferences: CustomFieldReferences
 }
 
 export function toRows(
@@ -47,6 +50,7 @@ export function toRows(
     needs: item.needs ?? [],
     rowVersion: item.rowVersion ?? null,
     customFields: item.customFields ?? {},
+    customFieldReferences: item.customFieldReferences ?? {},
   }))
 }
 

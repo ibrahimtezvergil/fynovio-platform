@@ -1,15 +1,23 @@
-import type { CustomFieldDefinition, CustomFieldValues } from './schema'
+import type { CustomFieldDefinition, CustomFieldReference, CustomFieldReferences, CustomFieldValues } from './schema'
 
-/** What an input holds while being edited: text for scalar types, a flag for boolean, option keys for multi-select. */
-export type CustomFieldDraft = string | boolean | string[]
+/** A reference being edited: the stored or chosen id, its label when this reader may see it, and whether they may. */
+export interface ReferenceDraft { id: number; label: string | null; accessible: boolean }
+export const isReferenceDraft = (draft: unknown): draft is ReferenceDraft =>
+  typeof draft === 'object' && draft !== null && !Array.isArray(draft) && typeof (draft as ReferenceDraft).id === 'number'
+
+/** What an input holds while being edited: text for scalar types, a flag for boolean, option keys for multi-select, a chosen record for a reference. */
+export type CustomFieldDraft = string | boolean | string[] | ReferenceDraft
 export type CustomFieldDrafts = Record<string, CustomFieldDraft>
 
 /** Active fields in display order — what forms and list columns render. */
 export const activeFields = (definitions: readonly CustomFieldDefinition[]) =>
   definitions.filter((definition) => definition.status === 'Active').toSorted((a, b) => a.sortOrder - b.sortOrder || a.fieldName.localeCompare(b.fieldName))
 
-export function toDraft(definition: CustomFieldDefinition, value: unknown): CustomFieldDraft {
+export function toDraft(definition: CustomFieldDefinition, value: unknown, reference?: CustomFieldReference | null): CustomFieldDraft {
   switch (definition.fieldType) {
+    case 'reference':
+      // A stored id is kept even when this reader cannot see the record: an unrelated edit must not drop it.
+      return typeof value === 'number' ? { id: value, label: reference?.accessible ? (reference.label ?? null) : null, accessible: reference?.accessible ?? false } : ''
     case 'boolean':
       return value === true
     case 'multi_select':
@@ -22,8 +30,8 @@ export function toDraft(definition: CustomFieldDefinition, value: unknown): Cust
   }
 }
 
-export function toDrafts(definitions: readonly CustomFieldDefinition[], values: CustomFieldValues | null | undefined): CustomFieldDrafts {
-  return Object.fromEntries(definitions.map((definition) => [definition.fieldName, toDraft(definition, values?.[definition.fieldName])]))
+export function toDrafts(definitions: readonly CustomFieldDefinition[], values: CustomFieldValues | null | undefined, references?: CustomFieldReferences | null): CustomFieldDrafts {
+  return Object.fromEntries(definitions.map((definition) => [definition.fieldName, toDraft(definition, values?.[definition.fieldName], references?.[definition.fieldName])]))
 }
 
 /**
@@ -33,6 +41,8 @@ export function toDrafts(definitions: readonly CustomFieldDefinition[], values: 
 export function fromDraft(definition: CustomFieldDefinition, draft: CustomFieldDraft | undefined): unknown {
   if (draft === undefined) return undefined
   switch (definition.fieldType) {
+    case 'reference':
+      return isReferenceDraft(draft) ? draft.id : undefined
     case 'boolean':
       return draft === true ? true : undefined
     case 'multi_select':
@@ -68,10 +78,18 @@ export const missingRequired = (definitions: readonly CustomFieldDefinition[], d
 export const hasValue = (value: unknown) => value !== undefined && value !== null && value !== '' && !(Array.isArray(value) && value.length === 0)
 
 /** Human-readable value: option labels instead of keys, a localized date and number; '' when absent. */
-export function formatCustomFieldValue(definition: CustomFieldDefinition, value: unknown, yesNo: { yes: string; no: string }, locale?: string): string {
+export function formatCustomFieldValue(
+  definition: CustomFieldDefinition,
+  value: unknown,
+  yesNo: { yes: string; no: string; unavailable?: string },
+  locale?: string,
+  reference?: CustomFieldReference | null,
+): string {
   if (!hasValue(value)) return ''
   const optionLabel = (key: unknown) => definition.config.options?.find((option) => option.key === key)?.label ?? String(key)
   switch (definition.fieldType) {
+    case 'reference':
+      return reference?.accessible && reference.label ? reference.label : (yesNo.unavailable ?? String(value))
     case 'boolean':
       return value === true ? yesNo.yes : yesNo.no
     case 'select':

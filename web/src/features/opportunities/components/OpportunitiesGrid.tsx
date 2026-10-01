@@ -11,9 +11,11 @@ import { Card } from '@/components/ui/card'
 import { useCustomFieldDefinitions } from '@/lib/custom-fields/api'
 import { activeFields } from '@/lib/custom-fields/values'
 import { exportRowsToCsv } from '@/lib/importExport/exportCsv'
+import type { SharedView } from '@/lib/shared-views/schema'
 import { paths } from '@/routes/paths'
 import { PAGE_SIZE } from '../api'
 import type { OpportunityRow } from '../lib/rows'
+import { applySharedView } from '../lib/views'
 import { createOpportunityColumns, getOpportunityRowId, opportunityFeatures } from './opportunitiesTable'
 
 interface OpportunitiesGridProps {
@@ -28,13 +30,15 @@ interface OpportunitiesGridProps {
   loadedCount: number
   onPageChange: (page: number) => void
   returnTo: string
+  /** A shared table view: which columns, in what order. Null shows every column. */
+  tableView?: SharedView | null
 }
 
 /**
  * Selection lives in an external atom so the selection bar — which is not part of the table — can read and clear it
  * without every row re-rendering. Row actions are local UI prototypes until their backend commands are available.
  */
-export function OpportunitiesGrid({ rows, isLoading, refreshing, page, hasNext, loadedCount, onPageChange, returnTo }: OpportunitiesGridProps) {
+export function OpportunitiesGrid({ rows, isLoading, refreshing, page, hasNext, loadedCount, onPageChange, returnTo, tableView }: OpportunitiesGridProps) {
   const { t, i18n } = useTranslation('opportunities')
   const definitions = useCustomFieldDefinitions()
   const customFields = useMemo(() => activeFields(definitions.data ?? []), [definitions.data])
@@ -43,10 +47,11 @@ export function OpportunitiesGrid({ rows, isLoading, refreshing, page, hasNext, 
   const [localEdits, setLocalEdits] = useState<Partial<Record<number, Partial<OpportunityRow>>>>({})
   const visibleRows = useMemo(() => rows.map((row) => ({ ...row, ...localEdits[row.id] })), [rows, localEdits])
   const applyLocalEdit = useCallback((id: number, changes: Partial<OpportunityRow>) => setLocalEdits((current) => ({ ...current, [id]: { ...current[id], ...changes } })), [])
-  const columns = useMemo(
-    () => createOpportunityColumns(t, returnTo, applyLocalEdit, customFields, i18n.language),
-    [t, returnTo, applyLocalEdit, customFields, i18n.language],
-  )
+  const columns = useMemo(() => {
+    const all = createOpportunityColumns(t, returnTo, applyLocalEdit, customFields, i18n.language)
+    // The view only selects and orders columns that already exist, so the result keeps the table's column type.
+    return applySharedView(all, tableView, (column) => (column as { id?: string; accessorKey?: string }).id ?? (column as { accessorKey?: string }).accessorKey) as typeof all
+  }, [t, returnTo, applyLocalEdit, customFields, i18n.language, tableView])
 
   const table = useTable(
     {

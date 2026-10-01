@@ -12,6 +12,7 @@
     <ProjectReference Include="..\Modules\MasterData\MasterData.csproj" />
     <ProjectReference Include="..\Modules\CRM\CRM.csproj" />
     <ProjectReference Include="..\Modules\Collaboration\Collaboration.csproj" />
+    <ProjectReference Include="..\Modules\SemanticCatalog\SemanticCatalog.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
