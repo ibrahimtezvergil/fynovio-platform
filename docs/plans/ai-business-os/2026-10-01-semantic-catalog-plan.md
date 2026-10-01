@@ -11,25 +11,35 @@
 
 ## C-1 — Behavior-preserving move to the catalog
 ### Task 1 — Contracts
-- [ ] `Contracts`: `FieldType`, `FieldStatus`, `FieldOption`, `FieldConfig`, `FieldDefinition` read model, `ISemanticDefinitionReader` (`ListFieldsAsync`, `GetFieldAsync`) scoped to `(tenant, owner_context, object_type)`.
+- [x] `Contracts`: `FieldType`, `FieldStatus`, `FieldOption`, `FieldConfig`, `FieldDefinition` read model, `ISemanticDefinitionReader` (`ListFieldsAsync`, `GetFieldAsync`) scoped to `(tenant, owner_context, object_type)`.
+→ Commit: `3ae3bc1` "feat(semantic-catalog): move field definitions to a SemanticCatalog module behind a reader (C-1)"
+Note: the read model also carries `FieldConfig` helpers (`TextLengthCap`, `IsOptionActive`, `HasOption`) so CRM keeps no second copy of the definition side; `Validate` lives only in the catalog (`FieldConfigRules`).
 
 ### Task 2 — Module, persistence, migration
-- [ ] `src/Modules/SemanticCatalog` project + `SemanticCatalogDbContext` (schema `semantic`): `field_definitions` (CHECKs carried over from tier 1), `idempotency_records`, `evidence_records`, `outbox_messages`; RLS ENABLE + FORCE.
-- [ ] Migration copies `crm.tenant_field_definitions` when it exists (ids preserved, sequence advanced); runtime/relay grants; README migration order; slnx.
+- [x] `src/Modules/SemanticCatalog` project + `SemanticCatalogDbContext` (schema `semantic`): `field_definitions` (CHECKs carried over from tier 1), `idempotency_records`, `evidence_records`, `outbox_messages`; RLS ENABLE + FORCE.
+- [x] Migration copies `crm.tenant_field_definitions` when it exists (ids preserved, sequence advanced); runtime/relay grants; README migration order; slnx.
+→ Commit: `3ae3bc1` "feat(semantic-catalog): move field definitions to a SemanticCatalog module behind a reader (C-1)"
+Note: the catalog table drops the tier-1 `owner_scope` column (it only ever held `Tenant`).
 
 ### Task 3 — Move the write side
-- [ ] Domain (`FieldDefinition` entity + config validation) and `ManageFieldDefinitionHandler` move to the catalog, same limits/errors; endpoints unchanged; authorization via the `owner_context` action map (reuse `crm.settings.*`).
-- [ ] `ISemanticDefinitionReader` implementation.
+- [x] Domain (`FieldDefinition` entity + config validation) and `ManageFieldDefinitionHandler` move to the catalog, same limits/errors; endpoints unchanged; authorization via the `owner_context` action map (reuse `crm.settings.*`).
+- [x] `ISemanticDefinitionReader` implementation.
+→ Commit: `3ae3bc1` "feat(semantic-catalog): move field definitions to a SemanticCatalog module behind a reader (C-1)"
 
 ### Task 4 — Switch CRM to the reader
-- [ ] The five CRM readers (create, update-values, list, impact, activity) and the two value validators use the reader (list-definitions moves to the catalog with the write side); `CustomFieldValues` / `CustomFieldFilter` operate on the contract read model; `CrmDbContext` loses the definitions DbSet.
-- [ ] CRM migration drops `crm.tenant_field_definitions` (guarded: refuses while rows exist that the catalog lacks).
+- [x] The five CRM readers (create, update-values, list, impact, activity) and the two value validators use the reader (list-definitions moves to the catalog with the write side); `CustomFieldValues` / `CustomFieldFilter` operate on the contract read model; `CrmDbContext` loses the definitions DbSet.
+- [x] CRM migration drops `crm.tenant_field_definitions` (guarded: refuses while rows exist that the catalog lacks).
+→ Commit: `3ae3bc1` "feat(semantic-catalog): move field definitions to a SemanticCatalog module behind a reader (C-1)"
 
 ### Task 5 — Outbox, relay, roles
-- [ ] `OutboxSources` + `semantic`; Messaging RLS migration; relay/runtime role scripts; `RelayRoleTests`; Host/Worker registration; Host fixtures migrate the new context.
+- [x] `OutboxSources` + `semantic`; Messaging RLS migration; relay/runtime role scripts; `RelayRoleTests`; Host/Worker registration; Host fixtures migrate the new context.
+→ Commit: `3ae3bc1` "feat(semantic-catalog): move field definitions to a SemanticCatalog module behind a reader (C-1)"
+Note: Host.Tests fixtures also needed `ConnectionStrings__SemanticCatalog` (otherwise the app silently falls back to the localhost dev default) and the `semantic` grants in their hand-written runtime-role SQL; the Collaboration fixture slices `create-runtime-role.sql` by `-- X module.` headings, so the new section heading had to follow that pattern.
 
 ### Task 6 — Tests and verification
-- [ ] `tests/SemanticCatalog.Tests` (domain, persistence, RLS isolation, idempotency, evidence/outbox, migration copy); CRM tests use a stub reader.
+- [x] `tests/SemanticCatalog.Tests` (domain, persistence, RLS isolation, idempotency, evidence/outbox, migration copy); CRM tests use a stub reader.
+→ Commit: `3ae3bc1` "feat(semantic-catalog): move field definitions to a SemanticCatalog module behind a reader (C-1)"
+Note: .NET suites after C-1: Access 313, Collaboration 306, CRM 334, Host 405, MasterData 44, Messaging 49, SemanticCatalog 57, TenantLifecycle 20 = 1528 (was 1504; the definition tests moved to the catalog, and the new tests cover the reader as the runtime role, the authorization agreement, the data move and the endpoint error contract). EF pending-model checks clean for SemanticCatalog, CRM and Messaging; dev DB migrated in order (the one real definition, id 1, copied). The web suite and the browser check run once at the end (no web change in C-1).
 - [ ] Full .NET + web suites green; EF model check clean; dev DB migrated in the documented order and the browser check repeated.
 
 ## C-2 — ChangeSet v1 for fields
