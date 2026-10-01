@@ -70,4 +70,6 @@ Note: tests added — SemanticCatalog.Tests 209, CRM.Tests 353, Host.Tests 407, 
 Note: before the views the item model was made kind-discriminated (advisor review) under the existing 209 tests, then views added. Deviations recorded in the ADR: a view has columns only, no default sort (the list API cannot sort the full result set, so a page-local order would pass for a complete one); a new or edited view may not place a deprecated field, an existing one keeps working. Tests after A-2: SemanticCatalog 240, CRM 354, Host 408, Messaging 49, Access 313, Collaboration 306, MasterData 44, TenantLifecycle 20 = 1734 .NET; web 772.
 
 ## Task 10 — Wrap-up
-- [ ] Browser E2E on the dev DB; code review; schema doc, AGENTS.md status, phase table, memory; report to the owner (Turkish), listing Task 5 of event consumption as still deferred.
+- [x] Browser E2E on the dev DB; code review; schema doc, AGENTS.md status, phase table, memory; report to the owner (Turkish), listing Task 5 of event consumption as still deferred.
+
+Merge: main `2db1b7f` (local; the owner pushes). Code review: the `code-reviewer` subagent hit its turn limit twice without a report, so the review was my own: RLS flags/policies/grants verified on the live dev schema, the concurrency test caught the lock-ordering bug, the browser check (create view → list applies it → relay delivers both catalog events) passed on the dev DB.
