@@ -9006,9 +9006,9 @@
     "semantic_hash": ""
   },
   "docs/plans/ai-business-os/2026-09-30-tier1-custom-fields-plan.md": {
-    "mtime": 1790787239.674355,
-    "seen": 1790787252.8290188,
-    "ast_hash": "689244284c6d00003653f31530a19580",
+    "mtime": 1790858352.418678,
+    "seen": 1790858382.549261,
+    "ast_hash": "06e7ac7861ce498a49367381ea3366e8",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Persistence/Migrations/20260930132713_ExpandTenantFieldDefinitions.Designer.cs": {
@@ -9102,9 +9102,9 @@
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/CustomFieldsCard.tsx": {
-    "mtime": 1790786081.3562553,
-    "seen": 1790786510.963706,
-    "ast_hash": "f04433cfb75627052159d45260dd7af1",
+    "mtime": 1790858320.8687737,
+    "seen": 1790858382.549073,
+    "ast_hash": "84e8e2066124ff0e60811ef675af6dba",
     "semantic_hash": ""
   },
   "web/src/features/opportunities/components/opportunitiesTable.test.tsx": {
@@ -9150,9 +9150,9 @@
     "semantic_hash": ""
   },
   "docs/plans/ai-business-os/2026-09-30-tier1-slice-report.md": {
-    "mtime": 1790787235.9040325,
-    "seen": 1790787252.8290188,
-    "ast_hash": "d2bf76312e7a3b0a62853fcec09f0540",
+    "mtime": 1790858357.3264632,
+    "seen": 1790858382.549262,
+    "ast_hash": "411b1202ee2b9ac2355f638db2cb77f9",
     "semantic_hash": ""
   },
   "src/Modules/CRM/Customization/CustomFieldFilter.cs": {
